@@ -1,0 +1,22 @@
+.container {
+  margin: 16px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: inline-block;
+  width: 200px;
+  vertical-align: top;
+}
+
+.list {
+  min-height: 100px;
+}
+
+.item {
+  padding: 8px;
+  margin-bottom: 4px;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: move;
+}

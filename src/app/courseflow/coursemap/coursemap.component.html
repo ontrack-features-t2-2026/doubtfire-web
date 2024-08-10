@@ -1,3 +1,38 @@
-<section class="welcome" fxFlex fxLayout="row">
-  <h1>Welcome to courseflow</h1>
-</section>
+<div class="container">
+  <h2>To Do</h2>
+  <div
+    cdkDropList
+    #todoList="cdkDropList"
+    [cdkDropListData]="todo"
+    [cdkDropListConnectedTo]="[trimester1List, trimester2List]"
+    (cdkDropListDropped)="drop($event)"
+    class="list">
+    <div class="item" *ngFor="let item of todo" cdkDrag>{{item}}</div>
+  </div>
+</div>
+
+<div class="container">
+  <h2>Trimester 1</h2>
+  <div
+    cdkDropList
+    #trimester1List="cdkDropList"
+    [cdkDropListData]="trimester1"
+    [cdkDropListConnectedTo]="[todoList, trimester2List]"
+    (cdkDropListDropped)="drop($event)"
+    class="list">
+    <div class="item" *ngFor="let item of trimester1" cdkDrag>{{item}}</div>
+  </div>
+</div>
+
+<div class="container">
+  <h2>Trimester 2</h2>
+  <div
+    cdkDropList
+    #trimester2List="cdkDropList"
+    [cdkDropListData]="trimester2"
+    [cdkDropListConnectedTo]="[todoList, trimester1List]"
+    (cdkDropListDropped)="drop($event)"
+    class="list">
+    <div class="item" *ngFor="let item of trimester2" cdkDrag>{{item}}</div>
+  </div>
+</div>
