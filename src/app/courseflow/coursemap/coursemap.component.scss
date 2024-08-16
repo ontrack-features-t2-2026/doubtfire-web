@@ -1,22 +1,58 @@
-.container {
+.to-do-container {
   margin: 16px;
   padding: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
   display: inline-block;
-  width: 200px;
+  width: 30vw;
   vertical-align: top;
 }
 
-.list {
-  min-height: 100px;
+.year-container {
+  margin: 16px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  width: 60vw;
+  vertical-align: top;
+  flex-direction: column;
 }
 
-.item {
+.trimester-list {
+  display: flex;
+  flex-direction: row; /* Makes the items within the list display horizontally */
+  padding: 10px;
+  border-radius: 4px;
+  background-color: rgb(238, 238, 238);
+  margin: 10px;
+  align-items: center;
+}
+
+.unit {
   padding: 8px;
-  margin-bottom: 4px;
+  margin: 4px;
   background-color: #f1f1f1;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: move;
+  align-content: center;
 }
+
+.study-periods {
+  display: flex;
+  flex-direction: column;
+}
+
+.coursemap {
+  display: flex;
+  flex-direction: row;
+}
+
+
+.trimester-heading {
+  margin-right: 20px;
+  align-items: center;
+}
+
+

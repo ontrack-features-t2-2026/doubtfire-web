@@ -1,38 +1,71 @@
-<div class="container">
-  <h2>To Do</h2>
-  <div
-    cdkDropList
-    #todoList="cdkDropList"
-    [cdkDropListData]="todo"
-    [cdkDropListConnectedTo]="[trimester1List, trimester2List]"
-    (cdkDropListDropped)="drop($event)"
-    class="list">
-    <div class="item" *ngFor="let item of todo" cdkDrag>{{item}}</div>
+<div class="coursemap">
+  <!-- Required Units Panel -->
+  <div class="to-do-container">
+    <h3>Required Units</h3>
+    <div
+      cdkDropList
+      [cdkDropListData]="requiredUnits"
+      (cdkDropListDropped)="drop($event)"
+      [cdkDropListConnectedTo]="connectedDropLists"
+      [id]="requiredUnits"
+    >
+      <div class="unit" *ngFor="let unit of requiredUnits" cdkDrag>
+        {{ unit }}
+      </div>
+    </div>
   </div>
-</div>
+  <!-- Study Periods Panel -->
+  <div class="study-periods">
+    <h3>Study Periods</h3>
+    <div *ngFor="let year of years; let i = index" class="year-container">
+      <h4>{{ year.year }}</h4>
+      <!-- Trimester 1 -->
+      <div
+        class="trimester-list"
+        cdkDropList
+        [cdkDropListData]="year.trimester1"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListConnectedTo]="connectedDropLists"
+        [id]="'trimester1-' + i"
+      >
+        <h5 class="trimester-heading">Trimester 1</h5>
+        <div *ngFor="let unit of year.trimester1" cdkDrag class="unit">
+          {{ unit }}
+        </div>
+      </div>
+      <!-- Trimester 2 -->
+      <div
+        class="trimester-list"
+        cdkDropList
+        [cdkDropListData]="year.trimester2"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListConnectedTo]="connectedDropLists"
+        [id]="'trimester2-' + i"
+      >
+        <h5 class="trimester-heading">Trimester 2</h5>
+        <div *ngFor="let unit of year.trimester2" cdkDrag class="unit">
+          {{ unit }}
+        </div>
 
-<div class="container">
-  <h2>Trimester 1</h2>
-  <div
-    cdkDropList
-    #trimester1List="cdkDropList"
-    [cdkDropListData]="trimester1"
-    [cdkDropListConnectedTo]="[todoList, trimester2List]"
-    (cdkDropListDropped)="drop($event)"
-    class="list">
-    <div class="item" *ngFor="let item of trimester1" cdkDrag>{{item}}</div>
-  </div>
-</div>
-
-<div class="container">
-  <h2>Trimester 2</h2>
-  <div
-    cdkDropList
-    #trimester2List="cdkDropList"
-    [cdkDropListData]="trimester2"
-    [cdkDropListConnectedTo]="[todoList, trimester1List]"
-    (cdkDropListDropped)="drop($event)"
-    class="list">
-    <div class="item" *ngFor="let item of trimester2" cdkDrag>{{item}}</div>
+      </div>
+      <!-- Trimester 3 -->
+      <div
+        cdkDropList
+        class="trimester-list"
+        [cdkDropListData]="year.trimester3"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListConnectedTo]="connectedDropLists"
+        [id]="'trimester3-' + i"
+      >
+        <h5 class="trimester-heading">Trimester 3</h5>
+        <div *ngFor="let unit of year.trimester3" cdkDrag class="unit">
+          {{ unit }}
+        </div>
+      </div>
+      <button mat-icon-button (click)="deleteYear(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+    <button (click)="addYear()">Add Year</button>
   </div>
 </div>
