@@ -1,8 +1,6 @@
-.to-do-container {
-  margin: 16px;
-  padding: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.required-units-container {
+  border: 1px solid #337ab7;
+  border-radius: 6px;
   display: inline-block;
   width: 30vw;
   vertical-align: top;
@@ -10,20 +8,21 @@
 
 .year-container {
   margin: 16px;
-  padding: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid #337ab7;
+  border-radius: 9px;
   display: flex;
-  width: 60vw;
+  width: 90%;
   vertical-align: top;
   flex-direction: column;
+  border-radius: 6px;
+  width: auto;
 }
 
 .trimester-list {
   display: flex;
   flex-direction: row; /* Makes the items within the list display horizontally */
   padding: 10px;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: rgb(238, 238, 238);
   margin: 10px;
   align-items: center;
@@ -31,17 +30,37 @@
 
 .unit {
   padding: 8px;
-  margin: 4px;
-  background-color: #f1f1f1;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  margin: 16px;
+  background-color: #357bb9a8;
+  color: white;
+  border-radius: 6px;
   cursor: move;
   align-content: center;
+  height: 40px;
+
 }
 
-.study-periods {
+.study-periods-container {
   display: flex;
   flex-direction: column;
+  border: 1px solid #337ab7;
+  border-radius: 6px;
+  margin-left: 20px;
+  width: 70vw;
+}
+
+.study-periods-header, .required-units-header, .year-header{
+  background-color: #337ab7;
+  border-radius: 5px 5px 0 0;
+  color: white;
+  height: 40px;
+  align-items: center;
+  display: flex;
+  padding: 0 10px;
+}
+
+.study-periods-title, .required-units-title, .year-title {
+  margin: 0 2% 0 0;
 }
 
 .coursemap {
@@ -49,10 +68,14 @@
   flex-direction: row;
 }
 
-
 .trimester-heading {
   margin-right: 20px;
   align-items: center;
+}
+
+.delete-button {
+  margin-left: auto;
+  right: 2%;
 }
 
 

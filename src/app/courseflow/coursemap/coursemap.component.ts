@@ -49,6 +49,41 @@ export class CoursemapComponent {
     this.years.splice(index, 1);
   }
 
+  deleteTrimester(yearIndex: number, trimesterIndex: number) {
+    const trimesters = ['trimester1', 'trimester2', 'trimester3'];
+    const trimesterToDelete = this.years[yearIndex][trimesters[trimesterIndex]];
+
+    // Move all units from the trimester to the requiredUnits array
+    this.requiredUnits.push(...trimesterToDelete);
+
+    // Set the trimester to null to remove it
+    this.years[yearIndex][trimesters[trimesterIndex]] = null;
+  }
+
+  addTrimester(yearIndex: number) {
+    const year = this.years[yearIndex];
+
+    if (!year.trimester1) {
+      year.trimester1 = [];
+    } else if (!year.trimester2) {
+      year.trimester2 = [];
+    } else if (!year.trimester3) {
+      year.trimester3 = [];
+    } else {
+      // Optional: Alert or handle the case where all three trimesters already exist
+      console.log('All three trimesters already exist.');
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  countTrimesters(year: any): number {
+    let trimesterCount = 0;
+    if (year.trimester1 && year.trimester1.length > 0) trimesterCount++;
+    if (year.trimester2 && year.trimester2.length > 0) trimesterCount++;
+    if (year.trimester3 && year.trimester3.length > 0) trimesterCount++;
+    return trimesterCount;
+  }
+
   constructor() {}
 
   drop(event: CdkDragDrop<string[]>) {
