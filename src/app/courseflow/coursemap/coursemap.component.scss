@@ -37,7 +37,6 @@
   cursor: move;
   align-content: center;
   height: 40px;
-
 }
 
 .study-periods-container {
@@ -61,6 +60,24 @@
 
 .study-periods-title, .required-units-title, .year-title {
   margin: 0 2% 0 0;
+}
+
+.electives-container {
+  margin: 0 3% 0 3%;
+}
+
+mat-form-field {
+  width: 75%;
+}
+
+.search-bar {
+  margin: 0 1% 0 1%;
+  width: 70%;
+}
+
+.button {
+  border-radius: 5px;
+  margin: 0 2% 0 2%;
 }
 
 .coursemap {

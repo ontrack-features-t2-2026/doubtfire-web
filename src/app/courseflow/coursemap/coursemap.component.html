@@ -12,7 +12,35 @@
       [id]="'requiredUnits'"
     >
       <div class="unit" *ngFor="let unit of requiredUnits" cdkDrag>
-        {{ unit }}
+        <strong>{{ unit.code }}</strong> - {{ unit.name }}
+      </div>
+    </div>
+    <div class="electives-container">
+      <h3 class="electives-title">Elective Units</h3>
+      <div
+        *ngIf="electiveUnits"
+        cdkDropList
+        [cdkDropListData]="electiveUnits"
+        (cdkDropListDropped)="drop($event)"
+        [cdkDropListConnectedTo]="connectedDropLists"
+        [id]="electiveUnits"
+      >
+        <div *ngFor="let unit of electiveUnits" cdkDrag class="unit">
+          <p>
+            <strong>{{ unit.code }}</strong> - {{ unit.name }}
+          </p>
+        </div>
+      </div>
+      <div>
+        <mat-form-field appearance="fill">
+          <mat-label>Enter Unit Code</mat-label>
+          <input class="search-bar" matInput [(ngModel)]="unitCode" name="unitCode" id="unitCode" />
+        </mat-form-field>
+        <button mat-flat-button class="button" color="primary" type="submit">Add Unit</button>
+
+        <div *ngIf="errorMessage" class="error">
+          {{ errorMessage }}
+        </div>
       </div>
     </div>
   </div>
@@ -42,7 +70,7 @@
         <h5 class="trimester-heading">Trimester 1</h5>
 
         <div *ngFor="let unit of year.trimester1" cdkDrag class="unit">
-          {{ unit }}
+          <strong>{{ unit.code }}</strong> - {{ unit.name }}
         </div>
         <button class="delete-button" mat-icon-button (click)="deleteTrimester(i, 0)">
           <mat-icon>delete</mat-icon>
@@ -61,7 +89,7 @@
         <h5 class="trimester-heading">Trimester 2</h5>
 
         <div *ngFor="let unit of year.trimester2" cdkDrag class="unit">
-          {{ unit }}
+          <strong>{{ unit.code }}</strong> - {{ unit.name }}
         </div>
         <button class="delete-button" mat-icon-button (click)="deleteTrimester(i, 1)">
           <mat-icon>delete</mat-icon>
@@ -80,7 +108,7 @@
         <h5 class="trimester-heading">Trimester 3</h5>
 
         <div *ngFor="let unit of year.trimester3" cdkDrag class="unit">
-          {{ unit }}
+          <strong>{{ unit.code }}</strong> - {{ unit.name }}
         </div>
         <button class="delete-button" mat-icon-button (click)="deleteTrimester(i, 2)">
           <mat-icon>delete</mat-icon>

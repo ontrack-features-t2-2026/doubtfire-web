@@ -1,28 +1,112 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {MatListModule} from '@angular/material/list';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
-import { MatIconModule } from '@angular/material/icon';
+import {MatIconModule} from '@angular/material/icon';
+import {HttpClientModule} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
+import {AuthenticationService} from 'src/app/api/services/authentication.service';
+import {StateService, Transition} from '@uirouter/core';
+import {AlertService} from 'src/app/common/services/alert.service';
+import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
+import {UnitService} from 'src/app/api/services/unit.service';
+import {Unit} from 'src/app/api/models/doubtfire-model';
+import {FormsModule} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+
+
+
+
+type signInData =
+  | {
+      username: string;
+      password: string;
+      remember: boolean;
+      autoLogin: boolean;
+      auth_token?: string;
+    }
+  | {
+      auth_token: string;
+      username: string;
+      remember: boolean;
+      password?: string;
+      autoLogin?: boolean;
+    };
 
 @Component({
   selector: 'coursemap',
   templateUrl: './coursemap.component.html',
   styleUrls: ['./coursemap.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatListModule, DragDropModule, MatIconModule],
+  imports: [
+    CommonModule,
+    MatListModule,
+    DragDropModule,
+    MatIconModule,
+    HttpClientModule,
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
 })
-export class CoursemapComponent {
-  requiredUnits = ['SIT1', 'SIT2', 'SIT3', 'SIT4', 'SIT5', 'SIT6'];
+export class CoursemapComponent implements OnInit {
+  signingIn: boolean;
+  showCredentials = false;
+  invalidCredentials: boolean;
+  api: string;
+  SSOLoginUrl: unknown;
+  authMethodLoaded: boolean;
+  externalName: unknown;
+  formData: signInData;
+  unitCode = '';
+  unit: Unit | null = null;
+  errorMessage: string | null = null;
+  units: Unit[] = [];
+  requiredUnits: unknown[] = [
+    {code: 'SIT1', name: 'Introduction to Programming'},
+    {code: 'SIT2', name: 'Data Structures'},
+    {code: 'SIT3', name: 'Database Systems'},
+    {code: 'SIT4', name: 'Web Development'},
+    {code: 'SIT5', name: 'Mobile App Development'},
+    {code: 'SIT6', name: 'Software Engineering'},
+  ]
+
+
+  ngOnInit(): void {
+    this.formData = {
+      username: '',
+      password: '',
+      remember: false,
+      autoLogin: localStorage.getItem('autoLogin') ? true : false,
+    };
+    this.unitService.getUnits().subscribe({
+      next: (data: Unit[]) => {
+        this.units = data;
+        this.errorMessage = null;
+      },
+      error: (err) => {
+        this.errorMessage = 'Error fetching units';
+        console.error('Error fetching units:', err);
+      },
+    });
+  }
 
   years = [
     {
       year: 2023,
-      trimester1: ['Course 1', 'Course 2'],
-      trimester2: ['Course 3', 'Course 4'],
-      trimester3: ['Course 5', 'Course 6'],
+      trimester1: [],
+      trimester2: [],
+      trimester3: [],
     },
   ];
+
+  electiveUnits: Unit[] = [];
+
 
   allTrimesters = [this.years[0].trimester1, this.years[0].trimester2, this.years[0].trimester3];
 
@@ -84,7 +168,16 @@ export class CoursemapComponent {
     return trimesterCount;
   }
 
-  constructor() {}
+  constructor(
+    private authService: AuthenticationService,
+    private state: StateService,
+    private constants: DoubtfireConstants,
+    private http: HttpClient,
+    private transition: Transition,
+    private globalState: GlobalStateService,
+    private alerts: AlertService,
+    private unitService: UnitService
+  ) {}
 
   drop(event: CdkDragDrop<string[]>) {
     if (event.previousContainer === event.container) {
@@ -96,6 +189,25 @@ export class CoursemapComponent {
         event.previousIndex,
         event.currentIndex,
       );
+    }
+  }
+
+  fetchUnitByCode(): void {
+    if (!this.unitCode) {
+      this.errorMessage = 'Please enter a unit code';
+      return;
+    }
+
+    // Filter the units array by code
+    const foundUnit = this.units.find(unit => unit.code === this.unitCode);
+
+    if (foundUnit) {
+      this.electiveUnits.push(foundUnit);
+      this.unit = foundUnit;
+      this.errorMessage = null;
+    } else {
+      this.errorMessage = 'Unit not found';
+      this.unit = null;
     }
   }
 }
