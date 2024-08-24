@@ -17,6 +17,8 @@
     </div>
     <div class="electives-container">
       <h3 class="electives-title">Elective Units</h3>
+      <p>Electives remaining: {{ remainingSlots }} of {{ maxElectiveUnits }}</p>
+
       <div
         *ngIf="electiveUnits"
         cdkDropList
@@ -31,17 +33,19 @@
           </p>
         </div>
       </div>
-      <div>
-        <mat-form-field appearance="fill">
-          <mat-label>Enter Unit Code</mat-label>
-          <input class="search-bar" matInput [(ngModel)]="unitCode" name="unitCode" id="unitCode" />
-        </mat-form-field>
-        <button mat-flat-button class="button" color="primary" type="submit">Add Unit</button>
+      <form (ngSubmit)="fetchUnitByCode()">
+        <div>
+          <mat-form-field appearance="fill">
+            <mat-label>Enter Unit Code</mat-label>
+            <input class="search-bar" matInput [(ngModel)]="unitCode" name="unitCode" id="unitCode" />
+          </mat-form-field>
+          <button mat-flat-button class="button" color="primary" type="submit">Add Unit</button>
 
-        <div *ngIf="errorMessage" class="error">
-          {{ errorMessage }}
+          <div *ngIf="errorMessage" class="error">
+            {{ errorMessage }}
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   </div>
   <!-- Study Periods Panel -->

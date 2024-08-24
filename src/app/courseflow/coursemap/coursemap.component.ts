@@ -105,10 +105,15 @@ export class CoursemapComponent implements OnInit {
     },
   ];
 
+  maxElectiveUnits = 5;
+
   electiveUnits: Unit[] = [];
 
-
   allTrimesters = [this.years[0].trimester1, this.years[0].trimester2, this.years[0].trimester3];
+
+  get remainingSlots(): number {
+    return this.maxElectiveUnits - this.electiveUnits.length;
+  }
 
   get connectedDropLists(): string[] {
     const dropListIds: string[] = ['requiredUnits'];

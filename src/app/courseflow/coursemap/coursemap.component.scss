@@ -4,6 +4,7 @@
   display: inline-block;
   width: 30vw;
   vertical-align: top;
+  align-items: center;
 }
 
 .year-container {
@@ -15,7 +16,10 @@
   vertical-align: top;
   flex-direction: column;
   border-radius: 6px;
-  width: auto;
+  width: 98%;
+  justify-content: center;
+  align-items: center;
+
 }
 
 .trimester-list {
@@ -26,6 +30,7 @@
   background-color: rgb(238, 238, 238);
   margin: 10px;
   align-items: center;
+  width: 95%;
 }
 
 .unit {
@@ -46,6 +51,7 @@
   border-radius: 6px;
   margin-left: 20px;
   width: 70vw;
+  align-items: center;
 }
 
 .study-periods-header, .required-units-header, .year-header{
@@ -56,6 +62,7 @@
   align-items: center;
   display: flex;
   padding: 0 10px;
+  width: 100%;
 }
 
 .study-periods-title, .required-units-title, .year-title {
@@ -77,7 +84,7 @@ mat-form-field {
 
 .button {
   border-radius: 5px;
-  margin: 0 2% 0 2%;
+  margin: 0 2% 2% 2%;
 }
 
 .coursemap {
