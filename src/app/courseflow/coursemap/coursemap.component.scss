@@ -12,14 +12,12 @@
   border: 1px solid #337ab7;
   border-radius: 9px;
   display: flex;
-  width: 90%;
   vertical-align: top;
   flex-direction: column;
   border-radius: 6px;
   width: 98%;
   justify-content: center;
   align-items: center;
-
 }
 
 .trimester-list {
@@ -42,6 +40,7 @@
   cursor: move;
   align-content: center;
   height: 40px;
+  width: 95%;
 }
 
 .study-periods-container {
@@ -65,16 +64,28 @@
   width: 100%;
 }
 
-.study-periods-title, .required-units-title, .year-title {
-  margin: 0 2% 0 0;
+.study-periods-title, .required-units-title, .year-title, .electives-title {
+  margin: 0 2%;
+}
+
+.form {
+  margin: 0 2%;
+}
+
+.text {
+  margin-left: 2%;
 }
 
 .electives-container {
-  margin: 0 3% 0 3%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 mat-form-field {
   width: 75%;
+
 }
 
 .search-bar {

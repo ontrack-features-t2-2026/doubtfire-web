@@ -203,7 +203,13 @@ export class CoursemapComponent implements OnInit {
       return;
     }
 
-    // Filter the units array by code
+    const alreadyAdded = this.electiveUnits.some(unit => unit.code === this.unitCode);
+
+    if (alreadyAdded) {
+      this.errorMessage = 'Unit already added';
+      return;
+    }
+
     const foundUnit = this.units.find(unit => unit.code === this.unitCode);
 
     if (foundUnit) {

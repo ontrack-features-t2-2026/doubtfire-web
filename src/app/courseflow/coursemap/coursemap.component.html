@@ -17,8 +17,7 @@
     </div>
     <div class="electives-container">
       <h3 class="electives-title">Elective Units</h3>
-      <p>Electives remaining: {{ remainingSlots }} of {{ maxElectiveUnits }}</p>
-
+      <p class="text">Electives remaining: {{ remainingSlots }} of {{ maxElectiveUnits }}</p>
       <div
         *ngIf="electiveUnits"
         cdkDropList
@@ -27,13 +26,13 @@
         [cdkDropListConnectedTo]="connectedDropLists"
         [id]="electiveUnits"
       >
-        <div *ngFor="let unit of electiveUnits" cdkDrag class="unit">
-          <p>
+        <div class="text" *ngFor="let unit of electiveUnits" cdkDrag class="unit">
+          <p >
             <strong>{{ unit.code }}</strong> - {{ unit.name }}
           </p>
         </div>
       </div>
-      <form (ngSubmit)="fetchUnitByCode()">
+      <form class="form" (ngSubmit)="fetchUnitByCode()">
         <div>
           <mat-form-field appearance="fill">
             <mat-label>Enter Unit Code</mat-label>
