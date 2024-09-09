@@ -19,6 +19,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatButtonModule} from '@angular/material/button';
 import {Course} from 'src/app/api/models/doubtfire-model';
 import {CourseService} from 'src/app/api/services/course.service';
+import { CourseMapService } from 'src/app/api/services/course-map.service';
 
 type signInData =
   | {
@@ -194,6 +195,7 @@ export class CoursemapComponent implements OnInit {
     private alerts: AlertService,
     private unitService: UnitService,
     private courseService: CourseService,
+    private courseMapService: CourseMapService,
   ) {}
 
   drop(event: CdkDragDrop<string[]>) {
@@ -234,17 +236,6 @@ export class CoursemapComponent implements OnInit {
     }
   }
 
-  loadCourses(): void {
-    this.courseService.getCourses().subscribe(
-      (data: Course[]) => {
-        this.courses = data;
-      },
-      error => {
-        console.error('Error fetching courses', error);
-      }
-    );
-  }
-
   getCourses(): void {
     this.courseService.getCourses().subscribe(
       (data: Course[]) => {
@@ -253,6 +244,17 @@ export class CoursemapComponent implements OnInit {
       },
       (error) => {
         console.error('Error fetching courses:', error);
+      }
+    );
+  }
+
+  addCourseMap(): void {
+    this.courseMapService.addCourseMap(1, 1).subscribe(
+      (data) => {
+        console.log('Course map added:', data);
+      },
+      (error) => {
+        console.error('Error adding course map:', error);
       }
     );
   }
