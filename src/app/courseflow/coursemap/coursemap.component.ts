@@ -14,12 +14,11 @@ import {GlobalStateService} from 'src/app/projects/states/index/global-state.ser
 import {UnitService} from 'src/app/api/services/unit.service';
 import {Unit} from 'src/app/api/models/doubtfire-model';
 import {FormsModule} from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-
-
-
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatButtonModule} from '@angular/material/button';
+import {Course} from 'src/app/api/models/doubtfire-model';
+import {CourseService} from 'src/app/api/services/course.service';
 
 type signInData =
   | {
@@ -75,6 +74,16 @@ export class CoursemapComponent implements OnInit {
     {code: 'SIT5', name: 'Mobile App Development'},
     {code: 'SIT6', name: 'Software Engineering'},
   ]
+  courses: Course[] = [];
+
+  testCourse: Course = {
+      id: '12345',
+      name: 'Introduction to Programming',
+      code: 'CS101',
+      year: 2024,
+      version: 'v1.0',
+      url: 'http://university.edu/courses/cs101'
+    };
 
 
   ngOnInit(): void {
@@ -94,6 +103,8 @@ export class CoursemapComponent implements OnInit {
         console.error('Error fetching units:', err);
       },
     });
+    this.getCourses();
+
   }
 
   years = [
@@ -181,7 +192,8 @@ export class CoursemapComponent implements OnInit {
     private transition: Transition,
     private globalState: GlobalStateService,
     private alerts: AlertService,
-    private unitService: UnitService
+    private unitService: UnitService,
+    private courseService: CourseService,
   ) {}
 
   drop(event: CdkDragDrop<string[]>) {
@@ -221,4 +233,28 @@ export class CoursemapComponent implements OnInit {
       this.unit = null;
     }
   }
+
+  loadCourses(): void {
+    this.courseService.getCourses().subscribe(
+      (data: Course[]) => {
+        this.courses = data;
+      },
+      error => {
+        console.error('Error fetching courses', error);
+      }
+    );
+  }
+
+  getCourses(): void {
+    this.courseService.getCourses().subscribe(
+      (data: Course[]) => {
+        this.courses = data;
+        console.log('Courses fetched successfully:', this.courses);
+      },
+      (error) => {
+        console.error('Error fetching courses:', error);
+      }
+    );
+  }
+
 }
