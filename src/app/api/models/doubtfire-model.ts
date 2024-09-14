@@ -43,6 +43,8 @@ export * from './communication';
 export * from './engagement';
 export * from './course';
 export * from './course-map';
+export * from './unit-definition';
+export * from './requirement-set';
 
 // Users -- are students or staff
 export * from './user/user';

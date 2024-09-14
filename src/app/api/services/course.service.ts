@@ -22,7 +22,9 @@ export class CourseService {
   }
 
   createCourse(course: Course): Observable<Course> {
-    return this.http.post<Course>(API_URL, course);
+    const url = `${API_URL}/course/`;
+
+    return this.http.post<Course>(url, course);
   }
 
   updateCourse(id: string, course: Course): Observable<Course> {
