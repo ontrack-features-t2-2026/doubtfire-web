@@ -1,10 +1,13 @@
-import {Unit} from 'src/app/api/models/doubtfire-model';
+import {Unit, CourseMapUnit} from 'src/app/api/models/doubtfire-model';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import API_URL from 'src/app/config/constants/apiURL';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+}
+)
 export class CourseMapUnitService {
 
   constructor(private http: HttpClient) {}
@@ -12,16 +15,16 @@ export class CourseMapUnitService {
   private baseUrl: string = `${API_URL}/coursemapunit`;
 
   // Get course-map-units
-  getCourseMapUnits(): Observable<Unit> {
-    const url = `${this.baseUrl}`;
-    return this.http.get<Unit>(url);
+  getCourseMapUnitsById(id): Observable<CourseMapUnit[]> {
+    const url = `${this.baseUrl}/courseMapId/${id}`;
+    return this.http.get<CourseMapUnit[]>(url);
   }
 
   addCourseMapUnit(
     courseMapId: number,
     unitId: number,
     yearSlot: number,
-    teachingPeriodSlow: number,
+    teachingPeriodSlot: number,
     unitSlot: number,
   ): Observable<Unit> {
     const url = `${this.baseUrl}`;
@@ -29,7 +32,7 @@ export class CourseMapUnitService {
     params.set('courseMapId', courseMapId.toString());
     params.set('unitId', unitId.toString());
     params.set('yearSlot', yearSlot.toString());
-    params.set('teachingPeriodSlot', teachingPeriodSlow.toString());
+    params.set('teachingPeriodSlot', teachingPeriodSlot.toString());
     params.set('unitSlot', unitSlot.toString());
     return this.http.post<Unit>(url, {params});
   }

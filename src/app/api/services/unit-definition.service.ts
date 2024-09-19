@@ -1,36 +1,31 @@
-import { TeachingPeriodService, Unit, UnitRole, UnitService, UserService } from 'src/app/api/models/doubtfire-model';
-import { CachedEntityService } from 'ngx-entity-service';
-import { Inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {UnitDefinition} from 'src/app/api/models/doubtfire-model';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 import API_URL from 'src/app/config/constants/apiURL';
 
-@ Injectable()
-export class EntityService {
-  constructor() {}
-}
-
-@ Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class UnitDefinitionService {
 
   constructor(private http: HttpClient) {}
 
-  private baseUrl: string = `${API_URL}/unit-definition`;
-
+  private baseUrl: string = `${API_URL}/unit_definition`;
 
   // Get unit-definitions
-  getDefinitions(): Observable<Unit> {
-    const url = `${this.baseUrl}`;
-    return this.http.get<Unit>(url);
+  getDefinitions(): Observable<UnitDefinition[]> {
+    console.log("fetched unit definitions");
+    return this.http.get<UnitDefinition[]>(this.baseUrl);
   }
 
-  getUnitDefinitionById(): Observable<Unit> {
-    const url = `${this.baseUrl}/:id:`;
-    return this.http.get<Unit>(url);
+  getUnitDefinitionById(id: string): Observable<UnitDefinition> {
+    const url = `${this.baseUrl}/unitDefinitionId/${id}`;
+    return this.http.get<UnitDefinition>(url);
   }
 
-  searchUnitDefinitions(searchId?:number, searchName?: string, ): Observable<[]> {
+  searchUnitDefinitions(searchId?:number, searchName?: string, ): Observable<[UnitDefinition]> {
     let params = new HttpParams();
     if (searchId) {
       params = params.set('id', searchId.toString());
@@ -38,25 +33,22 @@ export class UnitDefinitionService {
     if (searchName) {
       params = params.set('name', searchName);
     }
-
-    const url = `${this.baseUrl}/search`;
-    return this.http.get<[]>(url, {params});
+    return this.http.get<[UnitDefinition]>(this.baseUrl, {params});
   }
 
   addUnitDefinition(
-    unitDefinitionId: number,
     name: string,
     description: string,
     code: string,
-  ): Observable<Unit> {
+    version: string,
+  ): Observable<UnitDefinition> {
     let params = new HttpParams();
-    params.set('unitDefinitionId', unitDefinitionId.toString());
     params.set('name', name);
     params.set('description', description);
     params.set('code', code);
-
-    const url = `${this.baseUrl}`;
-    return this.http.post<Unit>(url, {params});
+    params.set('version', version);
+    console.log("added unit definition");
+    return this.http.post<UnitDefinition>(this.baseUrl, {params});
   }
 
   updateUnitDefinition(
@@ -64,7 +56,7 @@ export class UnitDefinitionService {
     name: string,
     description: string,
     code: string,
-  ): Observable<Unit> {
+  ): Observable<UnitDefinition> {
     const params = new HttpParams();
     params.set('unitDefinitionId', unitDefinitionId.toString());
     params.set('name', name);
@@ -72,7 +64,7 @@ export class UnitDefinitionService {
     params.set('code', code);
 
     const url = `${this.baseUrl}/:id:`;
-    return this.http.put<Unit>(url, {params});
+    return this.http.put<UnitDefinition>(url, {params});
   }
 
   deleteUnitDefinition(unitId:number): Observable<void> {

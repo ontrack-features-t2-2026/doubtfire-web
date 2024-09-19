@@ -13,7 +13,7 @@ export class CourseService {
 
   getCourses(): Observable<Course[]> {
     const url = `${API_URL}/course/`;
-    console.log("fetched");
+    console.log("fetched courses");
     return this.http.get<Course[]>(url);
   }
 

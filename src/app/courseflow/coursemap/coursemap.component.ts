@@ -12,14 +12,16 @@ import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {UnitService} from 'src/app/api/services/unit.service';
-import {Unit} from 'src/app/api/models/doubtfire-model';
+import {Unit, UnitDefinition} from 'src/app/api/models/doubtfire-model';
 import {FormsModule} from '@angular/forms';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatButtonModule} from '@angular/material/button';
-import {Course} from 'src/app/api/models/doubtfire-model';
+import {Course, CourseMap, CourseMapUnit} from 'src/app/api/models/doubtfire-model';
 import {CourseService} from 'src/app/api/services/course.service';
-import { CourseMapService } from 'src/app/api/services/course-map.service';
+import {CourseMapService} from 'src/app/api/services/course-map.service';
+import {UnitDefinitionService} from 'src/app/api/services/unit-definition.service';
+import { CourseMapUnitService } from 'src/app/api/services/course-map-unit.service';
 
 type signInData =
   | {
@@ -53,8 +55,24 @@ type signInData =
     MatFormFieldModule,
     MatInputModule,
   ],
+  providers: [UnitService, CourseService, CourseMapService, UnitDefinitionService],
 })
 export class CoursemapComponent implements OnInit {
+  constructor(
+    private authService: AuthenticationService,
+    private state: StateService,
+    private constants: DoubtfireConstants,
+    private http: HttpClient,
+    private transition: Transition,
+    private globalState: GlobalStateService,
+    private alerts: AlertService,
+    private unitService: UnitService,
+    private courseService: CourseService,
+    private courseMapService: CourseMapService,
+    private unitDefinitionService: UnitDefinitionService,
+    private courseMapUnitService: CourseMapUnitService,
+  ) {}
+
   signingIn: boolean;
   showCredentials = false;
   invalidCredentials: boolean;
@@ -67,24 +85,19 @@ export class CoursemapComponent implements OnInit {
   unit: Unit | null = null;
   errorMessage: string | null = null;
   units: Unit[] = [];
-  requiredUnits: unknown[] = [
-    {code: 'SIT1', name: 'Introduction to Programming'},
-    {code: 'SIT2', name: 'Data Structures'},
-    {code: 'SIT3', name: 'Database Systems'},
-    {code: 'SIT4', name: 'Web Development'},
-    {code: 'SIT5', name: 'Mobile App Development'},
-    {code: 'SIT6', name: 'Software Engineering'},
-  ]
+  requiredUnits: UnitDefinition[] = [];
   courses: Course[] = [];
+  courseMapUnits: CourseMapUnit[];
 
+  // Temporarily creating a course until database is populated with real data
   testCourse: Course = {
-      id: '12345',
-      name: 'Introduction to Programming',
-      code: 'CS101',
-      year: 2024,
-      version: 'v1.0',
-      url: 'http://university.edu/courses/cs101'
-    };
+    id: '12345',
+    name: 'Introduction to Programming',
+    code: 'CS101',
+    year: 2024,
+    version: 'v1.0',
+    url: 'http://university.edu/courses/cs101',
+  };
 
 
   ngOnInit(): void {
@@ -94,6 +107,7 @@ export class CoursemapComponent implements OnInit {
       remember: false,
       autoLogin: localStorage.getItem('autoLogin') ? true : false,
     };
+    //fetching units
     this.unitService.getUnits().subscribe({
       next: (data: Unit[]) => {
         this.units = data;
@@ -104,13 +118,115 @@ export class CoursemapComponent implements OnInit {
         console.error('Error fetching units:', err);
       },
     });
-    this.getCourses();
+    //fetching courses.
+    this.courseService.createCourse(this.testCourse); //temporarily creating course until database is populated with real data
+    this.courseService.getCourses().subscribe({
+      next: (data: Course[]) => {
+        this.courses = data;
+        console.log('Courses:', this.courses); // Optional: Log the courses to verify
+      },
+      error: (err) => {
+        this.errorMessage = 'Error fetching courses';
+        console.error('Error fetching courses:', err);
+      },
+    });
+    //temporarily adding unit definition until database is populated with real data
+    this.unitDefinitionService.addUnitDefinition(
+      'Data Capture Technology',
+      'Data capture technologies',
+      'SIT115',
+      '1',
+    );
+    this.formData = {
+      username: '',
+      password: '',
+      remember: false,
+      autoLogin: localStorage.getItem('autoLogin') ? true : false,
+    };
+    //fetching units
+    this.unitService.getUnits().subscribe({
+      next: (data: Unit[]) => {
+        this.units = data;
+        this.errorMessage = null;
+      },
+      error: (err) => {
+        this.errorMessage = 'Error fetching units';
+        console.error('Error fetching units:', err);
+      },
+    });
+    //fetching unit definitions
+    this.unitDefinitionService.getDefinitions().subscribe({
+      next: (data: UnitDefinition[]) => {
+        this.requiredUnits = data;
+        this.errorMessage = null;
+      },
+      error: (err) => {
+        this.errorMessage = 'Error fetching units';
+        console.error('Error fetching unit definitions:', err);
+      },
+    })
+    //temporarily create coursemap with id of 1 until database is loaded
+    this.courseMapService.addCourseMap(1,1);
+    //add empty units to coursemap to initialise study periods
+    this.courseMapUnitService.getCourseMapUnitsById(1).subscribe(
+      (data: CourseMapUnit[]) => {
+        // Pass the entire array to populateYearsArray
+        this.populateYearsArray(data);
+      },
+      (err) => {
+        this.errorMessage = 'Error fetching courseMapUnits';
+        console.error('Error fetching courseMapUnits:', err);
+      }
+    );
+  }
 
+  populateYearsArray(courseMapUnits: CourseMapUnit[]) {
+    this.years = [];
+
+    courseMapUnits.forEach(unit => {
+      console.log('Processing unit with yearSlot:', unit.yearSlot); // Log the yearSlot value
+
+      // Find the year object with the same yearSlot value
+      let existingYear = this.years.find(y => y.year === unit.yearSlot);
+
+      // If no year object exists, create a new one
+      if (!existingYear) {
+        existingYear = {
+          year: unit.yearSlot,   // Set the year from yearSlot
+          trimester1: [],        // Initialize empty array for trimester 1
+          trimester2: [],        // Initialize empty array for trimester 2
+          trimester3: []         // Initialize empty array for trimester 3
+        };
+        this.years.push(existingYear);
+      }
+
+      // Depending on the teachingPeriodSlot, push the unit to the respective trimester array
+      switch (unit.teachingPeriodSlot) {
+        case 1:
+          if (!existingYear.trimester1.includes(unit)) {
+            existingYear.trimester1.push(unit);
+          }
+          break;
+        case 2:
+          if (!existingYear.trimester2.includes(unit)) {
+            existingYear.trimester2.push(unit);
+          }
+          break;
+        case 3:
+          if (!existingYear.trimester3.includes(unit)) {
+            existingYear.trimester3.push(unit);
+          }
+          break;
+        default:
+          console.warn('Unknown teaching period slot:', unit.teachingPeriodSlot);
+      }
+    });
+    console.log(this.years[0]);
   }
 
   years = [
     {
-      year: 2023,
+      year: 0,
       trimester1: [],
       trimester2: [],
       trimester3: [],
@@ -118,9 +234,7 @@ export class CoursemapComponent implements OnInit {
   ];
 
   maxElectiveUnits = 5;
-
   electiveUnits: Unit[] = [];
-
   allTrimesters = [this.years[0].trimester1, this.years[0].trimester2, this.years[0].trimester3];
 
   get remainingSlots(): number {
@@ -185,20 +299,7 @@ export class CoursemapComponent implements OnInit {
     return trimesterCount;
   }
 
-  constructor(
-    private authService: AuthenticationService,
-    private state: StateService,
-    private constants: DoubtfireConstants,
-    private http: HttpClient,
-    private transition: Transition,
-    private globalState: GlobalStateService,
-    private alerts: AlertService,
-    private unitService: UnitService,
-    private courseService: CourseService,
-    private courseMapService: CourseMapService,
-  ) {}
-
-  drop(event: CdkDragDrop<string[]>) {
+  drop(event: CdkDragDrop<UnitDefinition[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
@@ -208,7 +309,10 @@ export class CoursemapComponent implements OnInit {
         event.previousIndex,
         event.currentIndex,
       );
+
+
     }
+
   }
 
   fetchUnitByCode(): void {
@@ -234,29 +338,6 @@ export class CoursemapComponent implements OnInit {
       this.errorMessage = 'Unit not found';
       this.unit = null;
     }
-  }
-
-  getCourses(): void {
-    this.courseService.getCourses().subscribe(
-      (data: Course[]) => {
-        this.courses = data;
-        console.log('Courses fetched successfully:', this.courses);
-      },
-      (error) => {
-        console.error('Error fetching courses:', error);
-      }
-    );
-  }
-
-  addCourseMap(): void {
-    this.courseMapService.addCourseMap(1, 1).subscribe(
-      (data) => {
-        console.log('Course map added:', data);
-      },
-      (error) => {
-        console.error('Error adding course map:', error);
-      }
-    );
   }
 
 }

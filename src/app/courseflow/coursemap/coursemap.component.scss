@@ -1,10 +1,13 @@
 .required-units-container {
   border: 1px solid #337ab7;
   border-radius: 6px;
-  display: inline-block;
-  width: 30vw;
+  display: flex;
+  height: 80vh;
   vertical-align: top;
-  align-items: center;
+  align-items: left;
+  flex-direction: column;
+  width: 100%; /* Fill available space on mobile */
+  max-width: 25vw;
 }
 
 .year-container {
@@ -33,14 +36,14 @@
 
 .unit {
   padding: 8px;
-  margin: 16px;
+  margin: 8px 0 8px 5%;
   background-color: #357bb9a8;
   color: white;
   border-radius: 6px;
   cursor: move;
   align-content: center;
-  height: 40px;
-  width: 95%;
+  height: 8vh;
+  width: 90%;
 }
 
 .study-periods-container {
@@ -62,9 +65,11 @@
   display: flex;
   padding: 0 10px;
   width: 100%;
+  font-size: 1.2rem; /* Adjust to ensure readability on smaller screens */
 }
 
 .study-periods-title, .required-units-title, .year-title, .electives-title {
+  font-size: 2rem; /* Default font size for larger screens */
   margin: 0 2%;
 }
 
@@ -73,14 +78,15 @@
 }
 
 .text {
-  margin-left: 2%;
+  margin: auto 2% auto 2%;
 }
 
 .electives-container {
   width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
+  margin: auto 0 8px 5%;
 }
 
 mat-form-field {
@@ -111,6 +117,28 @@ mat-form-field {
 .delete-button {
   margin-left: auto;
   right: 2%;
+  display: flex;
+  flex-shrink: 1;
 }
+
+
+
+@media only screen and (max-width: 775px) {
+  .study-periods-title, .required-units-title, .year-title, .electives-title {
+    font-size: 2.7vw;
+  }
+
+  .text {
+    margin: auto 2% auto 2%;
+    font-size: 1.7vw;
+  }
+
+  .unit {
+    font-size: 1.65vw;
+  }
+
+
+}
+
 
 
