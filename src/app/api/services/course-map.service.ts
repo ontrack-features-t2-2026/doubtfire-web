@@ -10,7 +10,6 @@ import API_URL from 'src/app/config/constants/apiURL';
 export class CourseMapService {
 
   private baseUrl: string = `${API_URL}/coursemap`;
-
   constructor(private http: HttpClient) {}
 
   // Get course map by user ID

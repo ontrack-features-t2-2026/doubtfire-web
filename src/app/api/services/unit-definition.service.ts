@@ -9,7 +9,6 @@ import API_URL from 'src/app/config/constants/apiURL';
   providedIn: 'root'
 })
 export class UnitDefinitionService {
-
   constructor(private http: HttpClient) {}
 
   private baseUrl: string = `${API_URL}/unit_definition`;

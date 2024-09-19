@@ -3,3 +3,4 @@ export interface CourseMap {
   userId: number;
   courseId: number;
 }
+

@@ -6,3 +6,4 @@ export interface CourseMapUnit {
   teachingPeriodSlot: number;
   unitSlot: number;
 }
+

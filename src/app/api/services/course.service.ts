@@ -8,7 +8,6 @@ import API_URL from 'src/app/config/constants/apiURL';
   providedIn: 'root'
 })
 export class CourseService {
-
   constructor(private http: HttpClient) {}
 
   getCourses(): Observable<Course[]> {

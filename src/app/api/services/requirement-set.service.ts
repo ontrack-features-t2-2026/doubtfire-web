@@ -5,7 +5,6 @@ import API_URL from 'src/app/config/constants/apiURL';
 
 @Injectable()
 export class RequirementSet {
-
   constructor(private http: HttpClient) {}
 
   private baseUrl: string = `${API_URL}/requirementset`;
