@@ -3,6 +3,6 @@ export interface CourseMapUnit {
   courseMapId: number;
   unitId: number;
   yearSlot: number;
-  teachingPeriodSlow: number;
+  teachingPeriodSlot: number;
   unitSlot: number;
 }
