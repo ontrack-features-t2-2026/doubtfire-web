@@ -32,7 +32,8 @@ export class UnitDefinitionService {
     if (searchName) {
       params = params.set('name', searchName);
     }
-    return this.http.get<[UnitDefinition]>(this.baseUrl, {params});
+    const url = `${this.baseUrl}/search`;
+    return this.http.get<[UnitDefinition]>(url, {params});
   }
 
   addUnitDefinition(
