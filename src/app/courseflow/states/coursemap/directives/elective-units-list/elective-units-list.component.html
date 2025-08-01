@@ -1,0 +1,23 @@
+<div class="electives-header">
+  <h3 class="electives-title">Elective Units</h3>
+  <span class="electives-remaining">
+    {{ remainingSlots }} of {{ maxElectiveUnits }} remaining
+  </span>
+</div>
+
+<div
+  *ngIf="units"
+  cdkDropList
+  cdkDropListId="electiveUnits"
+  [cdkDropListData]="units"
+  (cdkDropListDropped)="onDrop($event)"
+  class="units-list"
+>
+  <unit-card
+    *ngFor="let unit of units"
+    [unit]="unit"
+    [dragData]="getDragData(unit)"
+    [showMenu]="false"
+  >
+  </unit-card>
+</div>

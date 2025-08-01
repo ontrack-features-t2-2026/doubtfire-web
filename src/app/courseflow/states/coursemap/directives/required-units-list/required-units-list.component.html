@@ -1,0 +1,21 @@
+<div class="required-units-header">
+  <h3 class="required-units-title">Required Units</h3>
+</div>
+
+<div class="units-container">
+  <div
+    cdkDropList
+    cdkDropListId="requiredUnits"
+    [cdkDropListData]="units"
+    (cdkDropListDropped)="onDrop($event)"
+    class="units-list"
+  >
+    <unit-card
+      *ngFor="let unit of units"
+      [unit]="unit"
+      [dragData]="getDragData(unit)"
+      [showMenu]="false"
+    >
+    </unit-card>
+  </div>
+</div>

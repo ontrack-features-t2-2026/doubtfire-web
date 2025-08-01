@@ -1,0 +1,23 @@
+<div class="trimester-list">
+  <div class="trimester-heading">
+    <span class="trimester-heading-text"> Trimester {{ getTrimesterNumber() }} </span>
+  </div>
+
+  <div class="slots-container">
+    <unit-slot
+      *ngFor="let slotIndex of slotIndices; trackBy: trackBySlotIndex"
+      [unit]="trimester[slotIndex]"
+      [yearIndex]="yearIndex"
+      [trimesterKey]="trimesterKey"
+      [slotIndex]="slotIndex"
+      (dropEvent)="onSlotDrop($event)"
+      (removeUnit)="onRemoveUnit(slotIndex)"
+    >
+    </unit-slot>
+  </div>
+
+  <!-- Delete button for this specific trimester -->
+  <button class="delete-button" mat-icon-button (click)="onDeleteTrimester()">
+    <mat-icon>delete</mat-icon>
+  </button>
+</div>

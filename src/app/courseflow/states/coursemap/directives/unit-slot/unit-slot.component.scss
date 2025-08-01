@@ -1,0 +1,21 @@
+:host {
+  display: flex;
+  flex: 1;
+}
+
+.slot {
+  flex: 1;
+  min-width: 184px;
+  min-height: 80px;
+  border: 2px dashed #ccc;
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0; /* Remove padding from the slot itself */
+
+  &.has-unit {
+    border-color: transparent;
+  }
+}
