@@ -1,0 +1,41 @@
+<div class="coursemap" cdkDropListGroup>
+  <!-- Required Units Panel -->
+  <div class="required-units-container">
+    <required-units-list [units]="state.requiredUnits" (dropEvent)="handleDrop($event)">
+    </required-units-list>
+
+    <!-- Electives section at bottom -->
+    <div class="electives-container">
+      <elective-units-list
+        [units]="state.electiveUnits"
+        [remainingSlots]="getRemainingElectiveSlots()"
+        [maxElectiveUnits]="state.maxElectiveUnits"
+        (dropEvent)="handleDrop($event)"
+      >
+      </elective-units-list>
+
+      <unit-search [availableUnits]="getAvailableUnits()" (unitAdded)="addElectiveUnit($event)">
+      </unit-search>
+    </div>
+  </div>
+
+  <!-- Study Periods Panel -->
+  <div class="study-periods-container">
+    <div class="study-periods-header">
+      <h3 class="study-periods-title">Study Periods</h3>
+    </div>
+
+    <course-year-editor
+      *ngFor="let year of state.years; let yIndex = index; trackBy: trackByYear"
+      [year]="year"
+      [yearIndex]="yIndex"
+      [stateService]="stateService"
+      (dropEvent)="handleDrop($event)"
+    >
+    </course-year-editor>
+
+    <button (click)="addYear()" mat-icon-button>
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
+  </div>
+</div>

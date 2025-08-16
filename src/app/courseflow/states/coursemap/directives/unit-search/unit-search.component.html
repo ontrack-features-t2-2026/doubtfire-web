@@ -1,0 +1,18 @@
+<form class="search-form" (ngSubmit)="onSubmit()">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Enter Unit Code</mat-label>
+    <input
+      class="search-bar"
+      matInput
+      [(ngModel)]="unitCode"
+      name="unitCode"
+      id="unitCode"
+      placeholder="e.g., CS101"
+    />
+    <button mat-flat-button class="add-unit-button" color="primary" type="submit" matSuffix>
+      Add
+    </button>
+  </mat-form-field>
+</form>
+
+<div *ngIf="errorMessage" class="error"><mat-icon>error</mat-icon> {{ errorMessage }}</div>

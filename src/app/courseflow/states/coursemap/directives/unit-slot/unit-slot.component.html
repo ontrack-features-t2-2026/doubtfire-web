@@ -1,0 +1,17 @@
+<div
+  class="slot"
+  [class.has-unit]="unit"
+  cdkDropList
+  cdkDropListId="dropListId"
+  [cdkDropListData]="dropListData"
+  (cdkDropListDropped)="onDrop($event)"
+>
+  <unit-card
+    *ngIf="unit"
+    [unit]="unit"
+    [dragData]="dragData"
+    [showMenu]="true"
+    (removeUnit)="onRemoveUnit()"
+  >
+  </unit-card>
+</div>

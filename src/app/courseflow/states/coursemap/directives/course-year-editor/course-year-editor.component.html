@@ -1,0 +1,38 @@
+<div class="year-container">
+  <!-- Left side vertical year label + delete button -->
+  <div class="year-label-section">
+    <div class="year-header">
+      <h3 class="vertical-year-title">Year {{ year.year }}</h3>
+    </div>
+    <button class="delete-button" mat-icon-button (click)="deleteYear()">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <!-- Right side: all trimesters for this year -->
+  <div class="year-trimesters">
+    <ng-container *ngFor="let trimesterKey of trimesterKeys; let tIndex = index">
+      <trimester-editor
+        *ngIf="year[trimesterKey]"
+        [trimester]="year[trimesterKey]"
+        [trimesterKey]="trimesterKey"
+        [yearIndex]="yearIndex"
+        [trimesterIndex]="tIndex"
+        [stateService]="stateService"
+        (dropEvent)="onTrimesterDrop($event)"
+        (deleteTrimester)="deleteTrimester(tIndex)"
+      >
+      </trimester-editor>
+    </ng-container>
+
+    <!-- Add Trimester Button -->
+    <button
+      mat-icon-button
+      *ngIf="countTrimesters() < 3"
+      (click)="addTrimester()"
+      class="add-trimester-button"
+    >
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
+  </div>
+</div>

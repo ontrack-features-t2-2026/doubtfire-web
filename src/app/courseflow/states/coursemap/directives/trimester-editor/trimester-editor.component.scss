@@ -1,0 +1,45 @@
+.trimester-list {
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trimester-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgb(245, 245, 245);
+  padding: 4px 8px;
+  margin-right: 16px;
+  border-radius: 4px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.trimester-heading-text {
+  font-weight: 500;
+  color: #555;
+}
+
+.slots-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 10px;
+  flex: 1;
+}
+
+.delete-button {
+  margin-left: auto;
+  color: #666;
+
+  &:hover {
+    color: #f44336;
+  }
+}

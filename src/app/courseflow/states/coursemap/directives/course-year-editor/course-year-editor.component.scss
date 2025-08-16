@@ -1,0 +1,55 @@
+.year-container {
+  margin: 10px;
+  border: 1px solid rgb(245, 245, 245);
+  border-radius: 9px;
+  display: flex;
+  flex-direction: row;
+  width: 70vw; 
+  min-width: 800px; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.year-label-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  background-color: rgb(245, 245, 245);
+  border-right: 1px solid #eee;
+}
+
+.year-header {
+  display: flex;
+}
+
+.vertical-year-title {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  margin: 0;
+  padding: 8px;
+  font-size: 18px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.year-trimesters {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 10px 10px;
+}
+
+.delete-button {
+  margin-left: auto;
+  color: #666;
+
+  &:hover {
+    color: #f44336;
+  }
+}
+
+.add-trimester-button {
+  align-self: flex-start;
+  margin: 10px 0 0 10px;
+}

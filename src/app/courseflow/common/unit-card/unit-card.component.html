@@ -1,0 +1,14 @@
+<div class="unit" cdkDrag [cdkDragData]="dragData">
+  <strong>{{ unit.code }}</strong> - {{ unit.name }}
+
+  <button *ngIf="showMenu" mat-icon-button class="unit-menu-button" [matMenuTriggerFor]="unitMenu">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+  <mat-menu #unitMenu="matMenu">
+    <button mat-menu-item (click)="onRemoveUnit()">
+      <mat-icon>delete</mat-icon>
+      <span>Remove</span>
+    </button>
+  </mat-menu>
+</div>

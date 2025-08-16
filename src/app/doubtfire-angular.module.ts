@@ -95,12 +95,16 @@ import {ExtensionModalComponent} from './common/modals/extension-modal/extension
 import {CalendarModalComponent} from './common/modals/calendar-modal/calendar-modal.component';
 import {MatRadioModule} from '@angular/material/radio';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
-import {DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, MatOptionModule} from '@angular/material/core';
+import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_DATE_LOCALE,
+  MatOptionModule,
+} from '@angular/material/core';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 
-import { DateFnsAdapter, MAT_DATE_FNS_FORMATS } from '@angular/material-date-fns-adapter';
-import { enAU } from 'date-fns/locale';
-
+import {DateFnsAdapter, MAT_DATE_FNS_FORMATS} from '@angular/material-date-fns-adapter';
+import {enAU} from 'date-fns/locale';
 
 import {doubtfireStates} from './doubtfire.states';
 import {MatTableModule} from '@angular/material/table';
@@ -212,8 +216,7 @@ import {UnitAnalyticsComponent} from './units/states/analytics/unit-analytics-ro
 import {FileDropComponent} from './common/file-drop/file-drop.component';
 import {UnitTaskEditorComponent} from './units/states/edit/directives/unit-tasks-editor/unit-task-editor.component';
 import {FUsersComponent} from './admin/states/f-users/f-users.component';
-import { CoursemapComponent } from './courseflow/coursemap/coursemap.component';
-
+import {CoursemapComponent} from './courseflow/states/coursemap/coursemap.component';
 
 import {CreateNewUnitModal} from './admin/modals/create-new-unit-modal/create-new-unit-modal.component';
 import {CreateNewUnitModalContentComponent} from './admin/modals/create-new-unit-modal/create-new-unit-modal-content.component';
