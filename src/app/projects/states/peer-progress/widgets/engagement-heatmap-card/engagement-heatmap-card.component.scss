@@ -1,0 +1,368 @@
+:host {
+  display: block;
+}
+
+// Heatmap sizing tokens — tuned for readability on the Peer Progress page.
+//
+// Cells are *flexible* (minmax) with an explicit aspect-ratio, so the grid
+// fills the available card width up to a sensible cap while staying square at
+// every size.
+$hm-cell-min: 18px;
+$hm-cell-max: 40px;
+$hm-gap: 4px;
+$hm-radius: 3px;
+$hm-day-label-col: 36px;
+$hm-month-row-height: 20px;
+
+// Intensity palette — sourced from the site's `formatif` blue palette defined
+// in `theme.scss` so the widget stays on-brand without introducing new colours.
+// Level 0 uses a neutral grey for "no activity".
+$hm-color-empty: #edf0f3;
+$hm-color-l1: #c4c4ff; // md-formatif 100
+$hm-color-l2: #9c9cff; // md-formatif 200
+$hm-color-l3: #5757ff; // md-formatif 400
+$hm-color-l4: #3939ff; // md-formatif 500 (primary)
+
+// Skeleton base colour — same neutral grey as the "no activity" cell so the
+// skeleton reads as a "draft" of the eventual heatmap.
+$hm-skeleton-bg: $hm-color-empty;
+
+// Screen-reader only utility. Keeps aria-live announcements accessible without
+// polluting the visual layout.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------- Summary tiles ---------------- */
+.hm-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .hm-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: rgba(57, 57, 255, 0.04); // subtle formatif-blue wash
+  }
+
+  .hm-tile-icon {
+    color: $hm-color-l4;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+  }
+
+  .hm-tile-value {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .hm-tile-label {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+@media (max-width: 599px) {
+  .hm-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------- Heatmap container ---------------- */
+//
+// The container holds everything the grid cares about — the heatmap proper
+// (day labels + month row + cells) and the legend — so both can read the
+// `--hm-weeks` custom property set on it. Stacking them vertically keeps the
+// legend from leaking height into `.hm-wrap`, which would break the
+// day-labels ↔ cell-rows alignment.
+.hm-container {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 4px;
+}
+
+/* ---------------- Heatmap wrapper ---------------- */
+//
+// Flex row: [day labels column] · [scrollable body].
+// `align-items: stretch` lets the day-labels column match the body's height,
+// which is driven purely by the cells (via aspect-ratio) and the fixed month
+// row — nothing else lives in `.hm-body`, so each day-label row ends up the
+// exact same height as a cell row.
+.hm-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+// Day labels column. Grid with an explicit top spacer row sized to match the
+// month row, then all seven weekday labels on equal-height `1fr` rows. Each
+// row stretches to the height of its corresponding cell row (see `.hm-wrap`
+// comment), so labels stay row-centred at every cell size.
+.hm-day-labels {
+  flex: 0 0 $hm-day-label-col;
+  width: $hm-day-label-col;
+  display: grid;
+  grid-template-rows: $hm-month-row-height repeat(7, 1fr);
+  row-gap: $hm-gap;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.02em;
+
+  > span {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+
+  .hm-day-labels-spacer {
+    // Reserved blank row — keeps the first day label aligned with the first
+    // grid row once the month row is rendered above the grid.
+  }
+}
+
+// Horizontal scroll container. Only engages when the grid cannot fit even at
+// its minimum cell width (very narrow cards / phones). Thin scrollbar so it
+// doesn't dominate the card visually.
+.hm-scroll {
+  flex: 1 1 auto;
+  min-width: 0; // allow flex child to shrink below its content width
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+}
+
+// Shared container for the month row and the grid. Both inherit the same
+// `--hm-weeks` custom property so their column templates match exactly and
+// month labels stay aligned with their week columns even on wide viewports.
+.hm-body {
+  display: flex;
+  flex-direction: column;
+  gap: $hm-gap;
+  // Cap total width so cells don't blow up past `$hm-cell-max` on very wide
+  // cards (e.g. xl breakpoint, `col-span-2`). Computed from the actual week
+  // count so the cap matches reality for both the heatmap and the month row.
+  max-width: calc(var(--hm-weeks) * (#{$hm-cell-max} + #{$hm-gap}) - #{$hm-gap});
+}
+
+/* ---------------- Month labels row ---------------- */
+.hm-month-row {
+  display: grid;
+  grid-template-columns: repeat(var(--hm-weeks), minmax($hm-cell-min, 1fr));
+  column-gap: $hm-gap;
+  height: $hm-month-row-height;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.55);
+
+  .hm-month-label {
+    grid-row: 1;
+    align-self: end;
+    white-space: nowrap;
+    overflow: visible;
+    min-width: 0;
+    // `grid-column` set via inline style (template binding).
+  }
+
+  // Hide visually but keep in the DOM for future hover/tooltip affordances.
+  // Single-week "sliver" months are skipped so they don't crowd the neighbour.
+  .hm-month-label-hidden {
+    visibility: hidden;
+  }
+}
+
+/* ---------------- Heatmap grid ---------------- */
+.hm-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--hm-weeks), minmax($hm-cell-min, 1fr));
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  gap: $hm-gap;
+}
+
+.hm-cell {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: $hm-radius;
+  transition: outline 0.1s ease-out;
+  outline: 1px solid transparent;
+  outline-offset: 1px;
+
+  &:hover,
+  &:focus-visible {
+    outline-color: rgba(0, 0, 0, 0.35);
+  }
+
+  &.hm-pad {
+    background: transparent;
+    pointer-events: none;
+  }
+
+  &.hm-level-0 {
+    background-color: $hm-color-empty;
+  }
+  &.hm-level-1 {
+    background-color: $hm-color-l1;
+  }
+  &.hm-level-2 {
+    background-color: $hm-color-l2;
+  }
+  &.hm-level-3 {
+    background-color: $hm-color-l3;
+  }
+  &.hm-level-4 {
+    background-color: $hm-color-l4;
+  }
+}
+
+/* ---------------- Legend ---------------- */
+//
+// The legend lives directly under the heatmap (sibling of `.hm-wrap`) so its
+// vertical height can't leak into the day-labels stretch calc. The wrap
+// indents past the day-labels gutter and caps at the same effective width as
+// the grid — that makes "More" align flush with the right edge of the last
+// cell column, which is what reads as "attached to the grid".
+.hm-legend-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-left: calc(#{$hm-day-label-col} + 8px);
+  max-width: calc(
+    #{$hm-day-label-col} + 8px + var(--hm-weeks) * (#{$hm-cell-max} + #{$hm-gap}) - #{$hm-gap}
+  );
+}
+
+.hm-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.55);
+
+  .hm-legend-label {
+    line-height: 1;
+  }
+
+  .hm-legend-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: $hm-radius;
+    display: inline-block;
+
+    &.hm-level-0 {
+      background-color: $hm-color-empty;
+    }
+    &.hm-level-1 {
+      background-color: $hm-color-l1;
+    }
+    &.hm-level-2 {
+      background-color: $hm-color-l2;
+    }
+    &.hm-level-3 {
+      background-color: $hm-color-l3;
+    }
+    &.hm-level-4 {
+      background-color: $hm-color-l4;
+    }
+  }
+}
+
+/* ---------------- Loading skeleton ---------------- */
+//
+// The skeleton mirrors the loaded layout (3 summary tiles + a ~13-week grid)
+// so the card height is stable across loading → data. A soft opacity pulse
+// is enough to signal activity without distracting animation — cheaper to
+// paint than a moving gradient shimmer, and avoids the "busy shimmer" feel
+// that can overwhelm a dashboard with multiple widgets.
+.hm-skeleton {
+  position: relative;
+
+  .hm-skeleton-tile {
+    height: 64px; // matches the loaded tile's vertical footprint
+    border-radius: 8px;
+    background-color: $hm-skeleton-bg;
+    animation: hm-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  .hm-skeleton-body {
+    // Match the real grid's indent (past the day-labels gutter) so the
+    // skeleton grid sits in the same horizontal position as the final one.
+    padding-left: calc(#{$hm-day-label-col} + 8px);
+    max-width: calc(
+      #{$hm-day-label-col} + 8px + var(--hm-weeks) * (#{$hm-cell-max} + #{$hm-gap}) -
+        #{$hm-gap}
+    );
+  }
+
+  .hm-skeleton-month-row {
+    height: $hm-month-row-height;
+    margin-bottom: $hm-gap;
+  }
+
+  .hm-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--hm-weeks), minmax($hm-cell-min, 1fr));
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
+    gap: $hm-gap;
+  }
+
+  .hm-skeleton-cell {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    border-radius: $hm-radius;
+    background-color: $hm-skeleton-bg;
+    animation: hm-skeleton-pulse 1.4s ease-in-out infinite;
+    // Tiny staggered phase so the pulse doesn't look like a sheet flash. The
+    // delay is scoped to nth-child pairs to keep the rule list short.
+    &:nth-child(2n) {
+      animation-delay: 0.15s;
+    }
+    &:nth-child(3n) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes hm-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+// Respect users who have asked the OS to tone down motion.
+@media (prefers-reduced-motion: reduce) {
+  .hm-skeleton-tile,
+  .hm-skeleton-cell {
+    animation: none;
+    opacity: 0.75;
+  }
+}

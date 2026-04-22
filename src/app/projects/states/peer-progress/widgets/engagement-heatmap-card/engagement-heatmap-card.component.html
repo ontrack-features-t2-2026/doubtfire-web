@@ -1,0 +1,164 @@
+<mat-card appearance="outlined" class="h-full">
+  <mat-card-header class="mb-2">
+    <mat-card-title>
+      <h3 class="m-0">Engagement</h3>
+    </mat-card-title>
+    <mat-card-subtitle>
+      Your activity in
+      <strong>{{ project?.unit?.code }}</strong>
+      over the last 12 weeks.
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (isLoading) {
+      <!-- Heatmap-shaped skeleton. Mirrors the final layout (summary tiles +
+           grid) so the card doesn't jump when data arrives. Announced with
+           aria-busy/aria-live so assistive tech still knows the card is
+           loading. -->
+      <div
+        class="hm-skeleton"
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+        data-testid="hm-skeleton"
+      >
+        <div class="hm-summary">
+          <div class="hm-skeleton-tile"></div>
+          <div class="hm-skeleton-tile"></div>
+          <div class="hm-skeleton-tile"></div>
+        </div>
+        <div class="hm-skeleton-body" [style.--hm-weeks]="skeletonWeeks">
+          <div class="hm-skeleton-month-row"></div>
+          <div class="hm-skeleton-grid">
+            @for (_cell of skeletonCells; track $index) {
+              <div class="hm-skeleton-cell"></div>
+            }
+          </div>
+        </div>
+        <span class="sr-only">Loading engagement data&hellip;</span>
+      </div>
+    } @else if (errorMessage) {
+      <div
+        class="flex flex-col items-center justify-center gap-3 p-4"
+        style="min-height: 180px"
+        role="alert"
+      >
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <p class="m-0 text-center">{{ errorMessage }}</p>
+        <button mat-stroked-button color="primary" (click)="retry()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          Retry
+        </button>
+      </div>
+    } @else if (data) {
+      <!-- Summary tiles -->
+      <div class="hm-summary" data-testid="hm-summary">
+        <div class="hm-tile">
+          <mat-icon class="hm-tile-icon" aria-hidden="true">check_circle</mat-icon>
+          <div class="flex flex-col">
+            <span class="hm-tile-value">{{ data.summary.tasks_completed }}</span>
+            <span class="hm-tile-label">Tasks completed</span>
+          </div>
+        </div>
+        <div class="hm-tile">
+          <mat-icon class="hm-tile-icon" aria-hidden="true">event_available</mat-icon>
+          <div class="flex flex-col">
+            <span class="hm-tile-value">{{ data.summary.active_days }}</span>
+            <span class="hm-tile-label">Active days</span>
+          </div>
+        </div>
+        <div class="hm-tile">
+          <mat-icon class="hm-tile-icon" aria-hidden="true">local_fire_department</mat-icon>
+          <div class="flex flex-col">
+            <span class="hm-tile-value">{{ data.summary.current_streak }}</span>
+            <span class="hm-tile-label">Current streak</span>
+          </div>
+        </div>
+      </div>
+
+      @if (isEmpty) {
+        <div
+          class="flex flex-col items-center justify-center gap-2 p-4"
+          style="min-height: 140px"
+          data-testid="hm-empty"
+        >
+          <mat-icon aria-hidden="true">insights</mat-icon>
+          <p class="m-0 text-center">
+            No activity in the last 12 weeks yet, submit or update a task to get started.
+          </p>
+        </div>
+      } @else {
+        <!-- Heatmap grid + month row + legend.
+             `--hm-weeks` is bound on the container so both the grid and the
+             legend-wrap (which is a sibling of `.hm-wrap`) can derive their
+             max-width from the same week count. -->
+        <div class="hm-container" [style.--hm-weeks]="layout.weekCount">
+          <div class="hm-wrap" data-testid="hm-grid-wrap">
+            <div class="hm-day-labels" aria-hidden="true">
+              <span class="hm-day-labels-spacer"></span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun</span>
+            </div>
+            <div class="hm-scroll">
+              <div class="hm-body">
+                <div class="hm-month-row" aria-hidden="true" data-testid="hm-month-row">
+                  @for (month of monthLabels; track $index) {
+                    <span
+                      class="hm-month-label"
+                      [class.hm-month-label-hidden]="month.span < 2"
+                      [style.grid-column]="month.columnIndex + 1 + ' / span ' + month.span"
+                    >
+                      {{ month.label }}
+                    </span>
+                  }
+                </div>
+                <div
+                  class="hm-grid"
+                  role="img"
+                  [attr.aria-label]="
+                    'Daily activity heatmap from ' +
+                    data.range.start_date +
+                    ' to ' +
+                    data.range.end_date
+                  "
+                  data-testid="hm-grid"
+                >
+                  @for (_slot of padSlots; track $index) {
+                    <div class="hm-cell hm-pad" aria-hidden="true"></div>
+                  }
+                  @for (cell of renderCells; track cell.date) {
+                    <div
+                      class="hm-cell hm-level-{{ cell.bucket }}"
+                      [matTooltip]="cell.tooltip"
+                      matTooltipPosition="above"
+                      tabindex="0"
+                      [attr.data-testid]="'hm-cell'"
+                      [attr.data-date]="cell.date"
+                      [attr.data-level]="cell.bucket"
+                    ></div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hm-legend-wrap">
+            <div class="hm-legend" aria-hidden="true" data-testid="hm-legend">
+              <span class="hm-legend-label">Less</span>
+              @for (level of legendLevels; track level) {
+                <span class="hm-legend-cell hm-level-{{ level }}"></span>
+              }
+              <span class="hm-legend-label">More</span>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </mat-card-content>
+
+</mat-card>

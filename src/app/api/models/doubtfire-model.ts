@@ -64,3 +64,7 @@ export * from '../services/task-similarity.service';
 export * from '../services/test-attempt.service';
 export * from '../models/d2l/d2l_assessment_mapping.service';
 export * from '../services/feedback-template.service';
+
+// Engagement heatmap -- unit-specific task activity for a project
+export * from './engagement-heatmap';
+export * from '../services/engagement-heatmap.service';
