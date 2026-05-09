@@ -12,6 +12,7 @@ import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component
 import {TutorDiscussionComponent} from './projects/states/tutor-discussion/tutor-discussion.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
 import {ProjectPlanComponent} from './projects/states/plan/project-plan.component';
+import {PeerProgressComponent} from './projects/states/peer-progress/peer-progress.component';
 import {JplagReportViewerComponent} from './projects/states/jplag/jplag-report-viewer.component';
 import {LtiDashboardComponent} from './home/states/lti-dashboard/lti-dashboard.component';
 import {LtiUnitLinkComponent} from './home/states/lti-unit-link/lti-unit-link.component';
@@ -447,6 +448,24 @@ const projectPlanState: NgHybridStateDeclaration = {
   },
 };
 
+/**
+ * Dedicated "Peer Progress" page for the selected project. Hosts the engagement
+ * heatmap and future peer progress widgets. Parented on `projects/index` so the
+ * Project (and its Unit) are resolved and broadcast via GlobalStateService before
+ * the view renders.
+ */
+const peerProgressState: NgHybridStateDeclaration = {
+  name: 'projects/peer-progress',
+  parent: 'projects/index',
+  url: '/peer-progress',
+  component: PeerProgressComponent,
+  data: {
+    pageTitle: 'Peer Progress',
+    task: 'Peer Progress',
+    roleWhitelist: ['Student', 'Tutor', 'Convenor', 'Admin', 'Auditor'],
+  },
+};
+
 const TutorDiscussionState: NgHybridStateDeclaration = {
   name: 'tutor-discussion',
   url: '/tutor-discussion?unitId&username',
@@ -594,6 +613,7 @@ export const doubtfireStates = [
   ScormPlayerStudentReviewState,
   SuccessCloseState,
   projectPlanState,
+  peerProgressState,
   TutorDiscussionState,
   jplagReportViewerState,
   LtiDashboardState,

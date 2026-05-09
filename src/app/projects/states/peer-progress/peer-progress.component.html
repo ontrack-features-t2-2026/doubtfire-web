@@ -1,0 +1,30 @@
+<div class="container mx-auto p-6">
+  <header class="mb-6">
+    <h2 class="mat-headline-5 m-0">Peer Progress</h2>
+    @if (project?.unit) {
+      <p class="mat-lead m-0 mt-1">
+        {{ project.unit.code }} &mdash; {{ project.unit.name }}
+      </p>
+    }
+  </header>
+
+  @if (!project) {
+    <div class="flex items-center justify-center" style="min-height: 200px">
+      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+    </div>
+  } @else {
+    <section
+      class="grid grid-cols-1 xl:grid-cols-2 gap-6"
+      aria-label="Peer progress widgets"
+    >
+      <f-engagement-heatmap-card
+        [project]="project"
+        class="xl:col-span-2"
+      ></f-engagement-heatmap-card>
+      <!--
+        Future peer progress widgets slot in here — each takes [project] as
+        its single input and owns its own loading / empty / error states.
+      -->
+    </section>
+  }
+</div>

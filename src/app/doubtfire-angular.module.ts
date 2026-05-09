@@ -274,6 +274,8 @@ import {TaskDateSliderComponent} from './common/modals/date-change-modal/task-da
 import {SpecConModalComponent} from './common/modals/spec-con-modal/spec-con-modal.component';
 import {SpecConModalService} from './common/modals/spec-con-modal/spec-con-modal.service';
 import {ProjectPlanComponent} from './projects/states/plan/project-plan.component';
+import {PeerProgressComponent} from './projects/states/peer-progress/peer-progress.component';
+import {EngagementHeatmapCardComponent} from './projects/states/peer-progress/widgets/engagement-heatmap-card/engagement-heatmap-card.component';
 import {JplagReportViewerComponent} from './projects/states/jplag/jplag-report-viewer.component';
 import {StaffNotesComponent} from './projects/states/staff-notes/staff-notes.component';
 import {StaffNoteService} from './api/services/staff-note.service';
@@ -390,6 +392,8 @@ const GANTT_CHART_CONFIG = {
     ConfirmationModalComponent,
     InstitutionSettingsComponent,
     ProjectPlanComponent,
+    PeerProgressComponent,
+    EngagementHeatmapCardComponent,
     SuccessCloseComponent,
     HomeComponent,
     CommentBubbleActionComponent,
