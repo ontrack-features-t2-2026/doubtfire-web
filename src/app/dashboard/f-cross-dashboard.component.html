@@ -14,11 +14,7 @@
 
       <div class="flex flex-col overflow-y-auto">
         <div *ngFor="let task of unit.tasks">
-          <div
-            class="border-b-[1px] border-gray-300"
-            uiSref="projects/dashboard"
-            [uiParams]="{projectId: unit.projectId, taskAbbr: task.abbreviation}"
-          >
+          <div class="border-b-[1px] border-gray-300">
             <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
           </div>
         </div>

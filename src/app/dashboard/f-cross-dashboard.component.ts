@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Project} from '../api/models/project';
 import {TaskStatus} from '../api/models/task-status';
-import {DashboardTask} from './dashboard-list-item.component';
+import {DashboardTask} from './list-item/dashboard-list-item.component';
 import {Task} from '../api/models/task';
 import {TaskDefinition} from '../api/models/task-definition';
 
@@ -18,7 +18,7 @@ type DashboardUnit = {
   templateUrl: './f-cross-dashboard.component.html',
 })
 export class CrossDashboardComponent implements OnInit {
-  constructor(private globalStateService: GlobalStateService) {}
+  constructor(private globalStateService: GlobalStateService,) {}
 
   units: DashboardUnit[] = [];
 
@@ -37,12 +37,12 @@ export class CrossDashboardComponent implements OnInit {
         projectId: project.id,
         code: unit.code,
         name: unit.name,
-        tasks: this.mapTasks(project.tasks, unit.taskDefinitions),
+        tasks: this.mapTasks(project.tasks, unit.taskDefinitions, project.id, unit.code),
       };
     });
   }
 
-  mapTasks(tasks: readonly Task[], taskDefs: readonly TaskDefinition[]): DashboardTask[] {
+  mapTasks(tasks: readonly Task[], taskDefs: readonly TaskDefinition[], projectId: number, unitCode: string): DashboardTask[] {
     return taskDefs.map((def) => {
       const task = tasks.find((t) => t.taskDefId == def.id);
       return {
@@ -51,6 +51,12 @@ export class CrossDashboardComponent implements OnInit {
         abbreviation: def.abbreviation,
         color: TaskStatus.STATUS_COLORS.get(task?.status ?? 'not_started'),
         comments: task?.numNewComments ?? 0,
+        projectId: projectId,
+        statusLabel: TaskStatus.STATUS_LABELS.get(task?.status ?? 'not_started'),
+        description: def.description,
+        unitCode: unitCode,
+        dueDate: def.targetDate,
+        taskDef: def,
       };
     });
   }

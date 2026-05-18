@@ -44,7 +44,8 @@ import {MatDialogModule as MatDialogModuleNew} from '@angular/material/dialog';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {AlertComponent} from 'src/app/common/services/alert.service';
 import {MatSidenavModule} from '@angular/material/sidenav';
-import { DashboardListItemComponent } from './dashboard/dashboard-list-item.component';
+import {DashboardListItemComponent} from './dashboard/list-item/dashboard-list-item.component';
+import {DashboardExpandedListItemComponent} from './dashboard/list-item/expanded-list-item/expanded-list-item.component';
 import {setTheme} from 'ngx-bootstrap/utils';
 
 import {CodeEditorModule} from '@ngstack/code-editor';
@@ -368,6 +369,7 @@ const GANTT_CHART_CONFIG = {
   // Components we declare
   declarations: [
     DashboardListItemComponent,
+    DashboardExpandedListItemComponent,
     AlertComponent,
     AboutDoubtfireModalContent,
     D2lUnitDetailsFormComponent,
