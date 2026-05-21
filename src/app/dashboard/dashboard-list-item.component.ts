@@ -1,4 +1,5 @@
 import {Component, Input} from '@angular/core';
+import {TaskStatusEnum} from '../api/models/task-status';
 
 export type DashboardTask = {
   title: string;
@@ -6,6 +7,9 @@ export type DashboardTask = {
   abbreviation: string;
   color: string;
   comments: number;
+  status: TaskStatusEnum;
+  date: Date;
+  weight: number;
 };
 
 @Component({
