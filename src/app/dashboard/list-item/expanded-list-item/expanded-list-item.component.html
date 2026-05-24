@@ -1,0 +1,44 @@
+<div class="flex flex-row">
+  <div class="w-4 mr-6 shrink-0" [style.background-color]="task.color"></div>
+  <div class="pb-4 flex flex-col flex-grow shrink min-w-0">
+    <p class="font-bold">{{ task.statusLabel }}</p>
+    <p class="pt-2">{{ task.description }}</p>
+    <p style="font-size: 13px">
+      Complete by
+      <span class="font-bold">{{ task.dueDate | date: 'EEEE d MMMM' }}</span>
+    </p>
+    <div class="flex flex-row gap-2 pt-2">
+      <button
+        mat-stroked-button
+        [hidden]="!task?.taskDef?.hasTaskSheet"
+        (click)="downloadTaskSheet()"
+        class="truncate"
+      >
+        <mat-icon style="width: 15px; height: 15px; font-size: 15px" aria-label="Download">
+          description
+        </mat-icon>
+        Task
+      </button>
+      <button
+        mat-stroked-button
+        [hidden]="!task?.taskDef?.hasTaskResources"
+        (click)="downloadResources()"
+        class="truncate"
+      >
+        <mat-icon style="width: 15px; height: 15px; font-size: 15px">download</mat-icon>
+        Resources
+      </button>
+      <button
+        mat-stroked-button
+        uiSref="projects/dashboard"
+        [uiParams]="{projectId: task.projectId, taskAbbr: task.abbreviation}"
+        [matBadge]="task.comments > 0 ? task.comments : null"
+        matBadgeColor="warn"
+        matBadgePosition="after"
+      >
+        <mat-icon style="width: 15px; height: 15px; font-size: 15px">open_in_new</mat-icon>
+        More
+      </button>
+    </div>
+  </div>
+</div>
