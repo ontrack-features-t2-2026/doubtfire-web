@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Project} from '../api/models/project';
 import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
-import {DashboardTask} from './dashboard-list-item.component';
+import {DashboardTask} from './list-item/dashboard-list-item.component';
 import {Task} from '../api/models/task';
 
 enum Filter {
@@ -29,7 +29,7 @@ type DashboardUnit = {
   templateUrl: './f-cross-dashboard.component.html',
 })
 export class CrossDashboardComponent implements OnInit {
-  constructor(private globalStateService: GlobalStateService) {}
+  constructor(private globalStateService: GlobalStateService,) {}
 
   filterOptions = Object.values(Filter);
   sortOptions = Object.values(SortMode);
@@ -94,7 +94,7 @@ export class CrossDashboardComponent implements OnInit {
               return 0;
             }
             case SortMode.SubmissionDate:
-              return a.date.getTime() - b.date.getTime();
+              return a.dueDate.getTime() - b.dueDate.getTime();
             case SortMode.Default:
               return a.weight - b.weight;
           }
@@ -110,23 +110,28 @@ export class CrossDashboardComponent implements OnInit {
         projectId: project.id,
         code: unit.code,
         name: unit.name,
-        tasks: this.mapTasks(project.activeTasks()),
+        tasks: this.mapTasks(project.activeTasks(), project.id, unit.code),
       };
     });
   }
 
-  private mapTasks(tasks: readonly Task[]): DashboardTask[] {
+  private mapTasks(tasks: readonly Task[], projectId: number, unitCode: string): DashboardTask[] {
     return tasks.map((task) => {
       const def = task.definition;
       return {
         title: def.name,
         subtitle: `${def.abbreviation} - ${def.targetGradeText} Task`,
+        statusLabel: TaskStatus.STATUS_LABELS.get(task.status),
         abbreviation: def.abbreviation,
         color: TaskStatus.STATUS_COLORS.get(task.status),
         comments: task.numNewComments ?? 0,
         status: task.status,
-        date: def.targetDate,
         weight: task.topWeight,
+        projectId: projectId,
+        description: def.description,
+        taskDef: def,
+        unitCode: unitCode,
+        dueDate: def.targetDate,
       };
     });
   }
