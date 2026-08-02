@@ -837,7 +837,14 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     PdfViewerModule,
     LottieComponent,
     ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.production,
+      // Push notifications need the worker running in development too, so this
+      // is a flag rather than just `environment.production`. See
+      // docs/service-worker.md for how to turn it off and how to clear a stuck
+      // worker.
+      enabled: environment.production || environment.enableServiceWorker,
+
+      // Registration happens six seconds after bootstrap, not at bootstrap.
+      // Anything that asks for the worker during app init finds nothing there.
       registrationStrategy: () => interval(6000).pipe(take(1)),
     }),
     CalendarModule.forRoot({provide: CalendarDateAdapter, useFactory: adapterFactory}),
