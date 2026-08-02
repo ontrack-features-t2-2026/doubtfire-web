@@ -81,17 +81,19 @@ on this.
 - API calls are not cached. The `api` data group in `ngsw-config.json` uses
   `"strategy": "freshness"` with `maxAge: 0u` and `maxSize: 0`.
 
-**Not yet measured in a browser.** The checks above were all done from the
-command line. What has not been confirmed here is how live reload behaves once a
-worker is actually registered and serving from its cache. Angular's worker
-normally picks up a new version on a later page load rather than the current one,
-which would mean **after saving a file you reload and still see the old code**.
-Treat that as expected until somebody watches it happen.
+**Confirmed in a browser** on 2026-08-02: the worker registers, and a push sent
+from the api arrives as a desktop notification. So the two halves above are
+enough to make push work in development.
 
-So the cost to watch for is stale app code, not stale data — API responses are
-not cached. If something you just changed is not showing up, clear the worker
-before assuming the change is wrong, and if you confirm the behaviour either way,
-replace this paragraph with what you saw.
+What still has not been measured is how live reload behaves once the worker is
+serving from its cache over a long session. Angular's worker normally picks up a
+new version on a later page load rather than the current one, which would mean
+**after saving a file you reload and still see the old code**. Treat that as
+expected until somebody hits it.
+
+The cost to watch for is stale app code, not stale data — API responses are not
+cached. If something you just changed is not showing up, clear the worker before
+assuming the change is wrong.
 
 ## Clearing a stuck service worker
 
