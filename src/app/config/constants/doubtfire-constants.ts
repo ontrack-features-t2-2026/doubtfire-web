@@ -12,6 +12,8 @@ interface SettingsResponseFormat {
   overseerEnabled: boolean;
   tiiEnabled: boolean;
   d2lEnabled: boolean;
+  pushEnabled: boolean;
+  vapidPublicKey: string | null;
 }
 
 export interface LogoSettings {
@@ -67,6 +69,18 @@ export class DoubtfireConstants {
    */
   public IsTiiEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
+  /**
+   * Whether the api has VAPID keys configured. False means push cannot work at
+   * all, so the opt-in is not offered.
+   */
+  public IsPushEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  /**
+   * The VAPID public key the browser needs to subscribe to push. Not a secret —
+   * it is sent to the push service in the clear. Empty until settings load.
+   */
+  public VapidPublicKey: BehaviorSubject<string> = new BehaviorSubject<string>('');
+
   private readonly settingsUrl: string = `${this.API_URL}/settings`;
 
   constructor(handler: HttpBackend) {
@@ -92,6 +106,8 @@ export class DoubtfireConstants {
       this.IsOverseerEnabled.next(result.overseerEnabled);
       this.IsTiiEnabled.next(result.tiiEnabled);
       this.IsD2LEnabled.next(result.d2lEnabled);
+      this.IsPushEnabled.next(result.pushEnabled ?? false);
+      this.VapidPublicKey.next(result.vapidPublicKey ?? '');
 
       this.LogoSettings.next({
         hasLogo: result.hasLogo,
