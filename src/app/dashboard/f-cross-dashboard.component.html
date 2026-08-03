@@ -1,24 +1,82 @@
-<div class="panel-full-screen flex flex-row gap-8 overflow-x-auto px-16">
-  @for (unit of units; track unit.projectId) {
-    <div class="flex h-full w-[34rem] flex-col shadow">
-      <div class="flex w-full shrink-0 flex-row gap-4 rounded-t-lg bg-formatif-blue p-4">
-        <h3 class="m-0 min-w-0 flex-grow truncate text-white">{{ unit.code }}</h3>
-        <input
-          class="text-md h-full w-64 rounded-md p-2 px-4"
-          placeholder="Search tasks..."
-          type="text"
-        />
-        <mat-icon style="color: white">sort</mat-icon>
-        <mat-icon style="color: white">filter_list_alt</mat-icon>
-      </div>
+<div class="panel-full-screen flex h-full flex-col">
+  <div class="shrink-0 px-16 pt-4">
+    <mat-form-field appearance="outline" class="w-64">
+      <mat-label>Unit scope</mat-label>
 
-      <div class="flex flex-col overflow-y-auto">
-        @for (task of unit.tasks; track task.abbreviation) {
-          <div class="border-b-[1px] border-gray-300">
-            <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
+      <mat-select [value]="unitScope" (selectionChange)="setUnitScope($event.value)">
+        <mat-option value="active">Active units</mat-option>
+        <mat-option value="previous">Previous units</mat-option>
+        <mat-option value="all">All units</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="flex min-h-0 flex-1 flex-row gap-8 overflow-x-auto px-16 pb-4">
+    @for (unit of displayedUnits; track unit.projectId) {
+      <div class="flex h-full w-136 shrink-0 flex-col shadow">
+        <div
+          class="flex w-full shrink-0 flex-row items-center gap-4 rounded-t-lg p-4"
+          [class.bg-formatif-blue]="!unit.isPrevious"
+          [class.bg-green-600]="unit.isPrevious"
+        >
+          <div class="min-w-0 grow">
+            <p class="m-0 truncate text-xl font-semibold text-white">
+              {{ unit.code }}
+            </p>
+
+            <p class="m-0 truncate text-xl font-normal text-white">
+              {{ unit.isPrevious ? 'Previous' : 'Active' }}
+            </p>
           </div>
-        }
+
+          <input
+            class="text-md h-full w-64 rounded-md p-2 px-4"
+            placeholder="Search tasks..."
+            type="text"
+          />
+
+          <mat-icon style="color: white">sort</mat-icon>
+          <mat-icon style="color: white">filter_list_alt</mat-icon>
+        </div>
+
+        <div class="flex flex-col overflow-y-auto">
+          @for (task of unit.tasks; track task.abbreviation) {
+            <div class="border-b border-gray-300">
+              <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
+            </div>
+          }
+        </div>
       </div>
-    </div>
-  }
+    }
+
+    @if (unitScope !== 'active' && loadingPreviousUnits) {
+      <div class="flex w-80 shrink-0 items-center self-start rounded border border-gray-300 p-6">
+        Loading previous units...
+      </div>
+    }
+
+    @if (unitScope !== 'active' && previousUnitsLoadError) {
+      <div class="flex w-96 shrink-0 flex-col self-start rounded border border-gray-300 p-6">
+        <h3 class="mt-0">Previous units</h3>
+        <p class="mb-0">Previous units could not be loaded.</p>
+      </div>
+    }
+
+    @if (
+      unitScope !== 'active' &&
+      previousUnitsLoaded &&
+      !loadingPreviousUnits &&
+      previousUnits.length === 0
+    ) {
+      <div class="flex w-96 shrink-0 flex-col self-start overflow-hidden rounded shadow">
+        <div class="bg-green-600 p-4 text-white">
+          <h3 class="m-0">Previous units</h3>
+        </div>
+
+        <div class="border border-t-0 border-gray-300 p-6">
+          <p class="m-0">No previous units are available.</p>
+        </div>
+      </div>
+    }
+  </div>
 </div>
