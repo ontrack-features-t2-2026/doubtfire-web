@@ -308,11 +308,15 @@ export class GlobalStateService implements OnDestroy {
         // unit roles are now in the cache
 
         this.projectService
-          .query(undefined, {params: {include_inactive: false, include_task_definitions: true}})
+          .query(undefined, {
+            params: {
+              include_inactive: false,
+              include_task_definitions: true,
+            },
+          })
           .subscribe({
             next: (_projects: Project[]) => {
               // projects updated in cache
-
               setTimeout(() => {
                 this.isLoadingSubject.next(false);
               }, 800);

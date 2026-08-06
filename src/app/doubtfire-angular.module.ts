@@ -232,7 +232,6 @@ import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
 import {UserIconComponent} from './common/user-icon/user-icon.component';
 import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
-// Cross-unit dashboard feature (coordinate this file with other feature branches)
 import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
 import {DashboardListItemComponent} from './dashboard/list-item/dashboard-list-item.component';
 import {DashboardExpandedListItemComponent} from './dashboard/list-item/expanded-list-item/expanded-list-item.component';
@@ -457,7 +456,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
   // Components we declare
   declarations: [
     AppComponent,
-    // Cross-unit dashboard feature (coordinate this file with other feature branches)
     CrossDashboardComponent,
     DashboardListItemComponent,
     DashboardExpandedListItemComponent,
@@ -497,6 +495,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ProjectPlanComponent,
     SuccessCloseComponent,
     HomeComponent,
+    CrossDashboardComponent,
     CommentBubbleActionComponent,
     UnitTutorialsListComponent,
     UnitTutorialsManagerComponent,
