@@ -1,20 +1,52 @@
 <div class="panel-full-screen flex flex-row gap-8 overflow-x-auto px-16">
-  @for (unit of units; track unit.projectId) {
-    <div class="flex h-full w-[34rem] flex-col shadow">
-      <div class="flex w-full shrink-0 flex-row gap-4 rounded-t-lg bg-formatif-blue p-4">
-        <h3 class="m-0 min-w-0 flex-grow truncate text-white">{{ unit.code }}</h3>
+  @for (unit of unitsProcessed; track unit.projectId) {
+    <div class="flex h-full w-136 flex-col shadow">
+      <div
+        class="flex w-full shrink-0 flex-row items-center gap-4 rounded-t-lg bg-formatif-blue p-4"
+      >
+        <h3
+          class="m-0 mt-2 min-w-0 grow cursor-pointer truncate text-white"
+          [routerLink]="['/projects', unit.projectId, 'dashboard']"
+        >
+          {{ unit.code }}
+        </h3>
+
         <input
           class="text-md h-full w-64 rounded-md p-2 px-4"
           placeholder="Search tasks..."
           type="text"
         />
-        <mat-icon style="color: white">sort</mat-icon>
-        <mat-icon style="color: white">filter_list_alt</mat-icon>
+
+        <button aria-label="Sort options" mat-icon-button [matMenuTriggerFor]="sortmenu">
+          <mat-icon style="color: white">sort</mat-icon>
+        </button>
+        <mat-menu #sortmenu="matMenu">
+          @for (mode of sortOptions; track mode) {
+            <button mat-menu-item (click)="setSort(unit.projectId, mode)">
+              {{ mode }}
+            </button>
+          }
+        </mat-menu>
+
+        <button aria-label="Filter options" mat-icon-button [matMenuTriggerFor]="filtermenu">
+          <mat-icon style="color: white">filter_list_alt</mat-icon>
+        </button>
+        <mat-menu #filtermenu="matMenu">
+          @for (mode of filterOptions; track mode) {
+            <div
+              mat-menu-item
+              (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
+            >
+              <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
+              {{ mode }}
+            </div>
+          }
+        </mat-menu>
       </div>
 
       <div class="flex flex-col overflow-y-auto">
         @for (task of unit.tasks; track task.abbreviation) {
-          <div class="border-b-[1px] border-gray-300">
+          <div class="border-b border-gray-300">
             <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
           </div>
         }
