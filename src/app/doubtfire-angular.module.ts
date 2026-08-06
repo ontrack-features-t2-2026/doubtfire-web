@@ -495,7 +495,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ProjectPlanComponent,
     SuccessCloseComponent,
     HomeComponent,
-    CrossDashboardComponent,
     CommentBubbleActionComponent,
     UnitTutorialsListComponent,
     UnitTutorialsManagerComponent,
