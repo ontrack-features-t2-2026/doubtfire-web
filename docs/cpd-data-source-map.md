@@ -10,45 +10,16 @@ permissions, cross-unit visibility rules.
 
 This table maps user-facing fields on the Cross-unit Dashboard to their
 underlying backend services and models:
-
-  -------------------------------------------------------------------------------------------------------------------------------
-  **Dashboard   **API Endpoint & Method**         **Frontend Component**      **Backend Model / Entity**        **Access Scope &
-  Field /                                                                                                       Permissions**
-  Data**                                                                                                        
-  ------------- --------------------------------- --------------------------- --------------------------------- -----------------
-  Unit Code &   GET /projects                     DashboardUnit.code,         Unit#code, Unit#name via          Authenticated
-  Name                                            DashboardUnit.name          Project.eager_load(:unit)         Student (for_user
-                                                                                                                current_user)
-
-  Task Title &  GET /projects                     DashboardTask.title,        TaskDefinition#name,              Authenticated
-  Subtitle      (include_task_definitions=true)   DashboardTask.subtitle      TaskDefinition#abbreviation,      Student
-                                                                              TaskDefinition#targetGradeText    (current_user)
-
-  Task          GET /projects                     DashboardTask.description   TaskDefinition#description        Authenticated
-  Description   (include_task_definitions=true)                                                                 Student
-                                                                                                                (current_user)
-
-  Task Status & GET /projects                     DashboardTask.status,       Task#status, mapped via           Authenticated
-  Color                                           statusLabel, color          TaskStatus.STATUS_LABELS/COLORS   Student
-                                                                                                                (current_user)
-
-  New Comments  GET /projects                     DashboardTask.comments      Task#numNewComments               Authenticated
-  Count                                                                                                         Student
-                                                                                                                (current_user).
-
-  Due Date      GET /projects                     DashboardTask.dueDate       TaskDefinition#targetDate         Authenticated
-                                                                                                                Student
-                                                                                                                (current_user)
-
-  Task Weight / GET /projects                     DashboardTask.weight        Task#topWeight (calculated via    Authenticated
-  Priority                                                                    project.calcTopTasks())           Student
-                                                                                                                (current_user)
-
-  Project ID /  GET /projects                     DashboardUnit.projectId     Project#id                        Authenticated
-  Unit Key                                                                                                      Student
-                                                                                                                (current_user)
-  -------------------------------------------------------------------------------------------------------------------------------
-
+| Dashboard Field / Element | Angular Component / Data Binding | API Endpoint & Method | Backend Model / Entity | Access Scope & Permissions |
+| :--- | :--- | :--- | :--- | :--- |
+| **Unit Code & Name** | `DashboardUnit.code`, `DashboardUnit.name` | `GET /projects` | `Unit#code`, `Unit#name` via `Project.eager_load(:unit)` | Authenticated Student (`for_user current_user`) |
+| **Task Title & Subtitle** | `DashboardTask.title`, `DashboardTask.subtitle` | `GET /projects` (`include_task_definitions=true`) | `TaskDefinition#name`, `TaskDefinition#abbreviation`, `TaskDefinition#targetGradeText` | Authenticated Student (`current_user`) |
+| **Task Description** | `DashboardTask.description` | `GET /projects` (`include_task_definitions=true`) | `TaskDefinition#description` | Authenticated Student (`current_user`) |
+| **Task Status & Color** | `DashboardTask.status`, `statusLabel`, `color` | `GET /projects` | `Task#status`, mapped via `TaskStatus.STATUS_LABELS/COLORS` | Authenticated Student (`current_user`) |
+| **New Comments Count** | `DashboardTask.comments` | `GET /projects` | `Task#numNewComments` | Authenticated Student (`current_user`) |
+| **Due Date** | `DashboardTask.dueDate` | `GET /projects` | `TaskDefinition#targetDate` | Authenticated Student (`current_user`) |
+| **Task Weight / Priority** | `DashboardTask.weight` | `GET /projects` | `Task#topWeight` (calculated via `project.calcTopTasks()`) | Authenticated Student (`current_user`) |
+| **Project ID / Unit Key** | `DashboardUnit.projectId` | `GET /projects` | `Project#id` | Authenticated Student (`current_user`) |
 **Data Ownership, Enrolment & Visibility Rules**
 
 **Active vs. Inactive Enrolment Filtering**
