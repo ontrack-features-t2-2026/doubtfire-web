@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {SwPush} from '@angular/service-worker';
-import {Observable, from, of, switchMap, take} from 'rxjs';
+import {Observable, catchError, from, map, of, switchMap, take} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 
@@ -106,8 +106,28 @@ export class PushNotificationService {
 
         return this.http
           .delete<void>(this.endpoint, {params: {endpoint: subscription.endpoint}})
-          .pipe(switchMap(() => from(this.swPush.unsubscribe())));
+          .pipe(
+            // Server cleanup failing must not leave the browser subscribed. If
+            // the delete fails we still unsubscribe locally: the browser stops
+            // receiving immediately, and the row left behind is removed the
+            // first time the push service answers 410 for it, which deliver_to
+            // in PushNotificationService already handles.
+            catchError(() => of(void 0)),
+            switchMap(() => from(this.swPush.unsubscribe())),
+            map(() => void 0),
+          );
       }),
     );
+  }
+
+  /**
+   * Unsubscribe, but never fail.
+   *
+   * For sign out, where the caller cannot do anything useful with an error and
+   * must not be blocked by one. Prefer unsubscribe() anywhere a person is
+   * waiting on the result and should be told it did not work.
+   */
+  public unsubscribeQuietly(): Observable<void> {
+    return this.unsubscribe().pipe(catchError(() => of(void 0)));
   }
 }

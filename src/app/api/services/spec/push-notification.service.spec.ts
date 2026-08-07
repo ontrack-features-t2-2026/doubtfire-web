@@ -11,6 +11,17 @@ import {PushNotificationService} from '../push-notification.service';
 const ENDPOINT = 'https://fcm.googleapis.com/fcm/send/test-browser';
 
 /**
+ * Let pending promise callbacks run.
+ *
+ * unsubscribe() ends in from(swPush.unsubscribe()), and that promise settles on
+ * the microtask queue, so completion is not observable in the same tick as the
+ * http flush. A macrotask drains everything queued behind it.
+ */
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
  * Enough of a PushSubscription for the service. The real one comes from the
  * browser and cannot be constructed in a test environment.
  */
@@ -124,6 +135,62 @@ describe('PushNotificationService', () => {
 
     expect(swPush.unsubscribe).not.toHaveBeenCalled();
     httpMock.expectNone(`${API_URL}/push_subscriptions`);
+  });
+
+  // Leaving the browser subscribed because the api call failed is the worse of
+  // the two outcomes. The row on the server is cleaned up when the push service
+  // returns 410 for it; a browser still receiving is not cleaned up by anything.
+  it('still unsubscribes locally when the api delete fails', async () => {
+    swPush.subscription.next(fakeSubscription());
+    let completed = false;
+
+    service.unsubscribe().subscribe({complete: () => (completed = true)});
+
+    const request = httpMock.expectOne(
+      (r) => r.url === `${API_URL}/push_subscriptions` && r.method === 'DELETE',
+    );
+    request.flush('nope', {status: 500, statusText: 'Server Error'});
+
+    expect(swPush.unsubscribe).toHaveBeenCalled();
+
+    // swPush.unsubscribe() returns a promise, so completion lands a tick later.
+    await flushMicrotasks();
+    expect(completed).toBe(true);
+  });
+
+  it('still unsubscribes locally when the api is unreachable', () => {
+    swPush.subscription.next(fakeSubscription());
+
+    service.unsubscribe().subscribe();
+
+    const request = httpMock.expectOne(
+      (r) => r.url === `${API_URL}/push_subscriptions` && r.method === 'DELETE',
+    );
+    request.error(new ProgressEvent('network error'));
+
+    expect(swPush.unsubscribe).toHaveBeenCalled();
+  });
+
+  // Sign out calls this and cannot do anything useful with a failure, so it
+  // must never throw, even when the browser itself refuses to unsubscribe.
+  it('unsubscribeQuietly swallows a failure from the browser', async () => {
+    swPush.subscription.next(fakeSubscription());
+    swPush.unsubscribe.mockRejectedValue(new Error('no service worker'));
+    let errored = false;
+    let completed = false;
+
+    service.unsubscribeQuietly().subscribe({
+      error: () => (errored = true),
+      complete: () => (completed = true),
+    });
+
+    httpMock
+      .expectOne((r) => r.url === `${API_URL}/push_subscriptions` && r.method === 'DELETE')
+      .flush(null);
+
+    await flushMicrotasks();
+    expect(errored).toBe(false);
+    expect(completed).toBe(true);
   });
 
   it('reports nothing blocking when the service worker is running and keys are set', () => {
