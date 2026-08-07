@@ -20,6 +20,7 @@ underlying backend services and models:
 | **Due Date** | `DashboardTask.dueDate` | `GET /projects` | `TaskDefinition#targetDate` | Authenticated Student (`current_user`) |
 | **Task Weight / Priority** | `DashboardTask.weight` | `GET /projects` | `Task#topWeight` (calculated via `project.calcTopTasks()`) | Authenticated Student (`current_user`) |
 | **Project ID / Unit Key** | `DashboardUnit.projectId` | `GET /projects` | `Project#id` | Authenticated Student (`current_user`) |
+
 **Data Ownership, Enrolment & Visibility Rules**
 
 **Active vs. Inactive Enrolment Filtering**
