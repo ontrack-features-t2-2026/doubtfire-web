@@ -12,6 +12,7 @@
     ></div>
     @if (task) {
       <f-task-date-slider [task]="task" />
+      <f-ppi-widget [task]="task" [taskDef]="taskDef" />
     }
     <ul>
       <li>{{ grades.names[taskDef?.targetGrade] }} Task</li>
@@ -35,7 +36,8 @@
         </li>
         <li [hidden]="!task?.extensions || task?.extensions <= 0">
           Extension &mdash; The due date has been extended by
-          {{ task?.extensions }} week{{ task?.extensions > 1 ? 's' : '' }}.
+          {{ task?.extensions }} week{{ task?.extensions > 1 ? 's' : ''
+          }}.
         </li>
         <li>
           Due Date &mdash; I'm aiming to <b>submit</b> this task by

@@ -258,6 +258,7 @@ import {DiscussionPromptsViewComponent} from './projects/states/dashboard/direct
 import {StaffNotesViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/staff-notes-view/staff-notes-view.component';
 import {TaskAssessmentCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-assessment-card/task-assessment-card.component';
 import {TaskDescriptionCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/task-description-card.component';
+import {PpiWidgetComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component';
 import {TaskDueCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-due-card/task-due-card.component';
 import {TaskIlosCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-ilos-card/task-ilos-card.component';
 import {SubmissionFilesModalComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-overseer-report/submission-files-modal/submission-files-modal.component';
@@ -511,6 +512,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskListItemComponent,
     CreatePortfolioTaskListItemComponent,
     TaskDescriptionCardComponent,
+     PpiWidgetComponent,
     StatusIconComponent,
     TaskCommentsViewerComponent,
     UserIconComponent,
