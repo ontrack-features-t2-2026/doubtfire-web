@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatMenuModule} from '@angular/material/menu';
 import {BehaviorSubject, of, throwError} from 'rxjs';
 import {Project} from '../api/models/project';
 import {ProjectService} from '../api/services/project.service';
@@ -13,17 +14,22 @@ describe('CrossDashboardComponent', () => {
   let projectsSubject: BehaviorSubject<Project[]>;
   let projectServiceQuery: ReturnType<typeof vi.fn>;
 
-  const makeProject = (id: number, code: string, isActive: boolean): Project =>
-    ({
+  const makeProject = (id: number, code: string, isActive: boolean): Project => {
+    const tasks = [];
+
+    return {
       id,
-      tasks: [],
+      tasks,
       unit: {
         code,
         name: `${code} Unit`,
         isActive,
         taskDefinitions: [],
       },
-    }) as unknown as Project;
+      calcTopTasks: vi.fn(),
+      activeTasks: vi.fn().mockReturnValue(tasks),
+    } as unknown as Project;
+  };
 
   beforeEach(async () => {
     projectsSubject = new BehaviorSubject<Project[]>([]);
@@ -42,6 +48,7 @@ describe('CrossDashboardComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [CrossDashboardComponent],
+      imports: [MatMenuModule],
       providers: [
         {
           provide: GlobalStateService,
