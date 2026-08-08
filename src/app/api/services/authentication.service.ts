@@ -3,6 +3,7 @@ import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {AsyncSubject, Observable, catchError, map, throwError} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
+import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
@@ -279,13 +280,37 @@ export class AuthenticationService {
     };
 
     // If we have a token, delete it...
+    const deleteTokenAndSignOut = () => {
+      if (this.userService.currentUser.authenticationToken) {
+        this.httpClient.delete(this.AUTH_URL, {params: {remember: false}}).subscribe({
+          next: (_response) => doSignOut(),
+          error: (_response) => doSignOut(),
+        });
+      } else {
+        doSignOut();
+      }
+    };
+
+    // Drop the push registration before the auth token goes.
+    //
+    // The subscription belongs to whoever enabled it, and the browser keeps it
+    // across sign out. On a shared machine that means the next person to sign in
+    // would keep receiving the previous user's notifications on this device.
+    //
+    // Order matters twice over. DELETE /push_subscriptions needs the token, so
+    // it has to run first, and sign out must never be blocked by it, so both
+    // outcomes continue. Resolved through AppInjector rather than the
+    // constructor to avoid a circular dependency, the same as GlobalStateService
+    // above.
     if (this.userService.currentUser.authenticationToken) {
-      this.httpClient.delete(this.AUTH_URL, {params: {remember: false}}).subscribe({
-        next: (_response) => doSignOut(),
-        error: (_response) => doSignOut(),
-      });
+      AppInjector.get(PushNotificationService)
+        .unsubscribeQuietly()
+        .subscribe({
+          next: () => deleteTokenAndSignOut(),
+          error: () => deleteTokenAndSignOut(),
+        });
     } else {
-      doSignOut();
+      deleteTokenAndSignOut();
     }
   }
 

@@ -37,3 +37,20 @@ section {
   height: 50px;
   font-size: 50px;
 }
+
+.push-opt-in {
+  // The rule above sizes the profile avatar icon at 50px. Left alone it would
+  // apply to the icon inside this button too and blow the button apart.
+  .mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    margin-right: 6px;
+  }
+
+  &__hint {
+    display: block;
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+}

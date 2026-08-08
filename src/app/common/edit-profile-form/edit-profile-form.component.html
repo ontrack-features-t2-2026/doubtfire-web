@@ -136,6 +136,33 @@
           >Receive notifications when new tasks are available</mat-checkbox
         >
       </section>
+
+      <!--
+        Push opt-in. Subscribing has to come from a click: the browser only shows
+        its permission prompt in response to a user gesture, and the service
+        worker is not registered until six seconds after the page loads.
+      -->
+      <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
+        <button
+          color="primary"
+          mat-stroked-button
+          type="button"
+          [disabled]="pushBusy || pushBlocker !== null"
+          (click)="togglePushNotifications()"
+        >
+          <mat-icon>{{ pushSubscribed ? 'notifications_off' : 'notifications_active' }}</mat-icon>
+          {{
+            pushSubscribed
+              ? 'Turn off push notifications on this device'
+              : 'Turn on push notifications on this device'
+          }}
+        </button>
+        @if (pushBlocker !== null) {
+          <small class="push-opt-in__hint">{{ pushBlockerMessage }}</small>
+        } @else if (pushSubscribed) {
+          <small class="push-opt-in__hint">This device will receive push notifications.</small>
+        }
+      </section>
       <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
         <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
           >Send anonymous research statistics
