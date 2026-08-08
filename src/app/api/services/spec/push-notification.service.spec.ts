@@ -3,7 +3,7 @@ import {provideHttpClient, withInterceptorsFromDi, withXhr} from '@angular/commo
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
 import {TestBed} from '@angular/core/testing';
 import {SwPush} from '@angular/service-worker';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, NEVER, Observable} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {PushNotificationService} from '../push-notification.service';
@@ -38,18 +38,21 @@ function fakeSubscription() {
 describe('PushNotificationService', () => {
   let service: PushNotificationService;
   let httpMock: HttpTestingController;
+  let subscriptionSubject: BehaviorSubject<PushSubscription | null>;
   let swPush: {
     isEnabled: boolean;
-    subscription: BehaviorSubject<PushSubscription | null>;
+    subscription: Observable<PushSubscription | null>;
     requestSubscription: ReturnType<typeof vi.fn>;
     unsubscribe: ReturnType<typeof vi.fn>;
   };
   let constants: {IsPushEnabled: BehaviorSubject<boolean>; VapidPublicKey: BehaviorSubject<string>};
 
   beforeEach(() => {
+    subscriptionSubject = new BehaviorSubject<PushSubscription | null>(null);
+
     swPush = {
       isEnabled: true,
-      subscription: new BehaviorSubject<PushSubscription | null>(null),
+      subscription: subscriptionSubject,
       requestSubscription: vi.fn().mockResolvedValue(fakeSubscription()),
       unsubscribe: vi.fn().mockResolvedValue(undefined),
     };
@@ -111,7 +114,7 @@ describe('PushNotificationService', () => {
   });
 
   it('deletes on the api before unsubscribing in the browser', () => {
-    swPush.subscription.next(fakeSubscription());
+    subscriptionSubject.next(fakeSubscription());
 
     service.unsubscribe().subscribe();
 
@@ -129,10 +132,24 @@ describe('PushNotificationService', () => {
   });
 
   it('does nothing when unsubscribing a browser that was never subscribed', () => {
-    swPush.subscription.next(null);
+    subscriptionSubject.next(null);
 
     service.unsubscribe().subscribe();
 
+    expect(swPush.unsubscribe).not.toHaveBeenCalled();
+    httpMock.expectNone(`${API_URL}/push_subscriptions`);
+  });
+
+  it('returns immediately when the service worker is disabled', () => {
+    swPush.isEnabled = false;
+    swPush.subscription = NEVER;
+    let emitted = false;
+
+    service.unsubscribe().subscribe(() => {
+      emitted = true;
+    });
+
+    expect(emitted).toBe(true);
     expect(swPush.unsubscribe).not.toHaveBeenCalled();
     httpMock.expectNone(`${API_URL}/push_subscriptions`);
   });
@@ -141,7 +158,7 @@ describe('PushNotificationService', () => {
   // the two outcomes. The row on the server is cleaned up when the push service
   // returns 410 for it; a browser still receiving is not cleaned up by anything.
   it('still unsubscribes locally when the api delete fails', async () => {
-    swPush.subscription.next(fakeSubscription());
+    subscriptionSubject.next(fakeSubscription());
     let completed = false;
 
     service.unsubscribe().subscribe({complete: () => (completed = true)});
@@ -159,7 +176,7 @@ describe('PushNotificationService', () => {
   });
 
   it('still unsubscribes locally when the api is unreachable', () => {
-    swPush.subscription.next(fakeSubscription());
+    subscriptionSubject.next(fakeSubscription());
 
     service.unsubscribe().subscribe();
 
@@ -174,7 +191,7 @@ describe('PushNotificationService', () => {
   // Sign out calls this and cannot do anything useful with a failure, so it
   // must never throw, even when the browser itself refuses to unsubscribe.
   it('unsubscribeQuietly swallows a failure from the browser', async () => {
-    swPush.subscription.next(fakeSubscription());
+    subscriptionSubject.next(fakeSubscription());
     swPush.unsubscribe.mockRejectedValue(new Error('no service worker'));
     let errored = false;
     let completed = false;

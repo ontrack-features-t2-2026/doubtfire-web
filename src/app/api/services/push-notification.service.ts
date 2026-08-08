@@ -95,6 +95,12 @@ export class PushNotificationService {
    * there until the push service returned 410 for it.
    */
   public unsubscribe(): Observable<void> {
+    // Angular exposes SwPush.subscription as NEVER when service workers are
+    // disabled, so waiting on it would prevent sign-out from continuing.
+    if (!this.swPush.isEnabled) {
+      return of(void 0);
+    }
+
     // take(1) matters. swPush.subscription never completes, so without it the
     // returned observable would stay open forever and re-fire on every change.
     return this.swPush.subscription.pipe(

@@ -142,11 +142,11 @@
         its permission prompt in response to a user gesture, and the service
         worker is not registered until six seconds after the page loads.
       -->
-      <section fxFlexFill fxLayout="column" fxLayoutAlign="center start" class="push-opt-in">
+      <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
         <button
+          color="primary"
           mat-stroked-button
           type="button"
-          color="primary"
           [disabled]="pushBusy || pushBlocker !== null"
           (click)="togglePushNotifications()"
         >
