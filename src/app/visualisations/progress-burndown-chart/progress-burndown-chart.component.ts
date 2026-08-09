@@ -10,7 +10,12 @@ import {
   SimpleChanges,
   ViewContainerRef,
 } from '@angular/core';
-import {Project, Unit} from 'src/app/api/models/doubtfire-model';
+import {
+  PeerMedianPoint,
+  PeerProgressService,
+  Project,
+  Unit,
+} from 'src/app/api/models/doubtfire-model';
 import {AppInjector} from 'src/app/app-injector';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
 
@@ -23,6 +28,15 @@ interface BurndownSeries {
   name: string;
   series: BurndownPoint[];
 }
+
+type PeerMedianState = 'loading' | 'ready' | 'unavailable' | 'insufficient';
+
+/**
+ * Fewest students the median may be drawn from. Below this a "middle student" is
+ * identifiable enough that the comparison stops being anonymous. The endpoint has
+ * to enforce this too; the check here only decides what to render.
+ */
+const MINIMUM_COHORT_SIZE = 5;
 
 @Component({
   selector: 'f-progress-burndown-chart',
@@ -57,14 +71,23 @@ export class ProgressBurndownChartComponent
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', 'transparent'],
+    // My progress, Peer median.
+    domain: ['#E01B5D', '#0079d8'],
   };
   yScaleMin: number = 0;
   yScaleMax: number = 100;
 
-  private seriesVisibility: Record<string, boolean> = {};
+  /** Drives the status note under the chart. Read by the template. */
+  peerMedianState: PeerMedianState = 'loading';
 
-  constructor(public viewContainerRef: ViewContainerRef) {
+  private seriesVisibility: Record<string, boolean> = {};
+  private peerMedian: PeerMedianPoint[] = [];
+  private myProgress: PeerMedianPoint[] = [];
+
+  constructor(
+    public viewContainerRef: ViewContainerRef,
+    private peerProgressService: PeerProgressService,
+  ) {
     super(viewContainerRef);
     this.data = [];
     this.temp = [];
@@ -76,13 +99,47 @@ export class ProgressBurndownChartComponent
     this.data.forEach((item) => {
       this.seriesVisibility[item.name] = true;
     });
+    this.loadPeerMedian();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('grade' in changes && changes.grade.currentValue !== undefined) {
       this.project.refreshBurndownChartData();
       this.updateData();
+      // The cohort is the students on this target grade, so it moves with it.
+      this.loadPeerMedian();
     }
+  }
+
+  private loadPeerMedian(): void {
+    this.peerMedianState = 'loading';
+    this.peerMedian = [];
+
+    this.peerProgressService.getCohortMedian(this.project).subscribe({
+      next: (response) => {
+        if (response.cohort_size < MINIMUM_COHORT_SIZE) {
+          // Withhold the line rather than identify the few students behind it.
+          this.peerMedianState = 'insufficient';
+        } else if (response.median_burndown.length === 0) {
+          this.peerMedianState = 'unavailable';
+        } else {
+          this.peerMedian = response.median_burndown;
+          this.peerMedianState = 'ready';
+        }
+        this.updateData();
+      },
+      error: () => {
+        this.peerMedianState = 'unavailable';
+        this.updateData();
+      },
+    });
+
+    // Demo data. See PeerProgressService.getMyProgressMock -- the real source for
+    // this line is the 'To Complete' series in this.project.burndownChartData.
+    this.peerProgressService.getMyProgressMock(this.project).subscribe((points) => {
+      this.myProgress = points;
+      this.updateData();
+    });
   }
 
   updateData(): void {
@@ -96,42 +153,39 @@ export class ProgressBurndownChartComponent
       return;
     }
 
-    const formattedData = chartData.map((series) => ({
-      name: series.key, // Use the "key" as the "name"
-      series: series.values
-        .filter((value) => value[0] >= startDate.getTime() && value[0] <= endDate.getTime()) // Filter values based on the date range
-        .map((value) => {
-          if (value[1] < 0) {
-            value[1] = 0; // If the value is negative, set it to 0
-          }
-          value[1] = Math.round(value[1] * 100); // Round the value to 2 decimal places
-          return {
-            name: formatDate(new Date(value[0]), 'd MMM', locale), // Format the timestamp as a date
-            value: value[1],
-          };
-        }),
-    }));
+    const formattedData: BurndownSeries[] = [];
 
-    // Hack to get around yScaleMin and yScaleMax not working.
-    const target = formattedData.find((series) => series.name === 'Target');
-    if (target) {
-      const start = target.series.find(
-        (point) => point.name === formatDate(new Date(startDate), 'd MMM', locale),
-      );
-      const end = target.series.find(
-        (point) => point.name === formatDate(new Date(endDate), 'd MMM', locale),
-      );
+    if (this.myProgress.length > 0) {
+      formattedData.push(this.toSeries('My progress', this.myProgress, startDate, endDate, locale));
+    }
 
-      if (start) {
-        start.value = 100;
-      } // Update start
-      if (end) {
-        end.value = 0;
-      } // Update end
+    if (this.peerMedian.length > 0) {
+      formattedData.push(this.toSeries('Peer median', this.peerMedian, startDate, endDate, locale));
     }
 
     this.temp = JSON.parse(JSON.stringify(formattedData));
     this.data = formattedData;
+  }
+
+  private toSeries(
+    name: string,
+    points: PeerMedianPoint[],
+    startDate: Date,
+    endDate: Date,
+    locale: string,
+  ): BurndownSeries {
+    return {
+      name,
+      series: points
+        .filter((point) => {
+          const time = new Date(point.date).getTime();
+          return time >= startDate.getTime() && time <= endDate.getTime();
+        })
+        .map((point) => ({
+          name: formatDate(new Date(point.date), 'd MMM', locale),
+          value: Math.round(point.remaining * 100),
+        })),
+    };
   }
 
   onSelect(event: string | BurndownPoint): void {

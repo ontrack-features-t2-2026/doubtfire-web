@@ -1,23 +1,45 @@
-<div class="chart-container flex h-full min-h-[320px] pb-6">
-  <ngx-charts-line-chart
-    class="progress-burndown-chart h-full flex-1"
-    [legend]="legend"
-    [legendPosition]="legendPosition"
-    [legendTitle]="''"
-    [results]="data"
-    [scheme]="colorScheme"
-    [showXAxisLabel]="showXAxisLabel"
-    [showYAxisLabel]="showYAxisLabel"
-    [tooltipDisabled]="true"
-    [view]="undefined"
-    [xAxis]="xAxis"
-    [xAxisLabel]="xAxisLabel"
-    [yAxis]="yAxis"
-    [yAxisLabel]="yAxisLabel"
-    [yAxisTickFormatting]="formatPerc"
-    [yScaleMax]="yScaleMax"
-    [yScaleMin]="yScaleMin"
-    (select)="onSelect($event)"
-  >
-  </ngx-charts-line-chart>
+<div class="flex h-full min-h-[320px] flex-col pb-6">
+  <div class="chart-container flex min-h-0 flex-1">
+    <ngx-charts-line-chart
+      class="progress-burndown-chart h-full flex-1"
+      [legend]="legend"
+      [legendPosition]="legendPosition"
+      [legendTitle]="''"
+      [results]="data"
+      [scheme]="colorScheme"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [tooltipDisabled]="true"
+      [view]="undefined"
+      [xAxis]="xAxis"
+      [xAxisLabel]="xAxisLabel"
+      [yAxis]="yAxis"
+      [yAxisLabel]="yAxisLabel"
+      [yAxisTickFormatting]="formatPerc"
+      [yScaleMax]="yScaleMax"
+      [yScaleMin]="yScaleMin"
+      (select)="onSelect($event)"
+    >
+    </ngx-charts-line-chart>
+  </div>
+
+  <!-- Check for peerMedianState -->
+  @if (peerMedianState !== 'ready') {
+    <div class="flex items-center justify-center gap-2 pt-2 text-sm opacity-70" role="status">
+      @switch (peerMedianState) {
+        @case ('loading') {
+          <mat-spinner color="accent" diameter="16"></mat-spinner>
+          <span>Loading peer comparison…</span>
+        }
+        @case ('insufficient') {
+          <mat-icon inline>group_off</mat-icon>
+          <span>Too few students are targeting this grade to show an anonymous peer median.</span>
+        }
+        @case ('unavailable') {
+          <mat-icon inline>cloud_off</mat-icon>
+          <span>Peer median is unavailable right now.</span>
+        }
+      }
+    </div>
+  }
 </div>
