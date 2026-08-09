@@ -4,6 +4,8 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
 import {BehaviorSubject, of, throwError} from 'rxjs';
 import {Project} from '../api/models/project';
+import {Task} from '../api/models/task';
+import {TaskStatusEnum} from '../api/models/task-status';
 import {ProjectService} from '../api/services/project.service';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
 import {CrossDashboardComponent} from './f-cross-dashboard.component';
@@ -14,10 +16,34 @@ describe('CrossDashboardComponent', () => {
   let projectsSubject: BehaviorSubject<Project[]>;
   let projectServiceQuery: ReturnType<typeof vi.fn>;
 
-  const makeProject = (id: number, code: string, isActive: boolean): Project => {
-    const tasks = [];
+  const syncView = async (): Promise<void> => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
 
-    return {
+  const makeTask = (
+    name: string,
+    abbreviation: string,
+    status: TaskStatusEnum,
+    dueDate: Date,
+    topWeight: number = 0,
+  ): Task =>
+    ({
+      status,
+      topWeight,
+      numNewComments: 0,
+      definition: {
+        name,
+        abbreviation,
+        targetGradeText: 'Pass',
+        description: `${name} description`,
+        targetDate: dueDate,
+      },
+    }) as unknown as Task;
+
+  const makeProject = (id: number, code: string, isActive: boolean, tasks: Task[] = []): Project =>
+    ({
       id,
       tasks,
       unit: {
@@ -28,8 +54,7 @@ describe('CrossDashboardComponent', () => {
       },
       calcTopTasks: vi.fn(),
       activeTasks: vi.fn().mockReturnValue(tasks),
-    } as unknown as Project;
-  };
+    }) as unknown as Project;
 
   beforeEach(async () => {
     projectsSubject = new BehaviorSubject<Project[]>([]);
@@ -152,5 +177,184 @@ describe('CrossDashboardComponent', () => {
     expect(component.previousUnitsLoadError).toBe(true);
     expect(component.loadingPreviousUnits).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('Previous units could not be loaded.');
+  });
+
+  it('filters only the selected unit and ignores case and outer whitespace', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', new Date(2026, 7, 12)),
+        makeTask('Leadership Report', '5.3D', 'not_started', new Date(2026, 7, 18)),
+      ]),
+      makeProject(2, 'SIT782', true, [
+        makeTask('Security Report', '2.1P', 'not_started', new Date(2026, 7, 15)),
+      ]),
+    ]);
+
+    await syncView();
+
+    expect(component.displayedUnits).toHaveLength(2);
+
+    const searchInputs = fixture.nativeElement.querySelectorAll(
+      'input[type="search"]',
+    ) as NodeListOf<HTMLInputElement>;
+
+    expect(searchInputs).toHaveLength(2);
+
+    searchInputs[0].value = '  RETROSPECTIVE  ';
+    searchInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
+
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1P']);
+
+    expect(component.displayedUnits[1].tasks.map((task) => task.abbreviation)).toEqual(['2.1P']);
+  });
+
+  it('matches abbreviation, status, unit code and displayed due date', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'ready_for_feedback', new Date(2026, 7, 12)),
+      ]),
+    ]);
+
+    const matchingQueries = [
+      '5.1p',
+      'Awaiting Feedback',
+      'sit764',
+      'Wednesday 12 August',
+      '12/08/2026',
+      '2026-08-12',
+    ];
+
+    for (const query of matchingQueries) {
+      component.setSearch(1, query);
+
+      expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1P']);
+    }
+  });
+
+  it('clears the search and restores the original task list', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', new Date(2026, 7, 12)),
+        makeTask('Leadership Report', '5.3D', 'not_started', new Date(2026, 7, 18)),
+      ]),
+    ]);
+
+    component.setSearch(1, 'does not exist');
+
+    expect(component.displayedUnits[0].tasks).toEqual([]);
+
+    component.setSearch(1, '   ');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      '5.1P',
+      '5.3D',
+    ]);
+  });
+
+  it('combines search with the Hide Completed filter', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Completed Task', '1.1P', 'complete', new Date(2026, 7, 10)),
+        makeTask('Open Task', '1.2P', 'not_started', new Date(2026, 7, 12)),
+      ]),
+    ]);
+
+    component.setSearch(1, 'task');
+    component.toggleFilter(1, component.filterOptions[0]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['1.2P']);
+
+    component.setSearch(1, '');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['1.2P']);
+  });
+
+  it('preserves Due Date sorting after search is applied', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Later Task', 'LATE', 'not_started', new Date(2026, 7, 20)),
+        makeTask('Earlier Task', 'EARLY', 'not_started', new Date(2026, 7, 10)),
+      ]),
+    ]);
+
+    const dueDateSort = component.sortOptions.find((mode) => mode === 'Due Date');
+
+    if (!dueDateSort) {
+      throw new Error('Due Date sort option is missing');
+    }
+
+    component.setSort(1, dueDateSort);
+    component.setSearch(1, 'task');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'EARLY',
+      'LATE',
+    ]);
+  });
+
+  it('applies separate search state in All and Previous unit scopes', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Current Task', 'CUR', 'not_started', new Date(2026, 7, 12)),
+      ]),
+    ]);
+
+    projectServiceQuery.mockReturnValue(
+      of([
+        makeProject(2, 'SIT704', false, [
+          makeTask('Archived Security Task', 'OLD1', 'complete', new Date(2025, 7, 12)),
+          makeTask('Archived Project Task', 'OLD2', 'complete', new Date(2025, 7, 15)),
+        ]),
+      ]),
+    );
+
+    component.setUnitScope('all');
+    component.setSearch(2, 'security');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['CUR']);
+
+    expect(component.displayedUnits[1].tasks.map((task) => task.abbreviation)).toEqual(['OLD1']);
+
+    component.setUnitScope('previous');
+
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT704']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['OLD1']);
+  });
+
+  it('shows a no-results message without hiding the unit', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', new Date(2026, 7, 12)),
+      ]),
+    ]);
+
+    await syncView();
+
+    expect(fixture.nativeElement.textContent).toContain('SIT764');
+    expect(fixture.nativeElement.querySelectorAll('f-dashboard-list-item')).toHaveLength(1);
+
+    component.setSearch(1, 'not a matching task');
+
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain('SIT764');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No tasks match the current search and filters.',
+    );
+    expect(fixture.nativeElement.querySelectorAll('f-dashboard-list-item')).toHaveLength(0);
+
+    component.setSearch(1, '');
+
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks).toHaveLength(1);
+    expect(component.displayedUnits[0].tasks[0].title).toBe('Individual Retrospective');
+    expect(fixture.nativeElement.querySelectorAll('f-dashboard-list-item')).toHaveLength(1);
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'No tasks match the current search and filters.',
+    );
   });
 });
