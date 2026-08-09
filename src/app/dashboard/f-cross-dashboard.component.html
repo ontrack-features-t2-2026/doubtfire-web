@@ -31,9 +31,13 @@
           </div>
 
           <input
+            autocomplete="off"
             class="text-md h-full w-64 rounded-md p-2 px-4"
             placeholder="Search tasks..."
-            type="text"
+            type="search"
+            [attr.aria-label]="'Search tasks in ' + unit.code"
+            [value]="getSearchTerm(unit.projectId)"
+            (input)="setSearch(unit.projectId, $any($event.target).value)"
           />
 
           <button aria-label="Sort options" mat-icon-button [matMenuTriggerFor]="sortmenu">
@@ -68,6 +72,12 @@
             <div class="border-b border-gray-300">
               <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
             </div>
+          }
+
+          @if (unit.tasks.length === 0 && hasSearchTerm(unit.projectId)) {
+            <p class="m-0 p-6 text-center text-gray-600" role="status">
+              No tasks match the current search and filters.
+            </p>
           }
         </div>
       </div>

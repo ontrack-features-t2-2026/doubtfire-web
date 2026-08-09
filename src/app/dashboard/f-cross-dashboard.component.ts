@@ -1,5 +1,5 @@
 import {EntityCache} from 'ngx-entity-service';
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
@@ -21,6 +21,12 @@ enum SortMode {
 
 const completedTypes: readonly TaskStatusEnum[] = ['complete'];
 
+const displayedDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+});
+
 type DashboardUnit = {
   projectId: number;
   code: string;
@@ -31,8 +37,9 @@ type DashboardUnit = {
 
 @Component({
   selector: 'f-cross-dashboard',
-  standalone: false,
   templateUrl: './f-cross-dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
 })
 export class CrossDashboardComponent implements OnInit {
   activeUnits: DashboardUnit[] = [];
@@ -51,6 +58,7 @@ export class CrossDashboardComponent implements OnInit {
   private readonly previousProjectsCache: EntityCache<Project> = new EntityCache();
   private filters: Map<number, Filter[]> = new Map();
   private sorting: Map<number, SortMode> = new Map();
+  private searchTerms: Map<number, string> = new Map();
 
   constructor(
     private globalStateService: GlobalStateService,
@@ -103,6 +111,26 @@ export class CrossDashboardComponent implements OnInit {
     return this.filters.get(project)?.includes(filter) === true;
   }
 
+  setSearch(project: number, value: string): void {
+    const searchTerm = value ?? '';
+
+    if (this.normaliseSearchText(searchTerm).length === 0) {
+      this.searchTerms.delete(project);
+    } else {
+      this.searchTerms.set(project, searchTerm);
+    }
+
+    this.processTasks();
+  }
+
+  getSearchTerm(project: number): string {
+    return this.searchTerms.get(project) ?? '';
+  }
+
+  hasSearchTerm(project: number): boolean {
+    return this.normaliseSearchText(this.getSearchTerm(project)).length > 0;
+  }
+
   private loadPreviousUnits(): void {
     this.loadingPreviousUnits = true;
     this.previousUnitsLoadError = false;
@@ -144,7 +172,10 @@ export class CrossDashboardComponent implements OnInit {
       tasks: unit.tasks
         .filter((task) => {
           const filters = this.filters.get(unit.projectId) ?? [];
-          return !(filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status));
+          const isHiddenCompletedTask =
+            filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status);
+
+          return !isHiddenCompletedTask && this.taskMatchesSearch(task, unit.projectId);
         })
         .sort((a, b) => {
           const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
@@ -170,6 +201,49 @@ export class CrossDashboardComponent implements OnInit {
           return 0;
         }),
     }));
+  }
+
+  private taskMatchesSearch(task: DashboardTask, projectId: number): boolean {
+    const searchTerm = this.normaliseSearchText(this.getSearchTerm(projectId));
+
+    if (!searchTerm) {
+      return true;
+    }
+
+    const searchableText = this.normaliseSearchText(
+      [
+        task.title,
+        task.abbreviation,
+        task.statusLabel,
+        task.unitCode,
+        this.formatDateForSearch(task.dueDate),
+      ].join(' '),
+    );
+
+    return searchTerm.split(' ').every((term) => searchableText.includes(term));
+  }
+
+  private normaliseSearchText(value: string): string {
+    return value
+      .toLocaleLowerCase('en-AU')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ')
+      .trim();
+  }
+
+  private formatDateForSearch(date: Date): string {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return [
+      displayedDueDateFormatter.format(date),
+      `${day}/${month}/${year}`,
+      `${year}-${month}-${day}`,
+    ].join(' ');
   }
 
   private getUnitsForCurrentScope(): DashboardUnit[] {
