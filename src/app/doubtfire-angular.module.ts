@@ -1,4 +1,7 @@
 // Lottie animation module
+}
+import {ProjectCardComponent} from './common/project-card/project-card.component';
+// Lottie animation module
 // import {LottieModule, LottieCacheModule} from 'ngx-lottie';
 import {PickerModule} from '@ctrl/ngx-emoji-mart';
 import {EmojiModule} from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -566,6 +569,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     CreateNewUnitModalContentComponent,
     TiiActionLogComponent,
     FChipComponent,
+    ProjectCardComponent,
     UnitCodeComponent,
     NewTeachingPeriodDialogComponent,
     FileViewerComponent,
