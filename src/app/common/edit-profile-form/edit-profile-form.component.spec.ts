@@ -5,6 +5,7 @@ import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
 import {of} from 'rxjs';
+import {User} from 'src/app/api/models/user/user';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -12,6 +13,17 @@ import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {EditProfileFormComponent} from './edit-profile-form.component';
 
 const emptyProvider = {};
+
+const makeUser = (overrides: Partial<User> = {}): User =>
+  ({
+    id: 1,
+    systemRole: 'Student',
+    optInToResearch: true,
+    receiveFeedbackNotifications: false,
+    receivePortfolioNotifications: false,
+    receiveTaskNotifications: false,
+    ...overrides,
+  }) as User;
 
 // The component subscribes to this in ngOnInit. Stubbed here rather than
 // providing the real service, which would pull in SwPush and the whole service
@@ -26,15 +38,40 @@ describe('EditProfileFormComponent', () => {
   let component: EditProfileFormComponent;
   let fixture: ComponentFixture<EditProfileFormComponent>;
 
+  let userServiceStub: {currentUser: User};
+  let dialogData: {
+    user: User;
+    mode: 'edit' | 'create' | 'new';
+    modal: boolean;
+  };
+
+  const createComponent = (): void => {
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
   beforeEach(async () => {
+    const currentUser = makeUser();
+
+    userServiceStub = {
+      currentUser,
+    };
+
+    dialogData = {
+      user: currentUser,
+      mode: 'edit',
+      modal: false,
+    };
+
     await TestBed.configureTestingModule({
       declarations: [EditProfileFormComponent],
       providers: [
         {provide: DoubtfireConstants, useValue: emptyProvider},
-        {provide: UserService, useValue: emptyProvider},
+        {provide: UserService, useValue: userServiceStub},
         {provide: Router, useValue: emptyProvider},
         {provide: AuthenticationService, useValue: emptyProvider},
-        {provide: MAT_DIALOG_DATA, useValue: emptyProvider},
+        {provide: MAT_DIALOG_DATA, useValue: dialogData},
         {provide: MatSnackBar, useValue: emptyProvider},
         {provide: PushNotificationService, useValue: pushServiceStub},
       ],
@@ -44,12 +81,66 @@ describe('EditProfileFormComponent', () => {
       .compileComponents();
   });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(EditProfileFormComponent);
-    component = fixture.componentInstance;
+  it('should create', () => {
+    createComponent();
+
+    expect(component).toBeTruthy();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('preserves notification and research preferences in edit mode', () => {
+    dialogData.user = makeUser({
+      optInToResearch: true,
+      receiveFeedbackNotifications: false,
+      receivePortfolioNotifications: false,
+      receiveTaskNotifications: false,
+    });
+    dialogData.mode = 'edit';
+
+    createComponent();
+
+    expect(component.user.optInToResearch).toBe(true);
+    expect(component.user.receiveFeedbackNotifications).toBe(false);
+    expect(component.user.receivePortfolioNotifications).toBe(false);
+    expect(component.user.receiveTaskNotifications).toBe(false);
+  });
+
+  it('does not change another user when opened by an admin', () => {
+    userServiceStub.currentUser = makeUser({
+      id: 1,
+      systemRole: 'Admin',
+    });
+
+    dialogData.user = makeUser({
+      id: 2,
+      optInToResearch: true,
+      receiveFeedbackNotifications: false,
+      receivePortfolioNotifications: false,
+      receiveTaskNotifications: false,
+    });
+    dialogData.mode = 'edit';
+
+    createComponent();
+
+    expect(component.user.optInToResearch).toBe(true);
+    expect(component.user.receiveFeedbackNotifications).toBe(false);
+    expect(component.user.receivePortfolioNotifications).toBe(false);
+    expect(component.user.receiveTaskNotifications).toBe(false);
+  });
+
+  it('applies notification defaults in create mode', () => {
+    dialogData.user = makeUser({
+      optInToResearch: true,
+      receiveFeedbackNotifications: false,
+      receivePortfolioNotifications: false,
+      receiveTaskNotifications: false,
+    });
+    dialogData.mode = 'create';
+
+    createComponent();
+
+    expect(component.user.optInToResearch).toBe(false);
+    expect(component.user.receiveFeedbackNotifications).toBe(true);
+    expect(component.user.receivePortfolioNotifications).toBe(true);
+    expect(component.user.receiveTaskNotifications).toBe(true);
   });
 });
