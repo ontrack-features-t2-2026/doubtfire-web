@@ -19,6 +19,11 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) task: Task;
   @Input({ required: true }) taskDef: TaskDefinition;
 
+  // Optional mock-state override for local previewing/screenshots.
+  // Only used while the mock service is in place; once the real backend
+  // lands, this input and the 4th argument to getIndicator() both go away.
+  @Input() mockState: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled' = 'normal';
+
   view: PeerProgressViewModel = { state: 'loading', data: null, message: null };
 
   private activeRequest?: Subscription;
@@ -29,7 +34,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.task || changes.taskDef) {
+    if (changes.task || changes.taskDef || changes.mockState) {
       this.load();
     }
   }
@@ -59,7 +64,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
     const { unit, targetGrade } = this.task.project;
 
     this.activeRequest = this.ppiService
-      .getIndicator(this.taskDef.id, unit.id, targetGrade, 'normal')
+      .getIndicator(this.taskDef.id, unit.id, targetGrade, this.mockState)
       .subscribe({
         next: (data) => this.setView(resolvePeerProgressState(false, null, data)),
         error: (err) => this.setView(resolvePeerProgressState(false, err, null)),

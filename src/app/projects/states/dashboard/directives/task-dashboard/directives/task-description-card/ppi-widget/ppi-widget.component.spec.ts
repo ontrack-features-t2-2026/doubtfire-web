@@ -4,7 +4,6 @@ import { Subject, of, throwError, Observable } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { PpiWidgetComponent } from './ppi-widget.component';
 import { PeerProgressIndicatorService } from 'src/app/api/services/peer-progress-indicator.service';
 import { PeerProgressIndicator } from 'src/app/api/models/peer-progress-indicator';
@@ -17,7 +16,7 @@ import {
   UNAVAILABLE_STATE,
   STALE_STATE,
   DISABLED_STATE,
-} from 'src/app/api/services/mock/peer-progress-indicator.mock';
+} from 'src/app/api/services/mock';
 
 describe('PpiWidgetComponent', () => {
   let component: PpiWidgetComponent;
@@ -32,7 +31,7 @@ describe('PpiWidgetComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
-      imports: [MatIconModule, MatProgressSpinnerModule, MatButtonModule, NoopAnimationsModule],
+      imports: [MatIconModule, MatProgressSpinnerModule, MatButtonModule],
       providers: [{ provide: PeerProgressIndicatorService, useValue: { getIndicator } }],
     }).compileComponents();
 
@@ -62,30 +61,32 @@ describe('PpiWidgetComponent', () => {
   it('shows no-data when nobody has submitted yet', () => {
     load(of(ZERO_PERCENT_STATE));
     expect(component.view.state).toBe('no-data');
+    expect(fixture.nativeElement.textContent).toContain('No peer submissions yet');
   });
 
-  it('shows the hidden message for a suppressed response, without saying why', () => {
+  it('shows the API-provided hidden message for a suppressed response', () => {
     load(of(SUPPRESSED_STATE));
     expect(component.view.state).toBe('hidden');
-    expect(fixture.nativeElement.textContent).toContain('Not enough students to show progress.');
+    expect(fixture.nativeElement.textContent).toContain(SUPPRESSED_STATE.unavailableMessage);
     expect(fixture.nativeElement.textContent).not.toMatch(/\d+ students?/);
   });
 
-  it('shows the unavailable message when data is unavailable', () => {
+  it('shows the API-provided unavailable message', () => {
     load(of(UNAVAILABLE_STATE));
     expect(component.view.state).toBe('unavailable');
+    expect(fixture.nativeElement.textContent).toContain(UNAVAILABLE_STATE.unavailableMessage);
   });
 
-  it('shows the disabled message when the feature is turned off for the unit', () => {
+  it('shows the API-provided disabled message when the feature is turned off', () => {
     load(of(DISABLED_STATE));
     expect(component.view.state).toBe('disabled');
-    expect(fixture.nativeElement.textContent).toContain('Peer Progress Indicator is disabled for this unit.');
+    expect(fixture.nativeElement.textContent).toContain(DISABLED_STATE.unavailableMessage);
   });
 
-  it('shows the stale message when the response is marked stale', () => {
+  it('shows a distinct visible stale state when data is outdated', () => {
     load(of(STALE_STATE));
     expect(component.view.state).toBe('stale');
-    expect(fixture.nativeElement.textContent).toContain('may be outdated');
+    expect(fixture.nativeElement.textContent).toContain('Data may be outdated');
   });
 
   it('transitions from loading to success once the request resolves', () => {

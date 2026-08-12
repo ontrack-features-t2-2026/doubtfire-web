@@ -7,7 +7,7 @@ import {
   UNAVAILABLE_STATE,
   STALE_STATE,
   DISABLED_STATE,
-} from '../services/mock/peer-progress-indicator.mock';
+} from '../services/mock';
 
 describe('resolvePeerProgressState', () => {
   it('returns loading while the request is in flight, ignoring any data passed in', () => {
@@ -33,10 +33,10 @@ describe('resolvePeerProgressState', () => {
     expect(result.state).toBe('no-data');
   });
 
-  it('returns hidden for a suppressed (small-cohort) response, without leaking why', () => {
+  it('returns hidden with the API message for a suppressed response', () => {
     const result = resolvePeerProgressState(false, null, SUPPRESSED_STATE);
     expect(result.state).toBe('hidden');
-    expect(result.message).toBe('Not enough students to show progress.');
+    expect(result.message).toBe(SUPPRESSED_STATE.unavailableMessage);
   });
 
   it('returns unavailable for a generically unavailable response', () => {
@@ -47,7 +47,7 @@ describe('resolvePeerProgressState', () => {
   it('returns disabled when the unit has turned the feature off', () => {
     const result = resolvePeerProgressState(false, null, DISABLED_STATE);
     expect(result.state).toBe('disabled');
-    expect(result.message).toBe('Peer Progress Indicator is disabled for this unit.');
+    expect(result.message).toBe(DISABLED_STATE.unavailableMessage);
   });
 
   it('returns stale when data is outdated', () => {

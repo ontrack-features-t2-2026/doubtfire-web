@@ -32,13 +32,15 @@
   }
   @case ('no-data') {
     <div class="ppi-widget ppi-widget--muted">
-      <span>No peers have submitted this task yet.</span>
+      <mat-icon aria-hidden="false" aria-label="No data icon">hourglass_empty</mat-icon>
+      <span>No peer submissions yet</span>
     </div>
   }
   @case ('stale') {
-    <div class="ppi-widget ppi-widget--muted">
-      <mat-icon aria-hidden="false" aria-label="Stale data icon">history</mat-icon>
-      <span>{{ view.data?.submittedPercentage }}% of peers at your target grade have submitted (may be outdated)</span>
+    <div class="ppi-widget ppi-widget--warning">
+      <mat-icon aria-hidden="false" aria-label="Outdated data warning">history</mat-icon>
+      <span>{{ view.data?.submittedPercentage }}% of peers at your target grade have submitted</span>
+      <span class="ppi-widget__stale-badge">Data may be outdated</span>
     </div>
   }
   @case ('success') {
