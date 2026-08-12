@@ -1,12 +1,19 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { Task } from 'src/app/api/models/task';
-import { TaskDefinition } from 'src/app/api/models/task-definition';
-import { PeerProgressIndicatorService } from 'src/app/api/services/peer-progress-indicator.service';
 import {
-  resolvePeerProgressState,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnChanges,
+  OnDestroy,
+  SimpleChanges,
+} from '@angular/core';
+import {Subscription} from 'rxjs';
+import {
   PeerProgressViewModel,
+  resolvePeerProgressState,
 } from 'src/app/api/models/peer-progress-indicator-state';
+import {Task} from 'src/app/api/models/task';
+import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 
 // f-ppi-widget: renders the peer progress indicator for a task, with state handling per PPI-F03.
 @Component({
@@ -16,15 +23,16 @@ import {
   standalone: false,
 })
 export class PpiWidgetComponent implements OnChanges, OnDestroy {
-  @Input({ required: true }) task: Task;
-  @Input({ required: true }) taskDef: TaskDefinition;
+  @Input({required: true}) task: Task;
+  @Input({required: true}) taskDef: TaskDefinition;
 
   // Optional mock-state override for local previewing/screenshots.
   // Only used while the mock service is in place; once the real backend
   // lands, this input and the 4th argument to getIndicator() both go away.
-  @Input() mockState: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled' = 'normal';
+  @Input() mockState: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled' =
+    'normal';
 
-  view: PeerProgressViewModel = { state: 'loading', data: null, message: null };
+  view: PeerProgressViewModel = {state: 'loading', data: null, message: null};
 
   private activeRequest?: Subscription;
 
@@ -61,7 +69,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
     this.activeRequest?.unsubscribe();
     this.setView(resolvePeerProgressState(true, null, null));
 
-    const { unit, targetGrade } = this.task.project;
+    const {unit, targetGrade} = this.task.project;
 
     this.activeRequest = this.ppiService
       .getIndicator(this.taskDef.id, unit.id, targetGrade, this.mockState)

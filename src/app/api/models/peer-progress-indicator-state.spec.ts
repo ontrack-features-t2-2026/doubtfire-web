@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { resolvePeerProgressState } from './peer-progress-indicator-state';
+import {describe, expect, it} from 'vitest';
 import {
+  DISABLED_STATE,
   NORMAL_STATE,
-  ZERO_PERCENT_STATE,
+  STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
-  STALE_STATE,
-  DISABLED_STATE,
+  ZERO_PERCENT_STATE,
 } from '../services/mock';
+import {resolvePeerProgressState} from './peer-progress-indicator-state';
 
 describe('resolvePeerProgressState', () => {
   it('returns loading while the request is in flight, ignoring any data passed in', () => {
