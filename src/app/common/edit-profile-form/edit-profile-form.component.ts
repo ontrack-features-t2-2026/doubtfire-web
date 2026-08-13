@@ -110,6 +110,17 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Per-browser steps to reverse a blocked notification permission. Empty
+   * unless pushBlocker is 'permission-denied' — the generic message covers
+   * every other blocker.
+   */
+  public get pushBlockerInstructions(): string[] {
+    return this.pushBlocker === 'permission-denied'
+      ? this.pushService.permissionDeniedInstructions()
+      : [];
+  }
+
   public togglePushNotifications(): void {
     if (this.pushBusy) {
       return;

@@ -19,7 +19,8 @@ const emptyProvider = {};
 const pushServiceStub = {
   subscription$: of(null),
   isEnabled: false,
-  blocker: () => 'no-service-worker' as const,
+  blocker: (): 'no-service-worker' | 'permission-denied' => 'no-service-worker',
+  permissionDeniedInstructions: (): string[] => [],
 };
 
 describe('EditProfileFormComponent', () => {
@@ -27,6 +28,9 @@ describe('EditProfileFormComponent', () => {
   let fixture: ComponentFixture<EditProfileFormComponent>;
 
   beforeEach(async () => {
+    pushServiceStub.blocker = () => 'no-service-worker';
+    pushServiceStub.permissionDeniedInstructions = () => [];
+
     await TestBed.configureTestingModule({
       declarations: [EditProfileFormComponent],
       providers: [
@@ -51,5 +55,16 @@ describe('EditProfileFormComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('returns no instructions when nothing is blocking notifications', () => {
+    expect(component.pushBlockerInstructions).toEqual([]);
+  });
+
+  it('asks the push service for instructions when permission is denied', () => {
+    pushServiceStub.blocker = () => 'permission-denied';
+    pushServiceStub.permissionDeniedInstructions = () => ['step one', 'step two'];
+
+    expect(component.pushBlockerInstructions).toEqual(['step one', 'step two']);
   });
 });

@@ -14,6 +14,64 @@ export type PushBlocker =
   | 'permission-denied'
   | 'unsupported';
 
+/**
+ * Browsers we have specific unblock instructions for. 'other' covers Safari,
+ * Opera, and anything else — a generic fallback still gets shown.
+ */
+export type SupportedBrowser = 'chrome' | 'edge' | 'firefox' | 'other';
+
+/**
+ * Which browser the user agent string identifies as.
+ *
+ * Order matters: Edge's user agent also contains "Chrome/", and older Opera
+ * builds do too, so the more specific token has to be checked first or every
+ * Edge user gets Chrome's instructions.
+ */
+export function detectBrowser(userAgent: string): SupportedBrowser {
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('edg/')) {
+    return 'edge';
+  }
+  if (ua.includes('firefox/')) {
+    return 'firefox';
+  }
+  if (ua.includes('chrome/')) {
+    return 'chrome';
+  }
+  return 'other';
+}
+
+/**
+ * Step-by-step instructions for reversing a blocked notification permission,
+ * per browser. A site cannot re-prompt once denied — only the user can undo
+ * it, in their own browser's settings.
+ */
+export const PERMISSION_DENIED_INSTRUCTIONS: Record<SupportedBrowser, string[]> = {
+  chrome: [
+    'Click the lock (or tune) icon to the left of the address bar.',
+    'Select "Site settings".',
+    'Set Notifications to "Allow".',
+    'Reload this page.',
+  ],
+  edge: [
+    'Click the lock icon to the left of the address bar.',
+    'Select "Permissions for this site".',
+    'Set Notifications to "Allow".',
+    'Reload this page.',
+  ],
+  firefox: [
+    'Click the lock icon to the left of the address bar.',
+    'Select "More Information", then the Permissions tab.',
+    'Clear the blocked Notifications permission and set it to "Allow".',
+    'Reload this page.',
+  ],
+  other: [
+    "Open this site's permissions from your browser's address bar menu.",
+    'Find Notifications and set it to "Allow".',
+    'Reload this page.',
+  ],
+};
+
 @Injectable({providedIn: 'root'})
 export class PushNotificationService {
   private readonly endpoint = `${API_URL}/push_subscriptions`;
@@ -60,6 +118,23 @@ export class PushNotificationService {
       return 'no-service-worker';
     }
     return null;
+  }
+
+  /**
+   * Which browser this is, based on the user agent. Drives which set of
+   * unblock instructions is shown.
+   */
+  public get browser(): SupportedBrowser {
+    return detectBrowser(typeof navigator !== 'undefined' ? navigator.userAgent : '');
+  }
+
+  /**
+   * Step-by-step instructions for this browser to reverse a blocked
+   * notification permission. Only meaningful when blocker() returned
+   * 'permission-denied'; callers should check that first.
+   */
+  public permissionDeniedInstructions(): string[] {
+    return PERMISSION_DENIED_INSTRUCTIONS[this.browser];
   }
 
   /**

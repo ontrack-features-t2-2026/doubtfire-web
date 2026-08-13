@@ -6,7 +6,11 @@ import {SwPush} from '@angular/service-worker';
 import {BehaviorSubject, NEVER, Observable} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {PushNotificationService} from '../push-notification.service';
+import {
+  PERMISSION_DENIED_INSTRUCTIONS,
+  PushNotificationService,
+  detectBrowser,
+} from '../push-notification.service';
 
 const ENDPOINT = 'https://fcm.googleapis.com/fcm/send/test-browser';
 
@@ -236,5 +240,50 @@ describe('PushNotificationService', () => {
     delete (window as unknown as {PushManager?: unknown}).PushManager;
 
     expect(service.blocker()).toBe('unsupported');
+  });
+
+  describe('detectBrowser', () => {
+    it('recognises Chrome', () => {
+      const ua =
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      expect(detectBrowser(ua)).toBe('chrome');
+    });
+
+    it('recognises Edge even though its user agent also contains Chrome', () => {
+      const ua =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0';
+      expect(detectBrowser(ua)).toBe('edge');
+    });
+
+    it('recognises Firefox', () => {
+      const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0';
+      expect(detectBrowser(ua)).toBe('firefox');
+    });
+
+    it('falls back to other for an unrecognised browser', () => {
+      expect(detectBrowser('SomeUnknownBrowser/1.0')).toBe('other');
+    });
+  });
+
+  describe('permissionDeniedInstructions', () => {
+    it('returns Chrome steps in Chrome', () => {
+      vi.stubGlobal('navigator', {userAgent: 'Chrome/120.0.0.0'});
+      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.chrome);
+    });
+
+    it('returns Edge steps in Edge', () => {
+      vi.stubGlobal('navigator', {userAgent: 'Chrome/120.0.0.0 Edg/120.0.0.0'});
+      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.edge);
+    });
+
+    it('returns Firefox steps in Firefox', () => {
+      vi.stubGlobal('navigator', {userAgent: 'Firefox/120.0'});
+      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.firefox);
+    });
+
+    it('returns generic steps in an unrecognised browser', () => {
+      vi.stubGlobal('navigator', {userAgent: 'SomeUnknownBrowser/1.0'});
+      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.other);
+    });
   });
 });
