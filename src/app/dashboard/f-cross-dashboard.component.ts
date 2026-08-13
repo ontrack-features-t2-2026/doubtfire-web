@@ -40,6 +40,9 @@ export class CrossDashboardComponent implements OnInit {
 
   unitScope: UnitScope = 'active';
 
+  startDate = '';
+  endDate = '';
+
   previousUnitsLoaded = false;
   loadingPreviousUnits = false;
   previousUnitsLoadError = false;
@@ -72,6 +75,14 @@ export class CrossDashboardComponent implements OnInit {
     return this.unitsProcessed;
   }
 
+  get isDateRangeInvalid(): boolean {
+    return !!this.startDate && !!this.endDate && this.startDate > this.endDate;
+  }
+
+  get isDateFilterActive(): boolean {
+    return !this.isDateRangeInvalid && (!!this.startDate || !!this.endDate);
+  }
+
   setUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
     this.processTasks();
@@ -83,6 +94,22 @@ export class CrossDashboardComponent implements OnInit {
     }
   }
 
+  setStartDate(value: string): void {
+    this.startDate = value;
+    this.processTasks();
+  }
+
+  setEndDate(value: string): void {
+    this.endDate = value;
+    this.processTasks();
+  }
+
+  clearDateRange(): void {
+    this.startDate = '';
+    this.endDate = '';
+    this.processTasks();
+  }
+
   setSort(project: number, mode: SortMode): void {
     this.sorting.set(project, mode);
     this.processTasks();
@@ -90,11 +117,13 @@ export class CrossDashboardComponent implements OnInit {
 
   toggleFilter(project: number, filter: Filter): void {
     let filters = this.filters.get(project) ?? [];
+
     if (filters.includes(filter)) {
       filters = filters.filter((currentFilter) => currentFilter !== filter);
     } else {
       filters = [...filters, filter];
     }
+
     this.filters.set(project, filters);
     this.processTasks();
   }
@@ -144,7 +173,12 @@ export class CrossDashboardComponent implements OnInit {
       tasks: unit.tasks
         .filter((task) => {
           const filters = this.filters.get(unit.projectId) ?? [];
-          return !(filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status));
+
+          if (filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status)) {
+            return false;
+          }
+
+          return this.taskMatchesDateRange(task);
         })
         .sort((a, b) => {
           const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
@@ -162,7 +196,7 @@ export class CrossDashboardComponent implements OnInit {
               // TODO: Connect to recommender's points.
               return 0;
             case SortMode.SubmissionDate:
-              return a.dueDate.getTime() - b.dueDate.getTime();
+              return this.compareDueDates(a.dueDate, b.dueDate);
             case SortMode.Default:
               return a.weight - b.weight;
           }
@@ -170,6 +204,67 @@ export class CrossDashboardComponent implements OnInit {
           return 0;
         }),
     }));
+  }
+
+  private taskMatchesDateRange(task: DashboardTask): boolean {
+    if (!this.isDateFilterActive) {
+      return true;
+    }
+
+    const taskDate = this.calendarDateKey(task.dueDate);
+
+    if (!taskDate) {
+      return false;
+    }
+
+    if (this.startDate && taskDate < this.startDate) {
+      return false;
+    }
+
+    if (this.endDate && taskDate > this.endDate) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private calendarDateKey(date: Date | null | undefined): string | null {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private compareDueDates(
+    firstDate: Date | null | undefined,
+    secondDate: Date | null | undefined,
+  ): number {
+    const firstTime =
+      firstDate instanceof Date && !Number.isNaN(firstDate.getTime()) ? firstDate.getTime() : null;
+
+    const secondTime =
+      secondDate instanceof Date && !Number.isNaN(secondDate.getTime())
+        ? secondDate.getTime()
+        : null;
+
+    if (firstTime === null && secondTime === null) {
+      return 0;
+    }
+
+    if (firstTime === null) {
+      return 1;
+    }
+
+    if (secondTime === null) {
+      return -1;
+    }
+
+    return firstTime - secondTime;
   }
 
   private getUnitsForCurrentScope(): DashboardUnit[] {
