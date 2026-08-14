@@ -1,14 +1,13 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { PeerProgressIndicator } from '../models/peer-progress-indicator';
-
+import {Injectable} from '@angular/core';
+import {Observable, of} from 'rxjs';
+import {PeerProgressIndicator} from '../models/peer-progress-indicator';
 import {
+  DISABLED_STATE,
   NORMAL_STATE,
-  ZERO_PERCENT_STATE,
+  STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
-  STALE_STATE,
-  DISABLED_STATE,
+  ZERO_PERCENT_STATE,
 } from './mock/peer-progress-indicator.mock';
 
 @Injectable({
@@ -23,7 +22,7 @@ export class PeerProgressIndicatorService {
     taskDefinitionId: number,
     unitId: number,
     targetGrade: number,
-    state: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled'
+    state: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled',
   ): Observable<PeerProgressIndicator> {
     const base = this.resolveState(state);
 

@@ -39,9 +39,7 @@
   @case ('stale') {
     <div class="ppi-widget ppi-widget--warning">
       <mat-icon aria-hidden="false" aria-label="Outdated data warning">history</mat-icon>
-      <span
-        >{{ view.data?.submittedPercentage }}% of peers at your target grade have submitted</span
-      >
+      <span>{{ view.message }}</span>
       <span class="ppi-widget__stale-badge">Data may be outdated</span>
     </div>
   }

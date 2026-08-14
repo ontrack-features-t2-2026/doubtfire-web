@@ -50,9 +50,12 @@ describe('resolvePeerProgressState', () => {
     expect(result.message).toBe(DISABLED_STATE.unavailableMessage);
   });
 
-  it('returns stale when data is outdated', () => {
+  it('returns stale without exposing a percentage when data is outdated', () => {
     const result = resolvePeerProgressState(false, null, STALE_STATE);
+
     expect(result.state).toBe('stale');
+    expect(result.data?.submittedPercentage).toBeNull();
+    expect(result.message).toBe(STALE_STATE.unavailableMessage);
   });
 
   it('transitions from loading to success without carrying over a stale value', () => {

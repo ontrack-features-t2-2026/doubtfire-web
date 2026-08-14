@@ -87,7 +87,10 @@ describe('PpiWidgetComponent', () => {
   it('shows a distinct visible stale state when data is outdated', () => {
     load(of(STALE_STATE));
     expect(component.view.state).toBe('stale');
-    expect(fixture.nativeElement.textContent).toContain('Data may be outdated');
+    expect(component.view.data?.submittedPercentage).toBeNull();
+    expect(component.view.message).toBe(STALE_STATE.unavailableMessage);
+    expect(fixture.nativeElement.textContent).toContain('Peer progress is currently unavailable.');
+    expect(fixture.nativeElement.textContent).not.toContain('55%');
   });
 
   it('transitions from loading to success once the request resolves', () => {

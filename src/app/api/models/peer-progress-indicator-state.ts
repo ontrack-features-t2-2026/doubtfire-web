@@ -40,12 +40,12 @@ export function resolvePeerProgressState(
     return {state: 'hidden', data, message: data.unavailableMessage};
   }
 
-  if (data.submittedPercentage === null) {
-    return {state: 'unavailable', data, message: data.unavailableMessage};
-  }
-
   if (data.isStale) {
     return {state: 'stale', data, message: data.unavailableMessage};
+  }
+
+  if (data.submittedPercentage === null) {
+    return {state: 'unavailable', data, message: data.unavailableMessage};
   }
 
   if (data.submittedPercentage === 0) {
