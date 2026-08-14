@@ -1,16 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {
+  FIXTURE_DISABLED,
+  FIXTURE_MALFORMED,
   FIXTURE_NORMAL,
-  FIXTURE_ZERO_PERCENT,
+  FIXTURE_STALE,
   FIXTURE_SUPPRESSED,
   FIXTURE_UNAVAILABLE,
-  FIXTURE_DISABLED,
-  FIXTURE_STALE,
-  FIXTURE_MALFORMED,
+  FIXTURE_ZERO_PERCENT,
 } from './peer-progress-indicator.fixtures';
 
 describe('PPI Unit Summary Compatibility Expectations', () => {
-
   // Basic Input Expectations
   it('component must accept all valid safe-state fixtures', () => {
     const validFixtures = [
@@ -22,7 +21,7 @@ describe('PPI Unit Summary Compatibility Expectations', () => {
       FIXTURE_STALE,
     ];
 
-    validFixtures.forEach(f => {
+    validFixtures.forEach((f) => {
       expect(f).toHaveProperty('submittedPercentage');
       expect(f).toHaveProperty('isSuppressed');
       expect(f).toHaveProperty('isFeatureEnabled');
@@ -73,7 +72,7 @@ describe('PPI Unit Summary Compatibility Expectations', () => {
       FIXTURE_STALE,
     ];
 
-    fixtures.forEach(f => {
+    fixtures.forEach((f) => {
       expect(f).not.toHaveProperty('peerName');
       expect(f).not.toHaveProperty('studentId');
       expect(f).not.toHaveProperty('cohortCount');

@@ -1,4 +1,4 @@
-import { PeerProgressIndicator } from '../models/peer-progress-indicator';
+import {PeerProgressIndicator} from '../models/peer-progress-indicator';
 
 export const FIXTURE_NORMAL: PeerProgressIndicator = {
   taskDefinitionId: 12,

@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import {describe, expect, it} from 'vitest';
+import {PeerProgressIndicator} from '../models/peer-progress-indicator';
 import {
+  FIXTURE_DISABLED,
+  FIXTURE_MALFORMED,
   FIXTURE_NORMAL,
-  FIXTURE_ZERO_PERCENT,
+  FIXTURE_STALE,
   FIXTURE_SUPPRESSED,
   FIXTURE_UNAVAILABLE,
-  FIXTURE_DISABLED,
-  FIXTURE_STALE,
-  FIXTURE_MALFORMED,
+  FIXTURE_ZERO_PERCENT,
 } from './peer-progress-indicator.fixtures';
-import { PeerProgressIndicator } from '../models/peer-progress-indicator';
 
 const assertContractShape = (fixture: PeerProgressIndicator) => {
   expect(typeof fixture.taskDefinitionId).toBe('number');
@@ -17,8 +17,7 @@ const assertContractShape = (fixture: PeerProgressIndicator) => {
 
   // submittedPercentage can be number or null
   expect(
-    fixture.submittedPercentage === null ||
-      typeof fixture.submittedPercentage === 'number',
+    fixture.submittedPercentage === null || typeof fixture.submittedPercentage === 'number',
   ).toBe(true);
 
   expect(typeof fixture.isSuppressed).toBe('boolean');
@@ -30,7 +29,6 @@ const assertContractShape = (fixture: PeerProgressIndicator) => {
 };
 
 describe('PeerProgressIndicator Fixture Regression Tests', () => {
-
   // Contract Shape Tests
   it('NORMAL fixture matches the contract shape', () => {
     assertContractShape(FIXTURE_NORMAL);
@@ -100,7 +98,7 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
       FIXTURE_STALE,
     ];
 
-    fixtures.forEach(f => {
+    fixtures.forEach((f) => {
       expect(f).not.toHaveProperty('peerName');
       expect(f).not.toHaveProperty('studentId');
       expect(f).not.toHaveProperty('cohortCount');
@@ -129,7 +127,7 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
       FIXTURE_STALE,
     ];
 
-    validFixtures.forEach(f => {
+    validFixtures.forEach((f) => {
       expect(() => assertContractShape(f)).not.toThrow();
     });
   });

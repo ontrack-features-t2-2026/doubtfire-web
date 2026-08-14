@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import {describe, expect, it} from 'vitest';
+import {PeerProgressIndicator} from '../models/peer-progress-indicator';
 import {
+  FIXTURE_DISABLED,
+  FIXTURE_MALFORMED,
   FIXTURE_NORMAL,
-  FIXTURE_ZERO_PERCENT,
+  FIXTURE_STALE,
   FIXTURE_SUPPRESSED,
   FIXTURE_UNAVAILABLE,
-  FIXTURE_DISABLED,
-  FIXTURE_STALE,
-  FIXTURE_MALFORMED,
+  FIXTURE_ZERO_PERCENT,
 } from './peer-progress-indicator.fixtures';
-import { PeerProgressIndicator } from '../models/peer-progress-indicator';
 
 // A mock adapter boundary check
 const adapterBoundaryCheck = (input: PeerProgressIndicator) => {
@@ -43,14 +43,16 @@ describe('PPI Adapter Compatibility Expectations', () => {
       FIXTURE_STALE,
     ];
 
-    validFixtures.forEach(f => {
+    validFixtures.forEach((f) => {
       expect(() => adapterBoundaryCheck(f)).not.toThrow();
     });
   });
 
   it('rejects malformed fixture fields', () => {
     expect(() =>
-      adapterBoundaryCheck(FIXTURE_MALFORMED as Partial<PeerProgressIndicator> as PeerProgressIndicator)
+      adapterBoundaryCheck(
+        FIXTURE_MALFORMED as Partial<PeerProgressIndicator> as PeerProgressIndicator,
+      ),
     ).toThrow();
   });
 
@@ -83,7 +85,7 @@ describe('PPI Adapter Compatibility Expectations', () => {
       FIXTURE_STALE,
     ];
 
-    fixtures.forEach(f => {
+    fixtures.forEach((f) => {
       expect(f).not.toHaveProperty('peerName');
       expect(f).not.toHaveProperty('studentId');
       expect(f).not.toHaveProperty('cohortCount');
