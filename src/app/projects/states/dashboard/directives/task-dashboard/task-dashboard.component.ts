@@ -159,6 +159,13 @@ export class TaskDashboardComponent implements OnInit, OnChanges {
     );
   }
 
+  public get canViewPeerProgress(): boolean {
+    const currentUserId = this.userService.currentUser?.id;
+    const projectStudentId = this.task?.project?.student?.id;
+
+    return currentUserId !== undefined && currentUserId === projectStudentId;
+  }
+
   downloadSubmission() {
     this.fileDownloader.downloadFile(this.urls.taskSubmissionPdfAttachmentUrl, 'submission.pdf');
   }

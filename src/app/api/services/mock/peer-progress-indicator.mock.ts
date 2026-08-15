@@ -1,4 +1,4 @@
-import { PeerProgressIndicator } from '../../models/peer-progress-indicator';
+import {PeerProgressIndicator} from '../../models/peer-progress-indicator';
 
 export const NORMAL_STATE: PeerProgressIndicator = {
   taskDefinitionId: 0,
@@ -52,12 +52,12 @@ export const STALE_STATE: PeerProgressIndicator = {
   taskDefinitionId: 0,
   unitId: 0,
   targetGrade: 0,
-  submittedPercentage: 55,
+  submittedPercentage: null,
   isSuppressed: false,
   isStale: true,
   isFeatureEnabled: true,
-  lastUpdatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days old
-  unavailableMessage: 'Progress data is stale.',
+  lastUpdatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+  unavailableMessage: 'Peer progress is currently unavailable.',
 };
 
 export const DISABLED_STATE: PeerProgressIndicator = {

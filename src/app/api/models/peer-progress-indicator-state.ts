@@ -1,4 +1,4 @@
-import { PeerProgressIndicator } from './peer-progress-indicator';
+import {PeerProgressIndicator} from './peer-progress-indicator';
 
 export type PeerProgressUiState =
   | 'loading'
@@ -25,32 +25,32 @@ export function resolvePeerProgressState(
   data: PeerProgressIndicator | null,
 ): PeerProgressViewModel {
   if (loading) {
-    return { state: 'loading', data: null, message: null };
+    return {state: 'loading', data: null, message: null};
   }
 
   if (error || !data) {
-    return { state: 'error', data: null, message: GENERIC_ERROR_MESSAGE };
+    return {state: 'error', data: null, message: GENERIC_ERROR_MESSAGE};
   }
 
   if (!data.isFeatureEnabled) {
-    return { state: 'disabled', data, message: data.unavailableMessage };
+    return {state: 'disabled', data, message: data.unavailableMessage};
   }
 
   if (data.isSuppressed) {
-    return { state: 'hidden', data, message: data.unavailableMessage };
-  }
-
-  if (data.submittedPercentage === null) {
-    return { state: 'unavailable', data, message: data.unavailableMessage };
+    return {state: 'hidden', data, message: data.unavailableMessage};
   }
 
   if (data.isStale) {
-    return { state: 'stale', data, message: data.unavailableMessage };
+    return {state: 'stale', data, message: data.unavailableMessage};
+  }
+
+  if (data.submittedPercentage === null) {
+    return {state: 'unavailable', data, message: data.unavailableMessage};
   }
 
   if (data.submittedPercentage === 0) {
-    return { state: 'no-data', data, message: null };
+    return {state: 'no-data', data, message: null};
   }
 
-  return { state: 'success', data, message: null };
+  return {state: 'success', data, message: null};
 }

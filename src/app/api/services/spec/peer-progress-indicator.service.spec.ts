@@ -1,15 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { TestBed } from '@angular/core/testing';
-import { PeerProgressIndicatorService } from '../peer-progress-indicator.service';
-
+import {beforeEach, describe, expect, it} from 'vitest';
+import {TestBed} from '@angular/core/testing';
 import {
+  DISABLED_STATE,
   NORMAL_STATE,
-  ZERO_PERCENT_STATE,
+  STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
-  STALE_STATE,
-  DISABLED_STATE,
+  ZERO_PERCENT_STATE,
 } from '../mock/peer-progress-indicator.mock';
+import {PeerProgressIndicatorService} from '../peer-progress-indicator.service';
 
 describe('PeerProgressIndicatorService', () => {
   let service: PeerProgressIndicatorService;
