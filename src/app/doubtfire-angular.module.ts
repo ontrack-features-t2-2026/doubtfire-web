@@ -184,6 +184,7 @@ import {TasksForInboxSearchPipe} from './common/filters/tasks-for-inbox-search.p
 import {TasksInTutorialsPipe} from './common/filters/tasks-in-tutorials.pipe';
 import {TasksOfTaskDefinitionPipe} from './common/filters/tasks-of-task-definition.pipe';
 import {FooterComponent} from './common/footer/footer.component';
+import {PageContainerComponent} from './common/page-container/page-container.component';
 import {GradeIconComponent} from './common/grade-icon/grade-icon.component';
 import {HeaderComponent} from './common/header/header.component';
 import {TaskDropdownComponent} from './common/header/task-dropdown/task-dropdown.component';
@@ -555,6 +556,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskStatusCardComponent,
     TaskDueCardComponent,
     FooterComponent,
+    PageContainerComponent,
     TaskAssessmentCardComponent,
     TaskSubmissionCardComponent,
     TaskDashboardComponent,
