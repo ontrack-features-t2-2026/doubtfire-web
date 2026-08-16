@@ -1,8 +1,8 @@
 @if (unit.hasGroupwork()) {
-  <div class="mx-auto max-w-[90vw]">
+  <f-page-container>
     <f-group-set-manager [selectedGroupSet]="selectedGroupSet" [unit]="unit" [unitRole]="unitRole">
     </f-group-set-manager>
-  </div>
+  </f-page-container>
 } @else {
   <div class="mx-auto flex max-w-4xl flex-col items-center justify-center">
     <mat-icon>groups</mat-icon>
