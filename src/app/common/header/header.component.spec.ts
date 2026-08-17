@@ -3,7 +3,9 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
+import {of} from 'rxjs';
 import {AuthenticationService} from 'src/app/api/models/doubtfire-model';
+import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
@@ -36,6 +38,7 @@ describe('HeaderComponent', () => {
         {provide: AuthenticationService, useValue: emptyProvider},
         {provide: MediaObserver, useValue: emptyProvider},
         {provide: DoubtfireConstants, useValue: emptyProvider},
+        {provide: NotificationService, useValue: {unreadCount$: of(0)}},
         {provide: SidekiqJobService, useValue: emptyProvider},
         {provide: SidekiqJobsModalService, useValue: emptyProvider},
         {provide: QrModalService, useValue: emptyProvider},

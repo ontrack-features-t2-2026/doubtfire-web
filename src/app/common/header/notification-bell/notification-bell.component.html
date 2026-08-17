@@ -1,0 +1,10 @@
+<button
+  class="notification-bell-button"
+  mat-icon-button
+  matTooltip="Notifications"
+  [attr.aria-label]="bellLabel"
+  [matBadge]="unreadCount"
+  [matBadgeHidden]="unreadCount === 0"
+>
+  <mat-icon>notifications</mat-icon>
+</button>

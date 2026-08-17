@@ -186,6 +186,7 @@ import {TasksOfTaskDefinitionPipe} from './common/filters/tasks-of-task-definiti
 import {FooterComponent} from './common/footer/footer.component';
 import {GradeIconComponent} from './common/grade-icon/grade-icon.component';
 import {HeaderComponent} from './common/header/header.component';
+import {NotificationBellComponent} from './common/header/notification-bell/notification-bell.component';
 import {TaskDropdownComponent} from './common/header/task-dropdown/task-dropdown.component';
 import {UnitDropdownComponent} from './common/header/unit-dropdown/unit-dropdown.component';
 import {HeroSidebarComponent} from './common/hero-sidebar/hero-sidebar.component';
@@ -540,6 +541,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     HeaderComponent,
     UnitDropdownComponent,
     TaskDropdownComponent,
+    NotificationBellComponent,
     SplashScreenComponent,
     SubmissionFilesDownloadComponent,
     ProjectDashboardComponent,
