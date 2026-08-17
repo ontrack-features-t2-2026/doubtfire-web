@@ -1,15 +1,21 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {OverlayContainer} from '@angular/cdk/overlay';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatBadge, MatBadgeModule} from '@angular/material/badge';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {MatListModule} from '@angular/material/list';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {By} from '@angular/platform-browser';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {NavigationEnd, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, config, defer, of, throwError} from 'rxjs';
+import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
+import {AlertService} from 'src/app/common/services/alert.service';
 import {NotificationBellComponent} from './notification-bell.component';
 
 /**
@@ -18,33 +24,55 @@ import {NotificationBellComponent} from './notification-bell.component';
  * ask again as the user moves around the app. The two after those cover the
  * ones that are easy to leave out, a count request going out after sign out and
  * one still going out after the component is gone.
+ *
+ * The dropdown tests open the real menu and read the real overlay rather than
+ * poking at the component's fields, because "handle the empty state" is a
+ * question about what is on the screen. The one that matters most is the pair
+ * about failure: a list that came back empty and a list that failed to come
+ * back look identical from the outside and mean opposite things.
  */
 describe('NotificationBellComponent', () => {
   let component: NotificationBellComponent;
   let fixture: ComponentFixture<NotificationBellComponent>;
+  let overlayContainer: OverlayContainer;
 
   let unreadCount: BehaviorSubject<number>;
   let routerEvents: Subject<NavigationEnd>;
+  let list: Subject<Notification[]>;
   let subscribedTo: Set<string>;
   let notificationService: {
     unreadCount$: BehaviorSubject<number>;
     refreshUnreadCount: ReturnType<typeof vi.fn>;
+    list: ReturnType<typeof vi.fn>;
+    markRead: ReturnType<typeof vi.fn>;
   };
   let authenticationService: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let alerts: {success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>};
   let router: {events: unknown; navigateByUrl: ReturnType<typeof vi.fn>};
 
   /**
    * A stand-in that records whether anybody actually subscribed.
    *
-   * A spy that only counts calls is happy either way, and refreshUnreadCount
-   * returns a cold observable, so dropping the .subscribe() in the component
-   * sends no request at all while the call count stays the same.
+   * A spy that only counts calls is happy either way, and every one of these
+   * methods returns a cold observable, so dropping the .subscribe() in the
+   * component sends no request at all while every call count stays the same.
    */
   const answers = <T>(name: string, value: T): Observable<T> =>
     defer(() => {
       subscribedTo.add(name);
       return of(value);
     });
+
+  const notification = (id: number, over: Partial<Notification> = {}): Notification => {
+    const built = new Notification();
+    built.id = id;
+    built.message = `notification ${id}`;
+    built.link = `/projects/${id}/dashboard`;
+    built.notificationType = 'feedback';
+    built.readAt = null;
+    built.createdAt = new Date(2026, 7, 17, 9, 0, 0);
+    return Object.assign(built, over);
+  };
 
   const bell = (): HTMLElement => fixture.nativeElement.querySelector('button');
 
@@ -59,16 +87,61 @@ describe('NotificationBellComponent', () => {
       .query(By.directive(MatBadge))
       .nativeElement.classList.contains('mat-badge-hidden');
 
+  const openMenu = (): void => {
+    bell().click();
+    fixture.detectChanges();
+  };
+
+  // Reads the list a second time without going through the trigger, which is
+  // what reopening the menu does.
+  const reopenWith = (): Subject<Notification[]> => {
+    const refresh: Subject<Notification[]> = new Subject();
+    notificationService.list.mockReturnValue(refresh);
+    component.onMenuOpened();
+    fixture.detectChanges();
+    return refresh;
+  };
+
+  // The menu panel is not inside the component, it is in the cdk overlay
+  // container, so nothing in the dropdown can be found through the fixture.
+  const panel = (): HTMLElement => overlayContainer.getContainerElement();
+
+  const rows = (): HTMLElement[] => Array.from(panel().querySelectorAll('.notification-row'));
+
+  const rowText = (): string[] =>
+    rows().map((row) => row.querySelector('.notification-message').textContent.trim());
+
+  const glyphIcons = (): string[] =>
+    Array.from(panel().querySelectorAll('.notification-glyph mat-icon')).map((icon) =>
+      icon.textContent.trim(),
+    );
+
+  // The tone class, not the computed colour. jsdom applies no stylesheet, and
+  // the class is the contract between the template and the scss anyway.
+  const glyphTones = (): string[] =>
+    Array.from(panel().querySelectorAll('.notification-glyph')).map((glyph) =>
+      Array.from(glyph.classList).find((name) => name.startsWith('tone-')),
+    );
+
+  const placeholderText = (): string =>
+    Array.from(panel().querySelectorAll('.notification-empty'))
+      .map((element) => element.textContent.trim())
+      .join(' ');
+
   beforeEach(async () => {
     unreadCount = new BehaviorSubject<number>(0);
     routerEvents = new Subject<NavigationEnd>();
+    list = new Subject<Notification[]>();
     subscribedTo = new Set<string>();
 
     notificationService = {
       unreadCount$: unreadCount,
       refreshUnreadCount: vi.fn(() => answers('refreshUnreadCount', 0)),
+      list: vi.fn().mockReturnValue(list),
+      markRead: vi.fn(() => answers('markRead', undefined)),
     };
     authenticationService = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    alerts = {success: vi.fn(), error: vi.fn()};
     router = {events: routerEvents.asObservable(), navigateByUrl: vi.fn()};
 
     await TestBed.configureTestingModule({
@@ -77,18 +150,27 @@ describe('NotificationBellComponent', () => {
         MatBadgeModule,
         MatButtonModule,
         MatIconModule,
+        MatListModule,
+        MatMenuModule,
+        MatProgressSpinnerModule,
         MatTooltipModule,
         NoopAnimationsModule,
       ],
       providers: [
         {provide: NotificationService, useValue: notificationService},
         {provide: AuthenticationService, useValue: authenticationService},
+        {provide: AlertService, useValue: alerts},
         {provide: Router, useValue: router},
       ],
     }).compileComponents();
 
+    overlayContainer = TestBed.inject(OverlayContainer);
     fixture = TestBed.createComponent(NotificationBellComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
   });
 
   it('shows how many are unread', () => {
@@ -195,5 +277,266 @@ describe('NotificationBellComponent', () => {
     } finally {
       config.onUnhandledError = previous;
     }
+  });
+
+  describe('the dropdown', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it('reads the list every time it is opened', () => {
+      expect(notificationService.list).not.toHaveBeenCalled();
+
+      openMenu();
+      expect(notificationService.list).toHaveBeenCalledTimes(1);
+
+      list.next([notification(1)]);
+      fixture.detectChanges();
+
+      // Closing and opening again has to go back to the api. A list fetched
+      // once at sign in would be wrong for the rest of the session.
+      component.onMenuOpened();
+      expect(notificationService.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the newest few, newest first', () => {
+      openMenu();
+
+      const at = (hour: number) => new Date(2026, 7, 17, hour, 0, 0);
+      list.next([
+        notification(1, {createdAt: at(9)}),
+        notification(2, {createdAt: at(14)}),
+        notification(3, {createdAt: at(11)}),
+        notification(4, {createdAt: at(15)}),
+        notification(5, {createdAt: at(10)}),
+        notification(6, {createdAt: at(13)}),
+        notification(7, {createdAt: at(12)}),
+      ]);
+      fixture.detectChanges();
+
+      expect(rowText()).toEqual([
+        'notification 4',
+        'notification 2',
+        'notification 6',
+        'notification 7',
+        'notification 3',
+      ]);
+    });
+
+    it('makes each row a real button so a keyboard can open it', () => {
+      openMenu();
+      list.next([notification(1)]);
+      fixture.detectChanges();
+
+      // Structural, and it has to be. MatMenu's key manager only moves focus,
+      // it never synthesises a click, so Enter on a row works only because the
+      // element is natively a button. The test environment does not simulate
+      // that browser behaviour either, so the element type is the assertion.
+      expect(rows()[0].tagName).toBe('BUTTON');
+    });
+
+    it('gives each category its own icon and colour', () => {
+      openMenu();
+      list.next([
+        notification(1, {notificationType: 'feedback'}),
+        notification(2, {notificationType: 'task'}),
+        notification(3, {notificationType: 'portfolio'}),
+        notification(4, {notificationType: 'extension'}),
+        notification(5, {notificationType: 'general'}),
+      ]);
+      fixture.detectChanges();
+
+      expect(glyphIcons()).toEqual([
+        'chat_bubble',
+        'assignment',
+        'collections_bookmark',
+        'more_time',
+        'campaign',
+      ]);
+
+      // The tone is what the stylesheet colours on, so a row with the right
+      // icon and the wrong tone still looks wrong.
+      expect(glyphTones()).toEqual([
+        'tone-feedback',
+        'tone-task',
+        'tone-portfolio',
+        'tone-extension',
+        'tone-general',
+      ]);
+    });
+
+    it('still draws something for a category it has never heard of', () => {
+      openMenu();
+      // Notification::TYPES is validated on the api, so this is a sixth
+      // category added there reaching a browser running older web code. A row
+      // with no icon at all is worse than a generic one.
+      list.next([notification(1, {notificationType: 'announcement'})]);
+      fixture.detectChanges();
+
+      expect(glyphIcons()).toEqual(['notifications']);
+      expect(glyphTones()).toEqual(['tone-general']);
+    });
+
+    it('marks the unread rows with a dot and leaves the read ones a gap', () => {
+      openMenu();
+      list.next([notification(1), notification(2, {readAt: new Date(2026, 7, 17, 9, 30, 0)})]);
+      fixture.detectChanges();
+
+      const dots = Array.from(panel().querySelectorAll('.notification-unread-dot'));
+
+      // Both rows keep the element. Removing it on read would shuffle the
+      // delete button sideways from row to row.
+      expect(dots).toHaveLength(2);
+      expect(dots[0].classList.contains('is-read')).toBe(false);
+      expect(dots[1].classList.contains('is-read')).toBe(true);
+    });
+
+    it('says unread in words, not only in bold and colour', () => {
+      openMenu();
+      list.next([
+        notification(1, {message: 'Andrew Cain commented on 1.1P.'}),
+        notification(2, {
+          message: 'Your extension was granted.',
+          readAt: new Date(2026, 7, 17, 9, 30, 0),
+        }),
+      ]);
+      fixture.detectChanges();
+
+      // Weight and a dot are both things you have to be able to see.
+      expect(rows()[0].getAttribute('aria-label')).toContain('Unread.');
+      expect(rows()[0].getAttribute('aria-label')).toContain('Andrew Cain commented on 1.1P.');
+      expect(rows()[1].getAttribute('aria-label')).toContain('Read.');
+    });
+
+    it('says how long ago each one arrived', () => {
+      openMenu();
+
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      list.next([notification(1, {createdAt: twoHoursAgo})]);
+      fixture.detectChanges();
+
+      expect(rows()[0].querySelector('.notification-time').textContent.trim()).toBe('2 hours ago');
+    });
+
+    it('says something friendly when there is nothing to show', () => {
+      openMenu();
+
+      list.next([]);
+      fixture.detectChanges();
+
+      expect(rows()).toHaveLength(0);
+      expect(placeholderText()).toContain('You are all caught up');
+    });
+
+    it('says it could not load rather than claiming there is nothing', () => {
+      openMenu();
+
+      list.error(new Error('GET /notifications failed'));
+      fixture.detectChanges();
+
+      // The whole point of this one. An empty box after a failed request tells
+      // the user they have no notifications, which is a different and wrong
+      // thing to say.
+      expect(placeholderText()).toContain('could not load');
+      expect(placeholderText()).not.toContain('caught up');
+    });
+
+    it('shows the list it already has while it reads a fresh one', () => {
+      openMenu();
+      list.next([notification(1)]);
+      fixture.detectChanges();
+
+      // Reopening starts a second read. Blanking the panel for it would make
+      // every open flash, when what is on screen is still nearly right.
+      reopenWith();
+
+      expect(rowText()).toEqual(['notification 1']);
+    });
+
+    it('warns that the rows are stale when a refresh fails behind them', () => {
+      openMenu();
+      list.next([notification(1)]);
+      fixture.detectChanges();
+
+      reopenWith().error(new Error('GET /notifications failed'));
+      fixture.detectChanges();
+
+      // Keeping the rows is right, keeping them silently is not. A list nobody
+      // could refresh looks exactly like a list nothing has happened to.
+      expect(rowText()).toEqual(['notification 1']);
+      expect(panel().textContent).toContain('may be out of date');
+    });
+
+    it('marks a row read and follows its link when it is clicked', () => {
+      openMenu();
+      list.next([notification(1, {link: '/projects/9/dashboard'})]);
+      fixture.detectChanges();
+
+      rows()[0].click();
+
+      expect(notificationService.markRead).toHaveBeenCalledTimes(1);
+      expect(notificationService.markRead.mock.calls[0][0].id).toBe(1);
+      expect(subscribedTo.has('markRead')).toBe(true);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/projects/9/dashboard');
+    });
+
+    it('does not mark a row read twice', () => {
+      openMenu();
+      list.next([notification(1, {readAt: new Date(2026, 7, 17, 9, 30, 0)})]);
+      fixture.detectChanges();
+
+      rows()[0].click();
+
+      // read_all and mark_read are both no-ops on the api for one already read,
+      // so a second call would do nothing except tell the service to take one
+      // off a count that never included it.
+      expect(notificationService.markRead).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+    });
+
+    it('marks a row read even when it has nowhere to go', () => {
+      openMenu();
+      list.next([notification(1, {link: null})]);
+      fixture.detectChanges();
+
+      rows()[0].click();
+
+      // link is nullable on the api. Refusing to mark it read would leave a
+      // number on the bell that the user has no way to clear.
+      expect(notificationService.markRead).toHaveBeenCalledTimes(1);
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('says so when a notification could not be marked as read', () => {
+      notificationService.markRead.mockReturnValue(throwError(() => new Error('PUT read failed')));
+
+      openMenu();
+      list.next([notification(1, {link: null})]);
+      fixture.detectChanges();
+
+      rows()[0].click();
+
+      // Nothing else on screen changes when this fails. Swallowing it leaves
+      // the row unread and the badge where it was with no explanation.
+      expect(alerts.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('drops a list read still in flight when a row is opened', () => {
+      openMenu();
+      list.next([notification(1)]);
+      fixture.detectChanges();
+
+      // The rows on screen during a refresh are the previous list's, so this is
+      // the ordinary way to reach this: reopen, click before the read lands.
+      const refresh = reopenWith();
+      expect(refresh.observed).toBe(true);
+
+      rows()[0].click();
+
+      // That response was worked out before the click and NotificationService
+      // writes list responses into the shared entity cache, so letting it land
+      // would put readAt back to null and draw the row unread again.
+      expect(refresh.observed).toBe(false);
+    });
   });
 });
