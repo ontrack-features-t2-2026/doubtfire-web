@@ -112,14 +112,7 @@ export class CrossDashboardComponent implements OnInit {
   }
 
   setSearch(project: number, value: string): void {
-    const searchTerm = value ?? '';
-
-    if (this.normaliseSearchText(searchTerm).length === 0) {
-      this.searchTerms.delete(project);
-    } else {
-      this.searchTerms.set(project, searchTerm);
-    }
-
+    this.searchTerms.set(project, value ?? '');
     this.processTasks();
   }
 
@@ -201,18 +194,36 @@ export class CrossDashboardComponent implements OnInit {
           return 0;
         }),
     }));
+
+    this.changeDetectorRef.markForCheck();
   }
 
   private taskMatchesSearch(task: DashboardTask, projectId: number): boolean {
-    const searchTerm = this.normaliseSearchText(this.getSearchTerm(projectId));
+    const rawSearchTerm = this.getSearchTerm(projectId);
+    const searchTerm = this.normaliseSearchText(rawSearchTerm);
 
     if (!searchTerm) {
       return true;
     }
 
+    const {numericDates, remainingText} = this.extractNumericDateSearches(rawSearchTerm);
+    const taskDate = this.formatDateAsIso(task.dueDate);
+
+    if (numericDates.some((date) => date !== taskDate)) {
+      return false;
+    }
+
+    const remainingSearchTerm = this.normaliseSearchText(remainingText);
+
+    if (!remainingSearchTerm) {
+      return numericDates.length > 0;
+    }
+
     const searchableText = this.normaliseSearchText(
       [
         task.title,
+        task.subtitle,
+        task.description,
         task.abbreviation,
         task.statusLabel,
         task.unitCode,
@@ -220,7 +231,37 @@ export class CrossDashboardComponent implements OnInit {
       ].join(' '),
     );
 
-    return searchTerm.split(' ').every((term) => searchableText.includes(term));
+    return remainingSearchTerm.split(' ').every((term) => searchableText.includes(term));
+  }
+
+  private extractNumericDateSearches(value: string): {
+    numericDates: string[];
+    remainingText: string;
+  } {
+    const numericDates: string[] = [];
+    let remainingText = value;
+
+    remainingText = remainingText.replace(
+      /\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g,
+      (_match: string, year: string, month: string, day: string) => {
+        numericDates.push(this.normaliseNumericDate(year, month, day));
+        return ' ';
+      },
+    );
+
+    remainingText = remainingText.replace(
+      /\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g,
+      (_match: string, day: string, month: string, year: string) => {
+        numericDates.push(this.normaliseNumericDate(year, month, day));
+        return ' ';
+      },
+    );
+
+    return {numericDates, remainingText};
+  }
+
+  private normaliseNumericDate(year: string, month: string, day: string): string {
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
 
   private normaliseSearchText(value: string): string {
@@ -230,20 +271,28 @@ export class CrossDashboardComponent implements OnInit {
       .trim();
   }
 
-  private formatDateForSearch(date: Date): string {
+  private formatDateAsIso(date: Date): string {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
       return '';
     }
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    return this.normaliseNumericDate(
+      String(date.getFullYear()),
+      String(date.getMonth() + 1),
+      String(date.getDate()),
+    );
+  }
 
-    return [
-      displayedDueDateFormatter.format(date),
-      `${day}/${month}/${year}`,
-      `${year}-${month}-${day}`,
-    ].join(' ');
+  private formatDateForSearch(date: Date): string {
+    const isoDate = this.formatDateAsIso(date);
+
+    if (!isoDate) {
+      return '';
+    }
+
+    const [year, month, day] = isoDate.split('-');
+
+    return [displayedDueDateFormatter.format(date), `${day}/${month}/${year}`, isoDate].join(' ');
   }
 
   private getUnitsForCurrentScope(): DashboardUnit[] {

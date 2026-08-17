@@ -233,6 +233,70 @@ describe('CrossDashboardComponent', () => {
     }
   });
 
+  it('does not confuse Australian dates that contain the same numbers in another order', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('December Task', 'DEC', 'not_started', new Date(2026, 11, 8)),
+      ]),
+    ]);
+
+    component.setSearch(1, '12/08/2026');
+    expect(component.displayedUnits[0].tasks).toEqual([]);
+
+    component.setSearch(1, '08/12/2026');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['DEC']);
+  });
+
+  it('matches subtitle and description text shown on the task card', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', new Date(2026, 7, 12)),
+      ]),
+    ]);
+
+    component.setSearch(1, 'Pass');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1P']);
+
+    component.setSearch(1, 'description');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1P']);
+
+    component.setSearch(1, 'not shown anywhere');
+    expect(component.displayedUnits[0].tasks).toEqual([]);
+  });
+
+  it('keeps punctuation-only input visible without filtering tasks', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', new Date(2026, 7, 12)),
+        makeTask('Leadership Report', '5.3D', 'not_started', new Date(2026, 7, 18)),
+      ]),
+    ]);
+
+    await syncView();
+
+    const searchInput = fixture.nativeElement.querySelector(
+      'input[type="search"]',
+    ) as HTMLInputElement;
+
+    searchInput.value = 'retro';
+    searchInput.dispatchEvent(new Event('input', {bubbles: true}));
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1P']);
+
+    searchInput.value = '-';
+    searchInput.dispatchEvent(new Event('input', {bubbles: true}));
+    await syncView();
+
+    expect(component.getSearchTerm(1)).toBe('-');
+    expect(component.hasSearchTerm(1)).toBe(false);
+    expect(searchInput.value).toBe('-');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      '5.1P',
+      '5.3D',
+    ]);
+  });
+
   it('clears the search and restores the original task list', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
@@ -256,26 +320,34 @@ describe('CrossDashboardComponent', () => {
   it('combines search with the Hide Completed filter', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
-        makeTask('Completed Task', '1.1P', 'complete', new Date(2026, 7, 10)),
-        makeTask('Open Task', '1.2P', 'not_started', new Date(2026, 7, 12)),
+        makeTask('Completed Security Review', '1.1P', 'complete', new Date(2026, 7, 10)),
+        makeTask('Open Security Review', '1.2P', 'not_started', new Date(2026, 7, 12)),
+        makeTask('Open Calendar Review', '1.3P', 'not_started', new Date(2026, 7, 14)),
       ]),
     ]);
 
-    component.setSearch(1, 'task');
-    component.toggleFilter(1, component.filterOptions[0]);
+    component.setSearch(1, 'security');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      '1.1P',
+      '1.2P',
+    ]);
 
+    component.toggleFilter(1, component.filterOptions[0]);
     expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['1.2P']);
 
     component.setSearch(1, '');
-
-    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['1.2P']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      '1.2P',
+      '1.3P',
+    ]);
   });
 
   it('preserves Due Date sorting after search is applied', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
-        makeTask('Later Task', 'LATE', 'not_started', new Date(2026, 7, 20)),
-        makeTask('Earlier Task', 'EARLY', 'not_started', new Date(2026, 7, 10)),
+        makeTask('Later Security Review', 'LATE', 'not_started', new Date(2026, 7, 20)),
+        makeTask('Calendar Setup', 'OTHER', 'not_started', new Date(2026, 7, 5)),
+        makeTask('Earlier Security Review', 'EARLY', 'not_started', new Date(2026, 7, 10)),
       ]),
     ]);
 
@@ -286,7 +358,7 @@ describe('CrossDashboardComponent', () => {
     }
 
     component.setSort(1, dueDateSort);
-    component.setSearch(1, 'task');
+    component.setSearch(1, 'security');
 
     expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
       'EARLY',
