@@ -16,6 +16,7 @@ import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
 import {NotificationBellComponent} from './notification-bell.component';
 
 /**
@@ -45,8 +46,11 @@ describe('NotificationBellComponent', () => {
     refreshUnreadCount: ReturnType<typeof vi.fn>;
     list: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
+    markAllRead: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
   };
   let authenticationService: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let confirmationModal: {show: ReturnType<typeof vi.fn>};
   let alerts: {success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>};
   let router: {events: unknown; navigateByUrl: ReturnType<typeof vi.fn>};
 
@@ -139,8 +143,11 @@ describe('NotificationBellComponent', () => {
       refreshUnreadCount: vi.fn(() => answers('refreshUnreadCount', 0)),
       list: vi.fn().mockReturnValue(list),
       markRead: vi.fn(() => answers('markRead', undefined)),
+      markAllRead: vi.fn(() => answers('markAllRead', undefined)),
+      remove: vi.fn(() => answers('remove', undefined)),
     };
     authenticationService = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    confirmationModal = {show: vi.fn()};
     alerts = {success: vi.fn(), error: vi.fn()};
     router = {events: routerEvents.asObservable(), navigateByUrl: vi.fn()};
 
@@ -159,6 +166,7 @@ describe('NotificationBellComponent', () => {
       providers: [
         {provide: NotificationService, useValue: notificationService},
         {provide: AuthenticationService, useValue: authenticationService},
+        {provide: ConfirmationModalService, useValue: confirmationModal},
         {provide: AlertService, useValue: alerts},
         {provide: Router, useValue: router},
       ],
@@ -537,6 +545,183 @@ describe('NotificationBellComponent', () => {
       // writes list responses into the shared entity cache, so letting it land
       // would put readAt back to null and draw the row unread again.
       expect(refresh.observed).toBe(false);
+    });
+  });
+
+  /**
+   * The split that matters here is which action asks first. Marking read
+   * destroys nothing and a dialog on it is a step to click through; delete has
+   * no undo anywhere in this feature and gets one.
+   */
+  describe('the bulk actions', () => {
+    // The dialog is a callback, not a promise. show() is handed the function to
+    // run on confirm and the one to run on cancel, so a test drives it by
+    // reaching for whichever of those it wants.
+    const confirmed = (): void => confirmationModal.show.mock.calls[0][2]();
+    const cancelled = (): void => confirmationModal.show.mock.calls[0][3]();
+
+    const deleteButtons = (): HTMLElement[] =>
+      Array.from(panel().querySelectorAll('.notification-delete'));
+
+    const markAllButton = (): HTMLElement => panel().querySelector('.notification-mark-all');
+
+    const seeAllButton = (): HTMLElement => panel().querySelector('.notification-see-all');
+
+    beforeEach(() => {
+      fixture.detectChanges();
+      openMenu();
+      list.next([notification(1), notification(2, {readAt: new Date(2026, 7, 17, 9, 30, 0)})]);
+      fixture.detectChanges();
+    });
+
+    it('marks everything read without asking first', () => {
+      unreadCount.next(1);
+      fixture.detectChanges();
+
+      // MatMenu closes the panel from a click handler on the panel itself, so
+      // anything that reaches it shuts the menu. The whole reward for this
+      // button is watching the rows stop being bold, and that is gone if the
+      // menu closes underneath it. Watching the click arrive is steadier than
+      // watching the overlay leave, which is animation timing.
+      const reachedThePanel = vi.fn();
+      panel().addEventListener('click', reachedThePanel);
+
+      markAllButton().click();
+      fixture.detectChanges();
+
+      expect(notificationService.markAllRead).toHaveBeenCalledTimes(1);
+      expect(subscribedTo.has('markAllRead')).toBe(true);
+      expect(confirmationModal.show).not.toHaveBeenCalled();
+      expect(reachedThePanel).not.toHaveBeenCalled();
+    });
+
+    it('does not offer to mark all read when nothing is unread', () => {
+      unreadCount.next(0);
+      fixture.detectChanges();
+
+      // Same reason the badge disappears at zero rather than showing one. An
+      // action that cannot do anything should not be sitting there.
+      expect(markAllButton()).toBeNull();
+
+      unreadCount.next(2);
+      fixture.detectChanges();
+
+      expect(markAllButton()).not.toBeNull();
+    });
+
+    it('says so when marking everything read fails', () => {
+      unreadCount.next(1);
+      fixture.detectChanges();
+      notificationService.markAllRead.mockReturnValue(
+        throwError(() => new Error('PUT read_all failed')),
+      );
+
+      markAllButton().click();
+
+      expect(alerts.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('asks before it deletes anything', () => {
+      deleteButtons()[0].click();
+
+      expect(confirmationModal.show).toHaveBeenCalledTimes(1);
+      expect(notificationService.remove).not.toHaveBeenCalled();
+    });
+
+    it('deletes only once the dialog is agreed to', () => {
+      deleteButtons()[0].click();
+      confirmed();
+
+      expect(notificationService.remove).toHaveBeenCalledTimes(1);
+      expect(notificationService.remove.mock.calls[0][0].id).toBe(1);
+      expect(subscribedTo.has('remove')).toBe(true);
+
+      fixture.detectChanges();
+      expect(rowText()).toEqual(['notification 2']);
+    });
+
+    it('leaves the notification alone when the dialog is cancelled', () => {
+      deleteButtons()[0].click();
+      cancelled();
+      fixture.detectChanges();
+
+      expect(notificationService.remove).not.toHaveBeenCalled();
+      expect(rowText()).toEqual(['notification 1', 'notification 2']);
+    });
+
+    it('keeps the row when the delete fails', () => {
+      notificationService.remove.mockReturnValue(throwError(() => new Error('DELETE failed')));
+
+      deleteButtons()[0].click();
+      confirmed();
+      fixture.detectChanges();
+
+      // Taking the row out first and putting it back on failure would be worse
+      // than leaving it. The user reads the row vanishing as the delete having
+      // worked.
+      expect(rowText()).toEqual(['notification 1', 'notification 2']);
+      expect(alerts.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not open the notification when its delete button is clicked', () => {
+      deleteButtons()[0].click();
+
+      // The delete button sits in the row, and the row opens the notification.
+      // Without stopping the click there, asking to delete one would mark it
+      // read and navigate away from the menu it was asked in.
+      expect(notificationService.markRead).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('promotes the next notification when a shown one is deleted', () => {
+      const at = (hour: number) => new Date(2026, 7, 17, hour, 0, 0);
+      const refresh = reopenWith();
+      refresh.next([
+        notification(1, {createdAt: at(15)}),
+        notification(2, {createdAt: at(14)}),
+        notification(3, {createdAt: at(13)}),
+        notification(4, {createdAt: at(12)}),
+        notification(5, {createdAt: at(11)}),
+        notification(6, {createdAt: at(10)}),
+      ]);
+      fixture.detectChanges();
+
+      expect(rowText()).toHaveLength(5);
+      expect(rowText()).not.toContain('notification 6');
+
+      deleteButtons()[0].click();
+      confirmed();
+      fixture.detectChanges();
+
+      // Filtering only the five on screen would leave four and a gap, when the
+      // sixth is already in hand and nothing needs to be asked for.
+      expect(rowText()).toEqual([
+        'notification 2',
+        'notification 3',
+        'notification 4',
+        'notification 5',
+        'notification 6',
+      ]);
+    });
+
+    it('drops a list read still in flight when everything is marked read', () => {
+      unreadCount.next(1);
+      fixture.detectChanges();
+
+      const refresh = reopenWith();
+      expect(refresh.observed).toBe(true);
+
+      markAllButton().click();
+
+      expect(refresh.observed).toBe(false);
+    });
+
+    it('offers a way to the rest of them', () => {
+      // The dropdown shows five and the api sends every one, so without this a
+      // sixth notification can only be reached by typing a url.
+      seeAllButton().click();
+
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/notifications');
     });
   });
 });

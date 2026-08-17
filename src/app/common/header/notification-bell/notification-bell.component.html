@@ -12,7 +12,14 @@
 </button>
 
 <mat-menu #notificationMenu="matMenu" class="notification-dropdown-menu">
-  <h2 class="my-2 ml-3.5" mat-subheader>Notifications</h2>
+  <div class="flex items-center justify-between pr-2">
+    <h2 class="my-2 ml-3.5" mat-subheader>Notifications</h2>
+    @if (unreadCount) {
+      <button class="notification-mark-all" mat-button (click)="markAllRead($event)">
+        Mark all read
+      </button>
+    }
+  </div>
 
   <!--
     Rows win whenever there are any. A refresh that fails while the list is
@@ -21,14 +28,14 @@
     above it instead, because a list nobody could refresh looks exactly like a
     list nothing has happened to.
   -->
-  @if (notifications.length) {
+  @if (recent.length) {
     @if (loadFailed) {
       <p class="notification-stale mx-4 my-1">
         These may be out of date, the last refresh did not work.
       </p>
     }
 
-    @for (notification of notifications; track notification.id) {
+    @for (notification of recent; track notification.id) {
       <div class="notification-item flex w-full items-center">
         <!--
           A button and not a div. MatMenu's key manager only moves focus, it
@@ -80,8 +87,25 @@
             ></span>
           </span>
         </button>
+        <button
+          aria-label="Delete notification"
+          class="notification-delete"
+          mat-icon-button
+          matTooltip="Delete"
+          (click)="confirmDelete(notification, $event)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
     }
+
+    <!--
+      A button and not a routerLink, so this component keeps needing exactly one
+      thing from the router and its spec can keep handing it a stub.
+    -->
+    <button class="notification-see-all" mat-menu-item (click)="seeAll()">
+      See all notifications
+    </button>
   } @else if (loading) {
     <div class="flex items-center gap-3 px-4 py-3">
       <mat-spinner [diameter]="20"></mat-spinner>

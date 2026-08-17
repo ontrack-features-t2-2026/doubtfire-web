@@ -193,3 +193,20 @@
   color: rgba(0, 0, 0, 0.6);
   font-size: 14px;
 }
+
+.notification-mark-all,
+.notification-see-all {
+  font-size: 12px;
+}
+
+// The delete button sits in a menu row, so at its natural size it competes with
+// the message for attention on a list nobody opened to delete things from.
+.notification-delete {
+  flex: none;
+
+  .mat-icon {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+  }
+}
