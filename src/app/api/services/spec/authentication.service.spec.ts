@@ -11,6 +11,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {AuthenticationService} from '../authentication.service';
+import {NotificationService} from '../notification.service';
 import {PushNotificationService} from '../push-notification.service';
 
 const API_URL = 'http://localhost:3000/api';
@@ -33,6 +34,7 @@ describe('AuthenticationService sign out', () => {
   let httpMock: HttpTestingController;
 
   let pushService: {unsubscribeQuietly: ReturnType<typeof vi.fn>};
+  let notificationService: {reset: ReturnType<typeof vi.fn>};
   let globalState: {
     clearUnitsAndProjects: ReturnType<typeof vi.fn>;
     hideHeader: ReturnType<typeof vi.fn>;
@@ -46,12 +48,18 @@ describe('AuthenticationService sign out', () => {
   };
   let router: {navigateByUrl: ReturnType<typeof vi.fn>};
 
-  // signOut resolves PushNotificationService and GlobalStateService through
-  // AppInjector rather than the constructor (its comment explains this avoids a
-  // circular dependency). This stub injector hands back the mocks above. It is
-  // set once, and reads them through its closure so each test's fresh mocks flow
-  // through. setAppInjector is only ever called by the app module otherwise, so
-  // in a unit test AppInjector starts unset and this is the only writer.
+  // signOut resolves PushNotificationService, GlobalStateService and
+  // NotificationService through AppInjector rather than the constructor (its
+  // comment explains this avoids a circular dependency). This stub injector
+  // hands back the mocks above. It is set once, and reads them through its
+  // closure so each test's fresh mocks flow through. setAppInjector is only ever
+  // called by the app module otherwise, so in a unit test AppInjector starts
+  // unset and this is the only writer.
+  //
+  // The throw at the end is deliberate. A token this stub does not know about
+  // means signOut grew a dependency nobody told these tests about, and a stub
+  // that quietly answered undefined would turn that into a confusing failure
+  // somewhere else.
   const injectorStub = {
     get: (token: unknown) => {
       if (token === PushNotificationService) {
@@ -60,12 +68,16 @@ describe('AuthenticationService sign out', () => {
       if (token === GlobalStateService) {
         return globalState;
       }
+      if (token === NotificationService) {
+        return notificationService;
+      }
       throw new Error(`unexpected AppInjector token: ${String(token)}`);
     },
   } as unknown as Injector;
 
   beforeEach(() => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
+    notificationService = {reset: vi.fn()};
     globalState = {
       clearUnitsAndProjects: vi.fn(),
       hideHeader: vi.fn(),
@@ -130,6 +142,11 @@ describe('AuthenticationService sign out', () => {
 
     // The browser is signed out now, so the next person starts unsubscribed.
     expect(userService.currentUser).toBe(userService.anonymousUser);
+
+    // Same shared machine problem, other half of it. The push registration is
+    // gone but NotificationService is a root singleton, so its cache and unread
+    // count would otherwise survive into the next person's session.
+    expect(notificationService.reset).toHaveBeenCalledTimes(1);
   });
 
   // unsubscribeQuietly is the "never throw" variant, and sign out is also wired
