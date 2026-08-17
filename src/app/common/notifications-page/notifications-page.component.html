@@ -1,0 +1,80 @@
+<div class="notifications-page mx-auto my-6 max-w-3xl px-4">
+  <h1 class="mb-4 text-2xl">Notifications</h1>
+
+  @if (loading) {
+    <div class="flex items-center gap-3 py-6">
+      <mat-spinner [diameter]="24"></mat-spinner>
+      <span>Loading your notifications</span>
+    </div>
+  } @else if (loadFailed) {
+    <!--
+      Kept apart from the empty state on purpose. "You have none" and "we could
+      not find out" look the same and mean opposite things, and only one of them
+      has a way out.
+    -->
+    <div class="notifications-placeholder py-6">
+      <p>We could not load your notifications.</p>
+      <button class="notifications-retry" mat-stroked-button (click)="load()">Try again</button>
+    </div>
+  } @else if (!notifications.length) {
+    <div class="notifications-placeholder py-6">
+      <p>You have no notifications yet.</p>
+      <p class="notification-time">
+        Comments on your tasks, feedback and reminders will show up here.
+      </p>
+    </div>
+  } @else {
+    <!--
+      Plain buttons rather than mat-list-item. Material lays a list row out with
+      its own leading-icon and content wrappers, and the dropdown in the header
+      is a mat-menu-item with a different set of wrappers again, so the two
+      never lined up. Both now use the same .notification-line markup and the
+      same stylesheet block, and Material lays out neither.
+
+      Still a <button>: a div with a click handler is a row only a mouse can
+      open.
+    -->
+    <div class="notification-list">
+      @for (notification of visible; track notification.id) {
+        <button
+          class="notification-row"
+          type="button"
+          [attr.aria-label]="rowLabel(notification)"
+          (click)="open(notification)"
+        >
+          <span class="notification-line">
+            <!--
+              Same five categories and the same colours as the dropdown in the
+              header, so a notification looks like itself wherever it is read.
+            -->
+            <span class="notification-glyph" [class]="'tone-' + toneFor(notification)">
+              <mat-icon>{{ iconFor(notification) }}</mat-icon>
+            </span>
+
+            <span class="notification-body">
+              <span class="notification-message" [class.unread]="!notification.isRead">{{
+                notification.message
+              }}</span>
+              <span class="notification-time">{{ timeAgo(notification) }}</span>
+            </span>
+
+            <span
+              aria-hidden="true"
+              class="notification-unread-dot"
+              [class.is-read]="notification.isRead"
+            ></span>
+          </span>
+        </button>
+      }
+    </div>
+
+    <mat-paginator
+      class="mat-elevation-z0"
+      [length]="notifications.length"
+      [pageIndex]="pageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    ></mat-paginator>
+  }
+</div>

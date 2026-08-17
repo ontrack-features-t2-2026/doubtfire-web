@@ -211,6 +211,7 @@ import {SpecConModalService} from './common/modals/spec-con-modal/spec-con-modal
 import {TaskAssessmentModalComponent} from './common/modals/task-assessment-modal/task-assessment-modal.component';
 import {TutorNotesModalComponent} from './common/modals/tutor-notes-modal/tutor-notes-modal.component';
 import {NotificationSettingsComponent} from './common/notification-settings/notification-settings.component';
+import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
@@ -589,6 +590,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ProgressBurndownChartComponent,
     TaskVisualisationComponent,
     ScormPlayerComponent,
+    NotificationsPageComponent,
     ScormCommentComponent,
     TaskScormCardComponent,
     ScormExtensionCommentComponent,
