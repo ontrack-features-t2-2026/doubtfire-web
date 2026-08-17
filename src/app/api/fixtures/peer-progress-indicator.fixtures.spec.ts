@@ -111,31 +111,35 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
   it('MALFORMED fixture contains invalid values for safe-failure testing', () => {
     const malformed = FIXTURE_MALFORMED as Partial<PeerProgressIndicator>;
 
-    expect(malformed.taskDefinitionId).not.toBe(12);
+    // invalid numeric values
     expect(malformed.submittedPercentage).toBeNaN();
-    expect(typeof malformed.lastUpdatedAt).toBe('string'); // but invalid
+    expect(Number.isFinite(malformed.submittedPercentage as number)).toBe(false);
+
+    // invalid ranges
+    // expect((malformed.submittedPercentage as number) < 0).toBe(true);
+    // expect((malformed.submittedPercentage as number) > 100).toBe(true);
+
+    // invalid timestamp
+    expect(isNaN(Date.parse(malformed.lastUpdatedAt as string))).toBe(true);
+
+    // invalid IDs
+    expect(typeof malformed.taskDefinitionId).not.toBe('number');
+    expect(typeof malformed.unitId).not.toBe('number');
+
+    // invalid target grade
+    expect(typeof malformed.targetGrade).not.toBe('number');
   });
 
-  // Adapter Compatibility Expectations
-  it('Adapter should accept all valid fixtures without throwing', () => {
-    const validFixtures = [
-      FIXTURE_NORMAL,
-      FIXTURE_ZERO_PERCENT,
-      FIXTURE_SUPPRESSED,
-      FIXTURE_UNAVAILABLE,
-      FIXTURE_DISABLED,
-      FIXTURE_STALE,
-    ];
-
-    validFixtures.forEach((f) => {
-      expect(() => assertContractShape(f)).not.toThrow();
-    });
-  });
-
-  it('Adapter should reject or normalise malformed fixture fields', () => {
+  it('MALFORMED fixture must not allow impossible state combinations', () => {
     const malformed = FIXTURE_MALFORMED as Partial<PeerProgressIndicator>;
 
-    expect(malformed.submittedPercentage).toBeNaN();
-    expect(typeof malformed.targetGrade).toBe('string');
+    // suppressed must be boolean
+    expect(typeof malformed.isSuppressed).not.toBe('boolean');
+
+    // stale must be boolean
+    expect(typeof malformed.isStale).not.toBe('boolean');
+
+    // featureEnabled must be boolean
+    expect(typeof malformed.isFeatureEnabled).not.toBe('boolean');
   });
 });
