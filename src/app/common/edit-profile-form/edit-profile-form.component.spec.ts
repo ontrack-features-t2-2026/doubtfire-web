@@ -18,6 +18,7 @@ const makeUser = (overrides: Partial<User> = {}): User =>
   ({
     id: 1,
     systemRole: 'Student',
+    hasRunFirstTimeSetup: true,
     optInToResearch: true,
     receiveFeedbackNotifications: false,
     receivePortfolioNotifications: false,
@@ -127,14 +128,27 @@ describe('EditProfileFormComponent', () => {
     expect(component.user.receiveTaskNotifications).toBe(false);
   });
 
-  it('applies notification defaults in create mode', () => {
+  it('applies defaults before first-time setup', () => {
     dialogData.user = makeUser({
+      hasRunFirstTimeSetup: false,
       optInToResearch: true,
       receiveFeedbackNotifications: false,
       receivePortfolioNotifications: false,
       receiveTaskNotifications: false,
     });
     dialogData.mode = 'create';
+
+    createComponent();
+
+    expect(component.user.optInToResearch).toBe(false);
+    expect(component.user.receiveFeedbackNotifications).toBe(true);
+    expect(component.user.receivePortfolioNotifications).toBe(true);
+    expect(component.user.receiveTaskNotifications).toBe(true);
+  });
+
+  it('applies defaults to a blank user opened from the admin screen', () => {
+    dialogData.user = {} as User;
+    dialogData.mode = 'edit';
 
     createComponent();
 

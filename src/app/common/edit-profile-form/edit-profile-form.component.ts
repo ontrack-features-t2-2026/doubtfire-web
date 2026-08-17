@@ -77,7 +77,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       (subscription) => (this.pushSubscribed = subscription !== null),
     );
 
-    if (this.mode !== 'edit') {
+    if (!this.user.hasRunFirstTimeSetup) {
       this.user.optInToResearch = false;
       this.user.receiveFeedbackNotifications = true;
       this.user.receivePortfolioNotifications = true;
