@@ -53,7 +53,12 @@ describe('NotificationService', () => {
   });
 
   afterEach(() => {
-    httpMock.verify();
+    // A cancelled request is still open as far as the backend is concerned, and
+    // reset() cancels on purpose. The tests that call it assert the
+    // cancellation themselves. Nothing is lost by ignoring them here: a request
+    // cancelled by accident still fails, because the flush that was expecting
+    // it throws rather than being skipped.
+    httpMock.verify({ignoreCancelled: true});
   });
 
   /**
@@ -184,6 +189,51 @@ describe('NotificationService', () => {
 
       expect(emitted).toBe(7);
       expect(currentUnreadCount()).toBe(7);
+    });
+
+    it('ignores an older count response that lands after a newer one', () => {
+      service.refreshUnreadCount().subscribe();
+      service.refreshUnreadCount().subscribe();
+
+      const requests = httpMock.match(COUNT_URL);
+      expect(requests).toHaveLength(2);
+
+      // The second request answers first.
+      requests[1].flush({count: 4});
+      expect(currentUnreadCount()).toBe(4);
+
+      // Then the first one answers, carrying the number from before whatever
+      // triggered the second. Nothing orders http responses, so without the
+      // sequence guard this overwrites a correct count with a stale one and the
+      // bell stays wrong until the next mutation.
+      requests[0].flush({count: 9});
+
+      expect(currentUnreadCount()).toBe(4);
+    });
+
+    it('ignores a count response older than a local change to the count', () => {
+      seedUnreadCount(5);
+
+      // In flight before the mutation, so its answer was computed without it.
+      service.refreshUnreadCount().subscribe();
+      const stale = httpMock.expectOne(COUNT_URL);
+
+      const notification = new Notification();
+      notification.id = 4;
+      notification.readAt = null;
+      service.markRead(notification).subscribe();
+      httpMock.expectOne(`${API_URL}/notifications/4/read`).flush(readJson(4));
+
+      expect(currentUnreadCount()).toBe(4);
+
+      // The local decrement is newer than that request, so it has to retire it.
+      // Guarding only response against response leaves this hole open, and it
+      // is the common one: every mutation starts a count request.
+      stale.flush({count: 5});
+
+      expect(currentUnreadCount()).toBe(4);
+
+      flushResync(4);
     });
   });
 
@@ -374,6 +424,60 @@ describe('NotificationService', () => {
       // machine starts with the previous person's messages and count.
       expect(service.cache.size).toBe(0);
       expect(currentUnreadCount()).toBe(0);
+    });
+
+    it('cancels a list still in flight so it cannot refill the cache', () => {
+      let emitted = false;
+
+      service.list().subscribe(() => (emitted = true));
+      const pending = httpMock.expectOne(LIST_URL);
+
+      service.reset();
+
+      // Aborted, not merely ignored, and that distinction is the whole fix.
+      // The cache write lives in a tap inside the base class, upstream of
+      // anything this service could put a guard in, so the only way to stop it
+      // is to make sure the response never arrives.
+      expect(pending.cancelled).toBe(true);
+      expect(emitted).toBe(false);
+      expect(service.cache.size).toBe(0);
+    });
+
+    it('cancels a count re-sync still in flight so it cannot restore the count', () => {
+      seedUnreadCount(5);
+
+      const notification = new Notification();
+      notification.id = 4;
+      notification.readAt = null;
+
+      service.markRead(notification).subscribe();
+      httpMock.expectOne(`${API_URL}/notifications/4/read`).flush(readJson(4));
+      expect(currentUnreadCount()).toBe(4);
+
+      // Nobody holds this one. It is fired and forgotten by every mutation, so
+      // it is the request most likely to be open when someone signs out.
+      const resync = httpMock.expectOne(COUNT_URL);
+
+      service.reset();
+
+      expect(resync.cancelled).toBe(true);
+      expect(currentUnreadCount()).toBe(0);
+    });
+
+    it('cancels a mark read still in flight so it cannot re-add the entity', () => {
+      primeCache(unreadJson(1));
+
+      const notification = service.cache.currentValues[0];
+      service.markRead(notification).subscribe();
+      const pending = httpMock.expectOne(`${API_URL}/notifications/1/read`);
+
+      service.reset();
+
+      // update() writes the response entity into the cache in a base class tap.
+      // A sign out between the request and the response would otherwise leave
+      // one of the previous user's notifications sitting in an empty cache.
+      expect(pending.cancelled).toBe(true);
+      expect(service.cache.size).toBe(0);
     });
   });
 });

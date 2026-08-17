@@ -1,7 +1,7 @@
 import {CachedEntityService, RequestOptions} from 'ngx-entity-service';
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, map, tap} from 'rxjs';
+import {BehaviorSubject, Observable, Subject, map, takeUntil, tap} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {Notification} from '../models/notification';
 import {MappingFunctions} from './mapping-fn';
@@ -27,6 +27,31 @@ export class NotificationService extends CachedEntityService<Notification> {
   private readonly markReadEndpointFormat = 'notifications/:id:/read';
 
   private readonly unreadCountSubject: BehaviorSubject<number> = new BehaviorSubject(0);
+
+  /**
+   * Fires once per sign out, from reset().
+   *
+   * Every request this service returns ends with takeUntil on it, so this
+   * unsubscribes the lot. Unsubscribing aborts the underlying request, which is
+   * the part that matters: nothing in ngx-entity-service subscribes internally,
+   * so the cache writes all live in taps on the chain and an aborted request
+   * never reaches them. Without this, one still in flight at sign out would
+   * land afterwards and put the previous user's rows back into a cache that is
+   * shared by the whole app.
+   */
+  private readonly sessionEnded: Subject<void> = new Subject<void>();
+
+  /**
+   * Which unread count request is which.
+   *
+   * Every mutation asks for the count again, so several are often in the air at
+   * once, and nothing makes them answer in the order they were sent. The older
+   * answer is the wrong one, it was computed before the newer mutation applied.
+   * Each request takes the next number on the way out and only a number higher
+   * than the last one applied is allowed to move the subject.
+   */
+  private issuedUnreadCountRequests = 0;
+  private appliedUnreadCountRequest = 0;
 
   constructor(private apiHttpClient: HttpClient) {
     super(apiHttpClient, API_URL);
@@ -99,6 +124,7 @@ export class NotificationService extends CachedEntityService<Notification> {
           this.evictMissing(notifications);
         }
       }),
+      takeUntil(this.sessionEnded),
     );
   }
 
@@ -107,11 +133,25 @@ export class NotificationService extends CachedEntityService<Notification> {
    *
    * Direct HttpClient. unread_count answers `{count: n}`, which is not a
    * Notification.
+   *
+   * Only the newest request in flight is allowed to move the subject, see
+   * appliedUnreadCountRequest. The returned observable still emits whatever the
+   * server said either way, because the caller asked a question and that is the
+   * answer to it. unreadCount$ is the one the bell reads and the one that has to
+   * stay right.
    */
   public refreshUnreadCount(): Observable<number> {
+    const request = ++this.issuedUnreadCountRequests;
+
     return this.apiHttpClient.get<{count: number}>(`${API_URL}/notifications/unread_count`).pipe(
       map((response) => response.count),
-      tap((count) => this.unreadCountSubject.next(count)),
+      tap((count) => {
+        if (request > this.appliedUnreadCountRequest) {
+          this.appliedUnreadCountRequest = request;
+          this.unreadCountSubject.next(count);
+        }
+      }),
+      takeUntil(this.sessionEnded),
     );
   }
 
@@ -140,6 +180,7 @@ export class NotificationService extends CachedEntityService<Notification> {
 
         this.resyncUnreadCount();
       }),
+      takeUntil(this.sessionEnded),
     );
   }
 
@@ -172,9 +213,10 @@ export class NotificationService extends CachedEntityService<Notification> {
             this.cache.set(notification.key, notification);
           });
 
-        this.unreadCountSubject.next(0);
+        this.setUnreadCount(0);
         this.resyncUnreadCount();
       }),
+      takeUntil(this.sessionEnded),
     );
   }
 
@@ -197,6 +239,7 @@ export class NotificationService extends CachedEntityService<Notification> {
 
         this.resyncUnreadCount();
       }),
+      takeUntil(this.sessionEnded),
     );
   }
 
@@ -208,10 +251,19 @@ export class NotificationService extends CachedEntityService<Notification> {
    * person's notification messages and the bell keeps their unread count. On a
    * shared machine the next person to sign in sees both. AuthenticationService
    * already drops the push registration for the same reason.
+   *
+   * Clearing is not enough on its own. Anything still in flight would answer
+   * after the clear and write the previous user's rows straight back, so the
+   * requests are cancelled first.
    */
   public reset(): void {
+    // Before the clear, not after. This unsubscribes every request the service
+    // has handed out, which aborts each one, so none of them reach the taps
+    // that write to the cache or the count.
+    this.sessionEnded.next();
+
     this.cache.clear();
-    this.unreadCountSubject.next(0);
+    this.setUnreadCount(0);
   }
 
   /**
@@ -242,7 +294,20 @@ export class NotificationService extends CachedEntityService<Notification> {
    * Floored at zero. A negative badge is a worse thing to show than a stale one.
    */
   private adjustUnreadCount(delta: number): void {
-    this.unreadCountSubject.next(Math.max(0, this.unreadCountSubject.value + delta));
+    this.setUnreadCount(Math.max(0, this.unreadCountSubject.value + delta));
+  }
+
+  /**
+   * Put a locally worked out number on the bell.
+   *
+   * A local write counts as newer than every count request already in the air,
+   * so this retires all of them. Without that, one sent before this line could
+   * answer after it and undo it. That is the same stale write the sequence
+   * guard exists to stop, just arriving from the other direction.
+   */
+  private setUnreadCount(count: number): void {
+    this.appliedUnreadCountRequest = this.issuedUnreadCountRequests;
+    this.unreadCountSubject.next(count);
   }
 
   /**
