@@ -4,11 +4,12 @@ import {
   HostBinding,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   SimpleChanges,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
 import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {TaskDefinitionNamePipe} from 'src/app/common/filters/task-definition-name.pipe';
 
@@ -45,7 +46,9 @@ const START_APPROACHING_DAYS = 7;
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class FUnitTaskListComponent implements OnChanges, OnInit {
+export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
+  private readonly destroy$: Subject<void> = new Subject();
+
   @Input() mode: 'project' | 'all-tasks';
   @Input() project: Project;
   @Input() taskDefinitions: readonly TaskDefinition[];
@@ -249,7 +252,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     this.applyFilters();
 
     // Watch for changes in the selected task definition... including from us
-    this.selectedTaskDefinition$.subscribe((taskDef) => {
+    this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDef) => {
       this.selectedTaskDef = taskDef;
     });
 
@@ -267,21 +270,39 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     //   this.setSelectedTaskDefinition(this.taskDefinitions[0]);
     // }
 
-    // Load selected task from URL
-    const current = this.selectedTaskDefinition$.value;
-    const param = this.route.snapshot.paramMap.get('taskAbbreviation');
+    // Follow the selected task in the url, rather than reading it once.
+    //
+    // Angular reuses this component when only a route parameter changes, so
+    // going from .../dashboard/1.1P to .../dashboard/2.3P never runs ngOnInit
+    // again. Reading route.snapshot here left the first task selected and the
+    // second one never opened, which is what any in-app link to another task on
+    // a dashboard the user is already looking at runs into. A notification
+    // linking to a task is exactly that.
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const param = params.get('taskAbbreviation');
 
-    queueMicrotask(() => {
-      if (param) {
-        const taskDef = this.taskDefinitions.find((t) => t.abbreviation === param);
+      queueMicrotask(() => {
+        // Read inside the microtask, not outside. taskDefinitions arrives as an
+        // input and the value here has to be whatever is current when the
+        // comparison actually happens.
+        const current = this.selectedTaskDefinition$.value;
 
-        if (taskDef !== current) {
-          this.selectedTaskDefinition$.next(taskDef);
+        if (param) {
+          const taskDef = this.taskDefinitions?.find((t) => t.abbreviation === param);
+
+          if (taskDef && taskDef !== current) {
+            this.selectedTaskDefinition$.next(taskDef);
+          }
+        } else if (current !== null) {
+          this.selectedTaskDefinition$.next(null);
         }
-      } else if (current !== null) {
-        this.selectedTaskDefinition$.next(null);
-      }
+      });
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setSelectedTaskDefinition(taskDef: TaskDefinition) {
