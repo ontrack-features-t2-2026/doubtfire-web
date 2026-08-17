@@ -77,10 +77,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       (subscription) => (this.pushSubscribed = subscription !== null),
     );
 
-    this.user.optInToResearch = false;
-    this.user.receiveFeedbackNotifications = true;
-    this.user.receivePortfolioNotifications = true;
-    this.user.receiveTaskNotifications = true;
+    if (!this.user.hasRunFirstTimeSetup) {
+      this.user.optInToResearch = false;
+      this.user.receiveFeedbackNotifications = true;
+      this.user.receivePortfolioNotifications = true;
+      this.user.receiveTaskNotifications = true;
+    }
   }
 
   ngOnDestroy(): void {
