@@ -84,4 +84,23 @@ describe('NotificationSettingsComponent', () => {
     expect(text).toContain('Receive notifications for feedback-related events.');
     expect(text).toContain('Receive notifications for portfolio-related events.');
   });
+
+  it('associates each checkbox with its help text', () => {
+    const inputs = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+    const descriptions = fixture.nativeElement.querySelectorAll('.notification-setting small');
+    const descriptionIds = [
+      'task-notification-description',
+      'feedback-notification-description',
+      'portfolio-notification-description',
+    ];
+
+    expect(inputs.length).toBe(3);
+    expect(descriptions.length).toBe(3);
+
+    descriptionIds.forEach((id, index) => {
+      expect(descriptions[index].id).toBe(id);
+      expect(inputs[index].getAttribute('aria-describedby')).toBe(id);
+      expect(inputs[index].hasAttribute('name')).toBe(false);
+    });
+  });
 });
