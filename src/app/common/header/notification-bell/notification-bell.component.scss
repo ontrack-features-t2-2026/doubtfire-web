@@ -1,0 +1,30 @@
+// Put the count on the bell.
+//
+// Material anchors the badge at the host's outside top right corner, with
+// `bottom: 100%` and `left: 100%`, and then pulls it back with a negative
+// margin from one of these two tokens. Which token depends on whether the badge
+// overlaps, so both are set: left at the theme's -11px the number sits beside
+// the bell rather than on it.
+:host {
+  --mat-badge-container-offset: -20px -20px;
+  --mat-badge-container-overlap-offset: -20px;
+
+  // The toolbar is a plain flex row with no wrapping, so anything in it that
+  // can grow pushes the rest towards the edge. This one never does.
+  //
+  // The header drops this component entirely below xs, where there is no room
+  // for it at all. See the comment beside it in header.component.html.
+  flex: 0 0 auto;
+}
+
+// A ring in the toolbar's own colour, so the badge cuts itself out from the
+// glyph it sits on top of.
+//
+// A box-shadow and not a border. Material sets box-sizing: border-box on the
+// badge and gives it a fixed 22px box with a 22px line-height, so a 2px border
+// takes the content box down to 18px while the line box stays 22 and the digit
+// is shoved off centre. A shadow draws the same ring and costs no layout.
+:host ::ng-deep .mat-badge-content {
+  box-shadow: 0 0 0 2px #fff;
+  font-weight: 700;
+}
