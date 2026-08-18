@@ -27,6 +27,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   unreadCount = 0;
 
   private subscriptions: Subscription[] = [];
+  private destroyed = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -52,12 +53,22 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         .subscribe(() => this.refresh()),
     );
 
-    // unreadCount$ seeds at zero and stays there until something asks, so the
-    // first navigation is too late to be the only trigger.
-    this.refresh();
+    // A remembered session is restored after the header is created. If the bell
+    // asks immediately, the authentication guard can skip the request before the
+    // restored session is ready, and no later navigation is guaranteed.
+    if (this.authenticationService.isAuthenticated()) {
+      this.refresh();
+    } else {
+      this.authenticationService.afterAuthCall((authenticated) => {
+        if (authenticated && !this.destroyed) {
+          this.refresh();
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
   }
 

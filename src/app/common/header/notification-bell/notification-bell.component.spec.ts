@@ -30,7 +30,12 @@ describe('NotificationBellComponent', () => {
     unreadCount$: BehaviorSubject<number>;
     refreshUnreadCount: ReturnType<typeof vi.fn>;
   };
-  let authenticationService: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let completeAuthentication: (authenticated: boolean) => void;
+
+  let authenticationService: {
+    isAuthenticated: ReturnType<typeof vi.fn>;
+    afterAuthCall: ReturnType<typeof vi.fn>;
+  };
   let router: {events: unknown; navigateByUrl: ReturnType<typeof vi.fn>};
 
   /**
@@ -68,7 +73,14 @@ describe('NotificationBellComponent', () => {
       unreadCount$: unreadCount,
       refreshUnreadCount: vi.fn(() => answers('refreshUnreadCount', 0)),
     };
-    authenticationService = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    completeAuthentication = () => undefined;
+
+    authenticationService = {
+      isAuthenticated: vi.fn().mockReturnValue(true),
+      afterAuthCall: vi.fn((callback: (authenticated: boolean) => void) => {
+        completeAuthentication = callback;
+      }),
+    };
     router = {events: routerEvents.asObservable(), navigateByUrl: vi.fn()};
 
     await TestBed.configureTestingModule({
@@ -170,6 +182,33 @@ describe('NotificationBellComponent', () => {
     routerEvents.next(new NavigationEnd(1, '/home', '/home'));
 
     expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for restored authentication before the initial refresh', () => {
+    authenticationService.isAuthenticated.mockReturnValue(false);
+
+    fixture.detectChanges();
+
+    expect(authenticationService.afterAuthCall).toHaveBeenCalledTimes(1);
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
+
+    authenticationService.isAuthenticated.mockReturnValue(true);
+    completeAuthentication(true);
+
+    expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
+    expect(subscribedTo.has('refreshUnreadCount')).toBe(true);
+  });
+
+  it('does not refresh after delayed authentication once destroyed', () => {
+    authenticationService.isAuthenticated.mockReturnValue(false);
+
+    fixture.detectChanges();
+    fixture.destroy();
+
+    authenticationService.isAuthenticated.mockReturnValue(true);
+    completeAuthentication(true);
+
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
   });
 
   it('handles a count request that fails instead of leaving it unhandled', async () => {
