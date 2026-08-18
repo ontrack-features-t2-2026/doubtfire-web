@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable, of} from 'rxjs';
 import {PeerProgressIndicator} from '../models/peer-progress-indicator';
+import {PeerProgressUnitSummary} from '../models/peer-progress-unit-summary';
 import {
   DISABLED_STATE,
   NORMAL_STATE,
@@ -31,6 +32,30 @@ export class PeerProgressIndicatorService {
       taskDefinitionId,
       unitId,
       targetGrade,
+    });
+  }
+
+  // Unit-level counterpart to getIndicator(): same six cohort states, scoped to a
+  // unit's target grade rather than one task, plus the student's own percentage --
+  // the one field the cohort-only PeerProgressIndicator contract doesn't carry.
+  getUnitSummary(
+    unitId: number,
+    targetGrade: number,
+    studentPercentage: number | null,
+    state: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled',
+  ): Observable<PeerProgressUnitSummary> {
+    const cohort = this.resolveState(state);
+
+    return of({
+      unitId,
+      targetGrade,
+      studentPercentage,
+      submittedPercentage: cohort.submittedPercentage,
+      isSuppressed: cohort.isSuppressed,
+      isStale: cohort.isStale,
+      isFeatureEnabled: cohort.isFeatureEnabled,
+      lastUpdatedAt: cohort.lastUpdatedAt,
+      unavailableMessage: cohort.unavailableMessage,
     });
   }
 
