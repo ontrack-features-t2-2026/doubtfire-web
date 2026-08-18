@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable, of} from 'rxjs';
 import {PeerProgressIndicator} from '../models/peer-progress-indicator';
+import {PeerProgressUnitSummary} from '../models/peer-progress-unit-summary';
 import {
   DISABLED_STATE,
   NORMAL_STATE,
@@ -31,6 +32,34 @@ export class PeerProgressIndicatorService {
       taskDefinitionId,
       unitId,
       targetGrade,
+    });
+  }
+
+  /**
+   * Builds a privacy-safe unit-summary fixture for PPI-F02 tests and demos.
+   *
+   * This is mock-only. It must not be treated as the live PPI-F01 production
+   * adapter, and the caller-supplied target grade must never become the design
+   * of a future live endpoint.
+   */
+  getMockUnitSummary(
+    unitId: number,
+    targetGrade: number,
+    studentPercentage: number | null,
+    state: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled',
+  ): Observable<PeerProgressUnitSummary> {
+    const cohort = this.resolveState(state);
+
+    return of({
+      unitId,
+      targetGrade,
+      studentPercentage,
+      submittedPercentage: cohort.submittedPercentage,
+      isSuppressed: cohort.isSuppressed,
+      isStale: cohort.isStale,
+      isFeatureEnabled: cohort.isFeatureEnabled,
+      lastUpdatedAt: cohort.lastUpdatedAt,
+      unavailableMessage: cohort.unavailableMessage,
     });
   }
 
