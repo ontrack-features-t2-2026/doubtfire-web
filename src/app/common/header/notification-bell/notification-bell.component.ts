@@ -6,6 +6,7 @@ import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
 
 /**
  * The bell in the header, the unread count on it, and the list behind it.
@@ -77,7 +78,19 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   unreadCount = 0;
 
+  /**
+   * Everything the last read came back with, newest first.
+   *
+   * All of it and not just the five on screen. Deleting one of the five has to
+   * promote the sixth, and re-reading the list to find out what the sixth was
+   * would be a request for something already in hand.
+   */
   notifications: Notification[] = [];
+
+  /**
+   * The slice actually drawn.
+   */
+  recent: Notification[] = [];
 
   loading = false;
   loadFailed = false;
@@ -89,6 +102,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   constructor(
     private notificationService: NotificationService,
     private authenticationService: AuthenticationService,
+    private confirmationModal: ConfirmationModalService,
     private alerts: AlertService,
     private router: Router,
   ) {}
@@ -167,7 +181,8 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
     this.listSubscription = this.notificationService.list().subscribe({
       next: (notifications) => {
-        this.notifications = this.mostRecent(notifications);
+        this.notifications = this.newestFirst(notifications);
+        this.updateRecent();
         this.loading = false;
       },
       error: () => {
@@ -204,6 +219,74 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     if (notification.link) {
       this.router.navigateByUrl(notification.link);
     }
+  }
+
+  /**
+   * Mark the lot as read.
+   *
+   * No confirmation. Nothing is lost by it and the user can still read every
+   * one of them afterwards, so a dialog here would only be a step to click
+   * through. Delete is the one that asks.
+   *
+   * The count on the bell is not touched here. NotificationService drops it to
+   * zero inside markAllRead and pushes that down unreadCount$, which is where
+   * the badge reads it from, so a second copy of the arithmetic here could only
+   * ever disagree with it.
+   */
+  markAllRead(event: MouseEvent): void {
+    // MatMenu closes on any click that reaches the panel, and closing here
+    // would hide the thing the user just asked to see happen. It also has to
+    // stop before the row underneath, which would treat this as opening the
+    // notification.
+    event.stopPropagation();
+
+    // A read that went out before this is now out of date, and its response is
+    // written into the shared cache, so landing late would draw every row
+    // unread again.
+    this.cancelPendingList();
+
+    this.notificationService.markAllRead().subscribe({
+      error: () => this.alerts.error('Your notifications could not be marked as read'),
+    });
+  }
+
+  /**
+   * Ask first, then delete.
+   *
+   * Delete is the only one of the five endpoints that destroys anything, and
+   * there is no undo anywhere in this feature, so it gets the dialog the house
+   * already has rather than a new one.
+   *
+   * The empty cancel function is deliberate. ConfirmationModalService pops a
+   * green success snackbar reading "<title> action cancelled" when none is
+   * given, and telling somebody they successfully did not delete something is
+   * noise.
+   */
+  confirmDelete(notification: Notification, event: MouseEvent): void {
+    event.stopPropagation();
+
+    this.confirmationModal.show(
+      'Delete notification',
+      'This removes the notification. You will not be able to get it back.',
+      () => this.remove(notification),
+      () => undefined,
+      'Delete',
+    );
+  }
+
+  /**
+   * Go to the full list.
+   *
+   * The dropdown shows five and the api sends every one, so without a way out
+   * of it a sixth notification is unreachable except by typing a url.
+   *
+   * The /notifications route arrives with IN-04, which is a sibling branch, so
+   * on this branch alone there is nothing at that path yet and app.routes.ts
+   * sends an unmatched path to /home. Both branches merge into
+   * feature/notifications before any of this ships.
+   */
+  seeAll(): void {
+    this.router.navigateByUrl('/notifications');
   }
 
   iconFor(notification: Notification): string {
@@ -252,17 +335,45 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * The newest few.
+   * Delete it for real, once the dialog has been agreed to.
    *
-   * The api already answers newest first, and this sorts anyway. Recency is the
-   * entire meaning of this list, and the copies handed back here come out of a
-   * cache that other calls also write to, so the order of the array is not
+   * The row is dropped from the held list on success rather than by reading the
+   * list again. A second GET for something we already know the answer to would
+   * make the row sit there for a round trip after the user asked for it to go.
+   * The unread count corrects itself from unreadCount$, the same as everywhere
+   * else here.
+   */
+  private remove(notification: Notification): void {
+    this.cancelPendingList();
+
+    this.notificationService.remove(notification).subscribe({
+      next: () => {
+        this.notifications = this.notifications.filter((row) => row !== notification);
+
+        // Recomputed and not filtered in place. Filtering the five on screen
+        // leaves four and a gap, when the sixth newest is sitting right here
+        // waiting to move up.
+        this.updateRecent();
+        this.alerts.success('Notification deleted');
+      },
+      error: () => this.alerts.error('That notification could not be deleted'),
+    });
+  }
+
+  /**
+   * Newest first.
+   *
+   * The api already answers in this order, and this sorts anyway. Recency is
+   * the entire meaning of this list, and the copies handed back here come out
+   * of a cache that other calls also write to, so the order of the array is not
    * something worth trusting.
    */
-  private mostRecent(notifications: Notification[]): Notification[] {
-    return [...notifications]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, NotificationBellComponent.RECENT_COUNT);
+  private newestFirst(notifications: Notification[]): Notification[] {
+    return [...notifications].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  private updateRecent(): void {
+    this.recent = this.notifications.slice(0, NotificationBellComponent.RECENT_COUNT);
   }
 
   private categoryFor(notification: Notification): {icon: string; tone: string} {
