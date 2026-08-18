@@ -32,13 +32,13 @@ const makeUser = (overrides: Partial<User> = {}): User =>
 const pushServiceStub = {
   subscription$: of(null),
   isEnabled: false,
-  blocker: () => 'no-service-worker' as const,
+  blocker: (): 'no-service-worker' | 'permission-denied' => 'no-service-worker',
+  permissionDeniedInstructions: (): string[] => [],
 };
 
 describe('EditProfileFormComponent', () => {
   let component: EditProfileFormComponent;
   let fixture: ComponentFixture<EditProfileFormComponent>;
-
   let userServiceStub: {currentUser: User};
   let dialogData: {
     user: User;
@@ -53,12 +53,14 @@ describe('EditProfileFormComponent', () => {
   };
 
   beforeEach(async () => {
+    pushServiceStub.blocker = () => 'no-service-worker';
+    pushServiceStub.permissionDeniedInstructions = () => [];
+
     const currentUser = makeUser();
 
     userServiceStub = {
       currentUser,
     };
-
     dialogData = {
       user: currentUser,
       mode: 'edit',
@@ -110,7 +112,6 @@ describe('EditProfileFormComponent', () => {
       id: 1,
       systemRole: 'Admin',
     });
-
     dialogData.user = makeUser({
       id: 2,
       optInToResearch: true,
@@ -156,5 +157,20 @@ describe('EditProfileFormComponent', () => {
     expect(component.user.receiveFeedbackNotifications).toBe(true);
     expect(component.user.receivePortfolioNotifications).toBe(true);
     expect(component.user.receiveTaskNotifications).toBe(true);
+  });
+
+  it('returns no instructions when nothing is blocking notifications', () => {
+    createComponent();
+
+    expect(component.pushBlockerInstructions).toEqual([]);
+  });
+
+  it('asks the push service for instructions when permission is denied', () => {
+    pushServiceStub.blocker = () => 'permission-denied';
+    pushServiceStub.permissionDeniedInstructions = () => ['step one', 'step two'];
+
+    createComponent();
+
+    expect(component.pushBlockerInstructions).toEqual(['step one', 'step two']);
   });
 });
