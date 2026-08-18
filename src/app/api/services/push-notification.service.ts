@@ -29,15 +29,23 @@ export type SupportedBrowser = 'chrome' | 'edge' | 'firefox' | 'other';
  */
 export function detectBrowser(userAgent: string): SupportedBrowser {
   const ua = userAgent.toLowerCase();
+
   if (ua.includes('edg/')) {
     return 'edge';
   }
+
   if (ua.includes('firefox/')) {
     return 'firefox';
   }
+
+  if (ua.includes('opr/') || ua.includes('opt/') || ua.includes('opera/')) {
+    return 'other';
+  }
+
   if (ua.includes('chrome/')) {
     return 'chrome';
   }
+
   return 'other';
 }
 

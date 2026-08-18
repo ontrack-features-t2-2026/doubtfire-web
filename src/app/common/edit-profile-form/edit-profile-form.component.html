@@ -90,30 +90,7 @@
         </mat-form-field>
       }
 
-      <section fxFlexFill fxLayout="column" fxLayoutAlign="center start">
-        <mat-checkbox
-          class=""
-          color="primary"
-          name="feedback_n"
-          [(ngModel)]="user.receiveFeedbackNotifications"
-          >Receive notifications for new messages</mat-checkbox
-        >
-        <div fxFlex></div>
-        <mat-checkbox
-          color="primary"
-          name="portfolio_n"
-          [(ngModel)]="user.receivePortfolioNotifications"
-          >Receive notifications when your portfolio is ready</mat-checkbox
-        >
-        <div fxFlex></div>
-        <mat-checkbox
-          color="primary"
-          fxFlex
-          name="task_n"
-          [(ngModel)]="user.receiveTaskNotifications"
-          >Receive notifications when new tasks are available</mat-checkbox
-        >
-      </section>
+      <f-notification-settings [user]="user"></f-notification-settings>
 
       <!--
         Push opt-in. Subscribing has to come from a click: the browser only shows

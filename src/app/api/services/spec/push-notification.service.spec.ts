@@ -260,6 +260,14 @@ describe('PushNotificationService', () => {
       expect(detectBrowser(ua)).toBe('firefox');
     });
 
+    it('uses the generic fallback for Opera even though its user agent contains Chrome', () => {
+      const ua =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0';
+
+      expect(detectBrowser(ua)).toBe('other');
+    });
+
     it('falls back to other for an unrecognised browser', () => {
       expect(detectBrowser('SomeUnknownBrowser/1.0')).toBe('other');
     });
@@ -278,7 +286,19 @@ describe('PushNotificationService', () => {
 
     it('returns Firefox steps in Firefox', () => {
       vi.stubGlobal('navigator', {userAgent: 'Firefox/120.0'});
-      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.firefox);
+      expect(service.permissionDeniedInstructions()).toEqual(
+        PERMISSION_DENIED_INSTRUCTIONS.firefox,
+      );
+    });
+
+    it('returns generic steps in Opera', () => {
+      vi.stubGlobal('navigator', {
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0',
+      });
+
+      expect(service.permissionDeniedInstructions()).toEqual(PERMISSION_DENIED_INSTRUCTIONS.other);
     });
 
     it('returns generic steps in an unrecognised browser', () => {
