@@ -1,16 +1,19 @@
 import {PeerProgressIndicator} from './peer-progress-indicator';
 
 /**
- * Unit-level aggregate PPI summary: the requesting student's own progress next to
- * the anonymous cohort aggregate for a unit's target grade.
+ * Unit-level PPI proof-of-concept model for PPI-F02.
  *
- * Reuses PeerProgressIndicator's fields as-is -- suppression, staleness, the feature
- * flag, and safe messaging all mean the same thing at unit scope as they do at task
- * scope. `studentPercentage` is the one genuinely missing field: the requesting
- * student's own aggregate progress across the unit, needed so a unit-level summary
- * can show "your progress" and "cohort progress" as separate, plainly labelled values.
- * `taskDefinitionId` is dropped since a unit summary isn't scoped to a single task.
+ * This model places the authenticated student's own unit progress beside an
+ * anonymous cohort aggregate. It is a mock-backed frontend model and does not
+ * represent a live unit-level API response.
+ *
+ * `studentPercentage` is the authenticated student's own unit progress. It may
+ * remain available when the anonymous cohort percentage is suppressed,
+ * unavailable, or stale. It is null when the student's own progress is
+ * unavailable or when the feature is disabled.
+ *
+ * `taskDefinitionId` is omitted because this summary is not scoped to one task.
  */
 export interface PeerProgressUnitSummary extends Omit<PeerProgressIndicator, 'taskDefinitionId'> {
-  studentPercentage: number | null; // null under the same conditions submittedPercentage is
+  studentPercentage: number | null;
 }

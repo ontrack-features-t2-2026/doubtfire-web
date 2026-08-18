@@ -35,10 +35,14 @@ export class PeerProgressIndicatorService {
     });
   }
 
-  // Unit-level counterpart to getIndicator(): same six cohort states, scoped to a
-  // unit's target grade rather than one task, plus the student's own percentage --
-  // the one field the cohort-only PeerProgressIndicator contract doesn't carry.
-  getUnitSummary(
+  /**
+   * Builds a privacy-safe unit-summary fixture for PPI-F02 tests and demos.
+   *
+   * This is mock-only. It must not be treated as the live PPI-F01 production
+   * adapter, and the caller-supplied target grade must never become the design
+   * of a future live endpoint.
+   */
+  getMockUnitSummary(
     unitId: number,
     targetGrade: number,
     studentPercentage: number | null,

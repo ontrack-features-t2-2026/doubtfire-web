@@ -103,9 +103,9 @@ describe('PeerProgressIndicatorService', () => {
     });
   });
 
-  describe('getUnitSummary', () => {
+  describe('getMockUnitSummary', () => {
     it('should keep the student and cohort percentages separate for a normal response', () => {
-      service.getUnitSummary(10, 2, 30, 'normal').subscribe((result) => {
+      service.getMockUnitSummary(10, 2, 30, 'normal').subscribe((result) => {
         expect(result.studentPercentage).toBe(30);
         expect(result.submittedPercentage).toBe(NORMAL_STATE.submittedPercentage);
         expect(result.isSuppressed).toBe(NORMAL_STATE.isSuppressed);
@@ -116,13 +116,13 @@ describe('PeerProgressIndicatorService', () => {
     });
 
     it('should not expose a task definition id -- a unit summary is not task-scoped', () => {
-      service.getUnitSummary(10, 2, 30, 'normal').subscribe((result) => {
+      service.getMockUnitSummary(10, 2, 30, 'normal').subscribe((result) => {
         expect((result as unknown as {taskDefinitionId?: number}).taskDefinitionId).toBeUndefined();
       });
     });
 
     it('should return suppressed state with the safe message and no cohort percentage', () => {
-      service.getUnitSummary(30, 0, 30, 'suppressed').subscribe((result) => {
+      service.getMockUnitSummary(30, 0, 30, 'suppressed').subscribe((result) => {
         expect(result.submittedPercentage).toBe(SUPPRESSED_STATE.submittedPercentage);
         expect(result.isSuppressed).toBe(true);
         expect(result.unavailableMessage).toBe(SUPPRESSED_STATE.unavailableMessage);
@@ -131,14 +131,14 @@ describe('PeerProgressIndicatorService', () => {
     });
 
     it('should return disabled state when the unit has PPI turned off', () => {
-      service.getUnitSummary(60, 1, 30, 'disabled').subscribe((result) => {
+      service.getMockUnitSummary(60, 1, 30, 'disabled').subscribe((result) => {
         expect(result.isFeatureEnabled).toBe(false);
         expect(result.unavailableMessage).toBe(DISABLED_STATE.unavailableMessage);
       });
     });
 
     it('should preserve a null studentPercentage rather than substituting a default', () => {
-      service.getUnitSummary(10, 2, null, 'normal').subscribe((result) => {
+      service.getMockUnitSummary(10, 2, null, 'normal').subscribe((result) => {
         expect(result.studentPercentage).toBeNull();
       });
     });

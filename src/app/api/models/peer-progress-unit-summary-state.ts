@@ -9,9 +9,32 @@ export interface PeerProgressUnitSummaryViewModel {
 
 const GENERIC_ERROR_MESSAGE = 'Could not load peer progress. Please try again.';
 
-// Same priority order as resolvePeerProgressState (peer-progress-indicator-state.ts) --
-// unit-level summaries resolve to the same UI states as the task-level widget, just
-// over PeerProgressUnitSummary data instead of PeerProgressIndicator.
+function withoutCohortPercentage(data: PeerProgressUnitSummary): PeerProgressUnitSummary {
+  return {
+    ...data,
+    submittedPercentage: null,
+  };
+}
+
+function withoutAnyPercentage(data: PeerProgressUnitSummary): PeerProgressUnitSummary {
+  return {
+    ...data,
+    studentPercentage: null,
+    submittedPercentage: null,
+  };
+}
+
+/**
+ * Converts unit-summary data into the shared PPI UI states.
+ *
+ * Privacy rule:
+ * Hidden, unavailable and stale states must never retain an anonymous cohort
+ * percentage, even when a malformed response contains one.
+ *
+ * Accuracy rule:
+ * Disabled, loading and error states must not retain percentages that could be
+ * mistaken for current information.
+ */
 export function resolvePeerProgressUnitSummaryState(
   loading: boolean,
   error: unknown | null,
@@ -22,28 +45,56 @@ export function resolvePeerProgressUnitSummaryState(
   }
 
   if (error || !data) {
-    return {state: 'error', data: null, message: GENERIC_ERROR_MESSAGE};
+    return {
+      state: 'error',
+      data: null,
+      message: GENERIC_ERROR_MESSAGE,
+    };
   }
 
   if (!data.isFeatureEnabled) {
-    return {state: 'disabled', data, message: data.unavailableMessage};
+    return {
+      state: 'disabled',
+      data: withoutAnyPercentage(data),
+      message: data.unavailableMessage,
+    };
   }
 
   if (data.isSuppressed) {
-    return {state: 'hidden', data, message: data.unavailableMessage};
+    return {
+      state: 'hidden',
+      data: withoutCohortPercentage(data),
+      message: data.unavailableMessage,
+    };
   }
 
   if (data.isStale) {
-    return {state: 'stale', data, message: data.unavailableMessage};
+    return {
+      state: 'stale',
+      data: withoutCohortPercentage(data),
+      message: data.unavailableMessage,
+    };
   }
 
-  if (data.submittedPercentage === null) {
-    return {state: 'unavailable', data, message: data.unavailableMessage};
+  if (data.studentPercentage === null || data.submittedPercentage === null) {
+    return {
+      state: 'unavailable',
+      data: withoutCohortPercentage(data),
+      message: data.unavailableMessage,
+    };
   }
 
   if (data.submittedPercentage === 0) {
-    return {state: 'no-data', data, message: null};
+    return {
+      state: 'no-data',
+      data,
+      message: null,
+    };
   }
 
-  return {state: 'success', data, message: null};
+  return {
+    state: 'success',
+    data,
+    message: null,
+  };
 }

@@ -10,16 +10,16 @@ import {
 import {PeerProgressUnitSummary} from './peer-progress-unit-summary';
 import {resolvePeerProgressUnitSummaryState} from './peer-progress-unit-summary-state';
 
-// Builds a PeerProgressUnitSummary from one of the six shared cohort mock states,
-// the same way PeerProgressIndicatorService.getUnitSummary() does.
+type SharedCohortState =
+  | typeof NORMAL_STATE
+  | typeof ZERO_PERCENT_STATE
+  | typeof SUPPRESSED_STATE
+  | typeof UNAVAILABLE_STATE
+  | typeof STALE_STATE
+  | typeof DISABLED_STATE;
+
 function toUnitSummary(
-  cohort:
-    | typeof NORMAL_STATE
-    | typeof ZERO_PERCENT_STATE
-    | typeof SUPPRESSED_STATE
-    | typeof UNAVAILABLE_STATE
-    | typeof STALE_STATE
-    | typeof DISABLED_STATE,
+  cohort: SharedCohortState,
   studentPercentage: number | null,
 ): PeerProgressUnitSummary {
   return {
@@ -36,23 +36,26 @@ function toUnitSummary(
 }
 
 describe('resolvePeerProgressUnitSummaryState', () => {
-  it('returns loading while the request is in flight, ignoring any data passed in', () => {
+  it('clears data while loading', () => {
     const result = resolvePeerProgressUnitSummaryState(true, null, toUnitSummary(NORMAL_STATE, 30));
+
     expect(result.state).toBe('loading');
     expect(result.data).toBeNull();
   });
 
-  it('returns error when the request fails, and does not leak the previous data', () => {
+  it('clears previous data when a request fails', () => {
     const result = resolvePeerProgressUnitSummaryState(
       false,
       new Error('network down'),
       toUnitSummary(NORMAL_STATE, 30),
     );
+
     expect(result.state).toBe('error');
     expect(result.data).toBeNull();
+    expect(result.message).toBe('Could not load peer progress. Please try again.');
   });
 
-  it('returns success with the student and cohort percentages kept separate', () => {
+  it('returns success with student and cohort percentages kept separate', () => {
     const summary = toUnitSummary(NORMAL_STATE, 30);
     const result = resolvePeerProgressUnitSummaryState(false, null, summary);
 
@@ -61,58 +64,93 @@ describe('resolvePeerProgressUnitSummaryState', () => {
     expect(result.data?.submittedPercentage).toBe(NORMAL_STATE.submittedPercentage);
   });
 
-  it('returns no-data when the cohort genuinely has not submitted yet', () => {
+  it('keeps a genuine cohort 0% different from unavailable data', () => {
     const result = resolvePeerProgressUnitSummaryState(
       false,
       null,
       toUnitSummary(ZERO_PERCENT_STATE, 0),
     );
+
     expect(result.state).toBe('no-data');
+    expect(result.data?.studentPercentage).toBe(0);
+    expect(result.data?.submittedPercentage).toBe(0);
   });
 
-  it('returns hidden with the safe message for a small, suppressed cohort', () => {
-    const result = resolvePeerProgressUnitSummaryState(
-      false,
-      null,
-      toUnitSummary(SUPPRESSED_STATE, 30),
-    );
+  it('removes a cohort percentage from a malformed suppressed response', () => {
+    const unsafeSummary: PeerProgressUnitSummary = {
+      ...toUnitSummary(SUPPRESSED_STATE, 30),
+      submittedPercentage: 65,
+    };
+
+    const result = resolvePeerProgressUnitSummaryState(false, null, unsafeSummary);
+
     expect(result.state).toBe('hidden');
+    expect(result.data?.studentPercentage).toBe(30);
+    expect(result.data?.submittedPercentage).toBeNull();
     expect(result.message).toBe(SUPPRESSED_STATE.unavailableMessage);
   });
 
-  it('returns unavailable for a generically unavailable cohort response', () => {
+  it('keeps own progress but hides unavailable cohort progress', () => {
     const result = resolvePeerProgressUnitSummaryState(
       false,
       null,
       toUnitSummary(UNAVAILABLE_STATE, 30),
     );
+
     expect(result.state).toBe('unavailable');
+    expect(result.data?.studentPercentage).toBe(30);
+    expect(result.data?.submittedPercentage).toBeNull();
   });
 
-  it('returns disabled when the unit has turned the feature off', () => {
-    const result = resolvePeerProgressUnitSummaryState(
-      false,
-      null,
-      toUnitSummary(DISABLED_STATE, 30),
-    );
+  it('clears both percentages when the feature is disabled', () => {
+    const unsafeSummary: PeerProgressUnitSummary = {
+      ...toUnitSummary(DISABLED_STATE, 30),
+      submittedPercentage: 65,
+    };
+
+    const result = resolvePeerProgressUnitSummaryState(false, null, unsafeSummary);
+
     expect(result.state).toBe('disabled');
+    expect(result.data?.studentPercentage).toBeNull();
+    expect(result.data?.submittedPercentage).toBeNull();
     expect(result.message).toBe(DISABLED_STATE.unavailableMessage);
   });
 
-  it('returns stale without exposing a cohort percentage when data is outdated', () => {
-    const result = resolvePeerProgressUnitSummaryState(false, null, toUnitSummary(STALE_STATE, 30));
+  it('keeps own progress but removes a malformed stale cohort percentage', () => {
+    const unsafeSummary: PeerProgressUnitSummary = {
+      ...toUnitSummary(STALE_STATE, 30),
+      submittedPercentage: 65,
+    };
+
+    const result = resolvePeerProgressUnitSummaryState(false, null, unsafeSummary);
 
     expect(result.state).toBe('stale');
+    expect(result.data?.studentPercentage).toBe(30);
     expect(result.data?.submittedPercentage).toBeNull();
     expect(result.message).toBe(STALE_STATE.unavailableMessage);
   });
 
-  it('transitions from loading to success without carrying over a stale value', () => {
+  it('does not return success when the student percentage is missing', () => {
+    const result = resolvePeerProgressUnitSummaryState(
+      false,
+      null,
+      toUnitSummary(NORMAL_STATE, null),
+    );
+
+    expect(result.state).toBe('unavailable');
+    expect(result.data?.studentPercentage).toBeNull();
+    expect(result.data?.submittedPercentage).toBeNull();
+  });
+
+  it('transitions from loading to success without carrying old data', () => {
     const loadingResult = resolvePeerProgressUnitSummaryState(true, null, null);
+
     expect(loadingResult.data).toBeNull();
 
     const summary = toUnitSummary(NORMAL_STATE, 30);
     const successResult = resolvePeerProgressUnitSummaryState(false, null, summary);
+
+    expect(successResult.state).toBe('success');
     expect(successResult.data).toEqual(summary);
   });
 });
