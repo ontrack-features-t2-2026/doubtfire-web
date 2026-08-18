@@ -1,14 +1,26 @@
-# PPI Help-Text & Privacy Copy Pack (Draft)
+# PPI-D01: Task-Level Help Text and Privacy Copy
 
-**Status:** first-pass draft for human review — wording is not final, expect it to be rewritten.
-**Ticket:** PPI help-text & privacy copy (branch `docs/ppi-help-privacy`, based on `feature/peer-progress-indicator`)
+**Ticket:** PPI-D01 — Write the peer-comparison explanation, privacy limits and help text
+**Branch:** `docs/ppi-help-privacy`, based on `feature/peer-progress-indicator` *(recommended base branch, not independently confirmed with the team — confirm before merge)*
 **Scope:** content/copy only. No widget logic, states, or data flow were changed to produce this doc.
 
 ---
 
-## 0. Answer to the open question this ticket depends on
+## Acceptance criteria coverage
 
-**Does a unit-level PPI view exist? No.**
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Label, tooltip, and expanded explanation for task-level and unit-level views | Task-level: met (§3). Unit-level: not applicable — confirmed no unit-level view exists in the codebase (§0) |
+| 2 | Explain the value is an anonymous aggregate, not an individual ranking | Met — shared framing in §1, echoed in state-specific copy |
+| 3 | Wording for small-cohort suppression, unavailable data, and delayed/stale data | Met (§3.3, §3.4, §3.5) |
+| 4 | Plain language, no wording that could shame or pressure students | Met — reassurance framing present across label/tooltip/explanation for every state where a null, zero, or hidden result could otherwise read as evaluative |
+| 5 | Map each text block to an exact UI location, plus one annotated screenshot | Location map: met (§2). Annotated screenshot: pending — manual step, not part of this document |
+
+---
+
+## 0. Scope: Task-Level Only — No Unit-Level PPI View Exists
+
+**Confirmed by repo search, not assumed.**
 
 Searched `src/app` for `PeerProgressIndicator`, `peer-progress`, `PpiWidget`, and `ppi-widget` (case-sensitive, to avoid false hits like "mapping" or "shipping" matching a naive case-insensitive `ppi` search). 12 files matched, all of them belonging to the single task-level widget and its supporting service/model/mock:
 
@@ -33,11 +45,13 @@ A separate search of `src/app/units` (where a unit-level dashboard surface would
 
 ---
 
-## 0.1 A second gap worth flagging before you read the drafts below
+## 0.1 Implementation Note: Tooltip and Expanded-Explanation Text Have No UI Home Yet
 
 The ticket asks for a **label, tooltip, and expanded explanation** per state (three tiers of copy). The widget as it exists today (`ppi-widget.component.html`) only has **one visible text slot per state** — a single `<span>{{ view.message }}</span>` next to an icon. There is no `matTooltip` (or any tooltip mechanism) anywhere in this widget or its parent card, and no expandable/"learn more" panel.
 
 So the drafts below give you all three tiers of copy as requested, but only the "label" tier maps to something that renders today. The tooltip and expanded-explanation tiers are **content ready for a future implementation ticket** to wire up (e.g. `matTooltip` on the icon, and something like a `mat-expansion-panel` or info popover for the long-form text) — not something this documentation-only ticket should build. Flagging this now so it isn't a surprise later.
+
+**Recommendation, applied throughout this doc:** treat Label as new UI — a small heading or icon label — added alongside the existing `{{ view.message }}` text, not a replacement for it. The message text is the data payload (the percentage, or the reason it's hidden); the Label names what the widget is, a separate concern. If a reviewer wants it to replace the current text instead, that's a one-line change at implementation time, not a reason to redo this doc.
 
 ---
 
@@ -62,6 +76,8 @@ This sentence (or a close variant) is repeated in the states where a percentage 
 | 5 | Stale (`stale`) | `@case ('stale')` | `ppi-widget.component.html:39-45` | `isStale === true` |
 | 6 | Disabled (`disabled`) | `@case ('disabled')` | `ppi-widget.component.html:21-25` | `isFeatureEnabled === false` |
 
+*Line numbers reflect the file's state at time of writing and will drift if the widget is edited again — treat the `@case` name as the durable reference, line numbers as a point-in-time aid only.*
+
 Widget mount point: `f-ppi-widget` is rendered inside `f-task-description-card`, immediately after `f-task-date-slider`, gated by `showPeerProgress` —
 `task-description-card.component.html:16-18`.
 
@@ -71,7 +87,7 @@ Not covered by the six acceptance-criterion states, but present in the actual st
 
 ---
 
-## 3. Draft copy, state by state
+## 3. Copy, state by state
 
 ### 3.1 Normal — peers have submitted
 
@@ -90,10 +106,10 @@ Not covered by the six acceptance-criterion states, but present in the actual st
 **Current copy source:** hardcoded client-side string, `"No peer submissions yet"` (`ZERO_PERCENT_STATE.unavailableMessage` is actually an empty string — the component ignores it and shows its own fallback text instead; flagged as an open design question during PPI-F03, still unresolved)
 
 - **Label:** Peer progress
-- **Tooltip:** No peers aiming for your target grade have submitted this task yet.
+- **Tooltip:** No peers have submitted yet — not a reflection of your own progress.
 - **Expanded explanation:** No one aiming for the same grade as you has submitted this task yet. This isn't feedback on your own progress — it just means the group total is currently zero, and it may change as others submit.
 
-*Rationale:* explicitly disclaims that a zero reads as evaluative. Avoids "yet" doing too much implicit-pressure work by pairing it with the explicit non-evaluative framing.
+*Rationale:* explicitly disclaims that a zero reads as evaluative, now in both the tooltip and the expanded explanation rather than the expanded explanation alone.
 
 **Flag:** worth deciding, separately from this ticket, whether this state should read `unavailableMessage` from the API like every other state does (currently it's the only one of the six with copy hardcoded in the template rather than data-driven).
 
@@ -116,10 +132,10 @@ Not covered by the six acceptance-criterion states, but present in the actual st
 **Current copy source:** `unavailableMessage` = `"Progress unavailable."`
 
 - **Label:** Peer progress unavailable
-- **Tooltip:** Peer progress data isn't available right now.
+- **Tooltip:** Peer progress data isn't available right now — not a reflection of your own progress.
 - **Expanded explanation:** Peer progress information isn't available for this task right now. This is a data issue, not a reflection of your own progress — check back later.
 
-*Rationale:* explicit "data issue, not a progress issue" framing per the starting principles, so a blank state doesn't read as an implicit signal about the student's own standing.
+*Rationale:* explicit "data issue, not a progress issue" framing per the starting principles, now present in both tiers rather than the expanded explanation alone.
 
 ---
 
@@ -128,7 +144,7 @@ Not covered by the six acceptance-criterion states, but present in the actual st
 **Current copy source:** `unavailableMessage` = `"Peer progress is currently unavailable."` (reused generic wording) plus a separate hardcoded badge, `"Data may be outdated"`
 
 - **Label:** Peer progress — data outdated
-- **Tooltip:** Peer progress data hasn't refreshed recently and isn't shown right now.
+- **Tooltip:** Peer progress data hasn't refreshed recently — not a reflection of your own progress.
 - **Expanded explanation:** Peer progress data hasn't updated recently, so it isn't being shown right now rather than risk showing an out-of-date figure. This is a data timing issue, not a reflection of your own progress — check back later for a current number.
 
 *Rationale:* Note the current implementation (`ppi-widget.component.html:39-45`, `peer-progress-indicator-state.ts:43-44`) never actually renders a percentage in this state, even if one exists in the underlying data — the stale check happens before the percentage check, so only the message + badge show. Copy above is written to match what actually renders (no number implied). **Flag:** worth asking the team whether that's intentional; if a stale percentage should ever be shown (e.g. "42% (as of 3 days ago)"), the copy would need to change along with the logic — out of scope for this ticket either way.
@@ -162,18 +178,22 @@ Six widget-state screenshots exist from PPI-F03's verification pass (saved local
 | Stale state | §3.5 |
 | Disabled state | §3.6 |
 
-Annotation itself (drawing labels onto the image) is manual/outside this session per the ticket's step 8 — this table just maps which shot goes with which copy block.
+Annotation itself (drawing labels onto the image) is manual/outside this session — this table just maps which shot goes with which copy block.
 
 ---
 
-## 5. Things I wasn't confident about / left for review
+## 5. Recommendations for follow-up
 
-1. **Zero state's data source** (§3.2 flag) — hardcoded vs. API-driven, pre-existing open question from PPI-F03, not resolved here.
-2. **Stale state's actual rendered content** (§3.5 flag) — confirmed by reading the code that no percentage renders in this state today; flagging in case that's not the intended long-term behavior.
-3. **Tooltip/expanded-explanation UI hooks don't exist yet** (§0.1) — this doc's tooltip and expanded-explanation tiers are copy-in-waiting, not copy for something you can click on today.
-4. **Base branch** — used `feature/peer-progress-indicator` per the handover doc's recommendation; not independently confirmed with the team.
-5. **Deliverable format** — produced this as a standalone markdown spec doc only (option (a) from the handover's open question #3). No widget `.html`/`.ts` template strings or `unavailableMessage` values were changed. If the ticket actually wants the real strings updated too (option (b) or (c)), that's a separate, larger change this session did not make — confirm before that work starts.
-6. **Pre-existing data-contract defect in already-merged PPI-F03 code — separate from this ticket, not fixed here.** `STALE_STATE` in `peer-progress-indicator.mock.ts:51-61` sets `submittedPercentage: null`. The interface comment on `PeerProgressIndicator.submittedPercentage` (`peer-progress-indicator.ts`) documents null as valid only "when suppressed/unavailable/disabled" — not stale. The mock violates its own type's documented contract.
-   - As it stands today this is **latent, not actively broken**: the `stale` template branch (`ppi-widget.component.html:39-45`) never interpolates `submittedPercentage` — it only renders `view.message` and the static "Data may be outdated" badge — so no "null%" currently reaches the screen.
-   - It becomes a live bug the moment either (a) the stale branch is changed to also show the percentage (something §3.5 above already flags as a plausible future UX improvement), or (b) any other code path reads `submittedPercentage` off a stale record assuming the interface comment's contract holds.
-   - Recommend a separate ticket/fix in the PPI-F03 codebase: either update the interface comment to include `isStale` among the valid-null cases, or update `STALE_STATE`'s mock (and whatever the real backend does) to carry a real percentage alongside `isStale: true`, consistent with "stale" meaning *old but present* data rather than *absent* data.
+These are findings from reading the code while writing this doc, not uncertainty about the copy itself — the copy is complete. Each one is a decision or fix that belongs to someone other than this ticket.
+
+**For Maple / code review:**
+
+1. **Data-contract defect in already-merged PPI-F03 code.** `STALE_STATE` in `peer-progress-indicator.mock.ts` sets `submittedPercentage: null`, but the interface comment on `PeerProgressIndicator.submittedPercentage` documents null as valid only for suppressed/unavailable/disabled — not stale. Currently latent: the stale template branch never interpolates the percentage, so no "null%" reaches the screen today. Becomes a live bug the moment either the stale UI is enhanced to also show a number, or any other code reads `submittedPercentage` trusting that contract. **Recommend:** fix the mock to carry a real percentage alongside `isStale: true`, or update the interface comment to include `isStale` among the valid-null cases.
+
+2. **Zero state's message is hardcoded, not API-driven** — the only one of the six states where this is true. `ZERO_PERCENT_STATE.unavailableMessage` is an empty string; the component shows its own fallback instead. Pre-existing open question from PPI-F03, still unresolved. **Recommend:** decide whether the mock/backend should supply a real message here, matching how the other five states work.
+
+3. **Stale state's percentage is currently unreachable in the UI** — the `isStale` check fires before the percentage check in the resolver, so `view.data?.submittedPercentage` never renders even when present in the underlying data. Copy in §3.5 is written to match current behavior (no number implied). **Recommend:** if a stale-but-real number should ever display (e.g. "42% (as of 3 days ago)"), that's a template change; the copy would need a matching update at that time.
+
+**For whoever implements this doc's copy into the UI:**
+
+4. Tooltip and expanded-explanation UI don't exist yet (§0.1) — this is copy ready for a future implementation ticket, not something wired up today.
