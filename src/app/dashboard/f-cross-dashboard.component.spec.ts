@@ -22,11 +22,13 @@ describe('CrossDashboardComponent', () => {
     fixture.detectChanges();
   };
 
+  const makeDate = (day: number, hour = 12): Date => new Date(2026, 7, day, hour, 0, 0);
+
   const makeTask = (
     name: string,
     abbreviation: string,
     status: TaskStatusEnum,
-    dueDate: Date,
+    dueDate: Date | null | undefined,
     topWeight: number = 0,
   ): Task =>
     ({
@@ -428,5 +430,210 @@ describe('CrossDashboardComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain(
       'No tasks match the current search and filters.',
     );
+  });
+
+  it('includes tasks exactly on the start and end boundaries', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Before Task', 'BEFORE', 'not_started', makeDate(9)),
+        makeTask('Start Task', 'START', 'not_started', makeDate(10, 23)),
+        makeTask('End Task', 'END', 'not_started', makeDate(20, 1)),
+        makeTask('After Task', 'AFTER', 'not_started', makeDate(21)),
+      ]),
+    ]);
+
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-20');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'START',
+      'END',
+    ]);
+  });
+
+  it('supports start-date-only filtering', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Before Task', 'BEFORE', 'not_started', makeDate(9)),
+        makeTask('Boundary Task', 'BOUNDARY', 'not_started', makeDate(10)),
+        makeTask('After Task', 'AFTER', 'not_started', makeDate(11)),
+      ]),
+    ]);
+
+    component.setStartDate('2026-08-10');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'BOUNDARY',
+      'AFTER',
+    ]);
+  });
+
+  it('supports end-date-only filtering', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Before Task', 'BEFORE', 'not_started', makeDate(9)),
+        makeTask('Boundary Task', 'BOUNDARY', 'not_started', makeDate(10)),
+        makeTask('After Task', 'AFTER', 'not_started', makeDate(11)),
+      ]),
+    ]);
+
+    component.setEndDate('2026-08-10');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'BEFORE',
+      'BOUNDARY',
+    ]);
+  });
+
+  it('detects a reversed date range and does not apply it', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('First Task', 'TASK1', 'not_started', makeDate(10)),
+        makeTask('Second Task', 'TASK2', 'not_started', makeDate(20)),
+      ]),
+    ]);
+
+    component.setStartDate('2026-08-20');
+    component.setEndDate('2026-08-10');
+
+    expect(component.startDate).toBe('2026-08-20');
+    expect(component.endDate).toBe('2026-08-10');
+    expect(component.isDateRangeInvalid).toBe(true);
+    expect(component.isDateFilterActive).toBe(false);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'TASK1',
+      'TASK2',
+    ]);
+  });
+
+  it('keeps undated tasks without a filter and excludes them while filtering', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Valid Task', 'VALID', 'not_started', makeDate(15)),
+        makeTask('Missing Date Task', 'MISSING', 'not_started', undefined),
+        makeTask('Invalid Date Task', 'INVALID', 'not_started', new Date('invalid')),
+      ]),
+    ]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'VALID',
+      'MISSING',
+      'INVALID',
+    ]);
+
+    component.setStartDate('2026-08-10');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['VALID']);
+  });
+
+  it('clears both dates and restores the unfiltered task list', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Early Task', 'EARLY', 'not_started', makeDate(5)),
+        makeTask('Late Task', 'LATE', 'not_started', makeDate(20)),
+      ]),
+    ]);
+
+    component.setStartDate('2026-08-10');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['LATE']);
+
+    component.clearDateRange();
+
+    expect(component.startDate).toBe('');
+    expect(component.endDate).toBe('');
+    expect(component.isDateFilterActive).toBe(false);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'EARLY',
+      'LATE',
+    ]);
+  });
+
+  it('keeps a unit visible when no tasks match the selected date range', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [makeTask('Early Task', 'TASK1', 'not_started', makeDate(5))]),
+    ]);
+
+    component.setStartDate('2026-08-20');
+
+    expect(component.isDateFilterActive).toBe(true);
+    expect(component.displayedUnits).toHaveLength(1);
+    expect(component.displayedUnits[0].code).toBe('SIT764');
+    expect(component.displayedUnits[0].tasks).toHaveLength(0);
+  });
+
+  it('combines date filtering with Hide Completed and Due Date sorting', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Later Review', 'LATER', 'not_started', makeDate(18), 3),
+        makeTask('Completed Review', 'COMPLETE', 'complete', makeDate(12), 1),
+        makeTask('Earlier Review', 'EARLIER', 'not_started', makeDate(15), 2),
+        makeTask('Outside Review', 'OUTSIDE', 'not_started', makeDate(25), 4),
+      ]),
+    ]);
+
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-20');
+
+    const hideCompleted = component.filterOptions.find((mode) => mode === 'Hide Completed');
+    if (!hideCompleted) {
+      throw new Error('Hide Completed filter option is missing');
+    }
+    component.toggleFilter(1, hideCompleted);
+
+    const dueDateSort = component.sortOptions.find((mode) => mode === 'Due Date');
+    if (!dueDateSort) {
+      throw new Error('Due Date sort option is missing');
+    }
+    component.setSort(1, dueDateSort);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'EARLIER',
+      'LATER',
+    ]);
+  });
+
+  it('applies the same date range in Active, Previous and All unit views', () => {
+    const activeProject = makeProject(1, 'SIT764', true, [
+      makeTask('Active Early Task', 'ACTIVE-EARLY', 'not_started', makeDate(10)),
+    ]);
+    const previousProject = makeProject(2, 'SIT704', false, [
+      makeTask('Previous Late Task', 'PREVIOUS-LATE', 'not_started', makeDate(20)),
+    ]);
+
+    projectsSubject.next([activeProject]);
+    projectServiceQuery.mockReturnValue(of([activeProject, previousProject]));
+
+    component.setStartDate('2026-08-15');
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764']);
+    expect(component.displayedUnits[0].tasks).toHaveLength(0);
+
+    component.setUnitScope('previous');
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT704']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'PREVIOUS-LATE',
+    ]);
+
+    component.setUnitScope('all');
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764', 'SIT704']);
+    expect(component.displayedUnits[0].tasks).toHaveLength(0);
+    expect(component.displayedUnits[1].tasks.map((task) => task.abbreviation)).toEqual([
+      'PREVIOUS-LATE',
+    ]);
+  });
+
+  it('combines per-unit search with dashboard date filtering', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Early Security Review', 'EARLY', 'not_started', makeDate(8)),
+        makeTask('In-range Security Review', 'MATCH', 'not_started', makeDate(15)),
+        makeTask('In-range Calendar Setup', 'OTHER', 'not_started', makeDate(16)),
+      ]),
+    ]);
+
+    component.setSearch(1, 'security');
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-20');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['MATCH']);
   });
 });
