@@ -1,7 +1,4 @@
-export function calculateCompletionPercentage(
-  completed: number,
-  available: number
-): number | null {
+export function calculateCompletionPercentage(completed: number, available: number): number | null {
   if (
     !Number.isFinite(completed) ||
     !Number.isFinite(available) ||
@@ -17,7 +14,7 @@ export function calculateCompletionPercentage(
 
 export function calculateProgressComparison(
   studentPercentage: number,
-  cohortPercentage: number | null
+  cohortPercentage: number | null,
 ): number | null {
   if (
     cohortPercentage === null ||

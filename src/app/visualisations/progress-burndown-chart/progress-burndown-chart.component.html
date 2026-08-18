@@ -23,21 +23,41 @@
     </ngx-charts-line-chart>
   </div>
 
-  <!-- Check for peerMedianState -->
-  @if (peerMedianState !== 'ready') {
+  @if (peerMedianState === 'ready') {
+    <div class="flex items-center justify-center gap-2 pt-2 text-sm opacity-70" role="note">
+      <mat-icon inline>science</mat-icon>
+      <span>
+        Peer median (demo) uses anonymous aggregate sample data for this proof of concept.
+      </span>
+    </div>
+  } @else {
     <div class="flex items-center justify-center gap-2 pt-2 text-sm opacity-70" role="status">
       @switch (peerMedianState) {
         @case ('loading') {
           <mat-spinner color="accent" diameter="16"></mat-spinner>
           <span>Loading peer comparison…</span>
         }
-        @case ('insufficient') {
+
+        @case ('suppressed') {
           <mat-icon inline>group_off</mat-icon>
-          <span>Too few students are targeting this grade to show an anonymous peer median.</span>
+          <span>
+            Peer comparison is hidden because the anonymous cohort threshold was not met.
+          </span>
         }
+
         @case ('unavailable') {
           <mat-icon inline>cloud_off</mat-icon>
           <span>Peer median is unavailable right now.</span>
+        }
+
+        @case ('disabled') {
+          <mat-icon inline>visibility_off</mat-icon>
+          <span>Peer comparison is disabled for this unit.</span>
+        }
+
+        @case ('error') {
+          <mat-icon inline>error_outline</mat-icon>
+          <span>Peer median could not be loaded. Please try again later.</span>
         }
       }
     </div>

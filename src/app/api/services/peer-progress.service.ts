@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable, of} from 'rxjs';
-import {PeerMedianPoint, PeerProgressResponse} from '../models/peer-progress';
+import {PeerMedianPoint, PeerProgressResponse, PeerProgressState} from '../models/peer-progress';
 import {Project} from '../models/project';
 import {MappingFunctions} from './mapping-fn';
 
@@ -14,31 +14,29 @@ export class PeerProgressService {
   ];
 
   /**
-   * The chart's insufficient-cohort state is 
-   * displayed by dropping this below 'MINIMUM_COHORT_SIZE'
+   * Temporary proof-of-concept state.
+   *
+   * The future authorised backend must decide whether the result is ready,
+   * suppressed, unavailable or disabled. It must not send the raw cohort size
+   * to the browser.
    */
-  private static readonly MOCK_COHORT_SIZE = 24;
+  private static readonly MOCK_STATE: PeerProgressState = 'ready';
 
-  private static readonly MOCK_MY_PROGRESS = [
-    1.0, 1.0, 0.97, 0.97, 0.88, 0.88, 0.74, 0.7, 0.62, 0.55, 0.48, 0.4, 0.28, 0.18, 0.08, 0.02, 0.0,
-  ];
+  public getCohortMedian(
+    project: Project,
+    targetGrade: number = project.targetGrade,
+  ): Observable<PeerProgressResponse> {
+    const state = PeerProgressService.MOCK_STATE;
 
-  public getCohortMedian(project: Project): Observable<PeerProgressResponse> {
     return of({
       project_id: project.id,
-      target_grade: project.targetGrade,
-      cohort_size: PeerProgressService.MOCK_COHORT_SIZE,
-      median_burndown: this.sampleProfile(project, PeerProgressService.MOCK_WEEKLY_REMAINING),
+      target_grade: targetGrade,
+      state,
+      median_burndown:
+        state === 'ready'
+          ? this.sampleProfile(project, PeerProgressService.MOCK_WEEKLY_REMAINING)
+          : [],
     });
-  }
-
-  /**
-   * This line has a real source already -- `Project.refreshBurndownChartData()` computes it from
-   * the student's own tasks. Delete this method and `MOCK_MY_PROGRESS` once the
-   * chart no longer needs demo data; nothing needs to replace them.
-   */
-  public getMyProgressMock(project: Project): Observable<PeerMedianPoint[]> {
-    return of(this.sampleProfile(project, PeerProgressService.MOCK_MY_PROGRESS));
   }
 
   private sampleProfile(project: Project, profile: number[]): PeerMedianPoint[] {

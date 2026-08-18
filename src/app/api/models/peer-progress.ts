@@ -1,19 +1,33 @@
 export interface PeerMedianPoint {
   date: string;
+
   /**
    * Median proportion of target task weight still remaining across the cohort,
-   * 0..1. This is the same scale the burndown's own series use before they are
-   * converted to a percentage for display.
+   * from 0 to 1. This matches the scale used by the existing burndown series
+   * before those values are converted into percentages for display.
    */
   remaining: number;
 }
 
+/**
+ * A safe display state returned by the authorised backend or frontend adapter.
+ *
+ * The browser must not receive a raw cohort size and decide whether a cohort is
+ * large enough. That privacy decision belongs at the trusted data boundary.
+ */
+export type PeerProgressState = 'ready' | 'suppressed' | 'unavailable' | 'disabled';
+
 export interface PeerProgressResponse {
   project_id: number;
-  /** The median covers students in this unit targeting this same grade. */
+
+  /** The comparison applies to this selected target grade. */
   target_grade: number;
-  /** How many students the median was taken across. */
-  cohort_size: number;
-  /** One point per week, on the same weekly grid the burndown plots. */
+
+  /** Privacy-safe state; no raw cohort size is returned to the component. */
+  state: PeerProgressState;
+
+  /**
+   * Anonymous median points. This must be empty unless state is ready.
+   */
   median_burndown: PeerMedianPoint[];
 }
