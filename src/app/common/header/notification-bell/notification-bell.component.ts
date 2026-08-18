@@ -84,6 +84,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   private listSubscription: Subscription | null = null;
+  private destroyed = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -110,12 +111,22 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         .subscribe(() => this.refresh()),
     );
 
-    // unreadCount$ seeds at zero and stays there until something asks, so the
-    // first navigation is too late to be the only trigger.
-    this.refresh();
+    // A remembered session is restored after the header is created. If the bell
+    // asks immediately, the authentication guard can skip the request before the
+    // restored session is ready, and no later navigation is guaranteed.
+    if (this.authenticationService.isAuthenticated()) {
+      this.refresh();
+    } else {
+      this.authenticationService.afterAuthCall((authenticated) => {
+        if (authenticated && !this.destroyed) {
+          this.refresh();
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.listSubscription?.unsubscribe();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
   }
@@ -143,6 +154,12 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   onMenuOpened(): void {
     this.loading = true;
     this.loadFailed = false;
+
+    if (!this.authenticationService.isAuthenticated()) {
+      this.loading = false;
+      this.loadFailed = true;
+      return;
+    }
 
     // Opening twice quickly is easy to do. Without this the first response can
     // land after the second and put the older list back.

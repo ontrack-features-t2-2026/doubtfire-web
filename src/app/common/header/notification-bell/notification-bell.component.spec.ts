@@ -46,7 +46,12 @@ describe('NotificationBellComponent', () => {
     list: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
   };
-  let authenticationService: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let completeAuthentication: (authenticated: boolean) => void;
+
+  let authenticationService: {
+    isAuthenticated: ReturnType<typeof vi.fn>;
+    afterAuthCall: ReturnType<typeof vi.fn>;
+  };
   let alerts: {success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>};
   let router: {events: unknown; navigateByUrl: ReturnType<typeof vi.fn>};
 
@@ -140,7 +145,14 @@ describe('NotificationBellComponent', () => {
       list: vi.fn().mockReturnValue(list),
       markRead: vi.fn(() => answers('markRead', undefined)),
     };
-    authenticationService = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    completeAuthentication = () => undefined;
+
+    authenticationService = {
+      isAuthenticated: vi.fn().mockReturnValue(true),
+      afterAuthCall: vi.fn((callback: (authenticated: boolean) => void) => {
+        completeAuthentication = callback;
+      }),
+    };
     alerts = {success: vi.fn(), error: vi.fn()};
     router = {events: routerEvents.asObservable(), navigateByUrl: vi.fn()};
 
@@ -254,6 +266,33 @@ describe('NotificationBellComponent', () => {
     expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
   });
 
+  it('waits for restored authentication before the initial refresh', () => {
+    authenticationService.isAuthenticated.mockReturnValue(false);
+
+    fixture.detectChanges();
+
+    expect(authenticationService.afterAuthCall).toHaveBeenCalledTimes(1);
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
+
+    authenticationService.isAuthenticated.mockReturnValue(true);
+    completeAuthentication(true);
+
+    expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
+    expect(subscribedTo.has('refreshUnreadCount')).toBe(true);
+  });
+
+  it('does not refresh after delayed authentication once destroyed', () => {
+    authenticationService.isAuthenticated.mockReturnValue(false);
+
+    fixture.detectChanges();
+    fixture.destroy();
+
+    authenticationService.isAuthenticated.mockReturnValue(true);
+    completeAuthentication(true);
+
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
+  });
+
   it('handles a count request that fails instead of leaving it unhandled', async () => {
     // rxjs does not throw an unhandled subscriber error where the subscribe
     // call was, it hands it to config.onUnhandledError a macrotask later, and
@@ -282,6 +321,15 @@ describe('NotificationBellComponent', () => {
   describe('the dropdown', () => {
     beforeEach(() => {
       fixture.detectChanges();
+    });
+
+    it('does not request the list before authentication is ready', () => {
+      authenticationService.isAuthenticated.mockReturnValue(false);
+
+      openMenu();
+
+      expect(notificationService.list).not.toHaveBeenCalled();
+      expect(placeholderText()).toContain('We could not load your notifications');
     });
 
     it('reads the list every time it is opened', () => {

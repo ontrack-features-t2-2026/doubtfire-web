@@ -98,7 +98,7 @@
       }
     </mat-menu>
 
-    <button mat-button [matMenuTriggerFor]="menu2">
+    <button mat-button [matMenuTriggerFor]="menu2" (menuOpened)="refreshMobileUnreadCount()">
       <user-icon [size]="32" [user]="currentUser"></user-icon>
     </button>
     <mat-menu #menu2="matMenu">

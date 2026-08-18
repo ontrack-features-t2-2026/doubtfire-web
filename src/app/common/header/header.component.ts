@@ -260,6 +260,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.aboutDoubtfireModal.show();
   }
 
+  public refreshMobileUnreadCount(): void {
+    if (!this.media.isActive('xs') || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.notificationService.refreshUnreadCount().subscribe({
+      error: () => undefined,
+    });
+  }
+
   openCalendar(): void {
     this.calendarModal.show(null);
   }

@@ -1,9 +1,9 @@
 import {MediaObserver} from 'ng-flex-layout';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
-import {of} from 'rxjs';
+import {Observable, defer, of} from 'rxjs';
 import {AuthenticationService} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
@@ -25,7 +25,42 @@ describe('HeaderComponent', () => {
   let component: HeaderComponent;
   let fixture: ComponentFixture<HeaderComponent>;
 
+  let refreshSubscribed: boolean;
+
+  let authenticationService: {
+    isAuthenticated: ReturnType<typeof vi.fn>;
+  };
+
+  let mediaObserver: {
+    isActive: ReturnType<typeof vi.fn>;
+  };
+
+  let notificationService: {
+    unreadCount$: Observable<number>;
+    refreshUnreadCount: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(async () => {
+    refreshSubscribed = false;
+
+    authenticationService = {
+      isAuthenticated: vi.fn().mockReturnValue(true),
+    };
+
+    mediaObserver = {
+      isActive: vi.fn().mockImplementation((alias: string) => alias === 'xs'),
+    };
+
+    notificationService = {
+      unreadCount$: of(0),
+      refreshUnreadCount: vi.fn(() =>
+        defer(() => {
+          refreshSubscribed = true;
+          return of(0);
+        }),
+      ),
+    };
+
     await TestBed.configureTestingModule({
       declarations: [HeaderComponent],
       providers: [
@@ -35,10 +70,10 @@ describe('HeaderComponent', () => {
         {provide: CheckForUpdateService, useValue: emptyProvider},
         {provide: GlobalStateService, useValue: emptyProvider},
         {provide: UserService, useValue: emptyProvider},
-        {provide: AuthenticationService, useValue: emptyProvider},
-        {provide: MediaObserver, useValue: emptyProvider},
+        {provide: AuthenticationService, useValue: authenticationService},
+        {provide: MediaObserver, useValue: mediaObserver},
         {provide: DoubtfireConstants, useValue: emptyProvider},
-        {provide: NotificationService, useValue: {unreadCount$: of(0)}},
+        {provide: NotificationService, useValue: notificationService},
         {provide: SidekiqJobService, useValue: emptyProvider},
         {provide: SidekiqJobsModalService, useValue: emptyProvider},
         {provide: QrModalService, useValue: emptyProvider},
@@ -58,5 +93,28 @@ describe('HeaderComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('refreshes the unread count when the mobile account menu opens', () => {
+    component.refreshMobileUnreadCount();
+
+    expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
+    expect(refreshSubscribed).toBe(true);
+  });
+
+  it('does not refresh the mobile count on larger screens', () => {
+    mediaObserver.isActive.mockReturnValue(false);
+
+    component.refreshMobileUnreadCount();
+
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh the mobile count after sign out', () => {
+    authenticationService.isAuthenticated.mockReturnValue(false);
+
+    component.refreshMobileUnreadCount();
+
+    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
   });
 });
