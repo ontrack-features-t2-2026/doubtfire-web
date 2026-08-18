@@ -1,8 +1,9 @@
-import {Color, LegendPosition, ScaleType} from '@swimlane/ngx-charts';
+import {Color, ScaleType} from '@swimlane/ngx-charts';
 import {formatDate} from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   Input,
   LOCALE_ID,
   OnChanges,
@@ -54,7 +55,7 @@ export class ProgressBurndownChartComponent
   temp: BurndownSeries[] = [];
 
   // Chart options
-  legend: boolean = true;
+  legend: boolean = false;
   showLabels: boolean = true;
   animations: boolean = true;
   xAxis: boolean = true;
@@ -63,14 +64,14 @@ export class ProgressBurndownChartComponent
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
   yAxisLabel: string = 'Tasks Remaining';
-  legendPosition: LegendPosition = LegendPosition.Below;
+
+  readonly seriesColors: string[] = ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED'];
 
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    // Target, Projected, To Submit, To Complete, Peer median (demo).
-    domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED', 'transparent'],
+    domain: this.seriesColors,
   };
 
   yScaleMin: number = 0;
@@ -96,6 +97,7 @@ export class ProgressBurndownChartComponent
 
   ngOnInit(): void {
     this.initialised = true;
+    this.updateResponsiveAxisLabels();
 
     this.project.refreshBurndownChartData();
     this.updateData();
@@ -129,9 +131,23 @@ export class ProgressBurndownChartComponent
     this.loadPeerMedian();
   }
 
+  @HostListener('window:resize')
+  onViewportResize(): void {
+    this.updateResponsiveAxisLabels();
+  }
+
   ngOnDestroy(): void {
     this.peerMedianRequestVersion++;
     this.activePeerMedianRequest?.unsubscribe();
+  }
+
+  private updateResponsiveAxisLabels(): void {
+    const viewportWidth = typeof window === 'undefined' ? 1024 : window.innerWidth;
+
+    const showAxisTitles = viewportWidth >= 640;
+
+    this.showYAxisLabel = showAxisTitles;
+    this.showXAxisLabel = showAxisTitles;
   }
 
   private loadPeerMedian(): void {

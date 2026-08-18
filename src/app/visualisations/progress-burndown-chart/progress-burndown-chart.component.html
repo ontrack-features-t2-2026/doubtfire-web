@@ -1,10 +1,8 @@
-<div class="flex h-full min-h-[320px] flex-col pb-6">
-  <div class="chart-container flex min-h-0 flex-1">
+<div class="progress-burndown">
+  <div class="progress-burndown__chart">
     <ngx-charts-line-chart
-      class="progress-burndown-chart h-full flex-1"
+      class="progress-burndown-chart"
       [legend]="legend"
-      [legendPosition]="legendPosition"
-      [legendTitle]="''"
       [results]="data"
       [scheme]="colorScheme"
       [showXAxisLabel]="showXAxisLabel"
@@ -23,15 +21,43 @@
     </ngx-charts-line-chart>
   </div>
 
+  @if (data.length > 0) {
+    <div
+      aria-label="Burndown chart series visibility"
+      class="progress-burndown__legend"
+      role="group"
+    >
+      @for (series of data; track series.name; let index = $index) {
+        <button
+          class="progress-burndown__legend-item"
+          type="button"
+          [attr.aria-pressed]="isDataShown(series.name)"
+          [attr.title]="'Show or hide ' + series.name"
+          [class.progress-burndown__legend-item--hidden]="!isDataShown(series.name)"
+          (click)="onSelect(series.name)"
+        >
+          <span
+            aria-hidden="true"
+            class="progress-burndown__legend-swatch"
+            [style.background-color]="seriesColors[index] || '#777777'"
+          ></span>
+
+          <span class="progress-burndown__legend-label">
+            {{ series.name }}
+          </span>
+        </button>
+      }
+    </div>
+  }
+
   @if (peerMedianState === 'ready') {
-    <div class="flex items-center justify-center gap-2 pt-2 text-sm opacity-70" role="note">
-      <mat-icon inline>science</mat-icon>
-      <span>
-        Peer median (demo) uses anonymous aggregate sample data for this proof of concept.
-      </span>
+    <div class="progress-burndown__message" role="note">
+      <mat-icon aria-hidden="true">science</mat-icon>
+
+      <span> Demo peer median: anonymous aggregate sample data, not live cohort data. </span>
     </div>
   } @else {
-    <div class="flex items-center justify-center gap-2 pt-2 text-sm opacity-70" role="status">
+    <div aria-live="polite" class="progress-burndown__message" role="status">
       @switch (peerMedianState) {
         @case ('loading') {
           <mat-spinner color="accent" diameter="16"></mat-spinner>
@@ -39,25 +65,25 @@
         }
 
         @case ('suppressed') {
-          <mat-icon inline>group_off</mat-icon>
+          <mat-icon aria-hidden="true">group_off</mat-icon>
           <span>
             Peer comparison is hidden because the anonymous cohort threshold was not met.
           </span>
         }
 
         @case ('unavailable') {
-          <mat-icon inline>cloud_off</mat-icon>
+          <mat-icon aria-hidden="true">cloud_off</mat-icon>
           <span>Peer median is unavailable right now.</span>
         }
 
         @case ('disabled') {
-          <mat-icon inline>visibility_off</mat-icon>
+          <mat-icon aria-hidden="true">visibility_off</mat-icon>
           <span>Peer comparison is disabled for this unit.</span>
         }
 
         @case ('error') {
-          <mat-icon inline>error_outline</mat-icon>
-          <span>Peer median could not be loaded. Please try again later.</span>
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span> Peer median could not be loaded. Please try again later. </span>
         }
       }
     </div>

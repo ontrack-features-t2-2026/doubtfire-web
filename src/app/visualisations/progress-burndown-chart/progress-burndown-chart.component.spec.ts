@@ -270,4 +270,35 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
 
     component.ngOnDestroy();
   });
+  it('hides axis titles on narrow screens', () => {
+    const {component} = makeHarness(vi.fn());
+    const originalWidth = window.innerWidth;
+
+    try {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: 639,
+      });
+
+      component.onViewportResize();
+
+      expect(component.showXAxisLabel).toBe(false);
+      expect(component.showYAxisLabel).toBe(false);
+
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: 640,
+      });
+
+      component.onViewportResize();
+
+      expect(component.showXAxisLabel).toBe(true);
+      expect(component.showYAxisLabel).toBe(true);
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: originalWidth,
+      });
+    }
+  });
 });
