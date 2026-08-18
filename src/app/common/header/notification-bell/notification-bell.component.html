@@ -15,7 +15,7 @@
   <div class="flex items-center justify-between pr-2">
     <h2 class="my-2 ml-3.5" mat-subheader>Notifications</h2>
     @if (unreadCount) {
-      <button class="notification-mark-all" mat-button (click)="markAllRead($event)">
+      <button class="notification-mark-all" mat-menu-item (click)="markAllRead($event)">
         Mark all read
       </button>
     }
@@ -88,10 +88,10 @@
           </span>
         </button>
         <button
-          aria-label="Delete notification"
           class="notification-delete"
-          mat-icon-button
+          mat-menu-item
           matTooltip="Delete"
+          [attr.aria-label]="'Delete notification: ' + notification.message"
           (click)="confirmDelete(notification, $event)"
         >
           <mat-icon>close</mat-icon>

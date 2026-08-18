@@ -574,6 +574,32 @@ describe('NotificationBellComponent', () => {
       fixture.detectChanges();
     });
 
+    it('registers every dropdown action in MatMenu keyboard order', () => {
+      unreadCount.next(1);
+      fixture.detectChanges();
+
+      const menuItems = Array.from(panel().querySelectorAll<HTMLElement>('[role="menuitem"]'));
+
+      expect(menuItems).toHaveLength(6);
+      expect(menuItems[0]).toBe(markAllButton());
+      expect(menuItems[1]).toBe(rows()[0]);
+      expect(menuItems[2]).toBe(deleteButtons()[0]);
+      expect(menuItems[3]).toBe(rows()[1]);
+      expect(menuItems[4]).toBe(deleteButtons()[1]);
+      expect(menuItems[5]).toBe(seeAllButton());
+
+      for (const menuItem of menuItems) {
+        expect(menuItem.classList.contains('mat-mdc-menu-item')).toBe(true);
+      }
+    });
+
+    it('names each delete action after the notification it removes', () => {
+      expect(deleteButtons().map((button) => button.getAttribute('aria-label'))).toEqual([
+        'Delete notification: notification 1',
+        'Delete notification: notification 2',
+      ]);
+    });
+
     it('marks everything read without asking first', () => {
       unreadCount.next(1);
       fixture.detectChanges();

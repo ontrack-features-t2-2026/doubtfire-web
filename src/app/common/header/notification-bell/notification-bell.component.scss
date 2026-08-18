@@ -194,19 +194,40 @@
   font-size: 14px;
 }
 
-.notification-mark-all,
+.notification-mark-all.mat-mdc-menu-item {
+  flex: 0 0 auto;
+  font-size: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  width: auto;
+}
+
 .notification-see-all {
   font-size: 12px;
 }
 
-// The delete button sits in a menu row, so at its natural size it competes with
-// the message for attention on a list nobody opened to delete things from.
-.notification-delete {
-  flex: none;
+// Mark all read and Delete are real menu items so MatMenu's arrow-key manager
+// can reach them. Keep Delete compact beside the notification row while
+// retaining a 48px keyboard and pointer target.
+.notification-delete.mat-mdc-menu-item {
+  flex: 0 0 48px;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0;
+  width: 48px;
+
+  // MatMenu renders an empty text wrapper after an icon-only item. Remove it
+  // so the close icon can sit in the true centre of the button.
+  ::ng-deep .mat-mdc-menu-item-text {
+    display: none;
+  }
 
   .mat-icon {
+    display: block;
     font-size: 18px;
     height: 18px;
+    line-height: 18px;
+    margin: 0;
     width: 18px;
   }
 }
