@@ -1,199 +1,299 @@
-# PPI-D01: Task-Level Help Text and Privacy Copy
+# PPI-D01: Peer Progress Help Text and Privacy Copy
 
-**Ticket:** PPI-D01 — Write the peer-comparison explanation, privacy limits and help text
-**Branch:** `docs/ppi-help-privacy`, based on `feature/peer-progress-indicator` *(recommended base branch, not independently confirmed with the team — confirm before merge)*
-**Scope:** content/copy only. No widget logic, states, or data flow were changed to produce this doc.
+**Ticket:** PPI-D01 - Write the peer-comparison explanation, privacy limits and help text  
+**Branch:** `docs/ppi-help-privacy`  
+**Scope:** Documentation and copy specification only. No production widget logic, API
+behaviour or data flow is changed by this document.
 
----
+**Implementation status:**
+
+- The task-level location map is based on the current PPI widget.
+- The unit-level copy is planned for the mock-backed PPI-F02 proof of concept.
+- The unit-level section does not claim that a live unit-level component or API already
+  exists.
+- Labels, help controls and expanded explanations still require a separate frontend
+  implementation.
 
 ## Acceptance criteria coverage
 
-| # | Criterion | Status |
-|---|---|---|
-| 1 | Label, tooltip, and expanded explanation for task-level and unit-level views | Task-level: met (§3). Unit-level: not applicable — confirmed no unit-level view exists in the codebase (§0) |
-| 2 | Explain the value is an anonymous aggregate, not an individual ranking | Met — shared framing in §1, echoed in state-specific copy |
-| 3 | Wording for small-cohort suppression, unavailable data, and delayed/stale data | Met (§3.3, §3.4, §3.5) |
-| 4 | Plain language, no wording that could shame or pressure students | Met — reassurance framing present across label/tooltip/explanation for every state where a null, zero, or hidden result could otherwise read as evaluative |
-| 5 | Map each text block to an exact UI location, plus one annotated screenshot | Location map: met (§2). Annotated screenshot: pending — manual step, not part of this document |
+| Requirement                                                             | Result | Evidence                                                             |
+| ----------------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| Label, tooltip and expanded explanation for the task-level view         | Met    | Section 3                                                            |
+| Label, tooltip and expanded explanation for the planned unit-level view | Met    | Section 4                                                            |
+| Explain that the result is an anonymous aggregate and not a ranking     | Met    | Section 1 and all visible-value states                               |
+| Cover suppression, unavailable and stale data                           | Met    | Sections 3 and 4                                                     |
+| Use plain language without shame or pressure                            | Met    | All copy avoids ahead, behind, winning, losing and judgement wording |
+| Map copy to exact current or planned UI locations                       | Met    | Section 2                                                            |
+| Include one annotated screenshot or wireframe                           | Met    | `assets/ppi/ppi-d01-copy-location-wireframe.svg`                     |
+
+## 1. Shared privacy and wellbeing rules
+
+These rules apply to both views:
+
+1. A group result is shown as one combined percentage.
+2. It must not display names, student IDs, project IDs, individual results, individual
+   task statuses, marks, feedback, raw group size or rankings.
+3. A genuine `0%` is a real value. It must not be presented as missing, suppressed or
+   unavailable data.
+4. A suppressed result explains that the group value is hidden for privacy without
+   revealing the exact group size.
+5. Unavailable and stale states describe a data or timing condition. They must not sound
+   like feedback about the student's own work.
+6. The wording must not describe the student as ahead, behind, better or worse than
+   anyone else.
+7. The percentage is not a predicted grade or a judgement about the student's chance of
+   receiving a grade.
+8. Student-facing text must not expose technical errors, internal identifiers or backend
+   details.
+
+This wording describes the intended display boundary. Backend authorisation, aggregation
+and small-group suppression must still enforce that boundary.
 
----
+## 2. Copy placement and accessibility
 
-## 0. Scope: Task-Level Only — No Unit-Level PPI View Exists
+### 2.1 Current task-level location
 
-**Confirmed by repo search, not assumed.**
+- **Widget template:** `src/app/projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component.html`
+- **Parent mount location:** `src/app/projects/states/dashboard/directives/task-dashboard/directives/task-description-card/task-description-card.component.html`
+- **State resolver:** `src/app/api/models/peer-progress-indicator-state.ts`
+- **Current screen location:** inside the task description card, after the task date
+  controls.
+- **State locations:** use the durable template cases rather than relying only on line
+  numbers:
+  - `@case ('success')`
+  - `@case ('no-data')`
+  - `@case ('hidden')`
+  - `@case ('unavailable')`
+  - `@case ('stale')`
+  - `@case ('disabled')`
+
+The task-level copy should use the three numbered locations in the wireframe:
 
-Searched `src/app` for `PeerProgressIndicator`, `peer-progress`, `PpiWidget`, and `ppi-widget` (case-sensitive, to avoid false hits like "mapping" or "shipping" matching a naive case-insensitive `ppi` search). 12 files matched, all of them belonging to the single task-level widget and its supporting service/model/mock:
+1. A visible label naming the information.
+2. A short tooltip or help summary opened from an accessible help control.
+3. An expanded explanation in a popover, panel or other accessible disclosure.
 
-```
-src/app/projects/.../task-description-card/ppi-widget/ppi-widget.component.ts
-src/app/projects/.../task-description-card/ppi-widget/ppi-widget.component.html
-src/app/projects/.../task-description-card/ppi-widget/ppi-widget.component.spec.ts
-src/app/projects/.../task-description-card/task-description-card.component.html
-src/app/api/services/peer-progress-indicator.service.ts
-src/app/api/services/spec/peer-progress-indicator.service.spec.ts
-src/app/api/services/mock/peer-progress-indicator.mock.ts
-src/app/api/services/mock/index.ts
-src/app/api/models/peer-progress-indicator.ts
-src/app/api/models/peer-progress-indicator-state.ts
-src/app/api/models/peer-progress-indicator-state.spec.ts
-src/app/doubtfire-angular.module.ts
-```
+### 2.2 Planned unit-level location
 
-A separate search of `src/app/units` (where a unit-level dashboard surface would live) for "peer" returned nothing.
+The unit-level copy is planned for the PPI-F02 mock-backed proof of concept. It should use
+the same three locations:
+
+1. **Label:** at the top of the unit progress summary card.
+2. **Tooltip or short help text:** opened from the card's help control.
+3. **Expanded explanation:** below the two progress values or inside an accessible
+   disclosure panel.
 
-**Conclusion:** there is no unit-level PPI screen in this codebase yet. Acceptance criterion 1 asks for copy covering "both task-level and unit-level views" — the unit-level half is not achievable right now. This doc covers task-level only. **Recommend flagging back to whoever assigned the ticket** rather than inventing copy for a screen that doesn't exist — that would run against the ticket's own "do not redesign the PPI" instruction in spirit.
+The planned card should keep these values separate:
 
----
+- **My progress**
+- **Anonymous group progress**
 
-## 0.1 Implementation Note: Tooltip and Expanded-Explanation Text Have No UI Home Yet
+The earlier unit-level wireframe used one anonymous Ready-for-Feedback value. The current
+PPI-F02 scope requires the student's own progress and the anonymous group value to be
+separately labelled. The annotated wireframe below keeps the earlier simple card style
+while showing the current two-value boundary.
 
-The ticket asks for a **label, tooltip, and expanded explanation** per state (three tiers of copy). The widget as it exists today (`ppi-widget.component.html`) only has **one visible text slot per state** — a single `<span>{{ view.message }}</span>` next to an icon. There is no `matTooltip` (or any tooltip mechanism) anywhere in this widget or its parent card, and no expandable/"learn more" panel.
+![Annotated PPI copy-location wireframe](assets/ppi/ppi-d01-copy-location-wireframe.svg)
 
-So the drafts below give you all three tiers of copy as requested, but only the "label" tier maps to something that renders today. The tooltip and expanded-explanation tiers are **content ready for a future implementation ticket** to wire up (e.g. `matTooltip` on the icon, and something like a `mat-expansion-panel` or info popover for the long-form text) — not something this documentation-only ticket should build. Flagging this now so it isn't a surprise later.
+### 2.3 Accessibility requirement for implementation
 
-**Recommendation, applied throughout this doc:** treat Label as new UI — a small heading or icon label — added alongside the existing `{{ view.message }}` text, not a replacement for it. The message text is the data payload (the percentage, or the reason it's hidden); the Label names what the widget is, a separate concern. If a reviewer wants it to replace the current text instead, that's a one-line change at implementation time, not a reason to redo this doc.
+The future help control must:
 
----
+- be a real button with a useful accessible name;
+- work with keyboard, touch, and screen-reader use;
+- not depend on mouse hover alone;
+- expose expanded text in a predictable reading and focus order;
+- close without trapping keyboard focus;
+- remain understandable without colour;
+- avoid using an icon as the only explanation.
 
-## 1. Shared framing (applies across every state)
+Suggested accessible name:
 
-Per acceptance criterion 2 — every state's expanded explanation should reinforce, directly or by implication, that:
+> About peer progress
 
-> This number is a combined total across a group of students aiming for the same grade. It is never a list of names, never an individual comparison, and never a ranking.
+## 3. Task-level copy
 
-This sentence (or a close variant) is repeated in the states where a percentage is actually shown (Normal, Zero), since that's where a misreading-as-ranking risk is highest.
+### 3.1 Normal result
 
----
+**Template state:** `@case ('success')`
 
-## 2. Location map
+- **Label:** Peer task progress
+- **Tooltip or short help text:** Shows the percentage of students in your
+  privacy-protected target-grade group who have submitted this task.
+- **Expanded explanation:** This is one combined percentage for students aiming for the
+  same target grade. It does not show names, individual results, raw group size or
+  rankings. It does not assess your own work or predict your grade.
 
-| # | State (mock key) | Widget template case | File : line | Trigger condition |
-|---|---|---|---|---|
-| 1 | Normal (`normal`) | `@case ('success')` | `ppi-widget.component.html:46-52` | `submittedPercentage` is a number > 0 |
-| 2 | Zero (`zero`) | `@case ('no-data')` | `ppi-widget.component.html:33-38` | `submittedPercentage === 0` |
-| 3 | Suppressed (`suppressed`) | `@case ('hidden')` | `ppi-widget.component.html:27-32` | `isSuppressed === true` |
-| 4 | Unavailable (`unavailable`) | `@case ('unavailable')` | `ppi-widget.component.html:15-19` | `submittedPercentage === null` (and not suppressed/stale) |
-| 5 | Stale (`stale`) | `@case ('stale')` | `ppi-widget.component.html:39-45` | `isStale === true` |
-| 6 | Disabled (`disabled`) | `@case ('disabled')` | `ppi-widget.component.html:21-25` | `isFeatureEnabled === false` |
+### 3.2 Genuine zero result
 
-*Line numbers reflect the file's state at time of writing and will drift if the widget is edited again — treat the `@case` name as the durable reference, line numbers as a point-in-time aid only.*
+**Template state:** `@case ('no-data')`
 
-Widget mount point: `f-ppi-widget` is rendered inside `f-task-description-card`, immediately after `f-task-date-slider`, gated by `showPeerProgress` —
-`task-description-card.component.html:16-18`.
+- **Label:** Peer task progress
+- **Tooltip or short help text:** The group percentage is currently 0%. This is a real
+  result, not missing data.
+- **Expanded explanation:** No students in the privacy-protected group have submitted
+  this task yet. This is not feedback about your own progress. The percentage may change
+  as submissions are made.
 
-Not covered by the six acceptance-criterion states, but present in the actual state machine (`peer-progress-indicator-state.ts`) — flagging for completeness, no copy drafted since they're outside the ticket's named scope:
-- `loading` — `ppi-widget.component.html:2-7`, static text "Loading peer progress…"
-- `error` — `ppi-widget.component.html:8-14`, generic text "Could not load peer progress. Please try again." plus a Retry button
+### 3.3 Small-group suppression
 
----
+**Template state:** `@case ('hidden')`
 
-## 3. Copy, state by state
+- **Label:** Peer task progress hidden
+- **Tooltip or short help text:** The group percentage is hidden because the group is too
+  small to show safely.
+- **Expanded explanation:** OnTrack hides the group percentage to protect student
+  privacy. It does not show the hidden value, exact group size, names or individual
+  results. This is a privacy safeguard, not an error or a judgement about your work.
 
-### 3.1 Normal — peers have submitted
+### 3.4 Unavailable data
 
-**Current copy source:** built from `submittedPercentage` — `"{X}% of peers at your target grade have submitted"`
+**Template state:** `@case ('unavailable')`
 
-- **Label:** Peer progress
-- **Tooltip:** How many peers aiming for your target grade have submitted this task so far.
-- **Expanded explanation:** This shows the combined share of students aiming for the same grade as you who have submitted this task. It's a single group number, not a list of names or a ranking — you can't see who specifically has or hasn't submitted.
+- **Label:** Peer task progress unavailable
+- **Tooltip or short help text:** Current group progress is not available. This does not
+  describe your own progress.
+- **Expanded explanation:** OnTrack cannot show a current group percentage for this task
+  right now. This is a data-availability state, not feedback about your work. Check again
+  later.
 
-*Rationale:* states the number as a fact ("X% have submitted"), not a comparison ("you're behind X%"). No ahead/behind language.
+### 3.5 Stale data
 
----
+**Template state:** `@case ('stale')`
 
-### 3.2 Zero — no peers have submitted yet
+- **Label:** Peer task progress not current
+- **Tooltip or short help text:** The group value has not refreshed recently, so it is not
+  shown as current.
+- **Expanded explanation:** The latest group percentage may be out of date. OnTrack does
+  not present it as current because that could be misleading. This is a timing issue, not
+  feedback about your own progress.
 
-**Current copy source:** hardcoded client-side string, `"No peer submissions yet"` (`ZERO_PERCENT_STATE.unavailableMessage` is actually an empty string — the component ignores it and shows its own fallback text instead; flagged as an open design question during PPI-F03, still unresolved)
+### 3.6 Feature disabled
 
-- **Label:** Peer progress
-- **Tooltip:** No peers have submitted yet — not a reflection of your own progress.
-- **Expanded explanation:** No one aiming for the same grade as you has submitted this task yet. This isn't feedback on your own progress — it just means the group total is currently zero, and it may change as others submit.
+**Template state:** `@case ('disabled')`
 
-*Rationale:* explicitly disclaims that a zero reads as evaluative, now in both the tooltip and the expanded explanation rather than the expanded explanation alone.
+- **Label:** Peer task progress off
+- **Tooltip or short help text:** Peer progress is turned off for this unit.
+- **Expanded explanation:** Peer comparison is not shown for this unit. This message only
+  describes whether the feature is available. It is not a judgement about your work,
+  submission or progress.
 
-**Flag:** worth deciding, separately from this ticket, whether this state should read `unavailableMessage` from the API like every other state does (currently it's the only one of the six with copy hardcoded in the template rather than data-driven).
+### 3.7 Supporting loading and error copy
 
----
+These states already exist in the task-level widget and should use the same accessible
+help pattern when the copy is implemented.
 
-### 3.3 Suppressed — cohort too small
+- **Loading:** Loading peer progress.
+- **Error:** Could not load peer progress. Please try again.
 
-**Current copy source:** `unavailableMessage` = `"Not enough students to show progress."`
+The error message must remain generic and must not reveal peer details, internal IDs,
+authorisation rules or backend errors.
 
-- **Label:** Peer progress hidden
-- **Tooltip:** Hidden to protect student privacy — too few students in this group.
-- **Expanded explanation:** This is hidden because too few students are aiming for this grade to show a group percentage without potentially identifying individuals. This is a privacy safeguard, not an error or a sign that something's missing.
-
-*Rationale:* directly implements the "suppression as protection, not absence" principle — names the actual mechanism (small-cohort re-identification risk) rather than leaving it vague.
-
----
-
-### 3.4 Unavailable — data missing
-
-**Current copy source:** `unavailableMessage` = `"Progress unavailable."`
-
-- **Label:** Peer progress unavailable
-- **Tooltip:** Peer progress data isn't available right now — not a reflection of your own progress.
-- **Expanded explanation:** Peer progress information isn't available for this task right now. This is a data issue, not a reflection of your own progress — check back later.
-
-*Rationale:* explicit "data issue, not a progress issue" framing per the starting principles, now present in both tiers rather than the expanded explanation alone.
-
----
-
-### 3.5 Stale — data outdated
-
-**Current copy source:** `unavailableMessage` = `"Peer progress is currently unavailable."` (reused generic wording) plus a separate hardcoded badge, `"Data may be outdated"`
-
-- **Label:** Peer progress — data outdated
-- **Tooltip:** Peer progress data hasn't refreshed recently — not a reflection of your own progress.
-- **Expanded explanation:** Peer progress data hasn't updated recently, so it isn't being shown right now rather than risk showing an out-of-date figure. This is a data timing issue, not a reflection of your own progress — check back later for a current number.
-
-*Rationale:* Note the current implementation (`ppi-widget.component.html:39-45`, `peer-progress-indicator-state.ts:43-44`) never actually renders a percentage in this state, even if one exists in the underlying data — the stale check happens before the percentage check, so only the message + badge show. Copy above is written to match what actually renders (no number implied). **Flag:** worth asking the team whether that's intentional; if a stale percentage should ever be shown (e.g. "42% (as of 3 days ago)"), the copy would need to change along with the logic — out of scope for this ticket either way.
-
-**Also flag:** the current `unavailableMessage` for this state ("Peer progress is currently unavailable") is nearly identical to the plain Unavailable state's message, even though they're different situations (no data vs. old data) and already get a distinguishing badge. Recommend the API-side message text be differentiated too, not just the badge — draft expanded explanation above already treats them distinctly, but the actual `message` span will keep showing the old generic string until that's changed.
-
----
-
-### 3.6 Disabled — feature off for this unit
-
-**Current copy source:** `unavailableMessage` = `"Peer Progress Indicator is disabled for this unit."`
-
-- **Label:** Peer progress off
-- **Tooltip:** Your unit coordinator has turned this feature off for this unit.
-- **Expanded explanation:** This unit doesn't use the Peer Progress Indicator. Your own progress, submissions, and grading are completely unaffected — this setting only controls whether peer comparison information is shown to students in this unit.
-
-*Rationale:* reassures that a coordinator-level toggle isn't a signal about the student personally, and doesn't imply the feature being off is a loss.
-
----
-
-## 4. Suggested screenshot pairing
-
-Six widget-state screenshots exist from PPI-F03's verification pass (saved locally at capture time, not in this repo — need to be located and re-attached, not recaptured). Suggested pairing for the annotated screenshot required by acceptance criterion 5:
-
-| Screenshot | Pair with |
-|---|---|
-| Normal / 42% state | §3.1 |
-| Zero/no-data state | §3.2 |
-| Suppressed state | §3.3 |
-| Unavailable state | §3.4 |
-| Stale state | §3.5 |
-| Disabled state | §3.6 |
-
-Annotation itself (drawing labels onto the image) is manual/outside this session — this table just maps which shot goes with which copy block.
-
----
-
-## 5. Recommendations for follow-up
-
-These are findings from reading the code while writing this doc, not uncertainty about the copy itself — the copy is complete. Each one is a decision or fix that belongs to someone other than this ticket.
-
-**For Maple / code review:**
-
-1. **Data-contract defect in already-merged PPI-F03 code.** `STALE_STATE` in `peer-progress-indicator.mock.ts` sets `submittedPercentage: null`, but the interface comment on `PeerProgressIndicator.submittedPercentage` documents null as valid only for suppressed/unavailable/disabled — not stale. Currently latent: the stale template branch never interpolates the percentage, so no "null%" reaches the screen today. Becomes a live bug the moment either the stale UI is enhanced to also show a number, or any other code reads `submittedPercentage` trusting that contract. **Recommend:** fix the mock to carry a real percentage alongside `isStale: true`, or update the interface comment to include `isStale` among the valid-null cases.
-
-2. **Zero state's message is hardcoded, not API-driven** — the only one of the six states where this is true. `ZERO_PERCENT_STATE.unavailableMessage` is an empty string; the component shows its own fallback instead. Pre-existing open question from PPI-F03, still unresolved. **Recommend:** decide whether the mock/backend should supply a real message here, matching how the other five states work.
-
-3. **Stale state's percentage is currently unreachable in the UI** — the `isStale` check fires before the percentage check in the resolver, so `view.data?.submittedPercentage` never renders even when present in the underlying data. Copy in §3.5 is written to match current behavior (no number implied). **Recommend:** if a stale-but-real number should ever display (e.g. "42% (as of 3 days ago)"), that's a template change; the copy would need a matching update at that time.
-
-**For whoever implements this doc's copy into the UI:**
-
-4. Tooltip and expanded-explanation UI don't exist yet (§0.1) — this is copy ready for a future implementation ticket, not something wired up today.
+## 4. Planned unit-level copy
+
+This section is design-ready copy for the mock-backed PPI-F02 proof of concept. It is not a
+claim that live unit-level data has been delivered.
+
+### 4.1 Normal result
+
+- **Label:** Unit progress overview
+- **Tooltip or short help text:** Shows your own unit progress beside one
+  privacy-protected group percentage.
+- **Expanded explanation:** My progress and Anonymous group progress are separate values.
+  They use the agreed unit-progress measure. The group value is one combined percentage
+  and does not show names, individual results, raw group size, marks, feedback or
+  rankings.
+
+### 4.2 Genuine zero group result
+
+- **Label:** Unit progress overview
+- **Tooltip or short help text:** Anonymous group progress is currently 0%. This is a real
+  value, not missing data.
+- **Expanded explanation:** Your own progress remains separate from the group result. A
+  group value of 0% only describes the current aggregate. It is not feedback about your
+  work and does not predict your grade.
+
+### 4.3 Small-group suppression
+
+- **Label:** Anonymous group progress hidden
+- **Tooltip or short help text:** The group percentage is hidden because the group is too
+  small to show safely.
+- **Expanded explanation:** Your own progress may still be shown when it is available, but
+  the anonymous group percentage is hidden for privacy. OnTrack does not show the hidden
+  percentage, exact group size, names or individual results.
+
+### 4.4 Unavailable group data
+
+- **Label:** Anonymous group progress unavailable
+- **Tooltip or short help text:** Your own progress may remain visible, but current group
+  progress is unavailable.
+- **Expanded explanation:** OnTrack cannot show a current anonymous group percentage
+  right now. This does not change or assess your own progress. Check again later.
+
+### 4.5 Stale group data
+
+- **Label:** Anonymous group progress not current
+- **Tooltip or short help text:** The group value has not refreshed recently and is not
+  shown as current.
+- **Expanded explanation:** The latest anonymous group percentage may be out of date.
+  OnTrack does not present it as current because that could be misleading. Your own
+  progress remains a separate value.
+
+### 4.6 Feature disabled
+
+- **Label:** Unit peer progress off
+- **Tooltip or short help text:** Peer progress is turned off for this unit.
+- **Expanded explanation:** The unit-level peer comparison is not shown. This message only
+  describes feature availability. It is not feedback about your work, submission or
+  progress.
+
+### 4.7 Supporting loading and error copy
+
+- **Loading:** Loading unit progress.
+- **Error:** Could not load unit progress. Please try again.
+
+A failed request or unit change must not leave the previous unit's anonymous group value
+visible as though it were current.
+
+## 5. Implementation status and handover
+
+| Item                                              | Status after PPI-D01                                 |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| Task-level state copy                             | Complete in this document                            |
+| Task-level label, help control and expanded panel | Planned frontend implementation                      |
+| Unit-level state copy                             | Complete as planned PPI-F02 copy                     |
+| Unit-level component                              | Separate PPI-F02 work                                |
+| Live unit-level API                               | Future work and not claimed here                     |
+| Annotated copy-location evidence                  | Complete in the sanitised SVG wireframe              |
+| Privacy and authorisation enforcement             | Separate backend and security testing responsibility |
+
+### Known implementation follow-ups
+
+1. The current task-level template contains a visible message but no dedicated accessible
+   help control or expanded explanation location.
+2. The genuine zero message is currently handled differently from several other states.
+   A frontend follow-up should decide whether all state messages use one consistent
+   source.
+3. Stale and unavailable states need clearly different visible messages when this copy is
+   implemented.
+4. The disabled state must remain neutral. The frontend must not claim that a particular
+   role or person disabled the feature unless the trusted response explicitly supplies
+   that information.
+5. The exact unit-progress metric must be confirmed by the implementation and calculation
+   tickets before the planned unit-level wording is wired into production.
+
+## 6. Evidence and attribution
+
+- Original PPI-D01 task-level research and copy:
+  - David Tenni
+  - commits `c98e044` and `c5b379d`
+- Earlier unit-level visual baseline and usability work:
+  - Umeda Ranuluge
+  - used as a design reference without copying personal identifying details
+- Acceptance-criteria completion, privacy wording correction, sanitised annotated
+  wireframe and handover:
+  - Maple Fox
+- Documentation:
+  - `docs/ppi-help-text-pack.md`
+- Annotated wireframe:
+  - `docs/assets/ppi/ppi-d01-copy-location-wireframe.svg`
