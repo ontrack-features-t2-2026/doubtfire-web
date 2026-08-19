@@ -287,14 +287,14 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
         // comparison actually happens.
         const current = this.selectedTaskDefinition$.value;
 
-        if (param) {
-          const taskDef = this.taskDefinitions?.find((t) => t.abbreviation === param);
+        const nextTaskDefinition = param
+          ? (this.taskDefinitions?.find(
+              (taskDefinition) => taskDefinition.abbreviation === param,
+            ) ?? null)
+          : null;
 
-          if (taskDef && taskDef !== current) {
-            this.selectedTaskDefinition$.next(taskDef);
-          }
-        } else if (current !== null) {
-          this.selectedTaskDefinition$.next(null);
+        if (nextTaskDefinition !== current) {
+          this.selectedTaskDefinition$.next(nextTaskDefinition);
         }
       });
     });
