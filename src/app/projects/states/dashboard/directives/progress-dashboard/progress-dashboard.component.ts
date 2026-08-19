@@ -6,11 +6,18 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
+import {take} from 'rxjs/operators';
+import {
+  PeerProgressUnitSummaryViewModel,
+  resolvePeerProgressUnitSummaryState,
+} from 'src/app/api/models/peer-progress-unit-summary-state';
 import {Project} from 'src/app/api/models/project';
+import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {calculateCompletionPercentage} from 'src/app/common/services/ppi-progress-calculation.service';
 
 @Component({
   selector: 'f-progress-dashboard',
@@ -33,8 +40,15 @@ export class ProgressDashboardComponent implements OnInit {
     remaining: 0,
   };
 
+  peerProgressView: PeerProgressUnitSummaryViewModel = resolvePeerProgressUnitSummaryState(
+    true,
+    null,
+    null,
+  );
+
   constructor(
     private gradeService: GradeService,
+    private peerProgressService: PeerProgressIndicatorService,
     private projectService: ProjectService,
     private alertService: AlertService,
     private userService: UserService,
@@ -46,6 +60,7 @@ export class ProgressDashboardComponent implements OnInit {
       this.project.unit.gradeDefinitions.map((definition) => [definition.value, definition.label]),
     );
     this.updateTaskCompletionValues();
+    this.loadPeerProgressUnitSummary();
     this.project?.refreshBurndownChartData();
   }
 
@@ -62,6 +77,7 @@ export class ProgressDashboardComponent implements OnInit {
       (project) => {
         project.refreshBurndownChartData();
         this.updateTaskCompletionValues();
+        this.loadPeerProgressUnitSummary();
         this.doUpdateTargetGrade.emit();
         this.alertService.success('Updated target grade successfully', 2000);
       },
@@ -70,6 +86,40 @@ export class ProgressDashboardComponent implements OnInit {
         this.alertService.error('Failed to update target grade', 4000);
       },
     );
+  }
+
+  private loadPeerProgressUnitSummary(): void {
+    if (this.viewingOtherStudentProject) {
+      return;
+    }
+
+    const availableTasks = this.numberOfTasks.completed + this.numberOfTasks.remaining;
+
+    const studentPercentage = calculateCompletionPercentage(
+      this.numberOfTasks.completed,
+      availableTasks,
+    );
+
+    this.peerProgressView = resolvePeerProgressUnitSummaryState(true, null, null);
+
+    // PPI-F02 demonstration only.
+    // A live authorised unit-level API remains future work.
+    this.peerProgressService
+      .getMockUnitSummary(
+        this.project.unit.id,
+        this.project.targetGrade,
+        studentPercentage,
+        'normal',
+      )
+      .pipe(take(1))
+      .subscribe({
+        next: (data) => {
+          this.peerProgressView = resolvePeerProgressUnitSummaryState(false, null, data);
+        },
+        error: (error) => {
+          this.peerProgressView = resolvePeerProgressUnitSummaryState(false, error, null);
+        },
+      });
   }
 
   private updateTaskCompletionValues(): void {
