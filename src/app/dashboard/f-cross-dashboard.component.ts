@@ -47,6 +47,9 @@ export class CrossDashboardComponent implements OnInit {
 
   unitScope: UnitScope = 'active';
 
+  startDate = '';
+  endDate = '';
+
   previousUnitsLoaded = false;
   loadingPreviousUnits = false;
   previousUnitsLoadError = false;
@@ -80,6 +83,14 @@ export class CrossDashboardComponent implements OnInit {
     return this.unitsProcessed;
   }
 
+  get isDateRangeInvalid(): boolean {
+    return !!this.startDate && !!this.endDate && this.startDate > this.endDate;
+  }
+
+  get isDateFilterActive(): boolean {
+    return !this.isDateRangeInvalid && (!!this.startDate || !!this.endDate);
+  }
+
   setUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
     this.processTasks();
@@ -89,6 +100,22 @@ export class CrossDashboardComponent implements OnInit {
     if (needsPreviousUnits && !this.previousUnitsLoaded && !this.loadingPreviousUnits) {
       this.loadPreviousUnits();
     }
+  }
+
+  setStartDate(value: string): void {
+    this.startDate = value;
+    this.processTasks();
+  }
+
+  setEndDate(value: string): void {
+    this.endDate = value;
+    this.processTasks();
+  }
+
+  clearDateRange(): void {
+    this.startDate = '';
+    this.endDate = '';
+    this.processTasks();
   }
 
   setSort(project: number, mode: SortMode): void {
@@ -122,6 +149,14 @@ export class CrossDashboardComponent implements OnInit {
 
   hasSearchTerm(project: number): boolean {
     return this.normaliseSearchText(this.getSearchTerm(project)).length > 0;
+  }
+
+  hasActiveTaskCriteria(project: number): boolean {
+    return (
+      this.isDateFilterActive ||
+      this.hasSearchTerm(project) ||
+      (this.filters.get(project)?.length ?? 0) > 0
+    );
   }
 
   private loadPreviousUnits(): void {
@@ -168,7 +203,11 @@ export class CrossDashboardComponent implements OnInit {
           const isHiddenCompletedTask =
             filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status);
 
-          return !isHiddenCompletedTask && this.taskMatchesSearch(task, unit.projectId);
+          return (
+            !isHiddenCompletedTask &&
+            this.taskMatchesDateRange(task) &&
+            this.taskMatchesSearch(task, unit.projectId)
+          );
         })
         .sort((a, b) => {
           const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
@@ -186,7 +225,7 @@ export class CrossDashboardComponent implements OnInit {
               // TODO: Connect to recommender's points.
               return 0;
             case SortMode.SubmissionDate:
-              return a.dueDate.getTime() - b.dueDate.getTime();
+              return this.compareDueDates(a.dueDate, b.dueDate);
             case SortMode.Default:
               return a.weight - b.weight;
           }
@@ -196,6 +235,55 @@ export class CrossDashboardComponent implements OnInit {
     }));
 
     this.changeDetectorRef.markForCheck();
+  }
+
+  private taskMatchesDateRange(task: DashboardTask): boolean {
+    if (!this.isDateFilterActive) {
+      return true;
+    }
+
+    const taskDate = this.formatDateAsIso(task.dueDate);
+
+    if (!taskDate) {
+      return false;
+    }
+
+    if (this.startDate && taskDate < this.startDate) {
+      return false;
+    }
+
+    if (this.endDate && taskDate > this.endDate) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private compareDueDates(
+    firstDate: Date | null | undefined,
+    secondDate: Date | null | undefined,
+  ): number {
+    const firstTime =
+      firstDate instanceof Date && !Number.isNaN(firstDate.getTime()) ? firstDate.getTime() : null;
+
+    const secondTime =
+      secondDate instanceof Date && !Number.isNaN(secondDate.getTime())
+        ? secondDate.getTime()
+        : null;
+
+    if (firstTime === null && secondTime === null) {
+      return 0;
+    }
+
+    if (firstTime === null) {
+      return 1;
+    }
+
+    if (secondTime === null) {
+      return -1;
+    }
+
+    return firstTime - secondTime;
   }
 
   private taskMatchesSearch(task: DashboardTask, projectId: number): boolean {
@@ -271,7 +359,7 @@ export class CrossDashboardComponent implements OnInit {
       .trim();
   }
 
-  private formatDateAsIso(date: Date): string {
+  private formatDateAsIso(date: Date | null | undefined): string {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
       return '';
     }

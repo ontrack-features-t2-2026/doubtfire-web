@@ -1,5 +1,5 @@
 <div class="panel-full-screen flex h-full flex-col">
-  <div class="shrink-0 px-16 pt-4">
+  <div class="flex shrink-0 flex-wrap items-end gap-4 px-16 pt-4">
     <mat-form-field appearance="outline" class="w-full max-w-64">
       <mat-label>Unit scope</mat-label>
       <mat-select [value]="unitScope" (selectionChange)="setUnitScope($event.value)">
@@ -8,8 +8,45 @@
         <mat-option value="all">All units</mat-option>
       </mat-select>
     </mat-form-field>
-  </div>
+    <div class="flex flex-col gap-1 pb-5">
+      <label class="font-medium" for="dashboard-start-date">Start date</label>
+      <input
+        class="h-12 rounded border border-gray-400 bg-white px-3"
+        id="dashboard-start-date"
+        type="date"
+        [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
+        [attr.aria-invalid]="isDateRangeInvalid ? 'true' : null"
+        [value]="startDate"
+        (input)="setStartDate($any($event.target).value)"
+      />
+    </div>
+    <div class="flex flex-col gap-1 pb-5">
+      <label class="font-medium" for="dashboard-end-date">End date</label>
+      <input
+        class="h-12 rounded border border-gray-400 bg-white px-3"
+        id="dashboard-end-date"
+        type="date"
+        [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
+        [attr.aria-invalid]="isDateRangeInvalid ? 'true' : null"
+        [value]="endDate"
+        (input)="setEndDate($any($event.target).value)"
+      />
+    </div>
+    <button
+      class="mb-5 h-12 rounded border border-gray-400 bg-white px-4 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+      type="button"
+      [disabled]="!startDate && !endDate"
+      (click)="clearDateRange()"
+    >
+      Clear dates
+    </button>
 
+    @if (isDateRangeInvalid) {
+      <p class="mb-5 text-red-700" id="date-range-error" role="alert">
+        Start date must be on or before end date.
+      </p>
+    }
+  </div>
   <div class="flex min-h-0 flex-1 flex-row gap-8 overflow-x-auto px-16 pb-4">
     @for (unit of displayedUnits; track unit.projectId) {
       <div class="flex h-full w-128 shrink-0 flex-col shadow">
@@ -74,10 +111,14 @@
             </div>
           }
 
-          @if (unit.tasks.length === 0 && hasSearchTerm(unit.projectId)) {
-            <p class="m-0 p-6 text-center text-gray-600" role="status">
-              No tasks match the current search and filters.
-            </p>
+          @if (unit.tasks.length === 0) {
+            <div class="border border-t-0 border-gray-300 p-6 text-center" role="status">
+              @if (hasActiveTaskCriteria(unit.projectId)) {
+                <p class="m-0">No tasks match the current search and filters.</p>
+              } @else {
+                <p class="m-0">No tasks are available.</p>
+              }
+            </div>
           }
         </div>
       </div>
