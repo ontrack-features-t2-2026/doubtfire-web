@@ -1,3 +1,4 @@
+import {environment} from 'src/environments/environment';
 import {
   ChangeDetectorRef,
   Component,
@@ -62,6 +63,14 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
 
   private load(): void {
     if (!this.task?.project || !this.taskDef) {
+      return;
+    }
+
+    // The indicator is still a fixture. Never show a fabricated percentage in a
+    // production build - a student cannot tell it from a real one. Remove this
+    // guard when the live PPI-F01 adapter replaces getIndicator's mock states.
+    if (environment.production) {
+      this.setView(resolvePeerProgressState(false, null, null));
       return;
     }
 
