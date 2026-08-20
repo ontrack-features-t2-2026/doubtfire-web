@@ -58,9 +58,20 @@ A future backend endpoint and frontend adapter should:
 
 - authenticate the caller;
 - derive student identity from the authenticated session;
+- **derive the target grade server-side from the student's own project, and
+  never accept one from the browser.** `PeerProgressIndicatorService`'s mock
+  takes a caller-supplied `targetGrade` and its own comment warns that this
+  must not become the design of a live endpoint. A unit endpoint that trusts a
+  browser-supplied grade lets a student read another cohort's aggregate;
 - authorise access to the requested unit/project;
 - enforce minimum-cohort suppression server-side;
-- return only the student's own percentage and an anonymous cohort aggregate;
+- **add a `student_percentage` field.** The task-level contract shipped in
+  doubtfire-api#16 does not carry one, so the card computes it in the browser
+  today. That is a stopgap, not the target design;
+- **quantise the student percentage into the same buckets as the cohort
+  percentage.** doubtfire-api#16 quantises the cohort figure to 10-point
+  buckets. An exact student number beside a bucketed cohort number invites a
+  comparison neither supports;
 - avoid peer identities and raw cohort counts;
 - avoid marks, feedback and individual task-state information;
 - expose feature-enabled, suppression, stale/unavailable and timestamp state;
@@ -69,6 +80,20 @@ A future backend endpoint and frontend adapter should:
 The future frontend adapter can replace the mock call inside
 `ProgressDashboardComponent.loadPeerProgressUnitSummary()` without redesigning
 the presentational component.
+
+### Nullability the frontend types do not yet allow
+
+doubtfire-api#16 returns `null` for `last_updated_at` and `target_grade` in
+several documented states. Before the adapter lands, `PeerProgressIndicator`
+needs `lastUpdatedAt: string | null` and `targetGrade: number | null`.
+
+### The mock must not reach a production build
+
+Both PPI surfaces render a fixture today: this component and the already-merged
+`f-ppi-widget` on the task sheet. Both are now gated on
+`environment.production`, so a built application shows the unavailable state
+rather than a fabricated percentage. Remove both guards in the same change that
+lands the live adapter, and not before.
 
 ## Validation
 

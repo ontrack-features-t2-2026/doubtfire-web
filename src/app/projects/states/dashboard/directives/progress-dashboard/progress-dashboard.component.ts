@@ -1,3 +1,4 @@
+import {environment} from 'src/environments/environment';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -100,6 +101,14 @@ export class ProgressDashboardComponent implements OnInit {
       availableTasks,
     );
 
+    // The cohort figure is still a fixture. Never show a fabricated percentage
+    // in a production build - a student cannot tell it from a real one. Remove
+    // this guard when the live PPI-F01 adapter replaces getMockUnitSummary.
+    if (environment.production) {
+      this.peerProgressView = resolvePeerProgressUnitSummaryState(false, null, null);
+      return;
+    }
+
     this.peerProgressView = resolvePeerProgressUnitSummaryState(true, null, null);
 
     // PPI-F02 demonstration only.
@@ -123,7 +132,11 @@ export class ProgressDashboardComponent implements OnInit {
   }
 
   private updateTaskCompletionValues(): void {
-    const completedTasks = this.project.numberTasks('complete');
+    // Count completions among the tasks that count toward the student's target
+    // grade. project.numberTasks('complete') counts every task at every grade,
+    // which inflates the percentage and can push completed above available for
+    // a student who has done work beyond their target.
+    const completedTasks = this.project.tasksByStatus('complete').length;
     this.numberOfTasks = {
       completed: completedTasks,
       remaining: this.project.activeTasks().length - completedTasks,

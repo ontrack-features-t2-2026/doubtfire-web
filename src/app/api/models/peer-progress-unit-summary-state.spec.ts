@@ -130,15 +130,29 @@ describe('resolvePeerProgressUnitSummaryState', () => {
     expect(result.message).toBe(STALE_STATE.unavailableMessage);
   });
 
-  it('does not return success when the student percentage is missing', () => {
+  it('keeps a valid cohort percentage when the student percentage is missing', () => {
+    // A missing student figure says nothing about the cohort data we were
+    // given. The card renders the two panels independently, so the student
+    // panel falls to "Your progress is unavailable." on its own and the cohort
+    // panel keeps showing the number the API actually returned.
     const result = resolvePeerProgressUnitSummaryState(
       false,
       null,
       toUnitSummary(NORMAL_STATE, null),
     );
 
-    expect(result.state).toBe('unavailable');
+    expect(result.state).toBe('success');
     expect(result.data?.studentPercentage).toBeNull();
+    expect(result.data?.submittedPercentage).toBe(NORMAL_STATE.submittedPercentage);
+  });
+
+  it('returns unavailable when the cohort percentage itself is missing', () => {
+    const result = resolvePeerProgressUnitSummaryState(false, null, {
+      ...toUnitSummary(NORMAL_STATE, 30),
+      submittedPercentage: null,
+    });
+
+    expect(result.state).toBe('unavailable');
     expect(result.data?.submittedPercentage).toBeNull();
   });
 

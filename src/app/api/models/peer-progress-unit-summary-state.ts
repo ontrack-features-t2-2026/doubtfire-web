@@ -76,7 +76,11 @@ export function resolvePeerProgressUnitSummaryState(
     };
   }
 
-  if (data.studentPercentage === null || data.submittedPercentage === null) {
+  // Only a missing COHORT figure makes the cohort panel unavailable. A missing
+  // student figure says nothing about the cohort data we were given, and the
+  // card's own template already handles it -- discarding a valid cohort
+  // percentage here would make the card state something untrue about it.
+  if (data.submittedPercentage === null) {
     return {
       state: 'unavailable',
       data: withoutCohortPercentage(data),
