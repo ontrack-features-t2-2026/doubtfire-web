@@ -4,6 +4,7 @@ import {NavigationEnd, Router} from '@angular/router';
 import {Subscription, filter} from 'rxjs';
 import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
+import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
@@ -105,6 +106,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     private confirmationModal: ConfirmationModalService,
     private alerts: AlertService,
     private router: Router,
+    private notificationRoutes: NotificationRouteService,
   ) {}
 
   ngOnInit(): void {
@@ -216,9 +218,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (notification.link) {
-      this.router.navigateByUrl(notification.link);
-    }
+    void this.notificationRoutes.navigate(notification.link);
   }
 
   /**

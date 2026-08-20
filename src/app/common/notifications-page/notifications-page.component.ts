@@ -5,6 +5,7 @@ import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
+import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 
@@ -75,6 +76,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     private authenticationService: AuthenticationService,
     private alerts: AlertService,
     private router: Router,
+    private notificationRoutes: NotificationRouteService,
   ) {}
 
   /**
@@ -163,9 +165,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (notification.link) {
-      this.router.navigateByUrl(notification.link);
-    }
+    void this.notificationRoutes.navigate(notification.link);
   }
 
   iconFor(notification: Notification): string {

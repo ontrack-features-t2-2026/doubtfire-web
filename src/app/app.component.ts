@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit, Renderer2} from '@angular/core';
 import {NavigationEnd, Router} from '@angular/router';
 import {Subscription, filter} from 'rxjs';
+import {PushNotificationClickService} from 'src/app/api/services/push-notification-click.service';
 
 @Component({
   selector: 'app-root',
@@ -14,9 +15,11 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private renderer: Renderer2,
+    private pushNotificationClicks: PushNotificationClickService,
   ) {}
 
   ngOnInit(): void {
+    this.pushNotificationClicks.start();
     this.setBodyBackground(this.router.url);
     this.routerSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
@@ -24,6 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.pushNotificationClicks.stop();
     this.routerSub?.unsubscribe();
   }
 
