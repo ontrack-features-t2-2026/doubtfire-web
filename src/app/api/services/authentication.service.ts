@@ -7,7 +7,10 @@ import {NotificationService} from 'src/app/api/services/notification.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
-import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {
+  type AuthenticatedSettingsResponseFormat,
+  DoubtfireConstants,
+} from 'src/app/config/constants/doubtfire-constants';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 
 /**
@@ -162,6 +165,15 @@ export class AuthenticationService {
     );
   }
 
+  private loadAuthenticatedSettings(): void {
+    const url: string = `${this.doubtfireConstants.API_URL}/settings`;
+
+    this.httpClient.get<AuthenticatedSettingsResponseFormat>(url).subscribe({
+      next: (settings) => this.doubtfireConstants.applyAuthenticatedSettings(settings),
+      error: (error) => console.error('Unable to load authenticated settings', error),
+    });
+  }
+
   /**
    * Use the user service to get or create a user object, and update it
    * from the response. Ensure that the authentication token is set.
@@ -182,6 +194,9 @@ export class AuthenticationService {
 
     // Record the current user
     this.userService.currentUser = user;
+
+    // Load feature flags using the newly issued authentication token.
+    this.loadAuthenticatedSettings();
 
     if (firstTime) {
       // Load everything!
