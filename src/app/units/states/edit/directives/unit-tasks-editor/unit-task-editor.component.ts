@@ -57,9 +57,11 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   isStartAfterTarget(td: TaskDefinition, grade: GradeDefinition): boolean {
     const start = this.getGradeStartDate(td, grade);
     const target = this.getGradeDueDate(td, grade);
+
     if (!start || !target) {
       return false;
     }
+
     return new Date(start).getTime() > new Date(target).getTime();
   }
 
@@ -176,6 +178,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   }
 
   private subscriptions: Subscription[] = [];
+
   ngOnDestroy(): void {
     this.subscriptions.forEach((s) => s.unsubscribe());
   }
@@ -224,6 +227,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       const lastAbbr = this.unit.taskDefinitions[this.unit.taskDefinitions.length - 1].abbreviation;
       const regex = /(.*)(\d+)(\D*)/;
       const match = regex.exec(lastAbbr);
+
       if (match) {
         return `${match[1]}${parseInt(match[2]) + 1}${match[3]}`;
       } else {
@@ -256,6 +260,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       (response: CsvResult) => {
         // at least one student?
         this.csvResultModalService.show('Task Definition Import Results', response);
+
         if (response.success.length > 0) {
           this.unit.refresh();
         }
@@ -272,6 +277,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       (response: CsvResult) => {
         // at least one student?
         this.csvResultModalService.show('Task Sheet and Resources Import Results', response);
+
         if (response.success.length > 0) {
           this.unit.refresh();
         }
@@ -299,5 +305,4 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
 
     this.selectedTaskDefinition = task;
   }
-
 }
