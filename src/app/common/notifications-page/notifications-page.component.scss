@@ -2,21 +2,33 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+// The row and its delete button, side by side. The separator and the hover both
+// live out here rather than on the button, so they run the full width of the
+// list instead of stopping short of the delete column.
+.notification-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-right: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
 // A plain button carrying the shared row shape. Material lays out neither this
 // nor the header dropdown's rows, which is the only way the two match.
 .notification-row {
   background: none;
   border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
   display: block;
   font: inherit;
-  padding: 14px 12px;
-  width: 100%;
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.04);
-  }
+  // No right padding. The delete button beside it brings its own, and doubling
+  // up would push the unread dot away from the edge it marks.
+  padding: 14px 0 14px 12px;
+  // Without this the row keeps its content width inside the flex line, and a
+  // list of short messages leaves the delete buttons in a different place on
+  // every row.
+  min-width: 0;
 
   &:focus-visible {
     outline: 2px solid #3939ff;
@@ -132,4 +144,44 @@
 
 .notifications-placeholder {
   color: rgba(0, 0, 0, 0.6);
+}
+
+// The delete button competes with the message for attention on a list nobody
+// opened to delete things from, so it is drawn down to match the dropdown's.
+.notification-delete {
+  color: rgba(0, 0, 0, 0.54);
+  flex: none;
+
+  .mat-icon {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+  }
+}
+
+// Never shrinks, and on a phone it drops its label and keeps the icon. It sits
+// beside an h1 in a flex row, and at 320px the heading and a full width button
+// do not both fit; letting the button squeeze instead wraps "Mark all read"
+// onto two lines inside itself.
+//
+// The aria-label on the button is what carries the wording once the span is
+// gone, since display: none takes it out of the accessibility tree too.
+.notification-mark-all {
+  flex: none;
+
+  .mat-icon {
+    margin-right: 6px;
+  }
+
+  @media (max-width: 599px) {
+    min-width: 0;
+
+    .mat-icon {
+      margin-right: 0;
+    }
+
+    .notification-mark-all-label {
+      display: none;
+    }
+  }
 }
