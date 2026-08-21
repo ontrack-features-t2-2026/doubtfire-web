@@ -165,7 +165,9 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
       });
     }
 
-    void this.notificationRoutes.navigate(notification.link);
+    if (notification.link) {
+      void this.notificationRoutes.navigate(notification.link);
+    }
   }
 
   iconFor(notification: Notification): string {

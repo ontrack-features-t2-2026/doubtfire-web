@@ -218,7 +218,9 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       });
     }
 
-    void this.notificationRoutes.navigate(notification.link);
+    if (notification.link) {
+      void this.notificationRoutes.navigate(notification.link);
+    }
   }
 
   /**

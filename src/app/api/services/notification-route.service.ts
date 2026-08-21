@@ -9,10 +9,7 @@ const CONTROL_CHARACTER_MAX = 0x1f;
 const DELETE_CHARACTER = 0x7f;
 const FORBIDDEN_ROUTE_TEXT = /[\s\\?#%]/;
 const PROJECT_ROOT_ROUTE = /^\/projects\/[1-9]\d*\/(?:dashboard|groups)$/;
-const PROJECT_TASK_ROUTE = /^\/projects\/[1-9]\d*\/dashboard\/([A-Za-z0-9][A-Za-z0-9._-]{0,31})$/;
-const EXPECTED_TASK_ABBREVIATION =
-  /^(?=.{1,32}$)(?=.*\d)(?=.*(?:\.|[A-Z]))(?:HD|P|C|D|T)?\d+(?:\.\d+)*(?:HD|P|C|D|T)?$/;
-const SENSITIVE_TASK_TEXT = /(feedback|token|mark|grade|student|learner|name|comment)/i;
+const PROJECT_TASK_ROUTE = /^\/projects\/[1-9]\d*\/dashboard\/[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/;
 
 function hasControlCharacters(value: string): boolean {
   return Array.from(value).some((character) => {
@@ -46,16 +43,7 @@ export class NotificationRouteService {
       return link;
     }
 
-    const taskMatch = PROJECT_TASK_ROUTE.exec(link);
-    if (!taskMatch) {
-      return NOTIFICATION_ROUTE_FALLBACK;
-    }
-
-    const taskAbbreviation = taskMatch[1];
-    if (
-      !EXPECTED_TASK_ABBREVIATION.test(taskAbbreviation) ||
-      SENSITIVE_TASK_TEXT.test(taskAbbreviation)
-    ) {
+    if (!PROJECT_TASK_ROUTE.test(link)) {
       return NOTIFICATION_ROUTE_FALLBACK;
     }
 

@@ -23,6 +23,12 @@ describe('NotificationRouteService', () => {
       '/projects/23/dashboard/1.1P',
       '/projects/23/dashboard/T1.1',
       '/projects/23/dashboard/HD1.2',
+      '/projects/23/dashboard/10.1H',
+      '/projects/23/dashboard/A15',
+      '/projects/23/dashboard/TASK1',
+      '/projects/23/dashboard/P-2.21',
+      '/projects/23/dashboard/D-9.568',
+      '/projects/23/dashboard/C-4.602',
     ];
 
     for (const route of approved) {
@@ -46,6 +52,7 @@ describe('NotificationRouteService', () => {
       '/projects/1/dashboard/',
       '/projects/1/dashboard/1.1P/extra',
       '/projects/1/dashboard/line\nbreak',
+      `/projects/1/dashboard/${'A1'.repeat(20)}`,
     ];
 
     for (const value of invalid) {
@@ -105,8 +112,8 @@ describe('NotificationRouteService', () => {
     }
   });
 
-  it('rejects route segments shaped like marks, names, feedback or tokens', () => {
-    const invalid = [
+  it('accepts bounded task segments without guessing their business format', () => {
+    const approved = [
       '/projects/1/dashboard/85',
       '/projects/1/dashboard/Alice1',
       '/projects/1/dashboard/BOB1',
@@ -115,11 +122,10 @@ describe('NotificationRouteService', () => {
       '/projects/1/dashboard/feedback1',
       '/projects/1/dashboard/token123',
       '/projects/1/dashboard/mark85',
-      `/projects/1/dashboard/${'A1'.repeat(20)}`,
     ];
 
-    for (const value of invalid) {
-      expect(service.resolve(value)).toBe(NOTIFICATION_ROUTE_FALLBACK);
+    for (const route of approved) {
+      expect(service.resolve(route)).toBe(route);
     }
   });
 
