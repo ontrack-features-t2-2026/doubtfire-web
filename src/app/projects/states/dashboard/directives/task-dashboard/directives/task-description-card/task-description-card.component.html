@@ -65,5 +65,20 @@
         >download</mat-icon
       ><span>Resources</span>
     </button>
+    <a
+      class="add-to-google-calendar-link"
+      mat-stroked-button
+      rel="noopener"
+      target="_blank"
+      [hidden]="!googleCalendarUrl()"
+      [href]="googleCalendarUrl()"
+    >
+      <mat-icon
+        aria-label="Add to Google Calendar icon"
+        inline
+        style="width: 20px; height: 20px; font-size: 20px"
+        >event</mat-icon
+      ><span>Add to Google Calendar</span>
+    </a>
   </mat-card-actions>
 </mat-card>
