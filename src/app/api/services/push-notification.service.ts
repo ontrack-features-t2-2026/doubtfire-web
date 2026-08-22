@@ -1,7 +1,17 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {SwPush} from '@angular/service-worker';
-import {Observable, catchError, from, map, of, switchMap, take} from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  catchError,
+  concatMap,
+  from,
+  map,
+  of,
+  switchMap,
+  take,
+} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 
@@ -83,6 +93,7 @@ export const PERMISSION_DENIED_INSTRUCTIONS: Record<SupportedBrowser, string[]> 
 @Injectable({providedIn: 'root'})
 export class PushNotificationService {
   private readonly endpoint = `${API_URL}/push_subscriptions`;
+  private subscriptionChangeSubscription: Subscription | null = null;
 
   constructor(
     private http: HttpClient,
@@ -146,6 +157,52 @@ export class PushNotificationService {
   }
 
   /**
+   * Keep the api registration in step with browser-driven subscription changes.
+   *
+   * Angular 22 forwards the service worker's `pushsubscriptionchange` event as
+   * `pushSubscriptionChanges`. Register the replacement before removing the old
+   * endpoint so a transient api failure cannot throw away the last server row.
+   */
+  public start(): void {
+    if (this.subscriptionChangeSubscription) {
+      return;
+    }
+
+    this.subscriptionChangeSubscription = this.swPush.pushSubscriptionChanges
+      .pipe(
+        concatMap(({oldSubscription, newSubscription}) => {
+          if (!newSubscription) {
+            // Some browsers can report invalidation without a replacement. A
+            // fresh subscribe needs a user gesture, so leave recovery to the
+            // existing opt-in control and let server delivery remove the dead row.
+            return of(void 0);
+          }
+
+          return this.registerSubscription(newSubscription).pipe(
+            switchMap(() => {
+              if (!oldSubscription || oldSubscription.endpoint === newSubscription.endpoint) {
+                return of(void 0);
+              }
+
+              return this.removeServerSubscription(oldSubscription.endpoint);
+            }),
+            // One failed sync must not terminate the long-lived rotation stream.
+            catchError((error) => {
+              console.error('Could not update the rotated push subscription', error);
+              return of(void 0);
+            }),
+          );
+        }),
+      )
+      .subscribe();
+  }
+
+  public stop(): void {
+    this.subscriptionChangeSubscription?.unsubscribe();
+    this.subscriptionChangeSubscription = null;
+  }
+
+  /**
    * Ask the browser for permission, then store the resulting registration
    * against the signed in user.
    *
@@ -158,16 +215,7 @@ export class PushNotificationService {
       this.swPush.requestSubscription({
         serverPublicKey: this.constants.VapidPublicKey.value,
       }),
-    ).pipe(
-      switchMap((subscription) => {
-        const keys = subscription.toJSON().keys ?? {};
-        return this.http.post<void>(this.endpoint, {
-          endpoint: subscription.endpoint,
-          p256dh: keys.p256dh,
-          auth: keys.auth,
-        });
-      }),
-    );
+    ).pipe(switchMap((subscription) => this.registerSubscription(subscription)));
   }
 
   /**
@@ -193,18 +241,16 @@ export class PushNotificationService {
           return of(void 0);
         }
 
-        return this.http
-          .delete<void>(this.endpoint, {params: {endpoint: subscription.endpoint}})
-          .pipe(
-            // Server cleanup failing must not leave the browser subscribed. If
-            // the delete fails we still unsubscribe locally: the browser stops
-            // receiving immediately, and the row left behind is removed the
-            // first time the push service answers 410 for it, which deliver_to
-            // in PushNotificationService already handles.
-            catchError(() => of(void 0)),
-            switchMap(() => from(this.swPush.unsubscribe())),
-            map(() => void 0),
-          );
+        return this.removeServerSubscription(subscription.endpoint).pipe(
+          // Server cleanup failing must not leave the browser subscribed. If
+          // the delete fails we still unsubscribe locally: the browser stops
+          // receiving immediately, and the row left behind is removed the
+          // first time the push service answers 410 for it, which deliver_to
+          // in PushNotificationService already handles.
+          catchError(() => of(void 0)),
+          switchMap(() => from(this.swPush.unsubscribe())),
+          map(() => void 0),
+        );
       }),
     );
   }
@@ -218,5 +264,19 @@ export class PushNotificationService {
    */
   public unsubscribeQuietly(): Observable<void> {
     return this.unsubscribe().pipe(catchError(() => of(void 0)));
+  }
+
+  private registerSubscription(subscription: PushSubscription): Observable<void> {
+    const keys = subscription.toJSON().keys ?? {};
+
+    return this.http.post<void>(this.endpoint, {
+      endpoint: subscription.endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+    });
+  }
+
+  private removeServerSubscription(endpoint: string): Observable<void> {
+    return this.http.delete<void>(this.endpoint, {params: {endpoint}});
   }
 }
