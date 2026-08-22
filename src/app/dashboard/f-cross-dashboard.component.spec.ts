@@ -235,6 +235,21 @@ describe('CrossDashboardComponent', () => {
     }
   });
 
+  it('renders per-unit search with an explicit readable surface and placeholder', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+
+    await syncView();
+
+    const searchInput = fixture.nativeElement.querySelector(
+      'input[aria-label="Search tasks in SIT764"]',
+    ) as HTMLInputElement;
+
+    expect(searchInput.classList.contains('bg-white')).toBe(true);
+    expect(searchInput.classList.contains('text-gray-900')).toBe(true);
+    expect(searchInput.classList.contains('placeholder:text-gray-600')).toBe(true);
+    expect(searchInput.classList.contains('placeholder:opacity-100')).toBe(true);
+  });
+
   it('does not confuse Australian dates that contain the same numbers in another order', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
