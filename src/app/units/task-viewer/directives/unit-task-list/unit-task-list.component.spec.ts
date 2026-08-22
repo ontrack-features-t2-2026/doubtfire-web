@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {FUnitTaskListComponent} from './unit-task-list.component';
 
 const emptyProvider = {};
@@ -11,6 +11,7 @@ const taskDefinition = (
   id: number,
   abbreviation: string,
   startDate = new Date(2026, 0, id + 1),
+  targetGrade = 0,
 ): TaskDefinition =>
   ({
     id,
@@ -18,6 +19,7 @@ const taskDefinition = (
     abbreviation,
     name: abbreviation,
     startDate,
+    targetGrade,
   }) as TaskDefinition;
 
 const taskForDefinition = (definition: TaskDefinition, topWeight: number): Task =>
@@ -107,5 +109,79 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([firstTask, secondTask, thirdTask]);
+  });
+
+  it('shows only tasks at or below the project target grade by default', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    const distinctionTask = taskDefinition(3, 'D1', undefined, 2);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask, distinctionTask];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask]);
+    expect(component.activeViewPreferenceCount).toBe(0);
+  });
+
+  it('reveals tasks beyond the target grade only when explicitly selected', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask];
+    component.tasks = [];
+
+    component.toggleShowAboveTargetGrade(true);
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+    expect(component.activeViewPreferenceCount).toBe(1);
+
+    component.resetViewPreferences();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask]);
+    expect(component.activeViewPreferenceCount).toBe(0);
+  });
+
+  it('reapplies target-grade filtering when the selected target changes', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask];
+    component.tasks = [];
+    component.applyFilters();
+
+    component.targetGrade = 1;
+    component.project.targetGrade = 1;
+    component.ngOnChanges({targetGrade: new SimpleChange(0, 1, false)});
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+
+  it('does not grade-filter an all-tasks list without a student project', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const distinctionTask = taskDefinition(2, 'D1', undefined, 2);
+    component.mode = 'all-tasks';
+    component.taskDefinitions = [passTask, distinctionTask];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, distinctionTask]);
   });
 });
