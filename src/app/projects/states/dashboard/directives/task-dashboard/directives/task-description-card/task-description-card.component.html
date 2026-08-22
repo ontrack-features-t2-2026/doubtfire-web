@@ -75,7 +75,7 @@
         rel="noopener noreferrer"
         target="_blank"
         [href]="calendarUrl"
-        (keydown.space)="$event.preventDefault(); $event.target.click()"
+        (keydown)="handleCalendarLinkKeydown($event)"
       >
         <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px"
           >event</mat-icon

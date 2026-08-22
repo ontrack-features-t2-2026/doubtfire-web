@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
@@ -178,5 +178,72 @@ describe('TaskDescriptionCardComponent', () => {
     const url = component.googleCalendarUrl;
 
     expect(url).toContain('dates=20261003%2F20261004');
+  });
+
+  it('opens the calendar URL in a new tab, with noopener and noreferrer, when Space is pressed on the link', () => {
+    // jsdom cannot assert on actual navigation, so this spies on window.open, the
+    // browser API handleCalendarLinkKeydown calls directly, and dispatches a real
+    // keydown so the (keydown) template binding itself is exercised, not just the
+    // handler method in isolation. ' ' is the real browser event.key value for the
+    // space bar, not code: 'Space'.
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+    const task = buildTask({dueDate});
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      'a.add-to-google-calendar-link',
+    );
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const keyboardEvent = new KeyboardEvent('keydown', {key: ' ', cancelable: true});
+    const preventDefaultSpy = vi.spyOn(keyboardEvent, 'preventDefault');
+
+    link.dispatchEvent(keyboardEvent);
+
+    expect(preventDefaultSpy).toHaveBeenCalledOnce();
+    expect(windowOpenSpy).toHaveBeenCalledWith(
+      component.googleCalendarUrl,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  });
+
+  it('does not call window.open for a keydown that is not Space', () => {
+    // The handler now receives every keydown on the link, not just Space, since the
+    // template binding is plain (keydown) rather than Angular's (keydown.space)
+    // modifier. This proves the handler's own key check actually filters, it is not
+    // relying on Angular to only call it for the space key.
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+    const task = buildTask({dueDate});
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      'a.add-to-google-calendar-link',
+    );
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    link.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', cancelable: true}));
+
+    expect(windowOpenSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not call window.open on Space when there is no resolvable due date', () => {
+    // Defensive coverage for handleCalendarLinkKeydown's own null guard. The anchor
+    // only renders inside @if (googleCalendarUrl), so this branch is unreachable through
+    // the DOM, called directly here rather than left untested.
+    const task = buildTask({dueDate: undefined});
+    component.task = task;
+
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const keyboardEvent = new KeyboardEvent('keydown', {key: ' ', cancelable: true});
+
+    component.handleCalendarLinkKeydown(keyboardEvent);
+
+    expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 });
