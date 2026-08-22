@@ -176,4 +176,25 @@ export class TaskDescriptionCardComponent {
     const event = buildCalendarEvent(this._task);
     return event ? buildGoogleCalendarUrl(event) : null;
   }
+
+  /**
+   * An <a> responds natively to Enter but not Space. Binds plain (keydown) rather than
+   * Angular's (keydown.space) modifier syntax, since the template type checker cannot
+   * infer KeyboardEvent through that modifier and falls back to the plain Event type,
+   * this way the parameter is genuinely typed as KeyboardEvent with no cast needed.
+   * Navigates directly with window.open rather than simulating a click on the anchor,
+   * since googleCalendarUrl is already a typed string here, no DOM element reference or
+   * type narrowing is needed to use it. The noopener,noreferrer window features match
+   * the anchor's own rel attribute.
+   */
+  public handleCalendarLinkKeydown(event: KeyboardEvent): void {
+    if (event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    if (this.googleCalendarUrl) {
+      window.open(this.googleCalendarUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
 }
