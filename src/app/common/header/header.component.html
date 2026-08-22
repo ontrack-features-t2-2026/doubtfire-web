@@ -57,6 +57,14 @@
         <mat-icon>qr_code_scanner</mat-icon>
       </button>
     }
+    <button
+      aria-label="Open your calendar subscription settings"
+      mat-icon-button
+      matTooltip="Subscribe to your calendar"
+      (click)="openCalendar()"
+    >
+      <mat-icon>calendar_month</mat-icon>
+    </button>
     @if (currentUser.role === 'Admin' || currentUser.role === 'Convenor') {
       <button
         #menuState="matMenuTrigger"
