@@ -11,6 +11,7 @@ import {Router} from '@angular/router';
 import {Observable, Subject, defer, of, throwError} from 'rxjs';
 import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
+import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {NotificationsPageComponent} from './notifications-page.component';
@@ -40,6 +41,7 @@ describe('NotificationsPageComponent', () => {
   let authenticationService: {afterAuthCall: ReturnType<typeof vi.fn>};
   let alerts: {success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>};
   let router: {navigateByUrl: ReturnType<typeof vi.fn>};
+  let notificationRoutes: {navigate: ReturnType<typeof vi.fn>};
 
   /**
    * A stand-in that records whether anybody actually subscribed.
@@ -92,6 +94,7 @@ describe('NotificationsPageComponent', () => {
     authenticationService = {afterAuthCall: vi.fn((callback) => callback(true))};
     alerts = {success: vi.fn(), error: vi.fn()};
     router = {navigateByUrl: vi.fn()};
+    notificationRoutes = {navigate: vi.fn().mockResolvedValue(true)};
 
     await TestBed.configureTestingModule({
       declarations: [NotificationsPageComponent],
@@ -108,6 +111,7 @@ describe('NotificationsPageComponent', () => {
         {provide: AuthenticationService, useValue: authenticationService},
         {provide: AlertService, useValue: alerts},
         {provide: Router, useValue: router},
+        {provide: NotificationRouteService, useValue: notificationRoutes},
       ],
     }).compileComponents();
 
@@ -323,7 +327,7 @@ describe('NotificationsPageComponent', () => {
     expect(notificationService.markRead).toHaveBeenCalledTimes(1);
     expect(notificationService.markRead.mock.calls[0][0].id).toBe(1);
     expect(subscribedTo.has('markRead')).toBe(true);
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/projects/9/dashboard');
+    expect(notificationRoutes.navigate).toHaveBeenCalledWith('/projects/9/dashboard');
   });
 
   it('does not mark a row read twice', () => {
@@ -334,7 +338,7 @@ describe('NotificationsPageComponent', () => {
     rows()[0].click();
 
     expect(notificationService.markRead).not.toHaveBeenCalled();
-    expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(notificationRoutes.navigate).toHaveBeenCalledTimes(1);
   });
 
   it('marks a row read even when it has nowhere to go', () => {
@@ -347,7 +351,7 @@ describe('NotificationsPageComponent', () => {
     // link is nullable on the api. Refusing to mark it read would leave a
     // number on the bell that the user has no way to clear.
     expect(notificationService.markRead).toHaveBeenCalledTimes(1);
-    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(notificationRoutes.navigate).not.toHaveBeenCalled();
   });
 
   it('says so when a notification could not be marked as read', () => {
