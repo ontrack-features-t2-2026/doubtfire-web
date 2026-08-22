@@ -97,16 +97,16 @@
     </div>
 
     <div class="grid grid-cols-1 items-stretch gap-3.5 xl:col-span-2 xl:grid-cols-2">
-      <mat-card appearance="outlined" class="max-h-[600px]">
+      <mat-card appearance="outlined" class="h-full min-w-0">
         <mat-card-header>
           <mat-card-title>Progress Burndown</mat-card-title>
           <mat-card-subtitle>
             The burndown chart shows how much work remains for you to achieve your target grade.
           </mat-card-subtitle>
         </mat-card-header>
-        <mat-card-content class="overflow-hidden">
+        <mat-card-content class="min-w-0">
           <f-progress-burndown-chart
-            class="block"
+            class="block min-w-0"
             [grade]="project.targetGrade"
             [project]="project"
             [unit]="project.unit"
@@ -121,13 +121,14 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="max-h-[600px]">
+      <mat-card appearance="outlined" class="h-full min-w-0">
         <mat-card-header>
           <mat-card-title>Task Statuses</mat-card-title>
           <mat-card-subtitle>Breakdown summary of each of your task statuses</mat-card-subtitle>
         </mat-card-header>
-        <mat-card-content>
+        <mat-card-content class="min-w-0">
           <f-task-visualisation
+            class="block min-w-0"
             [grade]="project.targetGrade"
             [project]="project"
           ></f-task-visualisation>
