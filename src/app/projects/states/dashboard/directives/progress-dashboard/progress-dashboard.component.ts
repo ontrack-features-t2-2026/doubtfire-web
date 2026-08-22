@@ -3,8 +3,10 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
 } from '@angular/core';
 import {Project} from 'src/app/api/models/project';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -19,7 +21,7 @@ import {GradeService} from 'src/app/common/services/grade.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class ProgressDashboardComponent implements OnInit {
+export class ProgressDashboardComponent implements OnChanges, OnInit {
   @Input() project: Project;
   @Input() showSubmittedGrade?: boolean = false;
   @Output() doUpdateTargetGrade: EventEmitter<void> = new EventEmitter();
@@ -41,6 +43,20 @@ export class ProgressDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.refreshProjectSummary();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('project' in changes && !changes.project.firstChange) {
+      this.refreshProjectSummary();
+    }
+  }
+
+  private refreshProjectSummary(): void {
+    if (!this.project?.unit) {
+      return;
+    }
+
     this.grades.values = this.gradeService.gradeValuesFor(this.project.unit);
     this.grades.names = Object.fromEntries(
       this.project.unit.gradeDefinitions.map((definition) => [definition.value, definition.label]),

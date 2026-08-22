@@ -79,7 +79,11 @@ export class ProgressBurndownChartComponent
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ('grade' in changes && changes.grade.currentValue !== undefined) {
+    const projectChanged = 'project' in changes && !changes.project.firstChange;
+    const unitChanged = 'unit' in changes && !changes.unit.firstChange;
+    const gradeChanged = 'grade' in changes && changes.grade.currentValue !== undefined;
+
+    if (this.project && (projectChanged || unitChanged || gradeChanged)) {
       this.project.refreshBurndownChartData();
       this.updateData();
     }

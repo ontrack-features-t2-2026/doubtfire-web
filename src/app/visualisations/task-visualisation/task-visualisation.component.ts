@@ -31,7 +31,10 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ('grade' in changes && changes.grade.currentValue !== undefined) {
+    const projectChanged = 'project' in changes && !changes.project.firstChange;
+    const gradeChanged = 'grade' in changes && changes.grade.currentValue !== undefined;
+
+    if (projectChanged || gradeChanged) {
       this.updateData();
     }
   }
