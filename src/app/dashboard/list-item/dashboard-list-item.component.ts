@@ -10,12 +10,14 @@ export type DashboardTask = {
   color: string;
   comments: number;
   status: TaskStatusEnum;
+  targetGrade: number;
+  targetGradeLabel: string;
   weight: number;
   projectId: number;
   description: string;
   taskDef: TaskDefinition;
   unitCode: string;
-  dueDate: Date;
+  dueDate: Date | null | undefined;
 };
 
 @Component({
