@@ -65,20 +65,22 @@
         >download</mat-icon
       ><span>Resources</span>
     </button>
-    <a
-      class="add-to-google-calendar-link"
-      mat-stroked-button
-      rel="noopener"
-      target="_blank"
-      [hidden]="!googleCalendarUrl()"
-      [href]="googleCalendarUrl()"
-    >
-      <mat-icon
-        aria-label="Add to Google Calendar icon"
-        inline
-        style="width: 20px; height: 20px; font-size: 20px"
-        >event</mat-icon
-      ><span>Add to Google Calendar</span>
-    </a>
   </mat-card-actions>
+  @if (googleCalendarUrl; as calendarUrl) {
+    <mat-card-actions class="space-x-1">
+      <a
+        aria-label="Add to Google Calendar, opens in a new tab"
+        class="add-to-google-calendar-link"
+        mat-stroked-button
+        rel="noopener noreferrer"
+        target="_blank"
+        [href]="calendarUrl"
+        (keydown.space)="$event.preventDefault(); $event.target.click()"
+      >
+        <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px"
+          >event</mat-icon
+        ><span>Add to Google Calendar</span>
+      </a>
+    </mat-card-actions>
+  }
 </mat-card>
