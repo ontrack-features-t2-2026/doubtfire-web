@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-
+import {Injectable} from '@angular/core';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -12,7 +11,7 @@ export interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = 'ontrack_pwa_install_dismissed';
-const PROMPT_DURATION = 10000 
+const PROMPT_DURATION = 10000;
 
 @Injectable()
 export class InstallPromptService {
@@ -38,7 +37,7 @@ export class InstallPromptService {
       const snackBarRef = this._snackBar.open(
         'Install OnTrack for a better experience',
         'Install',
-        { duration: PROMPT_DURATION}
+        {duration: PROMPT_DURATION},
       );
 
       snackBarRef.onAction().subscribe(() => {
@@ -57,7 +56,7 @@ export class InstallPromptService {
     const snackBarRef = this._snackBar.open(
       'To install OnTrack: tap Share then "Add to Home Screen"',
       'Got it',
-      { duration: PROMPT_DURATION}
+      {duration: PROMPT_DURATION},
     );
 
     snackBarRef.afterDismissed().subscribe(() => {
@@ -73,7 +72,8 @@ export class InstallPromptService {
   private isStandalone(): boolean {
     return (
       window.matchMedia('(display-mode: standalone)').matches ||
-      ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone)
+      ('standalone' in window.navigator &&
+        (window.navigator as unknown as {standalone: boolean}).standalone)
     );
   }
 }

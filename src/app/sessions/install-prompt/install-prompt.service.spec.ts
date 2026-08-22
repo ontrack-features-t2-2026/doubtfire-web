@@ -1,12 +1,20 @@
-import { TestBed } from '@angular/core/testing';
-import { MatSnackBar, MatSnackBarRef, TextOnlySnackBar } from '@angular/material/snack-bar';
-import { Subject } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InstallPromptService } from './install-prompt.service';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {TestBed} from '@angular/core/testing';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {Subject} from 'rxjs';
+import {BeforeInstallPromptEvent, InstallPromptService} from './install-prompt.service';
+
+interface InstallPromptServicePrivate {
+  isIos(): boolean;
+  isStandalone(): boolean;
+}
 
 describe('InstallPromptService', () => {
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
-  let snackBarRefSpy: { onAction: ReturnType<typeof vi.fn>; afterDismissed: ReturnType<typeof vi.fn> };
+  let snackBarSpy: {open: ReturnType<typeof vi.fn>};
+  let snackBarRefSpy: {
+    onAction: ReturnType<typeof vi.fn>;
+    afterDismissed: ReturnType<typeof vi.fn>;
+  };
   let actionSubject: Subject<void>;
   let afterDismissedSubject: Subject<void>;
 
@@ -28,10 +36,7 @@ describe('InstallPromptService', () => {
 
   function createService(): InstallPromptService {
     TestBed.configureTestingModule({
-      providers: [
-        InstallPromptService,
-        { provide: MatSnackBar, useValue: snackBarSpy },
-      ],
+      providers: [InstallPromptService, {provide: MatSnackBar, useValue: snackBarSpy}],
     });
     return TestBed.inject(InstallPromptService);
   }
@@ -48,18 +53,21 @@ describe('InstallPromptService', () => {
     expect(snackBarSpy.open).not.toHaveBeenCalled();
   });
 
-describe('Non-iOS Flow', () => {
+  describe('Non-iOS Flow', () => {
     beforeEach(() => {
-      vi.spyOn(InstallPromptService.prototype as any, 'isIos').mockReturnValue(false);
+      vi.spyOn(
+        InstallPromptService.prototype as unknown as InstallPromptServicePrivate,
+        'isIos',
+      ).mockReturnValue(false);
     });
 
     it('should open snackbar and trigger prompt on user action', () => {
       createService();
 
-      const mockEvent = new Event('beforeinstallprompt');
+      const mockEvent = new Event('beforeinstallprompt') as BeforeInstallPromptEvent;
       const promptSpy = vi.fn();
       const preventDefaultSpy = vi.spyOn(mockEvent, 'preventDefault');
-      (mockEvent as any).prompt = promptSpy;
+      Object.defineProperty(mockEvent, 'prompt', {value: promptSpy});
 
       window.dispatchEvent(mockEvent);
 
@@ -67,7 +75,7 @@ describe('Non-iOS Flow', () => {
       expect(snackBarSpy.open).toHaveBeenCalledWith(
         'Install OnTrack for a better experience',
         'Install',
-        { duration: 10000 }
+        {duration: 10000},
       );
 
       actionSubject.next();
@@ -87,23 +95,32 @@ describe('Non-iOS Flow', () => {
 
   describe('iOS Flow', () => {
     beforeEach(() => {
-      vi.spyOn(InstallPromptService.prototype as any, 'isIos').mockReturnValue(true);
+      vi.spyOn(
+        InstallPromptService.prototype as unknown as InstallPromptServicePrivate,
+        'isIos',
+      ).mockReturnValue(true);
     });
 
     it('should show iOS prompt if not in standalone mode', () => {
-      vi.spyOn(InstallPromptService.prototype as any, 'isStandalone').mockReturnValue(false);
+      vi.spyOn(
+        InstallPromptService.prototype as unknown as InstallPromptServicePrivate,
+        'isStandalone',
+      ).mockReturnValue(false);
 
       createService();
 
       expect(snackBarSpy.open).toHaveBeenCalledWith(
         'To install OnTrack: tap Share then "Add to Home Screen"',
         'Got it',
-        { duration: 10000 }
+        {duration: 10000},
       );
     });
 
     it('should not show prompt if already in standalone mode', () => {
-      vi.spyOn(InstallPromptService.prototype as any, 'isStandalone').mockReturnValue(true);
+      vi.spyOn(
+        InstallPromptService.prototype as unknown as InstallPromptServicePrivate,
+        'isStandalone',
+      ).mockReturnValue(true);
 
       createService();
 
@@ -111,7 +128,10 @@ describe('Non-iOS Flow', () => {
     });
 
     it('should save dismissal to localStorage when iOS snackbar is dismissed', () => {
-      vi.spyOn(InstallPromptService.prototype as any, 'isStandalone').mockReturnValue(false);
+      vi.spyOn(
+        InstallPromptService.prototype as unknown as InstallPromptServicePrivate,
+        'isStandalone',
+      ).mockReturnValue(false);
 
       createService();
 
