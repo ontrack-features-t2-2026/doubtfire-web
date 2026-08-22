@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Subject} from 'rxjs';
@@ -17,6 +17,7 @@ describe('InstallPromptService', () => {
   };
   let actionSubject: Subject<void>;
   let afterDismissedSubject: Subject<void>;
+  let localStorageMock: Storage;
 
   beforeEach(() => {
     actionSubject = new Subject<void>();
@@ -31,7 +32,26 @@ describe('InstallPromptService', () => {
       open: vi.fn().mockReturnValue(snackBarRefSpy),
     };
 
-    localStorage.clear();
+    const storedValues: Map<string, string> = new Map();
+    localStorageMock = {
+      get length() {
+        return storedValues.size;
+      },
+      clear: vi.fn(() => storedValues.clear()),
+      getItem: vi.fn((key: string) => storedValues.get(key) ?? null),
+      key: vi.fn((index: number) => [...storedValues.keys()][index] ?? null),
+      removeItem: vi.fn((key: string) => storedValues.delete(key)),
+      setItem: vi.fn((key: string, value: string) => storedValues.set(key, value)),
+    };
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: localStorageMock,
+    });
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.restoreAllMocks();
   });
 
   function createService(): InstallPromptService {
@@ -47,7 +67,7 @@ describe('InstallPromptService', () => {
   });
 
   it('should do nothing if previously dismissed in localStorage', () => {
-    localStorage.setItem('ontrack_pwa_install_dismissed', 'true');
+    localStorageMock.setItem('ontrack_pwa_install_dismissed', 'true');
     createService();
 
     expect(snackBarSpy.open).not.toHaveBeenCalled();
@@ -61,24 +81,28 @@ describe('InstallPromptService', () => {
       ).mockReturnValue(false);
     });
 
-    it('should open snackbar and trigger prompt on user action', () => {
+    it('should open snackbar and trigger prompt on user action', async () => {
       createService();
 
       const mockEvent = new Event('beforeinstallprompt') as BeforeInstallPromptEvent;
-      const promptSpy = vi.fn();
+      const promptSpy = vi.fn().mockResolvedValue(undefined);
       const preventDefaultSpy = vi.spyOn(mockEvent, 'preventDefault');
       Object.defineProperty(mockEvent, 'prompt', {value: promptSpy});
+      Object.defineProperty(mockEvent, 'userChoice', {
+        value: Promise.resolve({outcome: 'accepted', platform: 'web'}),
+      });
 
       window.dispatchEvent(mockEvent);
 
       expect(preventDefaultSpy).toHaveBeenCalled();
       expect(snackBarSpy.open).toHaveBeenCalledWith(
-        'Install OnTrack for a better experience',
+        'Install OnTrack for quicker access and notifications',
         'Install',
         {duration: 10000},
       );
 
       actionSubject.next();
+      await Promise.resolve();
       expect(promptSpy).toHaveBeenCalled();
     });
 
@@ -89,7 +113,7 @@ describe('InstallPromptService', () => {
       window.dispatchEvent(mockEvent);
 
       afterDismissedSubject.next();
-      expect(localStorage.getItem('ontrack_pwa_install_dismissed')).toBe('true');
+      expect(localStorageMock.getItem('ontrack_pwa_install_dismissed')).toBe('true');
     });
   });
 
@@ -136,7 +160,7 @@ describe('InstallPromptService', () => {
       createService();
 
       afterDismissedSubject.next();
-      expect(localStorage.getItem('ontrack_pwa_install_dismissed')).toBe('true');
+      expect(localStorageMock.getItem('ontrack_pwa_install_dismissed')).toBe('true');
     });
   });
 });

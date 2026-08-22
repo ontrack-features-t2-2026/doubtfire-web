@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {MatSnackBar} from '@angular/material/snack-bar';
 
 export interface BeforeInstallPromptEvent extends Event {
@@ -14,42 +14,55 @@ const DISMISSED_KEY = 'ontrack_pwa_install_dismissed';
 const PROMPT_DURATION = 10000;
 
 @Injectable()
-export class InstallPromptService {
+export class InstallPromptService implements OnDestroy {
   private beforeInstallPrompt: BeforeInstallPromptEvent | null = null;
+  private readonly handleBeforeInstallPrompt = (event: Event): void => {
+    event.preventDefault();
+
+    this.beforeInstallPrompt = event as BeforeInstallPromptEvent;
+
+    const snackBarRef = this._snackBar.open(
+      'Install OnTrack for quicker access and notifications',
+      'Install',
+      {duration: PROMPT_DURATION},
+    );
+
+    snackBarRef.onAction().subscribe(() => {
+      void this.showInstallPrompt();
+    });
+
+    snackBarRef.afterDismissed().subscribe(() => {
+      this.rememberDismissal();
+    });
+  };
 
   constructor(private _snackBar: MatSnackBar) {
-    if (localStorage.getItem(DISMISSED_KEY) === 'true') {
+    if (window.localStorage.getItem(DISMISSED_KEY) === 'true' || this.isStandalone()) {
       return;
     }
 
     if (this.isIos()) {
-      if (!this.isStandalone()) {
-        this.showIosPrompt();
-      }
+      this.showIosPrompt();
       return;
     }
 
-    window.addEventListener('beforeinstallprompt', (e: Event) => {
-      e.preventDefault();
+    window.addEventListener('beforeinstallprompt', this.handleBeforeInstallPrompt);
+  }
 
-      this.beforeInstallPrompt = e as BeforeInstallPromptEvent;
+  public ngOnDestroy(): void {
+    window.removeEventListener('beforeinstallprompt', this.handleBeforeInstallPrompt);
+  }
 
-      const snackBarRef = this._snackBar.open(
-        'Install OnTrack for a better experience',
-        'Install',
-        {duration: PROMPT_DURATION},
-      );
+  private async showInstallPrompt(): Promise<void> {
+    const prompt = this.beforeInstallPrompt;
+    this.beforeInstallPrompt = null;
 
-      snackBarRef.onAction().subscribe(() => {
-        if (this.beforeInstallPrompt) {
-          this.beforeInstallPrompt.prompt();
-        }
-      });
+    if (!prompt) {
+      return;
+    }
 
-      snackBarRef.afterDismissed().subscribe(() => {
-        localStorage.setItem(DISMISSED_KEY, 'true');
-      });
-    });
+    await prompt.prompt();
+    await prompt.userChoice;
   }
 
   private showIosPrompt(): void {
@@ -60,18 +73,26 @@ export class InstallPromptService {
     );
 
     snackBarRef.afterDismissed().subscribe(() => {
-      localStorage.setItem(DISMISSED_KEY, 'true');
+      this.rememberDismissal();
     });
+  }
+
+  private rememberDismissal(): void {
+    window.localStorage.setItem(DISMISSED_KEY, 'true');
   }
 
   private isIos(): boolean {
     const userAgent = window.navigator.userAgent.toLowerCase();
-    return /iphone|ipad|ipod/.test(userAgent);
+    return (
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (userAgent.includes('macintosh') && window.navigator.maxTouchPoints > 1)
+    );
   }
 
   private isStandalone(): boolean {
     return (
-      window.matchMedia('(display-mode: standalone)').matches ||
+      (typeof window.matchMedia === 'function' &&
+        window.matchMedia('(display-mode: standalone)').matches) ||
       ('standalone' in window.navigator &&
         (window.navigator as unknown as {standalone: boolean}).standalone)
     );
