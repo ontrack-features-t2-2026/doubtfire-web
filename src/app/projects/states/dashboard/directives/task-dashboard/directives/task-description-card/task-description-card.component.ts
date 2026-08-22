@@ -7,16 +7,45 @@ import {
   Output,
 } from '@angular/core';
 import {Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
-import {CalendarEvent, buildCalendarEvent} from 'src/app/api/services/calendar-event-builder';
-import {MappingFunctions} from 'src/app/api/services/mapping-fn';
+import {WebCalEvent, buildCalendarEvent} from 'src/app/api/services/calendar-event-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {GradeService} from 'src/app/common/services/grade.service';
 
-function formatGoogleCalendarDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
+function formatGoogleCalendarDate(civilDate: string): string {
+  return civilDate.replaceAll('-', '');
+}
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+function daysInMonth(year: number, month: number): number {
+  const daysByMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return daysByMonth[month - 1];
+}
+
+/**
+ * Adds one day to a 'YYYY-MM-DD' civil date using plain integer arithmetic, with no Date
+ * object and no timezone involved anywhere. A civil date has no time-of-day, so it needs
+ * no DST awareness, this sidesteps the DST bug entirely rather than working around it.
+ * MappingFunctions.addDays previously did this step by adding a fixed 86,400,000 ms to a
+ * Date instant, which lands on the wrong calendar day across a DST transition, confirmed
+ * for a task due the day before Melbourne's October transition, see the spec for CAL-F01.
+ */
+function addOneCivilDay(civilDate: string): string {
+  let [year, month, day] = civilDate.split('-').map(Number);
+
+  day += 1;
+  if (day > daysInMonth(year, month)) {
+    day = 1;
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 /**
@@ -27,9 +56,9 @@ function formatGoogleCalendarDate(date: Date): string {
  * why those two conventions cannot share one date pair. formatGoogleCalendarDate is
  * calibrated for this URL only, CAL-F02's ICS output must not reuse it.
  */
-function buildGoogleCalendarUrl(event: CalendarEvent): string {
+function buildGoogleCalendarUrl(event: WebCalEvent): string {
   const start = formatGoogleCalendarDate(event.date);
-  const end = formatGoogleCalendarDate(MappingFunctions.addDays(event.date, 1));
+  const end = formatGoogleCalendarDate(addOneCivilDay(event.date));
 
   const params = [
     ['action', 'TEMPLATE'],
@@ -52,7 +81,16 @@ function buildGoogleCalendarUrl(event: CalendarEvent): string {
 export class TaskDescriptionCardComponent {
   @Output() switchView$: EventEmitter<string> = new EventEmitter();
 
-  @Input() task: Task;
+  private _task: Task;
+  @Input()
+  public set task(value: Task) {
+    this._task = value;
+    this._googleCalendarUrl = this.computeGoogleCalendarUrl();
+  }
+  public get task(): Task {
+    return this._task;
+  }
+
   @Input() taskDef: TaskDefinition;
   @Input() unit: Unit;
 
@@ -60,6 +98,8 @@ export class TaskDescriptionCardComponent {
     names: GradeService['grades'];
     acronyms: GradeService['gradeAcronyms'];
   };
+
+  private _googleCalendarUrl: string | null = null;
 
   constructor(
     private GradeService: GradeService,
@@ -119,13 +159,21 @@ export class TaskDescriptionCardComponent {
    * fresh "add event" dialog rather than updating an existing calendar entry. The date is
    * a snapshot of the due date at click time and will not track later changes. That is
    * inherent to this mechanism, not a defect.
+   *
+   * Computed once in the task setter, not read here as a method call. The template
+   * previously called this twice per change detection pass (visibility and href), each
+   * call rebuilding the event and the URL string from scratch.
    */
-  public googleCalendarUrl(): string | null {
-    if (!this.task) {
+  public get googleCalendarUrl(): string | null {
+    return this._googleCalendarUrl;
+  }
+
+  private computeGoogleCalendarUrl(): string | null {
+    if (!this._task) {
       return null;
     }
 
-    const event = buildCalendarEvent(this.task);
+    const event = buildCalendarEvent(this._task);
     return event ? buildGoogleCalendarUrl(event) : null;
   }
 }

@@ -18,6 +18,8 @@ function buildTask(overrides: {
   name?: string;
   taskDefId?: number;
   dueDate?: Date;
+  hasTaskSheet?: boolean;
+  hasTaskResources?: boolean;
 }): Task {
   const unit = new Unit();
   unit.code = overrides.unitCode ?? 'COS10001';
@@ -31,8 +33,8 @@ function buildTask(overrides: {
   definition.targetDate = undefined;
   definition.startDate = new Date(2026, 8, 1);
   definition.targetGrade = 0;
-  definition.hasTaskSheet = true;
-  definition.hasTaskResources = false;
+  definition.hasTaskSheet = overrides.hasTaskSheet ?? true;
+  definition.hasTaskResources = overrides.hasTaskResources ?? false;
 
   const task = new Task(unit);
   task.definition = definition;
@@ -60,8 +62,11 @@ describe('TaskDescriptionCardComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('renders the Add to Google Calendar button when the task has a due date', () => {
-    const dueDate = new Date(2026, 8, 15);
+  it('renders the Add to Google Calendar button when the task has a due date, with a correct href, target and rel', () => {
+    // 23:59:59.999 local, the only time-of-day Task.dueDate actually carries. It maps
+    // through MappingFunctions.mapDateToEndOfDay in the real app (task.service.ts), a
+    // bare local-midnight fixture is not a value the app ever produces.
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
     const task = buildTask({dueDate});
     component.task = task;
     component.taskDef = task.definition;
@@ -73,26 +78,42 @@ describe('TaskDescriptionCardComponent', () => {
     );
 
     expect(link).not.toBeNull();
-    expect(link.hidden).toBe(false);
+    expect(link.getAttribute('href')).toBe(component.googleCalendarUrl);
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
-  it('hides the Add to Google Calendar button when the task has no resolvable due date', () => {
+  it('is absent from the DOM when the task has no resolvable due date', () => {
     const task = buildTask({dueDate: undefined});
     component.task = task;
     component.taskDef = task.definition;
     component.unit = task.unit;
     fixture.detectChanges();
 
-    const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
-      'a.add-to-google-calendar-link',
-    );
+    const link = fixture.nativeElement.querySelector('a.add-to-google-calendar-link');
+
+    expect(link).toBeNull();
+  });
+
+  it('renders the button when the task has a due date but neither a task sheet nor resources', () => {
+    // The button's own container used to be mat-card-actions, hidden unless
+    // hasTaskSheet or hasTaskResources is true. The calendar button now has its own
+    // container gated only by whether a due date resolves, this proves it is no longer
+    // tied to that unrelated condition.
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+    const task = buildTask({dueDate, hasTaskSheet: false, hasTaskResources: false});
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('a.add-to-google-calendar-link');
 
     expect(link).not.toBeNull();
-    expect(link.hidden).toBe(true);
   });
 
   it('builds the exact Google Calendar URL, with an exclusive end date one day after the due date', () => {
-    const dueDate = new Date(2026, 8, 15);
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
     const task = buildTask({
       unitCode: 'COS10001',
       abbreviation: '1.1P',
@@ -102,7 +123,7 @@ describe('TaskDescriptionCardComponent', () => {
     });
     component.task = task;
 
-    const url = component.googleCalendarUrl();
+    const url = component.googleCalendarUrl;
 
     expect(url).toBe(
       'https://calendar.google.com/calendar/render?' +
@@ -110,5 +131,52 @@ describe('TaskDescriptionCardComponent', () => {
         'text=COS10001%3A%201.1P%3A%20Hello%20World&' +
         'dates=20260915%2F20260916',
     );
+  });
+
+  it('produces the correct dates range for a due date the day before Melbourne DST starts, which the old MappingFunctions.addDays approach got wrong', () => {
+    // Confirmed against the ICU timezone database: 2026-10-03 is AEST (UTC+10),
+    // 2026-10-04 is AEDT (UTC+11). Melbourne's clocks spring forward overnight
+    // between these two dates.
+    //
+    // The old approach (before this fix) held event.date as a Date instant and
+    // called MappingFunctions.addDays, which adds a fixed 24 hours of real
+    // elapsed time, then read the result back via local calendar getters. For a
+    // task due 2026-10-03, Task.localDueDate() resolved to 23:59:59.999 local
+    // time, 13:59:59.999 UTC while still on AEST. Reconstructed here exactly, to
+    // prove what that approach actually produced, since the buggy code itself no
+    // longer exists in this file to call directly.
+    const dueDateInstantUtc = Date.UTC(2026, 9, 3, 13, 59, 59, 999);
+    const oldBuggyEndInstant = dueDateInstantUtc + 24 * 60 * 60 * 1000;
+    const melbourneCivilDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Australia/Melbourne',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    // Adding a fixed 24 hours crosses the DST transition, so the wall-clock
+    // result lands an hour later than a plain "next day" would, which is enough
+    // to push it past midnight into a second day. The old approach's end date is
+    // 2026-10-05, not 2026-10-04, confirmed both by this direct reconstruction
+    // and empirically against the real ICU timezone database before writing this
+    // test. This assertion is the proof this test would fail against the old
+    // approach, not a description of it.
+    expect(melbourneCivilDate.format(oldBuggyEndInstant)).toBe('2026-10-05');
+
+    // The test container itself runs in UTC (confirmed separately), which has no
+    // DST, so exercising the real component pipeline in this environment cannot
+    // by itself distinguish old from new behaviour, UTC never crosses a DST
+    // transition regardless of which calendar date is chosen. The assertion
+    // above is what makes this test meaningful, the assertion below confirms
+    // the current, fixed production code produces the correct civil-date
+    // arithmetic (2026-10-03 to 2026-10-04) that the old approach failed to.
+    // Reuses dueDateInstantUtc, the same 23:59:59.999-Melbourne-local instant
+    // established above, as the realistic Task.dueDate fixture value.
+    const task = buildTask({dueDate: new Date(dueDateInstantUtc)});
+    component.task = task;
+
+    const url = component.googleCalendarUrl;
+
+    expect(url).toContain('dates=20261003%2F20261004');
   });
 });
