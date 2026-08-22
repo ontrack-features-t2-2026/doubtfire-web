@@ -357,7 +357,7 @@ describe('NotificationsPageComponent', () => {
     // link is nullable on the api. Refusing to mark it read would leave a
     // number on the bell that the user has no way to clear.
     expect(notificationService.markRead).toHaveBeenCalledTimes(1);
-    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(notificationRoutes.navigate).not.toHaveBeenCalled();
   });
 
   it('says so when a notification could not be marked as read', () => {
@@ -499,7 +499,7 @@ describe('NotificationsPageComponent', () => {
       // would make asking to delete one mark it read and navigate away from the
       // page it was asked on.
       expect(notificationService.markRead).not.toHaveBeenCalled();
-      expect(router.navigateByUrl).not.toHaveBeenCalled();
+      expect(notificationRoutes.navigate).not.toHaveBeenCalled();
     });
 
     it('names the notification on its delete button', () => {
