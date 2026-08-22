@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
@@ -60,6 +60,16 @@ describe('TaskDescriptionCardComponent', () => {
 
     fixture = TestBed.createComponent(TaskDescriptionCardComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    // window.open is a real global. vi.spyOn replaces it in place and, without this,
+    // the replacement and its call history persist across tests, since neither
+    // restoreMocks nor clearMocks is configured globally for this project (checked
+    // angular.json's test builder options and src/vitest-setup.ts, neither sets
+    // either). vi.restoreAllMocks() restores the original window.open and clears the
+    // spy's history after every test, not just the ones that create it directly.
+    vi.restoreAllMocks();
   });
 
   it('renders the Add to Google Calendar button when the task has a due date, with a correct href, target and rel', () => {
