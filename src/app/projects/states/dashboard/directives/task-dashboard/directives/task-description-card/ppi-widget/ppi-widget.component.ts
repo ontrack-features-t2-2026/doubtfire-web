@@ -1,4 +1,3 @@
-import {environment} from 'src/environments/environment';
 import {
   ChangeDetectorRef,
   Component,
@@ -27,12 +26,6 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   @Input({required: true}) task: Task;
   @Input({required: true}) taskDef: TaskDefinition;
 
-  // Optional mock-state override for local previewing/screenshots.
-  // Only used while the mock service is in place; once the real backend
-  // lands, this input and the 4th argument to getIndicator() both go away.
-  @Input() mockState: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled' =
-    'normal';
-
   view: PeerProgressViewModel = {state: 'loading', data: null, message: null};
 
   private activeRequest?: Subscription;
@@ -43,7 +36,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.task || changes.taskDef || changes.mockState) {
+    if (changes.task || changes.taskDef) {
       this.load();
     }
   }
@@ -66,22 +59,12 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
       return;
     }
 
-    // The indicator is still a fixture. Never show a fabricated percentage in a
-    // production build - a student cannot tell it from a real one. Remove this
-    // guard when the live PPI-F01 adapter replaces getIndicator's mock states.
-    if (environment.production) {
-      this.setView(resolvePeerProgressState(false, null, null));
-      return;
-    }
-
     // Cancel the previous request first -- otherwise a late response could overwrite our new loading state with old data.
     this.activeRequest?.unsubscribe();
     this.setView(resolvePeerProgressState(true, null, null));
 
-    const {unit, targetGrade} = this.task.project;
-
     this.activeRequest = this.ppiService
-      .getIndicator(this.taskDef.id, unit.id, targetGrade, this.mockState)
+      .getIndicator(this.task.project.id, this.taskDef.id)
       .subscribe({
         next: (data) => this.setView(resolvePeerProgressState(false, null, data)),
         error: (err) => this.setView(resolvePeerProgressState(false, err, null)),

@@ -81,19 +81,19 @@ The future frontend adapter can replace the mock call inside
 `ProgressDashboardComponent.loadPeerProgressUnitSummary()` without redesigning
 the presentational component.
 
-### Nullability the frontend types do not yet allow
+### Task-level adapter nullability
 
 doubtfire-api#16 returns `null` for `last_updated_at` and `target_grade` in
-several documented states. Before the adapter lands, `PeerProgressIndicator`
-needs `lastUpdatedAt: string | null` and `targetGrade: number | null`.
+several documented states. The task-level live adapter now maps those values to
+`PeerProgressIndicator.lastUpdatedAt: string | null` and
+`PeerProgressIndicator.targetGrade: number | null`.
 
 ### The mock must not reach a production build
 
-Both PPI surfaces render a fixture today: this component and the already-merged
-`f-ppi-widget` on the task sheet. Both are now gated on
+The unit-level summary in this document remains mock-backed and is gated on
 `environment.production`, so a built application shows the unavailable state
-rather than a fabricated percentage. Remove both guards in the same change that
-lands the live adapter, and not before.
+rather than a fabricated percentage. The task-sheet `f-ppi-widget` now uses the
+authorised project/task API route and does not render a fixture in production.
 
 ## Validation
 

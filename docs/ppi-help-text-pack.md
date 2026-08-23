@@ -33,8 +33,8 @@ These rules apply to both views:
 1. A group result is shown as one combined percentage.
 2. It must not display names, student IDs, project IDs, individual results, individual
    task statuses, marks, feedback, raw group size or rankings.
-3. A genuine `0%` is a real value. It must not be presented as missing, suppressed or
-   unavailable data.
+3. A displayed `0%` is a real privacy-bucket value. It must not be presented as missing,
+   suppressed or unavailable data, but it may represent a small percentage that rounds to zero.
 4. A suppressed result explains that the group value is hidden for privacy without
    revealing the exact group size.
 5. Unavailable and stale states describe a data or timing condition. They must not sound
@@ -124,16 +124,16 @@ Suggested accessible name:
   same target grade. It does not show names, individual results, raw group size or
   rankings. It does not assess your own work or predict your grade.
 
-### 3.2 Genuine zero result
+### 3.2 Rounded zero result
 
 **Template state:** `@case ('no-data')`
 
 - **Label:** Peer task progress
-- **Tooltip or short help text:** The group percentage is currently 0%. This is a real
-  result, not missing data.
-- **Expanded explanation:** No students in the privacy-protected group have submitted
-  this task yet. This is not feedback about your own progress. The percentage may change
-  as submissions are made.
+- **Tooltip or short help text:** The privacy-protected group percentage currently rounds
+  to 0%. This is a displayed value, not missing data.
+- **Expanded explanation:** The API rounds percentages into privacy-safe bands, so 0% may
+  include a small number of submissions. It is not feedback about your own progress. The
+  displayed percentage may change as submissions are made.
 
 ### 3.3 Small-group suppression
 
@@ -204,14 +204,14 @@ claim that live unit-level data has been delivered.
   and does not show names, individual results, raw group size, marks, feedback or
   rankings.
 
-### 4.2 Genuine zero group result
+### 4.2 Rounded zero group result
 
 - **Label:** Unit progress overview
-- **Tooltip or short help text:** Anonymous group progress is currently 0%. This is a real
-  value, not missing data.
+- **Tooltip or short help text:** Anonymous group progress currently rounds to 0%. This is
+  a displayed value, not missing data.
 - **Expanded explanation:** Your own progress remains separate from the group result. A
-  group value of 0% only describes the current aggregate. It is not feedback about your
-  work and does not predict your grade.
+  displayed group value of 0% may include a small value that rounds to zero. It is not
+  feedback about your work and does not predict your grade.
 
 ### 4.3 Small-group suppression
 

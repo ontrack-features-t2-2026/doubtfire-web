@@ -33,7 +33,9 @@
   @case ('no-data') {
     <div class="ppi-widget ppi-widget--muted">
       <mat-icon [attr.aria-hidden]="true">hourglass_empty</mat-icon>
-      <span>No peer submissions yet</span>
+      <span aria-label="Peer submission progress">
+        Peer submission progress rounds to 0% for your target grade
+      </span>
     </div>
   }
   @case ('stale') {

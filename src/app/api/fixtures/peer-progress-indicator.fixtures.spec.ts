@@ -13,7 +13,7 @@ import {
 const assertContractShape = (fixture: PeerProgressIndicator) => {
   expect(typeof fixture.taskDefinitionId).toBe('number');
   expect(typeof fixture.unitId).toBe('number');
-  expect(typeof fixture.targetGrade).toBe('number');
+  expect(fixture.targetGrade === null || typeof fixture.targetGrade === 'number').toBe(true);
 
   // submittedPercentage can be number or null
   expect(
@@ -24,7 +24,7 @@ const assertContractShape = (fixture: PeerProgressIndicator) => {
   expect(typeof fixture.isStale).toBe('boolean');
   expect(typeof fixture.isFeatureEnabled).toBe('boolean');
 
-  expect(typeof fixture.lastUpdatedAt).toBe('string');
+  expect(fixture.lastUpdatedAt === null || typeof fixture.lastUpdatedAt === 'string').toBe(true);
   expect(typeof fixture.unavailableMessage).toBe('string');
 };
 
@@ -61,7 +61,7 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
     expect(FIXTURE_NORMAL.isFeatureEnabled).toBe(true);
   });
 
-  it('ZERO_PERCENT fixture correctly represents genuine 0%', () => {
+  it('ZERO_PERCENT fixture keeps a displayed 0% distinct from unavailable data', () => {
     expect(FIXTURE_ZERO_PERCENT.submittedPercentage).toBe(0);
     expect(FIXTURE_ZERO_PERCENT.isSuppressed).toBe(false);
   });

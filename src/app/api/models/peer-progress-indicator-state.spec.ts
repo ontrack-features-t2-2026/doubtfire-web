@@ -28,7 +28,7 @@ describe('resolvePeerProgressState', () => {
     expect(result.data).toEqual(NORMAL_STATE);
   });
 
-  it('returns no-data when nobody has submitted yet', () => {
+  it('keeps a rounded zero distinct from unavailable data', () => {
     const result = resolvePeerProgressState(false, null, ZERO_PERCENT_STATE);
     expect(result.state).toBe('no-data');
   });
@@ -37,6 +37,16 @@ describe('resolvePeerProgressState', () => {
     const result = resolvePeerProgressState(false, null, SUPPRESSED_STATE);
     expect(result.state).toBe('hidden');
     expect(result.message).toBe(SUPPRESSED_STATE.unavailableMessage);
+  });
+
+  it('prioritises privacy suppression when a response is also stale', () => {
+    const result = resolvePeerProgressState(false, null, {
+      ...STALE_STATE,
+      isSuppressed: true,
+    });
+
+    expect(result.state).toBe('hidden');
+    expect(result.data?.submittedPercentage).toBeNull();
   });
 
   it('returns unavailable for a generically unavailable response', () => {

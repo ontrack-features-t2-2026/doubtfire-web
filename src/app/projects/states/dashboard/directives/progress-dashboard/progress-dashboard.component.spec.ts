@@ -57,6 +57,10 @@ describe('ProgressDashboardComponent', () => {
             gradeValuesFor: () => [0, 1],
           },
         },
+        {
+          provide: PeerProgressIndicatorService,
+          useValue: {getMockUnitSummary: vi.fn().mockReturnValue(of(null))},
+        },
         {provide: ProjectService, useValue: {update: projectServiceUpdate}},
         {provide: AlertService, useValue: {success: alertSuccess, error: alertError}},
         {provide: UserService, useValue: {currentUser: {id: 25}}},
@@ -137,7 +141,9 @@ describe('ProgressDashboardComponent route reuse', () => {
         gradeValues: [0],
         gradeValuesFor,
       } as unknown as GradeService,
-      new PeerProgressIndicatorService(),
+      {
+        getMockUnitSummary: vi.fn().mockReturnValue(of(null)),
+      } as unknown as PeerProgressIndicatorService,
       {} as ProjectService,
       {} as AlertService,
       {} as UserService,
