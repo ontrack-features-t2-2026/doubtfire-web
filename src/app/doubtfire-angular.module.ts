@@ -714,6 +714,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
+    InstallPromptService,
     TaskOutcomeAlignmentService,
     // rootScopeProvider,
     {provide: MAT_DATE_LOCALE, useValue: enAU},
