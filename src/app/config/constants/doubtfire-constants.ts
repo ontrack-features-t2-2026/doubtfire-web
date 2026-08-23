@@ -149,4 +149,19 @@ export class DoubtfireConstants {
     this.IsPushEnabled.next(result.pushEnabled ?? false);
     this.VapidPublicKey.next(result.vapidPublicKey ?? '');
   }
+
+  /**
+   * Remove configuration that may only be used by an authenticated session.
+   *
+   * DoubtfireConstants is a root singleton, so these subjects otherwise retain
+   * the previous session's values after sign out. Keep the defaults fail closed
+   * while signed out and when the authenticated settings request fails.
+   */
+  public resetAuthenticatedSettings(): void {
+    this.IsOverseerEnabled.next(false);
+    this.IsTiiEnabled.next(false);
+    this.IsD2LEnabled.next(false);
+    this.IsPushEnabled.next(false);
+    this.VapidPublicKey.next('');
+  }
 }

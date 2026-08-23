@@ -199,9 +199,8 @@ describe('DoubtfireConstants', () => {
    * and neither push field. The assertion is what makes the ?? in
    * applyAuthenticatedSettings load bearing rather than decoration.
    *
-   * The cast is deliberate. AuthenticatedSettingsResponseFormat declares both
-   * push fields as required, which is the right contract for the current api, so
-   * an object without them is only reachable in a test by asserting past it.
+   * AuthenticatedSettingsResponseFormat keeps the two push fields optional for
+   * this staged-deployment case.
    */
   it('leaves push disabled when the api omits the push fields entirely', () => {
     const service = bootstrap();
@@ -244,6 +243,26 @@ describe('DoubtfireConstants', () => {
       vapidPublicKey: null,
     });
 
+    expect(service.IsPushEnabled.value).toBe(false);
+    expect(service.VapidPublicKey.value).toBe('');
+  });
+
+  it('resets every authenticated setting to its signed-out default', () => {
+    const service = bootstrap();
+
+    service.applyAuthenticatedSettings({
+      overseerEnabled: true,
+      tiiEnabled: true,
+      d2lEnabled: true,
+      pushEnabled: true,
+      vapidPublicKey: 'BPreviousSessionKey',
+    });
+
+    service.resetAuthenticatedSettings();
+
+    expect(service.IsOverseerEnabled.value).toBe(false);
+    expect(service.IsTiiEnabled.value).toBe(false);
+    expect(service.IsD2LEnabled.value).toBe(false);
     expect(service.IsPushEnabled.value).toBe(false);
     expect(service.VapidPublicKey.value).toBe('');
   });
