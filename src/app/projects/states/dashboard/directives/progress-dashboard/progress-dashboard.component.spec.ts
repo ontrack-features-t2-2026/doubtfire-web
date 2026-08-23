@@ -9,6 +9,7 @@ import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {of, throwError} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
+import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -136,6 +137,7 @@ describe('ProgressDashboardComponent route reuse', () => {
         gradeValues: [0],
         gradeValuesFor,
       } as unknown as GradeService,
+      new PeerProgressIndicatorService(),
       {} as ProjectService,
       {} as AlertService,
       {} as UserService,
