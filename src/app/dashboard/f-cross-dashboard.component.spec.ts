@@ -2,11 +2,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
-import {BehaviorSubject, of, throwError} from 'rxjs';
+import {BehaviorSubject, ReplaySubject, of, throwError} from 'rxjs';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
 import {TaskStatusEnum} from '../api/models/task-status';
 import {ProjectService} from '../api/services/project.service';
+import {
+  TaskRecommendation,
+  TaskRecommendationService,
+} from '../api/services/task-recommendation.service';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
 import {CrossDashboardComponent} from './f-cross-dashboard.component';
 
@@ -14,7 +18,9 @@ describe('CrossDashboardComponent', () => {
   let component: CrossDashboardComponent;
   let fixture: ComponentFixture<CrossDashboardComponent>;
   let projectsSubject: BehaviorSubject<Project[]>;
+  let recommendationsSubject: ReplaySubject<TaskRecommendation[]>;
   let projectServiceQuery: ReturnType<typeof vi.fn>;
+  let nextTaskId: number;
 
   const syncView = async (): Promise<void> => {
     fixture.detectChanges();
@@ -30,8 +36,10 @@ describe('CrossDashboardComponent', () => {
     status: TaskStatusEnum,
     dueDate: Date | null | undefined,
     topWeight: number = 0,
+    id: number = nextTaskId++,
   ): Task =>
     ({
+      id,
       status,
       topWeight,
       numNewComments: 0,
@@ -58,8 +66,19 @@ describe('CrossDashboardComponent', () => {
       activeTasks: vi.fn().mockReturnValue(tasks),
     }) as unknown as Project;
 
+  const makeRecommendation = (taskId: number, priorityScore: number): TaskRecommendation => ({
+    task_id: taskId,
+    task_name: `Task ${taskId}`,
+    project_id: 1,
+    unit_id: 1,
+    priority_score: priorityScore,
+  });
+
   beforeEach(async () => {
+    nextTaskId = 1;
     projectsSubject = new BehaviorSubject<Project[]>([]);
+    recommendationsSubject = new ReplaySubject<TaskRecommendation[]>(1);
+    recommendationsSubject.next([]);
     projectServiceQuery = vi.fn().mockReturnValue(of([]));
 
     const globalStateServiceStub = {
@@ -71,6 +90,10 @@ describe('CrossDashboardComponent', () => {
 
     const projectServiceStub = {
       query: projectServiceQuery,
+    };
+
+    const taskRecommendationServiceStub = {
+      getAll: vi.fn().mockReturnValue(recommendationsSubject.asObservable()),
     };
 
     await TestBed.configureTestingModule({
@@ -85,6 +108,10 @@ describe('CrossDashboardComponent', () => {
           provide: ProjectService,
           useValue: projectServiceStub,
         },
+        {
+          provide: TaskRecommendationService,
+          useValue: taskRecommendationServiceStub,
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -96,6 +123,7 @@ describe('CrossDashboardComponent', () => {
 
   afterEach(() => {
     projectsSubject.complete();
+    recommendationsSubject.complete();
   });
 
   it('uses Active units as the default scope', () => {
@@ -379,7 +407,7 @@ describe('CrossDashboardComponent', () => {
     ]);
 
     const expectedByMode: Record<string, string[]> = {
-      Recommended: ['OPEN-LATE', 'OPEN-EARLY', 'DONE-FIRST', 'DONE-LATE'],
+      Recommended: ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
       'Due Date': ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
       Default: ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
     };
@@ -390,6 +418,102 @@ describe('CrossDashboardComponent', () => {
       expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(
         expectedByMode[mode],
       );
+    });
+  });
+
+  it('orders Recommended tasks by descending API priority score', () => {
+    const lowerPriority = makeTask(
+      'Lower Priority Security Review',
+      'LOW',
+      'not_started',
+      makeDate(10),
+      0,
+      101,
+    );
+    const higherPriority = makeTask(
+      'Higher Priority Security Review',
+      'HIGH',
+      'not_started',
+      makeDate(20),
+      5,
+      102,
+    );
+
+    projectsSubject.next([makeProject(1, 'SIT764', true, [lowerPriority, higherPriority])]);
+    recommendationsSubject.next([makeRecommendation(101, 25), makeRecommendation(102, 90)]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'HIGH',
+      'LOW',
+    ]);
+
+    component.setSearch(1, 'security');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'HIGH',
+      'LOW',
+    ]);
+  });
+
+  it('uses top weight as a deterministic fallback for missing or equal scores', () => {
+    const missingScore = makeTask('Missing Score', 'MISSING', 'not_started', makeDate(10), 0, 201);
+    const equalScoreLater = makeTask(
+      'Equal Score Later',
+      'EQUAL-LATER',
+      'not_started',
+      makeDate(12),
+      4,
+      202,
+    );
+    const equalScoreEarlier = makeTask(
+      'Equal Score Earlier',
+      'EQUAL-EARLIER',
+      'not_started',
+      makeDate(14),
+      1,
+      203,
+    );
+
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [missingScore, equalScoreLater, equalScoreEarlier]),
+    ]);
+    recommendationsSubject.next([makeRecommendation(202, 60), makeRecommendation(203, 60)]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'EQUAL-EARLIER',
+      'EQUAL-LATER',
+      'MISSING',
+    ]);
+  });
+
+  it('falls back to top weight if recommendations cannot be loaded', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Later Weight', 'LATER', 'not_started', makeDate(10), 5),
+        makeTask('Earlier Weight', 'EARLIER', 'not_started', makeDate(20), 1),
+      ]),
+    ]);
+
+    recommendationsSubject.error(new Error('Recommendations unavailable'));
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'EARLIER',
+      'LATER',
+    ]);
+  });
+
+  it('keeps completed tasks below open tasks even if the API ranks them first', () => {
+    const completed = makeTask('Completed', 'DONE', 'complete', makeDate(5), 0, 301);
+    const open = makeTask('Open', 'OPEN', 'not_started', makeDate(20), 5, 302);
+
+    projectsSubject.next([makeProject(1, 'SIT764', true, [completed, open])]);
+    recommendationsSubject.next([makeRecommendation(301, 100), makeRecommendation(302, 10)]);
+
+    component.sortOptions.forEach((mode) => {
+      component.setSort(1, mode);
+      expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+        'OPEN',
+        'DONE',
+      ]);
     });
   });
 
