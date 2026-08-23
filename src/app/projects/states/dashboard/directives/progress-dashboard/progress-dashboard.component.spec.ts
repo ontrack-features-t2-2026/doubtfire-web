@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
@@ -108,5 +108,47 @@ describe('ProgressDashboardComponent', () => {
     component.ngOnInit();
 
     expect(component.numberOfTasks).toEqual({completed: 1, remaining: 2});
+  });
+});
+
+describe('ProgressDashboardComponent route reuse', () => {
+  it('refreshes summary data when the active project changes', () => {
+    const gradeValuesFor = vi.fn(() => [0]);
+    const component = new ProgressDashboardComponent(
+      {
+        grades: {0: 'Pass'},
+        gradeValues: [0],
+        gradeValuesFor,
+      } as unknown as GradeService,
+      {} as ProjectService,
+      {} as AlertService,
+      {} as UserService,
+    );
+    const firstProject = {
+      id: 2,
+      targetGrade: 0,
+      unit: {gradeDefinitions: [{value: 0, label: 'Pass'}]},
+      numberTasks: vi.fn(() => 1),
+      activeTasks: vi.fn(() => [{}, {}, {}]),
+      refreshBurndownChartData: vi.fn(),
+    } as unknown as Project;
+    const nextProject = {
+      id: 18,
+      targetGrade: 0,
+      unit: {gradeDefinitions: [{value: 0, label: 'Pass'}]},
+      numberTasks: vi.fn(() => 2),
+      activeTasks: vi.fn(() => [{}, {}, {}, {}]),
+      refreshBurndownChartData: vi.fn(),
+    } as unknown as Project;
+    component.project = firstProject;
+    component.ngOnInit();
+    vi.clearAllMocks();
+
+    component.project = nextProject;
+    component.ngOnChanges({project: new SimpleChange(firstProject, nextProject, false)});
+
+    expect(gradeValuesFor).toHaveBeenCalledWith(nextProject.unit);
+    expect(component.numberOfTasks).toEqual({completed: 2, remaining: 2});
+    expect(nextProject.refreshBurndownChartData).toHaveBeenCalled();
   });
 });
