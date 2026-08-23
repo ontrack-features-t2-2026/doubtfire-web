@@ -3,6 +3,7 @@ import {TaskDefinition} from '../../api/models/task-definition';
 import {TaskStatusEnum} from '../../api/models/task-status';
 
 export type DashboardTask = {
+  id: number;
   title: string;
   subtitle: string;
   statusLabel: string;
