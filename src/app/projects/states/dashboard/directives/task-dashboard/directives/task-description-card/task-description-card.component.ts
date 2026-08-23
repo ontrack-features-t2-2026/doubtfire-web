@@ -81,16 +81,7 @@ function buildGoogleCalendarUrl(event: WebCalEvent): string {
 export class TaskDescriptionCardComponent {
   @Output() switchView$: EventEmitter<string> = new EventEmitter();
 
-  private _task: Task;
-  @Input()
-  public set task(value: Task) {
-    this._task = value;
-    this._googleCalendarUrl = this.computeGoogleCalendarUrl();
-  }
-  public get task(): Task {
-    return this._task;
-  }
-
+  @Input() task: Task;
   @Input() taskDef: TaskDefinition;
   @Input() unit: Unit;
 
@@ -98,8 +89,6 @@ export class TaskDescriptionCardComponent {
     names: GradeService['grades'];
     acronyms: GradeService['gradeAcronyms'];
   };
-
-  private _googleCalendarUrl: string | null = null;
 
   constructor(
     private GradeService: GradeService,
@@ -160,20 +149,17 @@ export class TaskDescriptionCardComponent {
    * a snapshot of the due date at click time and will not track later changes. That is
    * inherent to this mechanism, not a defect.
    *
-   * Computed once in the task setter, not read here as a method call. The template
-   * previously called this twice per change detection pass (visibility and href), each
-   * call rebuilding the event and the URL string from scratch.
+   * Task entities are updated in place when planned dates or extensions change, so this
+   * derives the URL from the current task state instead of caching it by object identity.
+   * The template aliases this getter in its @if block, so it is evaluated only once per
+   * change detection pass for both visibility and href.
    */
   public get googleCalendarUrl(): string | null {
-    return this._googleCalendarUrl;
-  }
-
-  private computeGoogleCalendarUrl(): string | null {
-    if (!this._task) {
+    if (!this.task) {
       return null;
     }
 
-    const event = buildCalendarEvent(this._task);
+    const event = buildCalendarEvent(this.task);
     return event ? buildGoogleCalendarUrl(event) : null;
   }
 
