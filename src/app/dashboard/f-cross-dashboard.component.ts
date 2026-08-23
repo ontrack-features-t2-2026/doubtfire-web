@@ -471,7 +471,8 @@ export class CrossDashboardComponent implements OnInit {
         description: def.description,
         taskDef: def,
         unitCode,
-        dueDate: def.targetDate,
+        dueDate: task.localDueDate(),
+        showDueWarning: !task.inSubmittedState(),
       };
     });
   }
