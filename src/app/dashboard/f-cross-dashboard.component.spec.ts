@@ -47,6 +47,8 @@ describe('CrossDashboardComponent', () => {
       status,
       topWeight,
       numNewComments: 0,
+      localDueDate: vi.fn().mockReturnValue(dueDate),
+      inSubmittedState: vi.fn().mockReturnValue(TaskStatus.SUBMITTED_STATUSES.includes(status)),
       definition: {
         name,
         abbreviation,
@@ -152,6 +154,22 @@ describe('CrossDashboardComponent', () => {
       'P1',
       'D1',
     ]);
+  });
+
+  it('maps each task using its effective due date and submitted state', () => {
+    const targetDate = makeDate(30);
+    const effectiveDate = makeDate(23);
+    const activeTask = makeTask('Active task', '1.1P', 'working_on_it', targetDate);
+    const submittedTask = makeTask('Submitted task', '1.2P', 'ready_for_feedback', targetDate);
+
+    vi.mocked(activeTask.localDueDate).mockReturnValue(effectiveDate);
+    projectsSubject.next([makeProject(1, 'COS10001', true, [activeTask, submittedTask])]);
+
+    expect(component.activeUnits[0].tasks[0]).toMatchObject({
+      dueDate: effectiveDate,
+      showDueWarning: true,
+    });
+    expect(component.activeUnits[0].tasks[1].showDueWarning).toBe(false);
   });
 
   it('loads and displays previous units in Previous units mode', () => {

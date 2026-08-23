@@ -1,18 +1,18 @@
-import { addWeeks } from 'date-fns';
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { MatTableDataSource } from '@angular/material/table';
-import { Subscription } from 'rxjs';
-import { TaskDefinition } from 'src/app/api/models/task-definition';
-import { GradeDefinition, Unit } from 'src/app/api/models/unit';
-import { FeedbackTemplateService } from 'src/app/api/services/feedback-template.service';
-import { TaskDefinitionService } from 'src/app/api/services/task-definition.service';
-import { ConfirmationModalService } from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
+import {addWeeks} from 'date-fns';
+import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {MatTableDataSource} from '@angular/material/table';
+import {Subscription} from 'rxjs';
+import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {GradeDefinition, Unit} from 'src/app/api/models/unit';
+import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
+import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
+import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {
   CsvResult,
   CsvResultModalService,
 } from 'src/app/common/modals/csv-result-modal/csv-result-modal.service';
-import { CsvUploadModalService } from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
-import { AlertService } from 'src/app/common/services/alert.service';
+import {CsvUploadModalService} from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
+import {AlertService} from 'src/app/common/services/alert.service';
 
 @Component({
   selector: 'f-unit-task-editor',
@@ -57,11 +57,9 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   isStartAfterTarget(td: TaskDefinition, grade: GradeDefinition): boolean {
     const start = this.getGradeStartDate(td, grade);
     const target = this.getGradeDueDate(td, grade);
-
     if (!start || !target) {
       return false;
     }
-
     return new Date(start).getTime() > new Date(target).getTime();
   }
 
@@ -84,60 +82,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
 
   isFallbackTargetDate(td: TaskDefinition, grade: GradeDefinition): boolean {
     return grade.value !== 0 && !td.gradeTargetDate(grade.value);
-  }
-
-  getDueDateWarning(taskDefinition: TaskDefinition): {
-    state: 'overdue' | 'within24Hours' | 'within3Days' | 'within7Days';
-    label: string;
-    icon: string;
-  } | null {
-    const dueDate = taskDefinition.targetDate;
-
-    if (!dueDate || Number.isNaN(new Date(dueDate).getTime())) {
-      return null;
-    }
-
-    const now = new Date();
-    const due = new Date(dueDate);
-    const difference = due.getTime() - now.getTime();
-
-    const hours24 = 24 * 60 * 60 * 1000;
-    const days3 = 3 * 24 * 60 * 60 * 1000;
-    const days7 = 7 * 24 * 60 * 60 * 1000;
-
-    if (difference < 0) {
-      return {
-        state: 'overdue',
-        label: 'Overdue',
-        icon: 'error',
-      };
-    }
-
-    if (difference <= hours24) {
-      return {
-        state: 'within24Hours',
-        label: 'Due within 24 hours',
-        icon: 'schedule',
-      };
-    }
-
-    if (difference <= days3) {
-      return {
-        state: 'within3Days',
-        label: 'Due within 3 days',
-        icon: 'warning',
-      };
-    }
-
-    if (difference <= days7) {
-      return {
-        state: 'within7Days',
-        label: 'Due within 7 days',
-        icon: 'event',
-      };
-    }
-
-    return null;
   }
 
   setGradeDueDate(td: TaskDefinition, grade: GradeDefinition, value: Date | null): void {
@@ -178,7 +122,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   }
 
   private subscriptions: Subscription[] = [];
-
   ngOnDestroy(): void {
     this.subscriptions.forEach((s) => s.unsubscribe());
   }
@@ -196,7 +139,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     }
 
     this.feedbackTemplateService
-      .query({ contextType: 'task_definitions', contextId: this.selectedTaskDefinition.id }, {})
+      .query({contextType: 'task_definitions', contextId: this.selectedTaskDefinition.id}, {})
       .subscribe({
         error: () => this.alerts.error('Error loading task feedback templates.'),
       });
@@ -227,7 +170,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       const lastAbbr = this.unit.taskDefinitions[this.unit.taskDefinitions.length - 1].abbreviation;
       const regex = /(.*)(\d+)(\D*)/;
       const match = regex.exec(lastAbbr);
-
       if (match) {
         return `${match[1]}${parseInt(match[2]) + 1}${match[3]}`;
       } else {
@@ -255,12 +197,11 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     this.csvUploadModal.show(
       'Upload Task Definitions as CSV',
       'Upload a CSV of task definitions.',
-      { file: { name: 'Task Definition CSV Data', type: 'csv' } },
+      {file: {name: 'Task Definition CSV Data', type: 'csv'}},
       this.unit.getTaskDefinitionBatchUploadUrl(),
       (response: CsvResult) => {
         // at least one student?
         this.csvResultModalService.show('Task Definition Import Results', response);
-
         if (response.success.length > 0) {
           this.unit.refresh();
         }
@@ -272,12 +213,11 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     this.csvUploadModal.show(
       'Upload Task Sheets and Resources as Zip',
       'Upload a ZIP of task sheets and resources.',
-      { file: { name: 'Task Sheets and Resources', type: 'zip' } },
+      {file: {name: 'Task Sheets and Resources', type: 'zip'}},
       this.unit.taskUploadUrl,
       (response: CsvResult) => {
         // at least one student?
         this.csvResultModalService.show('Task Sheet and Resources Import Results', response);
-
         if (response.success.length > 0) {
           this.unit.refresh();
         }
