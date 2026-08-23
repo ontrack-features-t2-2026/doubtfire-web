@@ -59,9 +59,9 @@ underlying backend services and models:
   calculated priority weight using a.weight - b.weight
   (Task#topWeight).
 
-- **Recommended Sort (SortMode.Recommended):** Loads the authenticated
-  student's complete recommendation set in one request and orders tasks by
-  descending priority score. Scores are keyed by project and task
+- **Recommended Sort (SortMode.Recommended):** Loads every page of the
+  authenticated student's recommendation set and orders tasks by descending
+  priority score. Scores are keyed by project and task
   definition so assigned tasks that have not yet created a Task row are
   still recommended. The score combines effective-deadline urgency (60%),
   task-specific workload due by that deadline (25%), mapped on a fixed

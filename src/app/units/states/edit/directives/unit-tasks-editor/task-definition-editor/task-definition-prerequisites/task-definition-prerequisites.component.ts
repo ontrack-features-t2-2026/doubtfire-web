@@ -12,7 +12,6 @@ import {Observable, Subscription} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskPrerequisite} from 'src/app/api/models/task-prerequisite';
-import {TaskStatusEnum} from 'src/app/api/models/task-status';
 import {Unit} from 'src/app/api/models/unit';
 import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
 import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.service';
@@ -41,15 +40,6 @@ export class TaskDefinitionPrerequisitesComponent implements OnInit, OnChanges {
 
   // All other task definitions in the unit (exclude the current one)
   filteredTaskDefs: TaskDefinition[] = [];
-
-  public readonly STATES: Partial<Record<TaskStatusEnum, number>> = {
-    ready_for_feedback: 1,
-    assess_in_portfolio: 1,
-    discuss: 2,
-    attention_required: 0,
-    demonstrate: 2,
-    complete: 3,
-  };
 
   public readonly stateOptions = [
     {value: 'ready_for_feedback', label: 'Ready for Feedback'},

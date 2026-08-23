@@ -25,17 +25,33 @@ describe('TaskRecommendationService', () => {
     httpTestingController.verify();
   });
 
-  it('loads the complete recommendation set in one request', () => {
+  it('loads and combines every recommendation page', () => {
     let recommendations: TaskRecommendation[] | undefined;
 
     service.getAll().subscribe((result) => {
       recommendations = result;
     });
 
-    const request = httpTestingController.expectOne(`${API_URL}/tasks/recommended`);
-    request.flush({
-      data: [makeRecommendation(1, 80), makeRecommendation(2, 60)],
-      meta: {total_count: 2},
+    const firstRequest = httpTestingController.expectOne(
+      (request) =>
+        request.url === `${API_URL}/tasks/recommended` &&
+        request.params.get('page') === '1' &&
+        request.params.get('per_page') === '50',
+    );
+    firstRequest.flush({
+      data: [makeRecommendation(1, 80)],
+      meta: {page: 1, per_page: 50, total_count: 2, total_pages: 2},
+    });
+
+    const secondRequest = httpTestingController.expectOne(
+      (request) =>
+        request.url === `${API_URL}/tasks/recommended` &&
+        request.params.get('page') === '2' &&
+        request.params.get('per_page') === '50',
+    );
+    secondRequest.flush({
+      data: [makeRecommendation(2, 60)],
+      meta: {page: 2, per_page: 50, total_count: 2, total_pages: 2},
     });
 
     expect(recommendations).toEqual([makeRecommendation(1, 80), makeRecommendation(2, 60)]);
