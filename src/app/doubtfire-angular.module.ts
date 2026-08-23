@@ -186,6 +186,7 @@ import {TasksOfTaskDefinitionPipe} from './common/filters/tasks-of-task-definiti
 import {FooterComponent} from './common/footer/footer.component';
 import {GradeIconComponent} from './common/grade-icon/grade-icon.component';
 import {HeaderComponent} from './common/header/header.component';
+import {NotificationBellComponent} from './common/header/notification-bell/notification-bell.component';
 import {TaskDropdownComponent} from './common/header/task-dropdown/task-dropdown.component';
 import {UnitDropdownComponent} from './common/header/unit-dropdown/unit-dropdown.component';
 import {HeroSidebarComponent} from './common/hero-sidebar/hero-sidebar.component';
@@ -210,6 +211,8 @@ import {SpecConModalComponent} from './common/modals/spec-con-modal/spec-con-mod
 import {SpecConModalService} from './common/modals/spec-con-modal/spec-con-modal.service';
 import {TaskAssessmentModalComponent} from './common/modals/task-assessment-modal/task-assessment-modal.component';
 import {TutorNotesModalComponent} from './common/modals/tutor-notes-modal/tutor-notes-modal.component';
+import {NotificationSettingsComponent} from './common/notification-settings/notification-settings.component';
+import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
@@ -295,6 +298,7 @@ import {StaffNotesComponent} from './projects/states/staff-notes/staff-notes.com
 import {TutorDiscussionComponent} from './projects/states/tutor-discussion/tutor-discussion.component';
 import {TutorNotesComponent} from './projects/states/tutor-notes/tutor-notes.component';
 import {TutorialsComponent} from './projects/states/tutorials/tutorials.component';
+import {InstallPromptService} from './sessions/install-prompt/install-prompt.service';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
@@ -549,6 +553,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     HeaderComponent,
     UnitDropdownComponent,
     TaskDropdownComponent,
+    NotificationBellComponent,
     SplashScreenComponent,
     SubmissionFilesDownloadComponent,
     ProjectDashboardComponent,
@@ -598,6 +603,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ProgressBurndownChartComponent,
     TaskVisualisationComponent,
     ScormPlayerComponent,
+    NotificationsPageComponent,
     ScormCommentComponent,
     TaskScormCardComponent,
     ScormExtensionCommentComponent,
@@ -684,6 +690,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     UnitGroupSetEditorComponent,
     UnitTaskInboxStateComponent,
     LegacyRoutePlaceholderComponent,
+    NotificationSettingsComponent,
   ],
   providers: [
     // Services we provide
@@ -717,6 +724,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
+    InstallPromptService,
     TaskOutcomeAlignmentService,
     // rootScopeProvider,
     {provide: MAT_DATE_LOCALE, useValue: enAU},
@@ -847,7 +855,14 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     PdfViewerModule,
     LottieComponent,
     ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.production,
+      // Push notifications need the worker running in development too, so this
+      // is a flag rather than just `environment.production`. See
+      // docs/service-worker.md for how to turn it off and how to clear a stuck
+      // worker.
+      enabled: environment.production || environment.enableServiceWorker,
+
+      // Registration happens six seconds after bootstrap, not at bootstrap.
+      // Anything that asks for the worker during app init finds nothing there.
       registrationStrategy: () => interval(6000).pipe(take(1)),
     }),
     CalendarModule.forRoot({provide: CalendarDateAdapter, useFactory: adapterFactory}),
@@ -868,6 +883,7 @@ export class DoubtfireAngularModule {
     private constants: DoubtfireConstants,
     private title: Title,
     private updater: CheckForUpdateService,
+    private installer: InstallPromptService,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
   ) {

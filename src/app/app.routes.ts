@@ -4,6 +4,7 @@ import {InstitutionSettingsComponent} from './admin/institution-settings/institu
 import {FUnitsComponent} from './admin/states/units/units.component';
 import {FUsersComponent} from './admin/states/users/users.component';
 import {roleWhitelistGuard} from './common/guards/role-whitelist.guard';
+import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
@@ -45,6 +46,7 @@ export const routes: Routes = [
   {path: 'timeout', component: TimeoutComponent},
   {path: 'success-close', component: SuccessCloseComponent},
   {path: 'edit_profile', component: EditProfileComponent},
+  {path: 'notifications', component: NotificationsPageComponent},
   {path: 'eula', component: AcceptEulaComponent},
   {path: 'lti', component: LtiDashboardComponent},
   {path: 'lti/link', component: LtiUnitLinkComponent},

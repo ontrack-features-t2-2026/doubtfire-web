@@ -11,6 +11,7 @@ import {
   UnitRole,
   User,
 } from 'src/app/api/models/doubtfire-model';
+import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobEntry, SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants, LogoSettings} from 'src/app/config/constants/doubtfire-constants';
@@ -55,6 +56,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   sidekiqJobs: SidekiqJobEntry[] = [];
 
+  /**
+   * How many notifications are unread, for the account menu on a phone.
+   *
+   * The bell is not rendered below xs, because this toolbar does not wrap and
+   * there is no room for it, so the account menu is the only way in on a phone
+   * and it needs to say there is something waiting.
+   *
+   * Read here rather than in notification-bell, because that component is the
+   * thing that does not exist at this size.
+   */
+  unreadNotifications = 0;
+
   constructor(
     private calendarModal: CalendarModalService,
     private aboutDoubtfireModal: AboutDoubtfireModal,
@@ -65,6 +78,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private authService: AuthenticationService,
     protected media: MediaObserver,
     protected doubtfireConstants: DoubtfireConstants,
+    private notificationService: NotificationService,
     private sidekiqJobService: SidekiqJobService,
     private sidekiqJobsModalService: SidekiqJobsModalService,
     private qrModalService: QrModalService,
@@ -163,6 +177,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.sidekiqJobService.sidekiqJobsSubject.subscribe((jobs) => {
       this.sidekiqJobs = [...jobs];
     });
+
+    this.subscriptions.push(
+      this.notificationService.unreadCount$.subscribe((count) => {
+        this.unreadNotifications = count;
+      }),
+    );
   }
 
   showMyQr() {
@@ -238,6 +258,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   openAboutModal(): void {
     this.aboutDoubtfireModal.show();
+  }
+
+  public refreshMobileUnreadCount(): void {
+    if (!this.media.isActive('xs') || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.notificationService.refreshUnreadCount().subscribe({
+      error: () => undefined,
+    });
   }
 
   openCalendar(): void {

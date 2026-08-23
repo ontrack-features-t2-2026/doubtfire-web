@@ -22,17 +22,6 @@
       </div>
 
       <div fxFlexFill fxLayout="row">
-        <!-- <mat-form-field fxFlex="25" fxFlexAlign="start" appearance="outline">
-          <mat-label>Pronouns</mat-label>
-          <mat-select [(ngModel)]="formPronouns.pronouns" name="pronouns">
-            <mat-option value="">Do not show</mat-option>
-            <mat-option value="He/Him">He/Him</mat-option>
-            <mat-option value="She/Her">She/Her</mat-option>
-            <mat-option value="They/Them">They/Them</mat-option>
-            <mat-option value="__customPronouns">Custom</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div fxFlex="3"></div> -->
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Username</mat-label>
           <input matInput name="username" [disabled]="!newUser" [(ngModel)]="user.username" />
@@ -54,17 +43,6 @@
       </div>
 
       <div fxFlexFill fxLayout="row">
-        <!-- <mat-form-field fxFlex="25" fxFlexAlign="start" appearance="outline">
-          <mat-label>Pronouns</mat-label>
-          <mat-select [(ngModel)]="formPronouns.pronouns" name="pronouns">
-            <mat-option value="">Do not show</mat-option>
-            <mat-option value="He/Him">He/Him</mat-option>
-            <mat-option value="She/Her">She/Her</mat-option>
-            <mat-option value="They/Them">They/Them</mat-option>
-            <mat-option value="__customPronouns">Custom</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div fxFlex="3"></div> -->
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Preferred Name</mat-label>
           <input matInput name="preferred_name" [(ngModel)]="user.nickname" />
@@ -112,29 +90,40 @@
         </mat-form-field>
       }
 
-      <section fxFlexFill fxLayout="column" fxLayoutAlign="center start">
-        <mat-checkbox
-          class=""
+      <f-notification-settings [user]="user"></f-notification-settings>
+
+      <!--
+        Push opt-in. Subscribing has to come from a click: the browser only shows
+        its permission prompt in response to a user gesture, and the service
+        worker is not registered until six seconds after the page loads.
+      -->
+      <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
+        <button
           color="primary"
-          name="feedback_n"
-          [(ngModel)]="user.receiveFeedbackNotifications"
-          >Receive notifications for new messages</mat-checkbox
+          mat-stroked-button
+          type="button"
+          [disabled]="pushBusy || pushBlocker !== null"
+          (click)="togglePushNotifications()"
         >
-        <div fxFlex></div>
-        <mat-checkbox
-          color="primary"
-          name="portfolio_n"
-          [(ngModel)]="user.receivePortfolioNotifications"
-          >Receive notifications when your portfolio is ready</mat-checkbox
-        >
-        <div fxFlex></div>
-        <mat-checkbox
-          color="primary"
-          fxFlex
-          name="task_n"
-          [(ngModel)]="user.receiveTaskNotifications"
-          >Receive notifications when new tasks are available</mat-checkbox
-        >
+          <mat-icon>{{ pushSubscribed ? 'notifications_off' : 'notifications_active' }}</mat-icon>
+          {{
+            pushSubscribed
+              ? 'Turn off push notifications on this device'
+              : 'Turn on push notifications on this device'
+          }}
+        </button>
+        @if (pushBlocker !== null) {
+          <small class="push-opt-in__hint">{{ pushBlockerMessage }}</small>
+          @if (pushBlocker === 'permission-denied') {
+            <ol class="push-opt-in__instructions">
+              @for (step of pushBlockerInstructions; track step) {
+                <li>{{ step }}</li>
+              }
+            </ol>
+          }
+        } @else if (pushSubscribed) {
+          <small class="push-opt-in__hint">This device will receive push notifications.</small>
+        }
       </section>
       <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
         <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
