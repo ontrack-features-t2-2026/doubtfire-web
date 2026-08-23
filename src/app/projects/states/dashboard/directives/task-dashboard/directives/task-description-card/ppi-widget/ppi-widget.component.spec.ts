@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {HttpErrorResponse} from '@angular/common/http';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
@@ -24,7 +25,7 @@ describe('PpiWidgetComponent', () => {
   let fixture: ComponentFixture<PpiWidgetComponent>;
   let getIndicator: ReturnType<typeof vi.fn>;
 
-  const mockTask = {project: {unit: {id: 1}, targetGrade: 2}} as unknown as Task;
+  const mockTask = {project: {id: 7, unit: {id: 1}, targetGrade: 2}} as unknown as Task;
   const mockTaskDef = {id: 99} as unknown as TaskDefinition;
 
   beforeEach(async () => {
@@ -55,14 +56,17 @@ describe('PpiWidgetComponent', () => {
 
   it('shows the peer percentage on a normal response', () => {
     load(of(NORMAL_STATE));
+    expect(getIndicator).toHaveBeenCalledWith(7, 99);
     expect(component.view.state).toBe('success');
     expect(fixture.nativeElement.textContent).toContain('42%');
   });
 
-  it('shows no-data when nobody has submitted yet', () => {
+  it('shows a rounded zero as data rather than unavailable', () => {
     load(of(ZERO_PERCENT_STATE));
     expect(component.view.state).toBe('no-data');
-    expect(fixture.nativeElement.textContent).toContain('No peer submissions yet');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Peer submission progress rounds to 0% for your target grade',
+    );
   });
 
   it('shows the API-provided hidden message for a suppressed response', () => {
@@ -104,17 +108,31 @@ describe('PpiWidgetComponent', () => {
     expect(component.view.state).toBe('success');
   });
 
-  it('transitions from loading to error on failure, with no stale data shown', () => {
-    const subject: Subject<PeerProgressIndicator> = new Subject();
-    getIndicator.mockReturnValue(subject.asObservable());
+  it.each([404, 503])(
+    'shows a generic error for HTTP %s without leaking server details',
+    (status) => {
+      const subject: Subject<PeerProgressIndicator> = new Subject();
+      getIndicator.mockReturnValue(subject.asObservable());
 
-    component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
-    expect(component.view.state).toBe('loading');
+      component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
+      expect(component.view.state).toBe('loading');
 
-    subject.error(new Error('network down'));
-    expect(component.view.state).toBe('error');
-    expect(component.view.data).toBeNull();
-  });
+      subject.error(
+        new HttpErrorResponse({
+          status,
+          error: {error: 'Peer progress is unavailable for this project or task.'},
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.view.state).toBe('error');
+      expect(component.view.data).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Could not load peer progress.');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'unavailable for this project or task',
+      );
+    },
+  );
 
   it('does not render a stale value if a request fails after a new one has already started', () => {
     load(of(NORMAL_STATE));
