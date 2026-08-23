@@ -87,6 +87,7 @@ describe('DashboardListItemComponent', () => {
     fixture = TestBed.createComponent(DashboardListItemComponent);
     component = fixture.componentInstance;
     component.task = {
+      taskDefinitionId: 1,
       title: 'Accessible task',
       subtitle: '1.1P - Pass Task',
       statusLabel: 'Not Started',

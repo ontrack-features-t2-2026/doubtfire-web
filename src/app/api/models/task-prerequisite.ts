@@ -12,6 +12,15 @@ export interface TaskPrerequisiteData {
 }
 
 export class TaskPrerequisite extends Entity {
+  private readonly readyOrCompleteStatuses: TaskStatusEnum[] = [
+    'complete',
+    'discuss',
+    'rediscuss',
+    'demonstrate',
+    'ready_for_feedback',
+    'assess_in_portfolio',
+  ];
+
   id: number;
 
   prerequisite: TaskDefinition;
@@ -29,6 +38,7 @@ export class TaskPrerequisite extends Entity {
     ready_for_feedback: 1,
     assess_in_portfolio: 1,
     discuss: 2,
+    rediscuss: 2,
     attention_required: 0,
     demonstrate: 2,
     complete: 3,
@@ -61,6 +71,9 @@ export class TaskPrerequisite extends Entity {
     }
     const currentStatus = prerequisiteTask.status;
     const requiredStatus = this.taskStatus;
+    if (!this.readyOrCompleteStatuses.includes(currentStatus)) {
+      return false;
+    }
     if (this.STATES[currentStatus] >= this.STATES[requiredStatus]) {
       return true;
     }
