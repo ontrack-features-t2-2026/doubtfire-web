@@ -95,6 +95,23 @@ The cost to watch for is stale app code, not stale data — API responses are no
 cached. If something you just changed is not showing up, clear the worker before
 assuming the change is wrong.
 
+## Push subscription rotation
+
+Angular 22's worker handles the browser's `pushsubscriptionchange` event and
+forwards it through `SwPush.pushSubscriptionChanges`. The app starts that
+listener with its other push lifecycle services. When the browser supplies a
+replacement, the app POSTs it to `/api/push_subscriptions` first and removes the
+old endpoint only after the replacement is stored. A keys-only rotation keeps
+the same endpoint and updates the existing api row in place.
+
+The focused service tests simulate this event because browsers do not provide a
+reliable way to force a real rotation. They verify the POST-before-DELETE order,
+keys-only updates, teardown, and that one failed api request does not stop later
+rotations. A change event with no replacement cannot be repaired automatically:
+creating a fresh subscription may require a user gesture, so the user must use
+the existing opt-in control again; the api removes the dead row after a failed
+delivery.
+
 ## Clearing a stuck service worker
 
 Fastest, in the browser console:

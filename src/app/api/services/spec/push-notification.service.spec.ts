@@ -3,7 +3,7 @@ import {provideHttpClient, withInterceptorsFromDi, withXhr} from '@angular/commo
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
 import {TestBed} from '@angular/core/testing';
 import {SwPush} from '@angular/service-worker';
-import {BehaviorSubject, NEVER, Observable} from 'rxjs';
+import {BehaviorSubject, NEVER, Observable, Subject} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {
@@ -29,12 +29,16 @@ function flushMicrotasks(): Promise<void> {
  * Enough of a PushSubscription for the service. The real one comes from the
  * browser and cannot be constructed in a test environment.
  */
-function fakeSubscription() {
+function fakeSubscription(
+  endpoint: string = ENDPOINT,
+  p256dh: string = 'BFakePublicKey',
+  auth: string = 'FakeAuthSecret',
+) {
   return {
-    endpoint: ENDPOINT,
+    endpoint,
     toJSON: () => ({
-      endpoint: ENDPOINT,
-      keys: {p256dh: 'BFakePublicKey', auth: 'FakeAuthSecret'},
+      endpoint,
+      keys: {p256dh, auth},
     }),
   } as unknown as PushSubscription;
 }
@@ -43,9 +47,17 @@ describe('PushNotificationService', () => {
   let service: PushNotificationService;
   let httpMock: HttpTestingController;
   let subscriptionSubject: BehaviorSubject<PushSubscription | null>;
+  let subscriptionChangeSubject: Subject<{
+    oldSubscription: PushSubscription | null;
+    newSubscription: PushSubscription | null;
+  }>;
   let swPush: {
     isEnabled: boolean;
     subscription: Observable<PushSubscription | null>;
+    pushSubscriptionChanges: Observable<{
+      oldSubscription: PushSubscription | null;
+      newSubscription: PushSubscription | null;
+    }>;
     requestSubscription: ReturnType<typeof vi.fn>;
     unsubscribe: ReturnType<typeof vi.fn>;
   };
@@ -53,10 +65,12 @@ describe('PushNotificationService', () => {
 
   beforeEach(() => {
     subscriptionSubject = new BehaviorSubject<PushSubscription | null>(null);
+    subscriptionChangeSubject = new Subject();
 
     swPush = {
       isEnabled: true,
       subscription: subscriptionSubject,
+      pushSubscriptionChanges: subscriptionChangeSubject,
       requestSubscription: vi.fn().mockResolvedValue(fakeSubscription()),
       unsubscribe: vi.fn().mockResolvedValue(undefined),
     };
@@ -115,6 +129,119 @@ describe('PushNotificationService', () => {
     return Promise.resolve().then(() => {
       httpMock.expectOne(`${API_URL}/push_subscriptions`).flush(null);
     });
+  });
+
+  it('stores a rotated registration before deleting the old endpoint', () => {
+    const oldSubscription = fakeSubscription(`${ENDPOINT}-old`);
+    const newSubscription = fakeSubscription(
+      `${ENDPOINT}-new`,
+      'BRotatedPublicKey',
+      'RotatedAuthSecret',
+    );
+
+    service.start();
+    subscriptionChangeSubject.next({oldSubscription, newSubscription});
+
+    const post = httpMock.expectOne(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'POST',
+    );
+    expect(post.request.body).toEqual({
+      endpoint: `${ENDPOINT}-new`,
+      p256dh: 'BRotatedPublicKey',
+      auth: 'RotatedAuthSecret',
+    });
+    httpMock.expectNone(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'DELETE',
+    );
+
+    post.flush(null);
+
+    const removeOld = httpMock.expectOne(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'DELETE',
+    );
+    expect(removeOld.request.params.get('endpoint')).toBe(`${ENDPOINT}-old`);
+    removeOld.flush(null);
+  });
+
+  it('updates keys in place when rotation keeps the same endpoint', () => {
+    const oldSubscription = fakeSubscription();
+    const newSubscription = fakeSubscription(ENDPOINT, 'BRotatedPublicKey', 'RotatedAuthSecret');
+
+    service.start();
+    subscriptionChangeSubject.next({oldSubscription, newSubscription});
+
+    const post = httpMock.expectOne(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'POST',
+    );
+    expect(post.request.body).toEqual({
+      endpoint: ENDPOINT,
+      p256dh: 'BRotatedPublicKey',
+      auth: 'RotatedAuthSecret',
+    });
+    post.flush(null);
+
+    httpMock.expectNone(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'DELETE',
+    );
+  });
+
+  it('keeps listening after one rotated registration fails to reach the api', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    service.start();
+    subscriptionChangeSubject.next({
+      oldSubscription: fakeSubscription(`${ENDPOINT}-old`),
+      newSubscription: fakeSubscription(`${ENDPOINT}-failed`),
+    });
+
+    httpMock
+      .expectOne(
+        (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'POST',
+      )
+      .flush('nope', {status: 500, statusText: 'Server Error'});
+
+    subscriptionChangeSubject.next({
+      oldSubscription: null,
+      newSubscription: fakeSubscription(`${ENDPOINT}-later`),
+    });
+
+    const later = httpMock.expectOne(
+      (request) => request.url === `${API_URL}/push_subscriptions` && request.method === 'POST',
+    );
+    expect(later.request.body['endpoint']).toBe(`${ENDPOINT}-later`);
+    later.flush(null);
+
+    expect(consoleError).toHaveBeenCalledOnce();
+  });
+
+  it('ignores an invalidation when the browser supplies no replacement', () => {
+    service.start();
+    subscriptionChangeSubject.next({
+      oldSubscription: fakeSubscription(),
+      newSubscription: null,
+    });
+
+    httpMock.expectNone(`${API_URL}/push_subscriptions`);
+  });
+
+  it('starts the rotation listener only once and stops it on teardown', () => {
+    service.start();
+    service.start();
+
+    subscriptionChangeSubject.next({
+      oldSubscription: null,
+      newSubscription: fakeSubscription(`${ENDPOINT}-once`),
+    });
+
+    httpMock.expectOne(`${API_URL}/push_subscriptions`).flush(null);
+    service.stop();
+
+    subscriptionChangeSubject.next({
+      oldSubscription: null,
+      newSubscription: fakeSubscription(`${ENDPOINT}-stopped`),
+    });
+
+    httpMock.expectNone(`${API_URL}/push_subscriptions`);
   });
 
   it('deletes on the api before unsubscribing in the browser', () => {
