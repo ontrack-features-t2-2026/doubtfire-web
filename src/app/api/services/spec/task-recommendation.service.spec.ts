@@ -25,41 +25,29 @@ describe('TaskRecommendationService', () => {
     httpTestingController.verify();
   });
 
-  it('loads and combines every recommendation page', () => {
+  it('loads the complete recommendation set in one request', () => {
     let recommendations: TaskRecommendation[] | undefined;
 
     service.getAll().subscribe((result) => {
       recommendations = result;
     });
 
-    const firstRequest = httpTestingController.expectOne(
-      (request) =>
-        request.url === `${API_URL}/tasks/recommended` &&
-        request.params.get('page') === '1' &&
-        request.params.get('per_page') === '50',
-    );
-    firstRequest.flush({
-      data: [makeRecommendation(1, 80)],
-      meta: {page: 1, per_page: 50, total_count: 2, total_pages: 2},
-    });
-
-    const secondRequest = httpTestingController.expectOne(
-      (request) =>
-        request.url === `${API_URL}/tasks/recommended` &&
-        request.params.get('page') === '2' &&
-        request.params.get('per_page') === '50',
-    );
-    secondRequest.flush({
-      data: [makeRecommendation(2, 60)],
-      meta: {page: 2, per_page: 50, total_count: 2, total_pages: 2},
+    const request = httpTestingController.expectOne(`${API_URL}/tasks/recommended`);
+    request.flush({
+      data: [makeRecommendation(1, 80), makeRecommendation(2, 60)],
+      meta: {total_count: 2},
     });
 
     expect(recommendations).toEqual([makeRecommendation(1, 80), makeRecommendation(2, 60)]);
   });
 
-  const makeRecommendation = (taskId: number, priorityScore: number): TaskRecommendation => ({
-    task_id: taskId,
-    task_name: `Task ${taskId}`,
+  const makeRecommendation = (
+    taskDefinitionId: number,
+    priorityScore: number,
+  ): TaskRecommendation => ({
+    task_id: null,
+    task_definition_id: taskDefinitionId,
+    task_name: `Task ${taskDefinitionId}`,
     project_id: 10,
     unit_id: 20,
     priority_score: priorityScore,

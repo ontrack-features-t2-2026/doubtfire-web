@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
-import {BehaviorSubject, ReplaySubject, of, throwError} from 'rxjs';
+import {BehaviorSubject, Observable, ReplaySubject, Subject, of, throwError} from 'rxjs';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
 import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
@@ -11,6 +11,7 @@ import {
   TaskRecommendation,
   TaskRecommendationService,
 } from '../api/services/task-recommendation.service';
+import {TaskService} from '../api/services/task.service';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
 import {CrossDashboardComponent} from './f-cross-dashboard.component';
 
@@ -19,14 +20,19 @@ describe('CrossDashboardComponent', () => {
   let fixture: ComponentFixture<CrossDashboardComponent>;
   let projectsSubject: BehaviorSubject<Project[]>;
   let recommendationsSubject: ReplaySubject<TaskRecommendation[]>;
+  let taskStatusSubject: Subject<Task>;
   let projectServiceQuery: ReturnType<typeof vi.fn>;
-  let nextTaskId: number;
+  let recommendationServiceGetAll: ReturnType<typeof vi.fn>;
+  let nextTaskDefinitionId: number;
 
   const syncView = async (): Promise<void> => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
   };
+
+  const flushDebouncedStatusChange = (): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, 0));
 
   const makeDate = (day: number, hour = 12): Date => new Date(2026, 7, day, hour, 0, 0);
 
@@ -36,16 +42,16 @@ describe('CrossDashboardComponent', () => {
     status: TaskStatusEnum,
     dueDate: Date | null | undefined,
     topWeight: number = 0,
-    id: number = nextTaskId++,
+    taskDefinitionId: number = nextTaskDefinitionId++,
   ): Task =>
     ({
-      id,
       status,
       topWeight,
       numNewComments: 0,
       localDueDate: vi.fn().mockReturnValue(dueDate),
       inSubmittedState: vi.fn().mockReturnValue(TaskStatus.SUBMITTED_STATUSES.includes(status)),
       definition: {
+        id: taskDefinitionId,
         name,
         abbreviation,
         targetGradeText: 'Pass',
@@ -54,8 +60,13 @@ describe('CrossDashboardComponent', () => {
       },
     }) as unknown as Task;
 
-  const makeProject = (id: number, code: string, isActive: boolean, tasks: Task[] = []): Project =>
-    ({
+  const makeProject = (
+    id: number,
+    code: string,
+    isActive: boolean,
+    tasks: Task[] = [],
+  ): Project => {
+    const project = {
       id,
       tasks,
       unit: {
@@ -66,27 +77,43 @@ describe('CrossDashboardComponent', () => {
       },
       calcTopTasks: vi.fn(),
       activeTasks: vi.fn().mockReturnValue(tasks),
-    }) as unknown as Project;
+    } as unknown as Project;
 
-  const makeRecommendation = (taskId: number, priorityScore: number): TaskRecommendation => ({
-    task_id: taskId,
-    task_name: `Task ${taskId}`,
-    project_id: 1,
+    tasks.forEach((task) => {
+      task.project = project;
+    });
+
+    return project;
+  };
+
+  const makeRecommendation = (
+    taskDefinitionId: number,
+    priorityScore: number,
+    projectId: number = 1,
+  ): TaskRecommendation => ({
+    task_id: null,
+    task_definition_id: taskDefinitionId,
+    task_name: `Task ${taskDefinitionId}`,
+    project_id: projectId,
     unit_id: 1,
     priority_score: priorityScore,
   });
 
   beforeEach(async () => {
-    nextTaskId = 1;
+    nextTaskDefinitionId = 1;
     projectsSubject = new BehaviorSubject<Project[]>([]);
     recommendationsSubject = new ReplaySubject<TaskRecommendation[]>(1);
     recommendationsSubject.next([]);
+    taskStatusSubject = new Subject<Task>();
     projectServiceQuery = vi.fn().mockReturnValue(of([]));
 
     const globalStateServiceStub = {
       onLoad: (callback: () => void): void => callback(),
       currentUserProjects: {
         values: projectsSubject.asObservable(),
+        get currentValues(): readonly Project[] {
+          return projectsSubject.value;
+        },
       },
     };
 
@@ -94,8 +121,9 @@ describe('CrossDashboardComponent', () => {
       query: projectServiceQuery,
     };
 
+    recommendationServiceGetAll = vi.fn().mockReturnValue(recommendationsSubject.asObservable());
     const taskRecommendationServiceStub = {
-      getAll: vi.fn().mockReturnValue(recommendationsSubject.asObservable()),
+      getAll: recommendationServiceGetAll,
     };
 
     await TestBed.configureTestingModule({
@@ -114,6 +142,10 @@ describe('CrossDashboardComponent', () => {
           provide: TaskRecommendationService,
           useValue: taskRecommendationServiceStub,
         },
+        {
+          provide: TaskService,
+          useValue: {taskStatusUpdated$: taskStatusSubject.asObservable()},
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -126,6 +158,7 @@ describe('CrossDashboardComponent', () => {
   afterEach(() => {
     projectsSubject.complete();
     recommendationsSubject.complete();
+    taskStatusSubject.complete();
   });
 
   it('uses Active units as the default scope', () => {
@@ -154,6 +187,102 @@ describe('CrossDashboardComponent', () => {
       showDueWarning: true,
     });
     expect(component.activeUnits[0].tasks[1].showDueWarning).toBe(false);
+  });
+
+  it('refreshes recommendation scores when the project cache changes', () => {
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(1);
+
+    projectsSubject.next([makeProject(1, 'COS10001', true)]);
+    projectsSubject.next([makeProject(1, 'COS10001', true), makeProject(2, 'COS30046', true)]);
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(3);
+  });
+
+  it('refreshes after an active task status change and ignores inactive projects', async () => {
+    const activeTask = makeTask('Active Task', 'ACTIVE', 'working_on_it', makeDate(10));
+    const inactiveTask = makeTask('Inactive Task', 'INACTIVE', 'working_on_it', makeDate(11));
+    const activeProject = makeProject(1, 'COS10001', true, [activeTask]);
+    const inactiveProject = makeProject(2, 'COS30046', false, [inactiveTask]);
+
+    projectsSubject.next([activeProject, inactiveProject]);
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(2);
+
+    activeTask.status = 'complete';
+    taskStatusSubject.next(activeTask);
+    taskStatusSubject.next(activeTask);
+    await flushDebouncedStatusChange();
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(3);
+    expect(component.displayedUnits[0].tasks[0].status).toBe('complete');
+
+    taskStatusSubject.next(inactiveTask);
+    await flushDebouncedStatusChange();
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(3);
+  });
+
+  it('cancels a recommendation request superseded by a newer project snapshot', () => {
+    const cancelled = vi.fn();
+    const pendingRequest: Observable<TaskRecommendation[]> = new Observable(() => cancelled);
+
+    recommendationServiceGetAll.mockImplementationOnce(() => pendingRequest);
+    recommendationServiceGetAll.mockImplementation(() => of([]));
+
+    projectsSubject.next([makeProject(1, 'COS10001', true)]);
+    expect(cancelled).not.toHaveBeenCalled();
+
+    projectsSubject.next([makeProject(1, 'COS10001', true), makeProject(2, 'COS20007', true)]);
+
+    expect(cancelled).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries recommendations after an error on the next active status change', async () => {
+    const lowerPriority = makeTask('Lower Priority', 'LOW', 'working_on_it', makeDate(10), 0, 101);
+    const higherPriority = makeTask(
+      'Higher Priority',
+      'HIGH',
+      'working_on_it',
+      makeDate(20),
+      5,
+      102,
+    );
+    const project = makeProject(1, 'COS10001', true, [lowerPriority, higherPriority]);
+
+    recommendationServiceGetAll.mockImplementationOnce(() =>
+      throwError(() => new Error('Recommendations unavailable')),
+    );
+    recommendationServiceGetAll.mockImplementation(() =>
+      of([makeRecommendation(101, 25), makeRecommendation(102, 90)]),
+    );
+
+    projectsSubject.next([project]);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'LOW',
+      'HIGH',
+    ]);
+
+    taskStatusSubject.next(lowerPriority);
+    await flushDebouncedStatusChange();
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'HIGH',
+      'LOW',
+    ]);
+  });
+
+  it('stops project and task-status refreshes after destruction', async () => {
+    const task = makeTask('Active Task', 'ACTIVE', 'working_on_it', makeDate(10));
+    const project = makeProject(1, 'COS10001', true, [task]);
+
+    projectsSubject.next([project]);
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(2);
+
+    fixture.destroy();
+    projectsSubject.next([project, makeProject(2, 'COS20007', true)]);
+    taskStatusSubject.next(task);
+    await flushDebouncedStatusChange();
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(2);
   });
 
   it('loads and displays previous units in Previous units mode', () => {
@@ -414,6 +543,41 @@ describe('CrossDashboardComponent', () => {
     ]);
   });
 
+  it('displays and sorts by the personalized local due date', () => {
+    const locallyLater = makeTask(
+      'Locally Later',
+      'LOCAL-LATE',
+      'not_started',
+      new Date(2026, 7, 20),
+    );
+    locallyLater.definition.targetDate = new Date(2026, 7, 5);
+    const locallyEarlier = makeTask(
+      'Locally Earlier',
+      'LOCAL-EARLY',
+      'not_started',
+      new Date(2026, 7, 10),
+    );
+    locallyEarlier.definition.targetDate = new Date(2026, 7, 25);
+
+    projectsSubject.next([makeProject(1, 'SIT764', true, [locallyLater, locallyEarlier])]);
+    const dueDateSort = component.sortOptions.find((mode) => mode === 'Due Date');
+
+    if (!dueDateSort) {
+      throw new Error('Due Date sort option is missing');
+    }
+
+    component.setSort(1, dueDateSort);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'LOCAL-EARLY',
+      'LOCAL-LATE',
+    ]);
+    expect(component.displayedUnits[0].tasks.map((task) => task.dueDate)).toEqual([
+      new Date(2026, 7, 10),
+      new Date(2026, 7, 20),
+    ]);
+  });
+
   it('keeps completed tasks below open tasks in every sort mode', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
@@ -439,7 +603,7 @@ describe('CrossDashboardComponent', () => {
     });
   });
 
-  it('orders Recommended tasks by descending API priority score', () => {
+  it('matches virtual tasks by project and task definition before sorting by score', () => {
     const lowerPriority = makeTask(
       'Lower Priority Security Review',
       'LOW',
@@ -456,6 +620,9 @@ describe('CrossDashboardComponent', () => {
       5,
       102,
     );
+
+    expect(lowerPriority.id).toBeUndefined();
+    expect(higherPriority.id).toBeUndefined();
 
     projectsSubject.next([makeProject(1, 'SIT764', true, [lowerPriority, higherPriority])]);
     recommendationsSubject.next([makeRecommendation(101, 25), makeRecommendation(102, 90)]);
@@ -532,6 +699,33 @@ describe('CrossDashboardComponent', () => {
         'OPEN',
         'DONE',
       ]);
+    });
+  });
+
+  it('keeps every final task status below actionable work in all sort modes', () => {
+    const finalStatuses: TaskStatusEnum[] = [
+      'complete',
+      'fail',
+      'feedback_exceeded',
+      'time_exceeded',
+      'assess_in_portfolio',
+    ];
+    const finalTasks = finalStatuses.map((status, index) =>
+      makeTask(`Final ${index}`, `FINAL-${index}`, status, makeDate(index + 1), index),
+    );
+    const actionable = makeTask('Actionable', 'OPEN', 'working_on_it', makeDate(25), 10);
+
+    projectsSubject.next([makeProject(1, 'SIT764', true, [...finalTasks, actionable])]);
+    recommendationsSubject.next([makeRecommendation(actionable.definition.id, 10)]);
+
+    component.sortOptions.forEach((mode) => {
+      component.setSort(1, mode);
+      const abbreviations = component.displayedUnits[0].tasks.map((task) => task.abbreviation);
+
+      expect(abbreviations[0]).toBe('OPEN');
+      expect(abbreviations.slice(1).sort()).toEqual(
+        finalTasks.map((task) => task.definition.abbreviation).sort(),
+      );
     });
   });
 
