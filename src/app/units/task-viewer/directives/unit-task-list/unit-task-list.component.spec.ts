@@ -39,10 +39,8 @@ describe('FUnitTaskListComponent', () => {
   let routeParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
 
   beforeEach(async () => {
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-    });
+    vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
     routeParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
 
     await TestBed.configureTestingModule({
@@ -69,7 +67,7 @@ describe('FUnitTaskListComponent', () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should create', () => {

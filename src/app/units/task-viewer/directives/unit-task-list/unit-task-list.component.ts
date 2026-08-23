@@ -300,10 +300,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
             ) ?? null)
           : null;
 
-        if (
-          nextTaskDefinition &&
-          this.isTaskDefinitionAboveTargetGrade(nextTaskDefinition)
-        ) {
+        if (nextTaskDefinition && this.isTaskDefinitionAboveTargetGrade(nextTaskDefinition)) {
           this.viewPreferences = {...this.viewPreferences, showAboveTargetGrade: true};
           this.persistViewPreferences();
           this.applyFilters();

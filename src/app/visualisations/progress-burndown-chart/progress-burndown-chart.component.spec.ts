@@ -1,5 +1,5 @@
-import {beforeAll, describe, expect, it, vi} from 'vitest';
-import {Injector, LOCALE_ID, SimpleChange, ViewContainerRef} from '@angular/core';
+import {describe, expect, it, vi} from 'vitest';
+import {SimpleChange, ViewContainerRef} from '@angular/core';
 import {Subject, of, throwError} from 'rxjs';
 import {
   PeerProgressResponse,
@@ -7,26 +7,10 @@ import {
   PeerProgressState,
   Project,
 } from 'src/app/api/models/doubtfire-model';
-import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
 
 describe('ProgressBurndownChartComponent peer comparison', () => {
   const EXISTING_SERIES = ['Target', 'Projected', 'To Submit', 'To Complete'];
-
-  beforeAll(() => {
-    if (!AppInjector) {
-      setAppInjector(
-        Injector.create({
-          providers: [
-            {
-              provide: LOCALE_ID,
-              useValue: 'en-US',
-            },
-          ],
-        }),
-      );
-    }
-  });
 
   function makeProject(): Project {
     const startDate = new Date(2026, 6, 1);
@@ -109,6 +93,7 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
       {
         getCohortMedian,
       } as unknown as PeerProgressService,
+      'en-US',
     );
 
     component.project = project;

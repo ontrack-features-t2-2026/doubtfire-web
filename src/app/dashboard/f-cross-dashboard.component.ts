@@ -297,11 +297,11 @@ export class CrossDashboardComponent implements OnInit {
             const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
 
             if (completedTypes.includes(a.status) && !completedTypes.includes(b.status)) {
-              return -1;
+              return 1;
             }
 
             if (!completedTypes.includes(a.status) && completedTypes.includes(b.status)) {
-              return 1;
+              return -1;
             }
 
             switch (sort) {
