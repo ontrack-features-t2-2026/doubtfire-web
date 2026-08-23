@@ -4,6 +4,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {Unit} from 'src/app/api/models/unit';
@@ -141,6 +142,41 @@ describe('TaskDescriptionCardComponent', () => {
         'text=COS10001%3A%201.1P%3A%20Hello%20World&' +
         'dates=20260915%2F20260916',
     );
+  });
+
+  it('keeps the rendered and activated calendar URL current when the same task is mutated', () => {
+    const task = buildTask({dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)});
+    task.project = new Project(task.unit);
+    task.project.targetGrade = 0;
+    task.definition.dueDate = new Date(2026, 11, 1, 23, 59, 59, 999);
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      'a.add-to-google-calendar-link',
+    );
+    expect(link.getAttribute('href')).toContain('dates=20260915%2F20260916');
+
+    task.dueDate = new Date(2026, 8, 22, 23, 59, 59, 999);
+    fixture.detectChanges();
+
+    expect(link.getAttribute('href')).toContain('dates=20260922%2F20260923');
+
+    task.unit.allowFlexibleDates = true;
+    task.targetDueDate = new Date(2026, 8, 29, 23, 59, 59, 999);
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    link.dispatchEvent(new KeyboardEvent('keydown', {key: ' ', cancelable: true}));
+
+    expect(windowOpenSpy).toHaveBeenCalledWith(
+      expect.stringContaining('dates=20260929%2F20260930'),
+      '_blank',
+      'noopener,noreferrer',
+    );
+
+    fixture.detectChanges();
+    expect(link.getAttribute('href')).toContain('dates=20260929%2F20260930');
   });
 
   it('produces the correct dates range for a due date the day before Melbourne DST starts, which the old MappingFunctions.addDays approach got wrong', () => {
