@@ -87,7 +87,7 @@ export class AuthenticationService {
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
-    localStorage.removeItem(this.USERNAME_KEY);
+    this.browserStorage?.removeItem(this.USERNAME_KEY);
   }
 
   private actionAuthFailed() {
@@ -159,11 +159,22 @@ export class AuthenticationService {
   }
 
   public get rememberMe(): boolean {
-    return localStorage.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
+    return this.browserStorage?.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
   }
 
   public set rememberMe(remember: boolean) {
-    localStorage.setItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN, remember ? 'true' : 'false');
+    this.browserStorage?.setItem(
+      this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN,
+      remember ? 'true' : 'false',
+    );
+  }
+
+  private get browserStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**

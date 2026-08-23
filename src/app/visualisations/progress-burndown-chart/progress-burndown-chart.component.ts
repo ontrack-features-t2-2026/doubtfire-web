@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   HostListener,
+  Inject,
   Input,
   LOCALE_ID,
   OnChanges,
@@ -21,7 +22,6 @@ import {
   Project,
   Unit,
 } from 'src/app/api/models/doubtfire-model';
-import {AppInjector} from 'src/app/app-injector';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
 
 interface BurndownPoint {
@@ -89,6 +89,7 @@ export class ProgressBurndownChartComponent
   constructor(
     public viewContainerRef: ViewContainerRef,
     private peerProgressService: PeerProgressService,
+    @Inject(LOCALE_ID) private locale: string,
   ) {
     super(viewContainerRef);
     this.data = [];
@@ -231,7 +232,7 @@ export class ProgressBurndownChartComponent
 
   updateData(): void {
     const chartData = this.project?.burndownChartData;
-    const locale: string = AppInjector.get(LOCALE_ID);
+    const locale = this.locale;
     const startDate: Date = this.project.unit.startDate;
     const endDate: Date = this.project.unit.endDate;
 
