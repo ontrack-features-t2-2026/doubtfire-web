@@ -1,4 +1,4 @@
-import {Color, LegendPosition, ScaleType} from '@swimlane/ngx-charts';
+import {Color, ScaleType} from '@swimlane/ngx-charts';
 import {formatDate} from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -43,7 +43,7 @@ export class ProgressBurndownChartComponent
   temp: BurndownSeries[] = [];
 
   // options
-  legend: boolean = true;
+  legend: boolean = false;
   showLabels: boolean = true;
   animations: boolean = true;
   xAxis: boolean = true;
@@ -52,7 +52,6 @@ export class ProgressBurndownChartComponent
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
   yAxisLabel: string = 'Tasks Remaining';
-  legendPosition: LegendPosition = LegendPosition.Below;
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
@@ -79,7 +78,11 @@ export class ProgressBurndownChartComponent
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ('grade' in changes && changes.grade.currentValue !== undefined) {
+    const projectChanged = 'project' in changes && !changes.project.firstChange;
+    const unitChanged = 'unit' in changes && !changes.unit.firstChange;
+    const gradeChanged = 'grade' in changes && changes.grade.currentValue !== undefined;
+
+    if (this.project && (projectChanged || unitChanged || gradeChanged)) {
       this.project.refreshBurndownChartData();
       this.updateData();
     }
@@ -132,26 +135,28 @@ export class ProgressBurndownChartComponent
 
     this.temp = JSON.parse(JSON.stringify(formattedData));
     this.data = formattedData;
+    this.seriesVisibility = Object.fromEntries(formattedData.map((series) => [series.name, true]));
   }
 
   onSelect(event: string | BurndownPoint): void {
     if (this.isLegend(event)) {
-      const tempData = JSON.parse(JSON.stringify(this.data));
-      if (this.isDataShown(event)) {
-        tempData.forEach((series) => {
-          if (series.name === event) {
-            series.series.forEach((point) => (point.value = 0));
-          }
-        });
-      } else {
-        const originalSeries = this.temp.find((series) => series.name === event);
-        const seriesIndex = tempData.findIndex((series) => series.name === event);
-        if (seriesIndex >= 0) {
-          tempData[seriesIndex] = JSON.parse(JSON.stringify(originalSeries));
-        }
-      }
-      this.data = tempData;
+      this.toggleSeries(event);
     }
+  }
+
+  toggleSeries(name: string): void {
+    if (!this.temp.some((series) => series.name === name)) {
+      return;
+    }
+
+    this.seriesVisibility[name] = !this.isDataShown(name);
+    this.data = this.temp.map((series) => ({
+      name: series.name,
+      series: series.series.map((point) => ({
+        ...point,
+        value: this.seriesVisibility[series.name] === false ? 0 : point.value,
+      })),
+    }));
   }
 
   isLegend(event: string | BurndownPoint): event is string {
@@ -159,8 +164,11 @@ export class ProgressBurndownChartComponent
   }
 
   isDataShown(name: string): boolean {
-    const series = this.data.find((series) => series.name === name);
-    return series && series.series.some((point) => point.value !== 0);
+    return this.seriesVisibility[name] !== false;
+  }
+
+  seriesColor(index: number): string {
+    return this.colorScheme.domain[index % this.colorScheme.domain.length] as string;
   }
 
   public formatPerc(input: number) {

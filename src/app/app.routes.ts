@@ -7,6 +7,7 @@ import {roleWhitelistGuard} from './common/guards/role-whitelist.guard';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
 import {TimeoutComponent} from './errors/states/timeout/timeout.component';
 import {UnauthorisedComponent} from './errors/states/unauthorised/unauthorised.component';
 import {AcceptEulaComponent} from './eula/accept-eula/accept-eula.component';
@@ -69,6 +70,12 @@ export const routes: Routes = [
   },
   {path: 'view-all-units', component: FUnitsComponent, data: {mode: 'tutor'}},
   {path: 'view-all-projects', component: FUnitsComponent, data: {mode: 'student'}},
+  {
+    path: 'dashboard',
+    component: CrossDashboardComponent,
+    canActivate: [roleWhitelistGuard],
+    data: {roleWhitelist: ['Student'], pageTitle: 'Dashboard'},
+  },
   {
     path: 'admin/units',
     component: FUnitsComponent,

@@ -101,7 +101,7 @@
           </button>
           <input
             autocomplete="off"
-            class="search w-full"
+            class="search w-full text-gray-900 placeholder:text-gray-600 placeholder:opacity-100"
             placeholder="Search Tasks"
             spellcheck="false"
             type="text"
@@ -167,10 +167,10 @@
               <mat-checkbox
                 color="primary"
                 [disabled]="!project"
-                [ngModel]="viewPreferences.hideAboveTargetGrade"
-                (ngModelChange)="toggleHideAboveTargetGrade($event)"
+                [ngModel]="viewPreferences.showAboveTargetGrade"
+                (ngModelChange)="toggleShowAboveTargetGrade($event)"
               >
-                Hide tasks beyond target grade
+                Show tasks beyond target grade
               </mat-checkbox>
             </div>
 
