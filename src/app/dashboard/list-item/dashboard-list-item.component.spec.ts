@@ -158,6 +158,7 @@ describe('DashboardListItemComponent', () => {
     expect(badge.textContent).toContain('Due within 24 hours');
     expect(icon.textContent.trim()).toBe('schedule');
     expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.classList).toContain('!leading-none');
     expect(statusStrip.style.backgroundColor).toBe('rgb(18, 52, 86)');
     expect(fixture.nativeElement.textContent).toContain('Status: Not Started');
   });
