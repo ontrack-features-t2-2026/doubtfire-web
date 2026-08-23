@@ -66,4 +66,21 @@
       ><span>Resources</span>
     </button>
   </mat-card-actions>
+  @if (googleCalendarUrl; as calendarUrl) {
+    <mat-card-actions class="space-x-1">
+      <a
+        aria-label="Add to Google Calendar, opens in a new tab"
+        class="add-to-google-calendar-link"
+        mat-stroked-button
+        rel="noopener noreferrer"
+        target="_blank"
+        [href]="calendarUrl"
+        (keydown)="handleCalendarLinkKeydown($event)"
+      >
+        <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px"
+          >event</mat-icon
+        ><span>Add to Google Calendar</span>
+      </a>
+    </mat-card-actions>
+  }
 </mat-card>
