@@ -153,7 +153,12 @@ describe('ProgressDashboardComponent route reuse', () => {
       targetGrade: 0,
       unit: {gradeDefinitions: [{value: 0, label: 'Pass'}]},
       numberTasks: vi.fn(() => 2),
-      activeTasks: vi.fn(() => [{}, {}, {}, {}]),
+      activeTasks: vi.fn(() => [
+        {status: 'complete'},
+        {status: 'complete'},
+        {status: 'not_started'},
+        {status: 'not_started'},
+      ]),
       refreshBurndownChartData: vi.fn(),
     } as unknown as Project;
     component.project = firstProject;
