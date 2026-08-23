@@ -109,6 +109,22 @@ describe('ProgressDashboardComponent', () => {
 
     expect(component.numberOfTasks).toEqual({completed: 1, remaining: 2});
   });
+
+  it('does not cap or clip the burndown and status cards', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const cardTitles = Array.from(host.querySelectorAll<HTMLElement>('mat-card-title'));
+    const burndownCard = cardTitles
+      .find((title) => title.textContent.trim() === 'Progress Burndown')
+      ?.closest('mat-card');
+    const statusCard = cardTitles
+      .find((title) => title.textContent.trim() === 'Task Statuses')
+      ?.closest('mat-card');
+    const burndownContent = burndownCard?.querySelector('mat-card-content');
+
+    expect(burndownCard?.classList.contains('max-h-[600px]')).toBe(false);
+    expect(statusCard?.classList.contains('max-h-[600px]')).toBe(false);
+    expect(burndownContent?.classList.contains('overflow-hidden')).toBe(false);
+  });
 });
 
 describe('ProgressDashboardComponent route reuse', () => {

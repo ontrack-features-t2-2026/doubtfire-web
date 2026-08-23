@@ -6,7 +6,15 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
-import {Project, TaskStatus} from 'src/app/api/models/doubtfire-model';
+import {Project, TaskStatus, TaskStatusEnum} from 'src/app/api/models/doubtfire-model';
+
+interface TaskStatusSummary {
+  status: TaskStatusEnum;
+  name: string;
+  value: number;
+  color: string;
+  textColor: string;
+}
 
 @Component({
   selector: 'f-task-visualisation',
@@ -19,12 +27,7 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
   @Input() project: Project;
   @Input() grade: number;
 
-  data: {name: string; value: number}[] = [];
-  colors: {name: string; value: string}[];
-  view: number[] = [700, 400];
-
-  // options
-  textColor: string = '#F5F5F5';
+  data: TaskStatusSummary[] = [];
 
   ngOnInit(): void {
     this.updateData();
@@ -49,42 +52,52 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
         }
       });
 
-      const sortOrder = [
-        'Complete',
-        'Discuss',
-        'Awaiting Feedback',
-        'Working On It',
-        'Not Started',
+      const sortOrder: TaskStatusEnum[] = [
+        'complete',
+        'discuss',
+        'ready_for_feedback',
+        'working_on_it',
+        'not_started',
       ];
 
       this.data = Array.from(taskCounts)
         .map(([status, count]) => {
+          const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
           return {
-            name: TaskStatus.STATUS_LABELS.get(status),
+            status,
+            name: TaskStatus.STATUS_LABELS.get(status) ?? status,
             value: count,
+            color,
+            textColor: this.contrastingTextColor(color),
           };
         })
-        .filter((task) => task.value > 0 || sortOrder.includes(task.name))
+        .filter((task) => task.value > 0 || sortOrder.includes(task.status))
         .sort((a, b) => {
-          let aIndex = sortOrder.indexOf(a.name);
-          let bIndex = sortOrder.indexOf(b.name);
+          let aIndex = sortOrder.indexOf(a.status);
+          let bIndex = sortOrder.indexOf(b.status);
 
           aIndex = aIndex === -1 ? sortOrder.length : aIndex;
           bIndex = bIndex === -1 ? sortOrder.length : bIndex;
 
           return aIndex - bIndex;
         });
-
-      this.colors = Array.from(TaskStatus.STATUS_COLORS).map(([status, color]) => {
-        return {name: TaskStatus.STATUS_LABELS.get(status), value: color};
-      });
-
-      // console.log('Data:', this.data);
-      // console.log('Colors:', this.colors);
     }
   }
 
-  onSelect(event) {
-    console.log(event);
+  private contrastingTextColor(color: string): string {
+    const hex = color.replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) {
+      return '#ffffff';
+    }
+
+    const channels = [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
+    const [red, green, blue] = channels.map((channel) =>
+      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+    );
+    const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const darkContrast = (luminance + 0.05) / 0.057;
+
+    return whiteContrast >= darkContrast ? '#ffffff' : '#111827';
   }
 }
