@@ -330,8 +330,8 @@ describe('CrossDashboardComponent', () => {
 
     component.setSearch(1, 'security');
     expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
-      '1.1P',
       '1.2P',
+      '1.1P',
     ]);
 
     component.toggleFilter(1, component.filterOptions[0]);
@@ -366,6 +366,31 @@ describe('CrossDashboardComponent', () => {
       'EARLY',
       'LATE',
     ]);
+  });
+
+  it('keeps completed tasks below open tasks in every sort mode', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Completed First', 'DONE-FIRST', 'complete', makeDate(3), 0),
+        makeTask('Open Later', 'OPEN-LATE', 'not_started', makeDate(20), 4),
+        makeTask('Completed Later', 'DONE-LATE', 'complete', makeDate(25), 5),
+        makeTask('Open Earlier', 'OPEN-EARLY', 'working_on_it', makeDate(10), 1),
+      ]),
+    ]);
+
+    const expectedByMode: Record<string, string[]> = {
+      Recommended: ['OPEN-LATE', 'OPEN-EARLY', 'DONE-FIRST', 'DONE-LATE'],
+      'Due Date': ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
+      Default: ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
+    };
+
+    component.sortOptions.forEach((mode) => {
+      component.setSort(1, mode);
+
+      expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(
+        expectedByMode[mode],
+      );
+    });
   });
 
   it('applies separate search state in All and Previous unit scopes', () => {
