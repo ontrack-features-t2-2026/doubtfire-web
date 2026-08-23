@@ -2,9 +2,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
 import {Router, provideRouter} from '@angular/router';
 import {RouterTestingHarness} from '@angular/router/testing';
-import {BehaviorSubject, of} from 'rxjs';
+import {BehaviorSubject, EMPTY, of} from 'rxjs';
 import {AuthenticationService} from '../api/services/authentication.service';
 import {ProjectService} from '../api/services/project.service';
+import {TaskRecommendationService} from '../api/services/task-recommendation.service';
+import {TaskService} from '../api/services/task.service';
 import {UserService} from '../api/services/user.service';
 import {routes} from '../app.routes';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
@@ -52,6 +54,14 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
         {
           provide: ProjectService,
           useValue: projectServiceMock,
+        },
+        {
+          provide: TaskRecommendationService,
+          useValue: {getAll: () => of([])},
+        },
+        {
+          provide: TaskService,
+          useValue: {taskStatusUpdated$: EMPTY},
         },
       ],
     });
