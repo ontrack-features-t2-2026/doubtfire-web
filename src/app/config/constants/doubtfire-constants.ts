@@ -1,14 +1,17 @@
-import {HttpBackend, HttpClient} from '@angular/common/http';
+import {HttpBackend, HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, catchError, throwError} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import HOST_URL from 'src/app/config/constants/hostUrl';
 
-interface SettingsResponseFormat {
+interface PublicSettingsResponseFormat {
   externalName: string;
   hasLogo: boolean;
   logoUrl: string;
   logoLinkUrl: string;
+}
+
+export interface AuthenticatedSettingsResponseFormat {
   overseerEnabled: boolean;
   tiiEnabled: boolean;
   d2lEnabled: boolean;
@@ -40,7 +43,7 @@ export class DoubtfireConstants {
   // Where should we redirect users on signout?
   public SignoutURL: string;
 
-  // initialise exernal name to loading.
+  // Initialise external name to loading.
   public ExternalName: BehaviorSubject<string> = new BehaviorSubject<string>('Loading...');
 
   /**
@@ -54,7 +57,7 @@ export class DoubtfireConstants {
   public IsD2LEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   /**
-   * Details on the logo
+   * Details on the logo.
    */
   public LogoSettings: BehaviorSubject<LogoSettings> = new BehaviorSubject<LogoSettings>({
     hasLogo: false,
@@ -67,37 +70,62 @@ export class DoubtfireConstants {
    */
   public IsTiiEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  private readonly settingsUrl: string = `${this.API_URL}/settings`;
+  private readonly publicSettingsUrl: string = `${this.API_URL}/settings/public`;
+  private readonly legacySettingsUrl: string = `${this.API_URL}/settings`;
 
   constructor(handler: HttpBackend) {
-    // Don't use interceptors for Doubtfire Constants
+    // Do not use interceptors for pre-authentication Doubtfire constants.
     this.http = new HttpClient(handler);
-    this.loadSettings();
+    this.loadPublicSettings();
     this.loadSignoutUrl();
   }
 
-  private loadSignoutUrl() {
+  private loadSignoutUrl(): void {
     const url: string = `${this.API_URL}/auth/signout_url`;
 
-    this.http.get<SignOutUrlResponseFormat>(url).subscribe(
-      (result) => (this.SignoutURL = result.auth_signout_url),
-      (error) => console.error(error),
-    );
+    this.http.get<SignOutUrlResponseFormat>(url).subscribe({
+      next: (result) => (this.SignoutURL = result.auth_signout_url),
+      error: (error) => console.error(error),
+    });
   }
 
-  // publish update to ExternalName when get request finishes.
-  private loadSettings() {
-    this.http.get<SettingsResponseFormat>(this.settingsUrl).subscribe((result) => {
-      this.ExternalName.next(result.externalName);
-      this.IsOverseerEnabled.next(result.overseerEnabled);
-      this.IsTiiEnabled.next(result.tiiEnabled);
-      this.IsD2LEnabled.next(result.d2lEnabled);
+  /**
+   * Load branding needed before the user signs in.
+   *
+   * The fallback allows this web change to be deployed before the API change.
+   * The current API returns the same branding fields from /settings.
+   */
+  private loadPublicSettings(): void {
+    this.http
+      .get<PublicSettingsResponseFormat>(this.publicSettingsUrl)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return this.http.get<PublicSettingsResponseFormat>(this.legacySettingsUrl);
+          }
 
-      this.LogoSettings.next({
-        hasLogo: result.hasLogo,
-        logoUrl: result.logoUrl,
-        logoLinkUrl: result.logoLinkUrl,
+          return throwError(() => error);
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.ExternalName.next(result.externalName);
+          this.LogoSettings.next({
+            hasLogo: result.hasLogo,
+            logoUrl: result.logoUrl,
+            logoLinkUrl: result.logoLinkUrl,
+          });
+        },
+        error: (error) => console.error('Unable to load public settings', error),
       });
-    });
+  }
+
+  /**
+   * Apply settings returned after successful authentication.
+   */
+  public applyAuthenticatedSettings(result: AuthenticatedSettingsResponseFormat): void {
+    this.IsOverseerEnabled.next(result.overseerEnabled);
+    this.IsTiiEnabled.next(result.tiiEnabled);
+    this.IsD2LEnabled.next(result.d2lEnabled);
   }
 }
