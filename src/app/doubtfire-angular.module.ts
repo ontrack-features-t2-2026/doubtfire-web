@@ -756,6 +756,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     StaffNoteService,
     SidekiqJobService,
     LtiService,
+    InstallPromptService,
     TaskPrerequisiteService,
     MarkingSessionService,
     DiscussionPromptService,
