@@ -81,6 +81,7 @@
             [taskDef]="task.definition"
           ></f-task-ilos-card>
           <f-task-description-card
+            [showPeerProgress]="canViewPeerProgress"
             [task]="task"
             [taskDef]="task.definition"
             [unit]="task.unit"

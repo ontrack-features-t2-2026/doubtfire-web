@@ -21,6 +21,7 @@ export class TaskDescriptionCardComponent {
   @Output() switchView$: EventEmitter<string> = new EventEmitter();
 
   @Input() task: Task;
+  @Input() showPeerProgress = false;
   @Input() taskDef: TaskDefinition;
   @Input() unit: Unit;
 
