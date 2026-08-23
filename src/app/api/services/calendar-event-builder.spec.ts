@@ -56,6 +56,14 @@ describe('buildCalendarEvent', () => {
     expect(event).toBeNull();
   });
 
+  it('returns null when the resolved due date is invalid', () => {
+    const task = buildTask({dueDate: new Date(Number.NaN)});
+
+    const event = buildCalendarEvent(task);
+
+    expect(event).toBeNull();
+  });
+
   it('returns the title raw and unescaped, leaving escaping to the consumer', () => {
     const dueDate = new Date(2026, 8, 15);
     const task = buildTask({

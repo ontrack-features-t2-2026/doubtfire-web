@@ -76,7 +76,7 @@ export function buildCalendarEvent(task: Task): WebCalEvent | null {
     return null;
   }
 
-  if (!dueDate) {
+  if (!dueDate || Number.isNaN(dueDate.valueOf())) {
     return null;
   }
 
