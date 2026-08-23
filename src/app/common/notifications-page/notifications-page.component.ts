@@ -1,5 +1,12 @@
 import moment from 'moment';
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import {PageEvent} from '@angular/material/paginator';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
@@ -70,6 +77,8 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
   pageSize = 20;
 
   private listSubscription: Subscription | null = null;
+  private readonly deletingNotificationIds: Set<number> = new Set();
+  markAllReadPending = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -77,6 +86,8 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     private confirmationModal: ConfirmationModalService,
     private alerts: AlertService,
     private router: Router,
+    private changeDetectorRef: ChangeDetectorRef,
+    private elementRef: ElementRef<HTMLElement>,
   ) {}
 
   /**
@@ -207,13 +218,26 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * ever come to disagree with it.
    */
   markAllRead(): void {
+    if (!this.hasUnread || this.markAllReadPending) {
+      return;
+    }
+
+    this.markAllReadPending = true;
+
     // A list read raised before this is out of date now, and its response goes
     // straight into the shared cache, so landing late would draw every row
     // unread again.
     this.cancelPendingList();
 
     this.notificationService.markAllRead().subscribe({
-      error: () => this.alerts.error('Your notifications could not be marked as read'),
+      next: () => {
+        this.markAllReadPending = false;
+        this.alerts.success('All notifications marked as read');
+      },
+      error: () => {
+        this.markAllReadPending = false;
+        this.alerts.error('Your notifications could not be marked as read');
+      },
     });
   }
 
@@ -230,9 +254,13 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * noise.
    */
   confirmDelete(notification: Notification): void {
+    if (this.isDeleting(notification)) {
+      return;
+    }
+
     this.confirmationModal.show(
       'Delete notification',
-      'This removes the notification. You will not be able to get it back.',
+      `Delete "${notification.message}"? This removes the notification permanently.`,
       () => this.remove(notification),
       () => undefined,
       'Delete',
@@ -271,6 +299,10 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    */
   deleteLabel(notification: Notification): string {
     return `Delete: ${notification.message}`;
+  }
+
+  isDeleting(notification: Notification): boolean {
+    return this.deletingNotificationIds.has(notification.id);
   }
 
   timeAgo(notification: Notification): string {
@@ -313,10 +345,18 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * something, which is a worse story than it not having worked.
    */
   private remove(notification: Notification): void {
+    if (this.isDeleting(notification)) {
+      return;
+    }
+
+    this.deletingNotificationIds.add(notification.id);
     this.cancelPendingList();
+
+    const visibleIndex = this.visible.indexOf(notification);
 
     this.notificationService.remove(notification).subscribe({
       next: () => {
+        this.deletingNotificationIds.delete(notification.id);
         this.notifications = this.notifications.filter((row) => row !== notification);
 
         // Deleting the only row on the last page leaves the reader on a page
@@ -325,9 +365,27 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
         this.pageIndex = Math.min(this.pageIndex, this.lastPageIndex());
         this.updateVisible();
         this.alerts.success('Notification deleted');
+        this.changeDetectorRef.detectChanges();
+        this.restoreFocusAfterDelete(visibleIndex);
       },
-      error: () => this.alerts.error('That notification could not be deleted'),
+      error: () => {
+        this.deletingNotificationIds.delete(notification.id);
+        this.alerts.error('That notification could not be deleted');
+      },
     });
+  }
+
+  private restoreFocusAfterDelete(previousIndex: number): void {
+    if (document.activeElement !== document.body) {
+      return;
+    }
+
+    const rows = Array.from(
+      this.elementRef.nativeElement.querySelectorAll<HTMLElement>('.notification-row'),
+    );
+    const nextIndex = Math.min(Math.max(previousIndex, 0), rows.length - 1);
+
+    rows[nextIndex]?.focus();
   }
 
   private updateVisible(): void {

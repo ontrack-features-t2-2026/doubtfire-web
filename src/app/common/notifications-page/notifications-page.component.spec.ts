@@ -357,7 +357,7 @@ describe('NotificationsPageComponent', () => {
     // link is nullable on the api. Refusing to mark it read would leave a
     // number on the bell that the user has no way to clear.
     expect(notificationService.markRead).toHaveBeenCalledTimes(1);
-    expect(notificationRoutes.navigate).not.toHaveBeenCalled();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('says so when a notification could not be marked as read', () => {
@@ -412,21 +412,57 @@ describe('NotificationsPageComponent', () => {
     });
 
     it('marks everything read without asking first', () => {
-      markAllButton().click();
+      component.markAllRead();
 
       expect(notificationService.markAllRead).toHaveBeenCalledTimes(1);
       expect(subscribedTo.has('markAllRead')).toBe(true);
       expect(confirmationModal.show).not.toHaveBeenCalled();
+      expect(alerts.success).toHaveBeenCalledWith('All notifications marked as read');
     });
 
-    it('does not offer to mark all read when nothing is unread', () => {
+    it('keeps the focused action available but disabled when nothing is unread', () => {
       const refresh = reloadWith();
       refresh.next([read(2), read(1)]);
       fixture.detectChanges();
 
-      // Same reason the badge on the bell disappears at zero rather than showing
-      // one. An action that cannot do anything should not be sitting there.
-      expect(markAllButton()).toBeNull();
+      expect(markAllButton()).not.toBeNull();
+      expect(markAllButton().getAttribute('aria-disabled')).toBe('true');
+
+      component.markAllRead();
+
+      expect(notificationService.markAllRead).not.toHaveBeenCalled();
+    });
+
+    it('does not send mark all read twice while the request is pending', () => {
+      const pending: Subject<void> = new Subject();
+      notificationService.markAllRead.mockReturnValue(pending);
+
+      component.markAllRead();
+      component.markAllRead();
+
+      expect(notificationService.markAllRead).toHaveBeenCalledTimes(1);
+      expect(component.markAllReadPending).toBe(true);
+
+      pending.next();
+
+      expect(component.markAllReadPending).toBe(false);
+    });
+
+    it('keeps focus on mark all read after the rows become read', () => {
+      notificationService.markAllRead.mockImplementation(() =>
+        defer(() => {
+          component.notifications.forEach((row) => (row.readAt = new Date()));
+          return of(undefined);
+        }),
+      );
+
+      const button = markAllButton();
+      button.focus();
+      button.click();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(button);
+      expect(button.getAttribute('aria-disabled')).toBe('true');
     });
 
     it('offers it on a phone, where nothing refreshes the shared unread count', () => {
@@ -454,6 +490,7 @@ describe('NotificationsPageComponent', () => {
 
       expect(confirmationModal.show).toHaveBeenCalledTimes(1);
       expect(notificationService.remove).not.toHaveBeenCalled();
+      expect(confirmationModal.show.mock.calls[0][1]).toContain('notification 2');
     });
 
     it('deletes only once the dialog is agreed to', () => {
@@ -468,6 +505,35 @@ describe('NotificationsPageComponent', () => {
       expect(rowText()).toEqual(['notification 1']);
     });
 
+    it('does not delete the same notification twice while the first request is pending', () => {
+      const pending: Subject<void> = new Subject();
+      notificationService.remove.mockReturnValue(pending);
+
+      deleteButtons()[0].click();
+      confirmed();
+      confirmed();
+      fixture.detectChanges();
+
+      expect(notificationService.remove).toHaveBeenCalledTimes(1);
+      expect(deleteButtons()[0].getAttribute('aria-disabled')).toBe('true');
+
+      pending.next();
+      fixture.detectChanges();
+
+      expect(component.isDeleting(notificationService.remove.mock.calls[0][0])).toBe(false);
+    });
+
+    it('moves focus to the row that replaces a deleted row', () => {
+      const button = deleteButtons()[0];
+      button.click();
+      button.focus();
+
+      confirmed();
+
+      expect(rowText()).toEqual(['notification 1']);
+      expect(document.activeElement).toBe(rows()[0]);
+    });
+
     it('leaves the notification alone when the dialog is cancelled', () => {
       deleteButtons()[0].click();
       cancelled();
@@ -480,7 +546,9 @@ describe('NotificationsPageComponent', () => {
     it('keeps the row when the delete fails', () => {
       notificationService.remove.mockReturnValue(throwError(() => new Error('DELETE failed')));
 
-      deleteButtons()[0].click();
+      const lastPageDelete = deleteButtons()[0];
+      lastPageDelete.click();
+      lastPageDelete.focus();
       confirmed();
       fixture.detectChanges();
 
@@ -499,7 +567,7 @@ describe('NotificationsPageComponent', () => {
       // would make asking to delete one mark it read and navigate away from the
       // page it was asked on.
       expect(notificationService.markRead).not.toHaveBeenCalled();
-      expect(notificationRoutes.navigate).not.toHaveBeenCalled();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
     });
 
     it('names the notification on its delete button', () => {
@@ -528,6 +596,7 @@ describe('NotificationsPageComponent', () => {
       // either, because there are still twenty notifications.
       expect(component.pageIndex).toBe(0);
       expect(rows()).toHaveLength(20);
+      expect(document.activeElement).toBe(rows()[0]);
     });
 
     it('shows the empty state once the last one is deleted', () => {
@@ -547,7 +616,7 @@ describe('NotificationsPageComponent', () => {
       const refresh = reloadWith();
       expect(refresh.observed).toBe(true);
 
-      markAllButton().click();
+      component.markAllRead();
 
       // That response was worked out before the click, and NotificationService
       // writes list responses into the shared entity cache, so letting it land
@@ -578,7 +647,7 @@ describe('NotificationsPageComponent', () => {
       reloadWith();
       expect(pageText()).toContain('Loading your notifications');
 
-      markAllButton().click();
+      component.markAllRead();
       fixture.detectChanges();
 
       // Cancelling the request without clearing the flag sits a spinner over a

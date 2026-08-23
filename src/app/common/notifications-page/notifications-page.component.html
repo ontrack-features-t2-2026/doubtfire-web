@@ -3,11 +3,12 @@
     <h1 class="text-2xl">Notifications</h1>
 
     <!--
-      Only when it has something to do, the same reason the badge on the bell
-      disappears at zero rather than showing one. hasUnread reads the rows this
-      page is holding and not the shared unread count, see the note on it.
+      Keep the control rendered once the list is visible, even after the last
+      unread row changes. Removing a focused button would drop keyboard focus to
+      the document body. disabledInteractive keeps it focusable while the guard
+      in markAllRead prevents another request.
     -->
-    @if (hasUnread) {
+    @if (!loading && !loadFailed && notifications.length) {
       <!--
         The label is hidden below sm and the icon carries it there, so the
         aria-label is not a duplicate of visible text, it is the only wording
@@ -17,6 +18,8 @@
         aria-label="Mark all read"
         class="notification-mark-all"
         mat-stroked-button
+        [disabled]="!hasUnread || markAllReadPending"
+        [disabledInteractive]="true"
         (click)="markAllRead()"
       >
         <mat-icon>done_all</mat-icon>
@@ -103,6 +106,8 @@
             mat-icon-button
             matTooltip="Delete"
             [attr.aria-label]="deleteLabel(notification)"
+            [disabled]="isDeleting(notification)"
+            [disabledInteractive]="true"
             (click)="confirmDelete(notification)"
           >
             <mat-icon>close</mat-icon>
