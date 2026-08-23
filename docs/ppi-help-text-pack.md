@@ -1,7 +1,7 @@
 # PPI-D01: Peer Progress Help Text and Privacy Copy
 
-**Ticket:** PPI-D01 - Write the peer-comparison explanation, privacy limits and help text  
-**Branch:** `docs/ppi-help-privacy`  
+**Ticket:** PPI-D01 - Write the peer-comparison explanation, privacy limits and help text
+**Branch:** `docs/ppi-help-privacy`
 **Scope:** Documentation and copy specification only. No production widget logic, API
 behaviour or data flow is changed by this document.
 
