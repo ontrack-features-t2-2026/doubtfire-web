@@ -4,14 +4,15 @@ import {EMPTY, Observable, expand, reduce} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 
 export type TaskRecommendation = {
-  task_id: number;
+  task_id: number | null;
+  task_definition_id: number;
   task_name: string;
   project_id: number;
   unit_id: number;
   priority_score: number;
 };
 
-type TaskRecommendationPage = {
+export type TaskRecommendationPage = {
   data: TaskRecommendation[];
   meta: {
     page: number;

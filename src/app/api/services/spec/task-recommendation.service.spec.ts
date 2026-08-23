@@ -57,9 +57,13 @@ describe('TaskRecommendationService', () => {
     expect(recommendations).toEqual([makeRecommendation(1, 80), makeRecommendation(2, 60)]);
   });
 
-  const makeRecommendation = (taskId: number, priorityScore: number): TaskRecommendation => ({
-    task_id: taskId,
-    task_name: `Task ${taskId}`,
+  const makeRecommendation = (
+    taskDefinitionId: number,
+    priorityScore: number,
+  ): TaskRecommendation => ({
+    task_id: null,
+    task_definition_id: taskDefinitionId,
+    task_name: `Task ${taskDefinitionId}`,
     project_id: 10,
     unit_id: 20,
     priority_score: priorityScore,
