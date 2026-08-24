@@ -10,7 +10,7 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {Unit} from 'src/app/api/models/unit';
-import * as icsCalendarBuilder from 'src/app/api/services/ics-calendar-builder';
+import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {GradeService} from 'src/app/common/services/grade.service';
 import {TaskPlannerCardComponent} from './task-planner-card.component';
@@ -36,6 +36,7 @@ function buildProjectWithTasks(
     definition.targetDate = dueDate;
 
     const task = new Task(unit);
+    task.id = index + 1;
     task.definition = definition;
     task.dueDate = dueDate;
     task.project = project;
@@ -116,6 +117,7 @@ describe('TaskPlannerCardComponent', () => {
       .spyOn(window.URL, 'createObjectURL')
       .mockReturnValue('blob:mock-url');
 
+    expect(component.hasDownloadableTasks).toBe(true);
     component.downloadIcs();
 
     expect(createObjectURLSpy).toHaveBeenCalledOnce();
@@ -137,7 +139,9 @@ describe('TaskPlannerCardComponent', () => {
   });
 
   it('falls back to the highest grade value when project.targetGrade is not set', () => {
-    component.project = buildProjectWithTasks([], undefined);
+    const project = buildProjectWithTasks([]);
+    project.targetGrade = undefined;
+    component.project = project;
     fixture.detectChanges();
 
     // GradeService.gradeValues is [0, 1, 2, 3], the highest is 3 (High Distinction).
@@ -153,12 +157,9 @@ describe('TaskPlannerCardComponent', () => {
     expect(component.project.targetGrade).toBe(1);
   });
 
-  it('reduces the task set passed to buildIcsCalendar when a lower grade is selected, proving the grade filter is exercised, not ignored', () => {
+  it('only includes tasks at or below the selected grade in the generated calendar', () => {
     // Two tasks: one at grade 0 (Pass), one at grade 2 (Distinction). If the grade filter
-    // were ignored, both tasks would always be passed to buildIcsCalendar regardless of
-    // selectedDownloadGrade. This test would fail under that bug: it asserts only the
-    // grade-0 task is passed when grade 0 is selected.
-    const buildIcsCalendarSpy = vi.spyOn(icsCalendarBuilder, 'buildIcsCalendar');
+    // were ignored, both event UIDs would be present in the generated calendar.
     component.project = buildProjectWithTasks([
       {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0},
       {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2},
@@ -166,12 +167,11 @@ describe('TaskPlannerCardComponent', () => {
     fixture.detectChanges();
     component.selectedDownloadGrade = 0;
 
-    component.downloadIcs();
-
-    expect(buildIcsCalendarSpy).toHaveBeenCalledOnce();
-    const [tasksArg] = buildIcsCalendarSpy.mock.calls[0];
-    expect(tasksArg).toHaveLength(1);
-    expect(tasksArg[0].definition.id).toBe(1);
+    const selectedTasks = component['tasksForSelectedGrade']();
+    const ics = buildIcsCalendar(selectedTasks, new Date('2026-08-24T00:00:00Z'));
+    expect(selectedTasks.map((task) => task.definition.id)).toEqual([1]);
+    expect(ics).toContain('UID:E-1');
+    expect(ics).not.toContain('UID:E-2');
   });
 
   it('hasDownloadableTasks reflects the selected grade, not just whether any task exists', () => {
