@@ -129,6 +129,7 @@ describe('HeaderComponent', () => {
     let calendarModalServiceStub: {show: ReturnType<typeof vi.fn>};
 
     beforeEach(async () => {
+      TestBed.resetTestingModule();
       calendarModalServiceStub = {show: vi.fn()};
 
       await TestBed.configureTestingModule({
