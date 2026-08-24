@@ -67,10 +67,12 @@ describe('HeaderComponent', () => {
   describe('calendar entry point', () => {
     const calendarButtonSelector = 'button[aria-label="Open your calendar subscription settings"]';
     let calendarModalServiceStub: {show: ReturnType<typeof vi.fn>};
+    let mediaObserverStub: {isActive: ReturnType<typeof vi.fn>};
 
     beforeEach(async () => {
       TestBed.resetTestingModule();
       calendarModalServiceStub = {show: vi.fn()};
+      mediaObserverStub = {isActive: vi.fn().mockReturnValue(false)};
 
       await TestBed.configureTestingModule({
         declarations: [HeaderComponent],
@@ -98,7 +100,7 @@ describe('HeaderComponent', () => {
           },
           {provide: UserService, useValue: {currentUser: {role: 'Student', username: 'student_1'}}},
           {provide: AuthenticationService, useValue: emptyProvider},
-          {provide: MediaObserver, useValue: {isActive: () => false}},
+          {provide: MediaObserver, useValue: mediaObserverStub},
           {
             provide: DoubtfireConstants,
             useValue: {
@@ -129,6 +131,15 @@ describe('HeaderComponent', () => {
       const button = fixture.nativeElement.querySelector(calendarButtonSelector);
 
       expect(button).not.toBeNull();
+    });
+
+    it('keeps the compact mobile toolbar clear and leaves calendar access in the account menu', () => {
+      mediaObserverStub.isActive.mockImplementation((alias: string) => alias === 'xs');
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector(calendarButtonSelector);
+
+      expect(button).toBeNull();
     });
 
     it('clicking the calendar button invokes the same handler the avatar menu Calendar item uses', () => {
