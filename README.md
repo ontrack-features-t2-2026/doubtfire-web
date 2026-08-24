@@ -42,6 +42,12 @@ Open <http://localhost:4200>. `proxy.conf.json` forwards `/api` to the local API
 It also forwards `/lti/api` to the optional local LTI service on port 3001; LTI
 requests will fail if that service is not running.
 
+The legacy root `docker-compose.yml` also defaults to local database
+authentication. Optional AAF development must use a dedicated non-production
+registration supplied through an ignored `.env` file copied from
+`.env.example`. Any AAF secret ever committed to Git must be treated as
+compromised and rotated by its identity owner.
+
 ## Checks
 
 Run the same checks required for a release before handing the branch over:
