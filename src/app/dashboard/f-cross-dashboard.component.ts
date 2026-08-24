@@ -1,11 +1,24 @@
 import {EntityCache} from 'ngx-entity-service';
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
 import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
 import {ProjectService} from '../api/services/project.service';
+import {
+  TaskRecommendation,
+  TaskRecommendationService,
+} from '../api/services/task-recommendation.service';
+import {TaskService} from '../api/services/task.service';
 import {DashboardTask} from './list-item/dashboard-list-item.component';
 
 type UnitScope = 'active' | 'previous' | 'all';
@@ -21,6 +34,7 @@ enum SortMode {
 }
 
 const completedTypes: readonly TaskStatusEnum[] = ['complete'];
+const finalTypes: readonly TaskStatusEnum[] = TaskStatus.FINAL_STATUSES;
 
 const displayedDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
   weekday: 'long',
@@ -85,21 +99,56 @@ export class CrossDashboardComponent implements OnInit {
   private filters: Map<number, Filter[]> = new Map();
   private sorting: Map<number, SortMode> = new Map();
   private searchTerms: Map<number, string> = new Map();
+  private recommendationScores: Map<string, number> = new Map();
 
   constructor(
     private globalStateService: GlobalStateService,
     private projectService: ProjectService,
+    private taskRecommendationService: TaskRecommendationService,
+    private taskService: TaskService,
     private changeDetectorRef: ChangeDetectorRef,
+    private destroyRef: DestroyRef,
   ) {}
 
   ngOnInit(): void {
     this.globalStateService.onLoad(() => {
-      this.globalStateService.currentUserProjects.values.subscribe((projects) => {
-        const activeProjects = projects.filter((project) => project.unit.isActive);
-        this.activeUnits = this.mapProjects(activeProjects);
-        this.processTasks();
-      });
+      const projectChanges = this.globalStateService.currentUserProjects.values.pipe(
+        tap((projects) => this.refreshActiveUnits(projects)),
+        map(() => undefined),
+      );
+      const activeTaskStatusChanges = this.taskService.taskStatusUpdated$.pipe(
+        filter((task) => this.isTaskInActiveProject(task)),
+        debounceTime(0),
+        tap(() =>
+          this.refreshActiveUnits(this.globalStateService.currentUserProjects.currentValues),
+        ),
+        map(() => undefined),
+      );
+
+      merge(projectChanges, activeTaskStatusChanges)
+        .pipe(
+          switchMap(() => this.taskRecommendationService.getAll().pipe(catchError(() => of([])))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe((recommendations) => {
+          this.setRecommendationScores(recommendations);
+          this.processTasks();
+        });
     });
+  }
+
+  private refreshActiveUnits(projects: readonly Project[]): void {
+    const activeProjects = projects.filter((project) => project.unit.isActive);
+    this.activeUnits = this.mapProjects(activeProjects);
+    this.processTasks();
+  }
+
+  private isTaskInActiveProject(task: Task): boolean {
+    const projectId = task.project?.id;
+
+    return this.globalStateService.currentUserProjects.currentValues.some(
+      (project) => project.id === projectId && project.unit.isActive,
+    );
   }
 
   get displayedUnits(): DashboardUnit[] {
@@ -296,18 +345,17 @@ export class CrossDashboardComponent implements OnInit {
           .sort((a, b) => {
             const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
 
-            if (completedTypes.includes(a.status) && !completedTypes.includes(b.status)) {
+            if (finalTypes.includes(a.status) && !finalTypes.includes(b.status)) {
               return 1;
             }
 
-            if (!completedTypes.includes(a.status) && completedTypes.includes(b.status)) {
+            if (!finalTypes.includes(a.status) && finalTypes.includes(b.status)) {
               return -1;
             }
 
             switch (sort) {
               case SortMode.Recommended:
-                // TODO: Connect to recommender's points.
-                return 0;
+                return this.compareRecommendations(a, b);
               case SortMode.SubmissionDate:
                 return this.compareDueDates(a.dueDate, b.dueDate);
               case SortMode.Default:
@@ -319,6 +367,44 @@ export class CrossDashboardComponent implements OnInit {
       }));
 
     this.changeDetectorRef.markForCheck();
+  }
+
+  private setRecommendationScores(recommendations: readonly TaskRecommendation[]): void {
+    this.recommendationScores = new Map(
+      recommendations
+        .filter((recommendation) => Number.isFinite(recommendation.priority_score))
+        .map((recommendation) => [
+          this.recommendationKey(recommendation.project_id, recommendation.task_definition_id),
+          recommendation.priority_score,
+        ]),
+    );
+  }
+
+  private compareRecommendations(first: DashboardTask, second: DashboardTask): number {
+    const firstScore = this.recommendationScores.get(
+      this.recommendationKey(first.projectId, first.taskDefinitionId),
+    );
+    const secondScore = this.recommendationScores.get(
+      this.recommendationKey(second.projectId, second.taskDefinitionId),
+    );
+
+    if (firstScore !== undefined && secondScore !== undefined) {
+      return secondScore - firstScore || first.weight - second.weight;
+    }
+
+    if (firstScore !== undefined) {
+      return -1;
+    }
+
+    if (secondScore !== undefined) {
+      return 1;
+    }
+
+    return first.weight - second.weight;
+  }
+
+  private recommendationKey(projectId: number, taskDefinitionId: number): string {
+    return `${projectId}:${taskDefinitionId}`;
   }
 
   private taskMatchesGlobalCriteria(task: DashboardTask, unit: DashboardUnit): boolean {
@@ -547,6 +633,7 @@ export class CrossDashboardComponent implements OnInit {
       const def = task.definition;
 
       return {
+        taskDefinitionId: def.id,
         title: def.name,
         subtitle: `${def.abbreviation} - ${def.targetGradeText} Task`,
         statusLabel: TaskStatus.STATUS_LABELS.get(task.status),

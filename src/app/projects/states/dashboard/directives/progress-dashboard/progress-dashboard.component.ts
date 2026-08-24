@@ -1,4 +1,3 @@
-import {environment} from 'src/environments/environment';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,6 +20,7 @@ import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
 import {calculateCompletionPercentage} from 'src/app/common/services/ppi-progress-calculation.service';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 
 @Component({
   selector: 'f-progress-dashboard',
@@ -56,6 +56,7 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
     private projectService: ProjectService,
     private alertService: AlertService,
     private userService: UserService,
+    readonly demoMode: DemoModeStore,
   ) {}
 
   ngOnInit(): void {
@@ -87,6 +88,10 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
     const currentUser = this.userService.currentUser;
 
     return !!role && role !== 'Student' && this.project?.student?.id !== currentUser?.id;
+  }
+
+  public get showDemoPeerProgress(): boolean {
+    return this.demoMode.enabled && !this.viewingOtherStudentProject;
   }
 
   updateTargetGrade(newGrade: number): void {
@@ -125,7 +130,7 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
   }
 
   private loadPeerProgressUnitSummary(): void {
-    if (this.viewingOtherStudentProject) {
+    if (!this.showDemoPeerProgress) {
       return;
     }
 
@@ -136,20 +141,12 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
       availableTasks,
     );
 
-    // The cohort figure is still a fixture. Never show a fabricated percentage
-    // in a production build - a student cannot tell it from a real one. Remove
-    // this guard when the live PPI-F01 adapter replaces getMockUnitSummary.
-    if (environment.production) {
-      this.peerProgressView = resolvePeerProgressUnitSummaryState(false, null, null);
-      return;
-    }
-
     this.peerProgressView = resolvePeerProgressUnitSummaryState(true, null, null);
 
     // PPI-F02 demonstration only.
     // A live authorised unit-level API remains future work.
     this.peerProgressService
-      .getMockUnitSummary(
+      .getDemoUnitSummary(
         this.project.unit.id,
         this.project.targetGrade,
         studentPercentage,

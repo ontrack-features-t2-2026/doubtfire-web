@@ -9,6 +9,7 @@ import {Observable, Subject, of, throwError} from 'rxjs';
 import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {
   DISABLED_STATE,
   NORMAL_STATE,
@@ -16,8 +17,7 @@ import {
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
   ZERO_PERCENT_STATE,
-} from 'src/app/api/services/mock';
-import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
+} from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {PpiWidgetComponent} from './ppi-widget.component';
 
 describe('PpiWidgetComponent', () => {

@@ -11,12 +11,17 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {BehaviorSubject, of, throwError} from 'rxjs';
+import {BehaviorSubject, Observable, ReplaySubject, Subject, of, throwError} from 'rxjs';
 import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
 import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
 import {ProjectService} from '../api/services/project.service';
+import {
+  TaskRecommendation,
+  TaskRecommendationService,
+} from '../api/services/task-recommendation.service';
+import {TaskService} from '../api/services/task.service';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
 import {CrossDashboardComponent} from './f-cross-dashboard.component';
 
@@ -25,6 +30,10 @@ describe('CrossDashboardComponent', () => {
   let fixture: ComponentFixture<CrossDashboardComponent>;
   let projectsSubject: BehaviorSubject<Project[]>;
   let projectServiceQuery: ReturnType<typeof vi.fn>;
+  let recommendationsSubject: ReplaySubject<TaskRecommendation[]>;
+  let recommendationServiceGetAll: ReturnType<typeof vi.fn>;
+  let taskStatusSubject: Subject<Task>;
+  let nextTaskDefinitionId: number;
 
   const syncView = async (): Promise<void> => {
     fixture.detectChanges();
@@ -50,6 +59,7 @@ describe('CrossDashboardComponent', () => {
       localDueDate: vi.fn().mockReturnValue(dueDate),
       inSubmittedState: vi.fn().mockReturnValue(TaskStatus.SUBMITTED_STATUSES.includes(status)),
       definition: {
+        id: nextTaskDefinitionId++,
         name,
         abbreviation,
         targetGrade,
@@ -65,8 +75,8 @@ describe('CrossDashboardComponent', () => {
     isActive: boolean,
     tasks: Task[] = [],
     name: string = `${code} Unit`,
-  ): Project =>
-    ({
+  ): Project => {
+    const project = {
       id,
       tasks,
       unit: {
@@ -77,16 +87,28 @@ describe('CrossDashboardComponent', () => {
       },
       calcTopTasks: vi.fn(),
       activeTasks: vi.fn().mockReturnValue(tasks),
-    }) as unknown as Project;
+    } as unknown as Project;
+
+    tasks.forEach((task) => (task.project = project));
+    return project;
+  };
 
   beforeEach(async () => {
     projectsSubject = new BehaviorSubject<Project[]>([]);
     projectServiceQuery = vi.fn().mockReturnValue(of([]));
+    recommendationsSubject = new ReplaySubject<TaskRecommendation[]>(1);
+    recommendationsSubject.next([]);
+    recommendationServiceGetAll = vi.fn().mockReturnValue(recommendationsSubject.asObservable());
+    taskStatusSubject = new Subject<Task>();
+    nextTaskDefinitionId = 100;
 
     const globalStateServiceStub = {
       onLoad: (callback: () => void): void => callback(),
       currentUserProjects: {
         values: projectsSubject.asObservable(),
+        get currentValues(): Project[] {
+          return projectsSubject.value;
+        },
       },
     };
 
@@ -114,6 +136,14 @@ describe('CrossDashboardComponent', () => {
           provide: ProjectService,
           useValue: projectServiceStub,
         },
+        {
+          provide: TaskRecommendationService,
+          useValue: {getAll: recommendationServiceGetAll},
+        },
+        {
+          provide: TaskService,
+          useValue: {taskStatusUpdated$: taskStatusSubject.asObservable()},
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -125,6 +155,17 @@ describe('CrossDashboardComponent', () => {
 
   afterEach(() => {
     projectsSubject.complete();
+    recommendationsSubject.complete();
+    taskStatusSubject.complete();
+  });
+
+  const recommendationFor = (task: Task, projectId: number, score: number): TaskRecommendation => ({
+    task_id: null,
+    task_definition_id: task.definition.id,
+    task_name: task.definition.name,
+    project_id: projectId,
+    unit_id: 20,
+    priority_score: score,
   });
 
   it('uses Active units as the default scope', () => {
@@ -445,18 +486,126 @@ describe('CrossDashboardComponent', () => {
     ]);
   });
 
-  it('keeps completed tasks below open tasks in every sort mode', () => {
+  it('sorts recommendations by project and task-definition id, including virtual tasks', () => {
+    const lowerPriority = makeTask('Lower priority', 'LOW', 'not_started', makeDate(10), 1);
+    const recommended = makeTask('Recommended next', 'NEXT', 'not_started', makeDate(20), 4);
+    const project = makeProject(7, 'DEMO20007', true, [lowerPriority, recommended]);
+
+    projectsSubject.next([project]);
+    recommendationsSubject.next([recommendationFor(recommended, project.id, 95)]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'NEXT',
+      'LOW',
+    ]);
+  });
+
+  it('refreshes recommendations after a status change in an active project', async () => {
+    const task = makeTask('Current task', 'CURRENT', 'working_on_it', makeDate(10));
+    const project = makeProject(7, 'DEMO20007', true, [task]);
+
+    projectsSubject.next([project]);
+    const callsBeforeStatusChange = recommendationServiceGetAll.mock.calls.length;
+    taskStatusSubject.next(task);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(callsBeforeStatusChange + 1);
+  });
+
+  it('refreshes recommendation scores whenever the active project cache changes', () => {
+    const callsBeforeProjectChanges = recommendationServiceGetAll.mock.calls.length;
+
+    projectsSubject.next([makeProject(1, 'COS10001', true)]);
+    projectsSubject.next([makeProject(1, 'COS10001', true), makeProject(2, 'COS30046', true)]);
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(callsBeforeProjectChanges + 2);
+  });
+
+  it('does not refresh recommendations for task changes in an inactive project', async () => {
+    const task = makeTask('Previous task', 'PREVIOUS', 'working_on_it', makeDate(10));
+    const project = makeProject(8, 'COS30046', false, [task]);
+
+    projectsSubject.next([project]);
+    const callsBeforeStatusChange = recommendationServiceGetAll.mock.calls.length;
+    taskStatusSubject.next(task);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(callsBeforeStatusChange);
+  });
+
+  it('cancels a recommendation request superseded by a newer project snapshot', () => {
+    const cancelled = vi.fn();
+    const pendingRequest: Observable<TaskRecommendation[]> = new Observable(() => cancelled);
+
+    recommendationServiceGetAll.mockImplementationOnce(() => pendingRequest);
+    recommendationServiceGetAll.mockImplementation(() => of([]));
+
+    projectsSubject.next([makeProject(1, 'COS10001', true)]);
+    expect(cancelled).not.toHaveBeenCalled();
+
+    projectsSubject.next([makeProject(1, 'COS10001', true), makeProject(2, 'COS20007', true)]);
+
+    expect(cancelled).toHaveBeenCalledOnce();
+  });
+
+  it('retries after a recommendation error on the next active task status change', async () => {
+    const lowerPriority = makeTask('Lower priority', 'LOW', 'working_on_it', makeDate(10), 0);
+    const higherPriority = makeTask('Higher priority', 'HIGH', 'working_on_it', makeDate(20), 5);
+    const project = makeProject(1, 'COS10001', true, [lowerPriority, higherPriority]);
+
+    recommendationServiceGetAll.mockImplementationOnce(() =>
+      throwError(() => new Error('Recommendations unavailable')),
+    );
+    recommendationServiceGetAll.mockImplementation(() =>
+      of([
+        recommendationFor(lowerPriority, project.id, 25),
+        recommendationFor(higherPriority, project.id, 90),
+      ]),
+    );
+
+    projectsSubject.next([project]);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'LOW',
+      'HIGH',
+    ]);
+
+    taskStatusSubject.next(lowerPriority);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'HIGH',
+      'LOW',
+    ]);
+  });
+
+  it('stops project and task-status refreshes after destruction', async () => {
+    const task = makeTask('Current task', 'CURRENT', 'working_on_it', makeDate(10));
+    const project = makeProject(1, 'COS10001', true, [task]);
+
+    projectsSubject.next([project]);
+    const callsBeforeDestruction = recommendationServiceGetAll.mock.calls.length;
+    fixture.destroy();
+
+    projectsSubject.next([project, makeProject(2, 'COS20007', true)]);
+    taskStatusSubject.next(task);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(recommendationServiceGetAll).toHaveBeenCalledTimes(callsBeforeDestruction);
+  });
+
+  it('keeps final-state tasks below open tasks in every sort mode', () => {
     projectsSubject.next([
       makeProject(1, 'SIT764', true, [
         makeTask('Completed First', 'DONE-FIRST', 'complete', makeDate(3), 0),
         makeTask('Open Later', 'OPEN-LATE', 'not_started', makeDate(20), 4),
-        makeTask('Completed Later', 'DONE-LATE', 'complete', makeDate(25), 5),
+        makeTask('Final Later', 'DONE-LATE', 'fail', makeDate(25), 5),
         makeTask('Open Earlier', 'OPEN-EARLY', 'working_on_it', makeDate(10), 1),
       ]),
     ]);
 
     const expectedByMode: Record<string, string[]> = {
-      Recommended: ['OPEN-LATE', 'OPEN-EARLY', 'DONE-FIRST', 'DONE-LATE'],
+      Recommended: ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
       'Due Date': ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
       Default: ['OPEN-EARLY', 'OPEN-LATE', 'DONE-FIRST', 'DONE-LATE'],
     };

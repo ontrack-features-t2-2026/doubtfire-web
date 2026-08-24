@@ -9,6 +9,7 @@ import {User, UserService} from 'src/app/api/models/doubtfire-model';
 import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {AuthenticationService} from '../authentication.service';
 import {NotificationService} from '../notification.service';
@@ -35,6 +36,7 @@ describe('AuthenticationService', () => {
 
   let pushService: {unsubscribeQuietly: ReturnType<typeof vi.fn>};
   let notificationService: {reset: ReturnType<typeof vi.fn>};
+  let demoMode: {reset: ReturnType<typeof vi.fn>};
   let globalState: {
     clearUnitsAndProjects: ReturnType<typeof vi.fn>;
     hideHeader: ReturnType<typeof vi.fn>;
@@ -87,6 +89,7 @@ describe('AuthenticationService', () => {
   beforeEach(() => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
     notificationService = {reset: vi.fn()};
+    demoMode = {reset: vi.fn()};
     globalState = {
       clearUnitsAndProjects: vi.fn(),
       hideHeader: vi.fn(),
@@ -125,6 +128,7 @@ describe('AuthenticationService', () => {
         {provide: Router, useValue: router},
         {provide: AlertService, useValue: {error: vi.fn()}},
         {provide: DoubtfireConstants, useValue: constants},
+        {provide: DemoModeStore, useValue: demoMode},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -189,6 +193,7 @@ describe('AuthenticationService', () => {
     // gone but NotificationService is a root singleton, so its cache and unread
     // count would otherwise survive into the next person's session.
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
+    expect(demoMode.reset).toHaveBeenCalledTimes(1);
   });
 
   // unsubscribeQuietly is the "never throw" variant, and sign out is also wired

@@ -238,6 +238,7 @@ import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
 import {DashboardListItemComponent} from './dashboard/list-item/dashboard-list-item.component';
 import {DashboardExpandedListItemComponent} from './dashboard/list-item/expanded-list-item/expanded-list-item.component';
+import {DemoToolsModule} from './demo/demo-tools.module';
 import {TimeoutComponent} from './errors/states/timeout/timeout.component';
 import {UnauthorisedComponent} from './errors/states/unauthorised/unauthorised.component';
 import {UnavailableCardComponent} from './errors/unavailable-card/unavailable-card.component';
@@ -805,6 +806,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,
+    DemoToolsModule,
     RouterModule.forRoot(routes, {
       initialNavigation: 'enabledNonBlocking',
     }),

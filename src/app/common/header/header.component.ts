@@ -15,6 +15,7 @@ import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobEntry, SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants, LogoSettings} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
@@ -84,6 +85,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private qrModalService: QrModalService,
     private router: Router,
     private tutorNotesModal: TutorNotesModalService,
+    readonly demoMode: DemoModeStore,
   ) {}
 
   public externalName: string;

@@ -90,6 +90,7 @@ describe('DashboardListItemComponent', () => {
     fixture = TestBed.createComponent(DashboardListItemComponent);
     component = fixture.componentInstance;
     component.task = {
+      taskDefinitionId: 10,
       title: 'Security Review',
       subtitle: '1.1P - Pass Task',
       statusLabel: 'Resubmit',
@@ -129,6 +130,7 @@ describe('DashboardListItemComponent', () => {
 
   it('renders warning text and an icon alongside the separate status colour', () => {
     fixture.componentRef.setInput('task', {
+      taskDefinitionId: 10,
       title: 'Accessible task',
       subtitle: '1.1P - Pass Task',
       statusLabel: 'Not Started',
@@ -158,6 +160,7 @@ describe('DashboardListItemComponent', () => {
     expect(badge.textContent).toContain('Due within 24 hours');
     expect(icon.textContent.trim()).toBe('schedule');
     expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.classList).toContain('!leading-none');
     expect(statusStrip.style.backgroundColor).toBe('rgb(18, 52, 86)');
     expect(fixture.nativeElement.textContent).toContain('Status: Not Started');
   });

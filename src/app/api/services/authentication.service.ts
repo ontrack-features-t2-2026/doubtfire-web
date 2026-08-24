@@ -24,6 +24,7 @@ import {
   type AuthenticatedSettingsResponseFormat,
   DoubtfireConstants,
 } from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 
 /**
@@ -84,6 +85,7 @@ export class AuthenticationService {
     private alertService: AlertService,
     private angularRouter: Router,
     private doubtfireConstants: DoubtfireConstants,
+    private demoMode: DemoModeStore,
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
@@ -380,6 +382,8 @@ export class AuthenticationService {
   }
 
   public signOut(ssoSignOut = true): void {
+    this.demoMode.reset();
+
     // Invalidate authentication work before the asynchronous push and token
     // teardown. This prevents a late /settings response from restoring values
     // after sign out or completing an obsolete sign-in observable.

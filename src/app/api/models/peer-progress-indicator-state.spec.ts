@@ -6,7 +6,7 @@ import {
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
   ZERO_PERCENT_STATE,
-} from '../services/mock';
+} from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {resolvePeerProgressState} from './peer-progress-indicator-state';
 
 describe('resolvePeerProgressState', () => {

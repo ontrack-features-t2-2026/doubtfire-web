@@ -7,6 +7,7 @@ import {
   PeerProgressState,
   Project,
 } from 'src/app/api/models/doubtfire-model';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
 
 describe('ProgressBurndownChartComponent peer comparison', () => {
@@ -82,7 +83,10 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
     };
   }
 
-  function makeHarness(getCohortMedian: ReturnType<typeof vi.fn>): {
+  function makeHarness(
+    getCohortMedian: ReturnType<typeof vi.fn>,
+    demoEnabled = true,
+  ): {
     component: ProgressBurndownChartComponent;
     project: Project;
   } {
@@ -93,6 +97,7 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
       {
         getCohortMedian,
       } as unknown as PeerProgressService,
+      {enabled: demoEnabled} as DemoModeStore,
       'en-US',
     );
 
@@ -118,6 +123,17 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
   function seriesNames(component: ProgressBurndownChartComponent): string[] {
     return component.data.map((series) => series.name);
   }
+
+  it('does not request or render synthetic peer data when demo mode is off', () => {
+    const getCohortMedian = vi.fn();
+    const {component} = makeHarness(getCohortMedian, false);
+
+    initialise(component);
+
+    expect(getCohortMedian).not.toHaveBeenCalled();
+    expect(seriesNames(component)).toEqual(EXISTING_SERIES);
+    expect(component.peerMedianState).toBe('disabled');
+  });
 
   function expectOnlyExistingSeries(component: ProgressBurndownChartComponent): void {
     expect(seriesNames(component)).toEqual(EXISTING_SERIES);

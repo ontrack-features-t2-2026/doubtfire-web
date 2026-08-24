@@ -118,6 +118,12 @@
           }
         </button>
       }
+      @if (demoMode.available) {
+        <button mat-menu-item routerLink="/demo-controls">
+          <mat-icon aria-label="Demo controls" matListItemIcon>science</mat-icon>
+          Demo controls
+        </button>
+      }
       <button mat-menu-item routerLink="/edit_profile">
         <mat-icon aria-label="Edit profile" matListItemIcon>person</mat-icon>
         My Profile
