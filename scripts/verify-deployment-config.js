@@ -6,7 +6,13 @@ const root = resolve(__dirname, '..');
 const nginx = readFileSync(resolve(root, 'nginx.conf'), 'utf8');
 const dockerfile = readFileSync(resolve(root, 'deploy.Dockerfile'), 'utf8');
 const developmentCompose = readFileSync(resolve(root, 'docker-compose.yml'), 'utf8');
-const deploymentWorkflow = readFileSync(resolve(root, '.github/workflows/deployment.yml'), 'utf8');
+const deploymentWorkflows = [
+  ['default', readFileSync(resolve(root, '.github/workflows/deployment.yml'), 'utf8')],
+  [
+    'institution',
+    readFileSync(resolve(root, '.github/workflows/deployment-institution.yml'), 'utf8'),
+  ],
+];
 const applicationBootstrap = readFileSync(resolve(root, 'src/main.ts'), 'utf8');
 const scormPlayerTemplate = readFileSync(
   resolve(root, 'src/app/common/scorm-player/scorm-player.component.html'),
@@ -54,12 +60,27 @@ assert.match(
   /try_files \$uri \$uri\/ \$uri\/index\.html \/index\.html;/,
   'SPA routes must continue to fall back to /index.html',
 );
-assert.doesNotMatch(
-  deploymentWorkflow,
-  /steps\.meta\.outputs\.labels/,
-  'deployment metadata labels must reference the declared docker_meta step',
-);
-assert.match(deploymentWorkflow, /steps\.docker_meta\.outputs\.labels/);
+for (const [name, workflow] of deploymentWorkflows) {
+  assert.doesNotMatch(
+    workflow,
+    /steps\.meta\.outputs\.labels/,
+    `${name} deployment metadata labels must reference the declared docker_meta step`,
+  );
+  assert.match(workflow, /steps\.docker_meta\.outputs\.labels/);
+
+  for (const line of workflow.split('\n')) {
+    if (/^\s*uses:/.test(line)) {
+      assert.match(
+        line,
+        /@[0-9a-f]{40}(?:\s+#.*)?$/,
+        `${name} production image workflow actions must be pinned to immutable commits`,
+      );
+    }
+  }
+
+  assert.match(workflow, /^\s*sbom:\s*true$/m);
+  assert.match(workflow, /^\s*provenance:\s*mode=max$/m);
+}
 assert.match(
   dockerfile,
   /^FROM node:22\.22\.3-bookworm-slim@sha256:[0-9a-f]{64} AS build$/m,
