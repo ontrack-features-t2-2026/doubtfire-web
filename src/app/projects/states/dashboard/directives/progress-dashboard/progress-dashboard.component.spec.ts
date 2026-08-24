@@ -14,6 +14,7 @@ import {ProjectService} from 'src/app/api/services/project.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {ProgressDashboardComponent} from './progress-dashboard.component';
 
 describe('ProgressDashboardComponent', () => {
@@ -59,8 +60,9 @@ describe('ProgressDashboardComponent', () => {
         },
         {
           provide: PeerProgressIndicatorService,
-          useValue: {getMockUnitSummary: vi.fn().mockReturnValue(of(null))},
+          useValue: {getDemoUnitSummary: vi.fn().mockReturnValue(of(null))},
         },
+        {provide: DemoModeStore, useValue: {enabled: true}},
         {provide: ProjectService, useValue: {update: projectServiceUpdate}},
         {provide: AlertService, useValue: {success: alertSuccess, error: alertError}},
         {provide: UserService, useValue: {currentUser: {id: 25}}},
@@ -130,6 +132,15 @@ describe('ProgressDashboardComponent', () => {
     expect(statusCard?.classList.contains('max-h-[600px]')).toBe(false);
     expect(burndownContent?.classList.contains('overflow-hidden')).toBe(false);
   });
+
+  it('renders fabricated unit peer progress only while demo mode is enabled', () => {
+    expect(fixture.nativeElement.querySelector('f-peer-progress-unit-summary')).toBeTruthy();
+
+    (component.demoMode as {enabled: boolean}).enabled = false;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-peer-progress-unit-summary')).toBeNull();
+  });
 });
 
 describe('ProgressDashboardComponent route reuse', () => {
@@ -142,11 +153,12 @@ describe('ProgressDashboardComponent route reuse', () => {
         gradeValuesFor,
       } as unknown as GradeService,
       {
-        getMockUnitSummary: vi.fn().mockReturnValue(of(null)),
+        getDemoUnitSummary: vi.fn().mockReturnValue(of(null)),
       } as unknown as PeerProgressIndicatorService,
       {} as ProjectService,
       {} as AlertService,
       {} as UserService,
+      {enabled: true} as DemoModeStore,
     );
     const firstProject = {
       id: 2,

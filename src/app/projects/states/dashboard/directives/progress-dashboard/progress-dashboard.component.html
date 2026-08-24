@@ -97,7 +97,7 @@
       <f-engagement-passport-card [project]="project"></f-engagement-passport-card>
     </div>
     <!-- PPI-F02 Unit Peer Progress Summary -->
-    @if (!viewingOtherStudentProject) {
+    @if (showDemoPeerProgress) {
       <div class="xl:col-span-2">
         <f-peer-progress-unit-summary [view]="peerProgressView"></f-peer-progress-unit-summary>
       </div>

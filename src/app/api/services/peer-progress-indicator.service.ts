@@ -2,16 +2,14 @@ import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable, map, of} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {
+  DemoPeerProgressState,
+  createDemoUnitSummary,
+  createMaskedPeerProgressIndicator,
+} from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {PeerProgressIndicator} from '../models/peer-progress-indicator';
 import {PeerProgressUnitSummary} from '../models/peer-progress-unit-summary';
-import {
-  DISABLED_STATE,
-  NORMAL_STATE,
-  STALE_STATE,
-  SUPPRESSED_STATE,
-  UNAVAILABLE_STATE,
-  ZERO_PERCENT_STATE,
-} from './mock/peer-progress-indicator.mock';
 
 interface PeerProgressIndicatorResponse {
   task_definition_id: number;
@@ -29,9 +27,16 @@ interface PeerProgressIndicatorResponse {
   providedIn: 'root',
 })
 export class PeerProgressIndicatorService {
-  constructor(private httpClient: HttpClient) {}
+  constructor(
+    private httpClient: HttpClient,
+    private demoMode: DemoModeStore,
+  ) {}
 
   getIndicator(projectId: number, taskDefinitionId: number): Observable<PeerProgressIndicator> {
+    if (this.demoMode.shouldMaskApiData) {
+      return of(createMaskedPeerProgressIndicator(taskDefinitionId));
+    }
+
     const url = `${API_URL}/projects/${projectId}/task_def_id/${taskDefinitionId}/peer_progress`;
 
     return this.httpClient.get<PeerProgressIndicatorResponse>(url).pipe(
@@ -56,43 +61,12 @@ export class PeerProgressIndicatorService {
    * adapter, and the caller-supplied target grade must never become the design
    * of a future live endpoint.
    */
-  getMockUnitSummary(
+  getDemoUnitSummary(
     unitId: number,
     targetGrade: number,
     studentPercentage: number | null,
-    state: 'normal' | 'zero' | 'suppressed' | 'unavailable' | 'stale' | 'disabled',
+    state: DemoPeerProgressState,
   ): Observable<PeerProgressUnitSummary> {
-    const cohort = this.resolveState(state);
-
-    return of({
-      unitId,
-      targetGrade,
-      studentPercentage,
-      submittedPercentage: cohort.submittedPercentage,
-      isSuppressed: cohort.isSuppressed,
-      isStale: cohort.isStale,
-      isFeatureEnabled: cohort.isFeatureEnabled,
-      lastUpdatedAt: cohort.lastUpdatedAt,
-      unavailableMessage: cohort.unavailableMessage,
-    });
-  }
-
-  private resolveState(state: string): PeerProgressIndicator {
-    switch (state) {
-      case 'normal':
-        return NORMAL_STATE;
-      case 'zero':
-        return ZERO_PERCENT_STATE;
-      case 'suppressed':
-        return SUPPRESSED_STATE;
-      case 'unavailable':
-        return UNAVAILABLE_STATE;
-      case 'stale':
-        return STALE_STATE;
-      case 'disabled':
-        return DISABLED_STATE;
-      default:
-        return UNAVAILABLE_STATE;
-    }
+    return of(createDemoUnitSummary(unitId, targetGrade, studentPercentage, state));
   }
 }

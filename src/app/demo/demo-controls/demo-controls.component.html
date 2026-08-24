@@ -1,0 +1,78 @@
+<main aria-labelledby="demo-controls-title" class="demo-controls">
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-icon aria-hidden="true" mat-card-avatar>science</mat-icon>
+      <mat-card-title id="demo-controls-title">Demo controls</mat-card-title>
+      <mat-card-subtitle>Local development only</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p>
+        Demo mode combines the feature surfaces used for walkthroughs. It does not replace live CPD
+        task data or recommendation scores with fabricated values.
+      </p>
+
+      <mat-slide-toggle
+        aria-describedby="demo-mode-description"
+        color="primary"
+        [checked]="demoMode.enabled"
+        (change)="setDemoMode($event)"
+      >
+        Demo mode {{ demoMode.enabled ? 'on' : 'off' }}
+      </mat-slide-toggle>
+
+      <p id="demo-mode-description">
+        Changing this setting reloads OnTrack so project and notification caches cannot mix quiet
+        and demonstration data.
+      </p>
+
+      <h2>What the switch does</h2>
+      <dl>
+        <dt>Off — quiet baseline</dt>
+        <dd>
+          Keeps one baseline unit (DEMO20007 when available) and hides the demo notification and
+          peer-comparison surfaces.
+        </dd>
+        <dt>On — complete walkthrough</dt>
+        <dd>
+          Shows the complete cross-unit scenario, the local 25-student cohort at roughly 40%, and
+          all seven curated local notifications.
+        </dd>
+      </dl>
+
+      <h2>Affected surfaces</h2>
+      <ul>
+        @for (surface of affectedSurfaces; track surface) {
+          <li>{{ surface }}</li>
+        }
+      </ul>
+
+      <section aria-labelledby="push-preview-title" class="push-preview">
+        <div class="push-preview__heading">
+          <mat-icon aria-hidden="true">notifications_active</mat-icon>
+          <div>
+            <h2 id="push-preview-title">Push notification visual preview</h2>
+            <p>Preview only — no browser permission or push subscription is changed.</p>
+          </div>
+        </div>
+
+        <div aria-label="Example push notification" class="push-preview__notification" role="img">
+          <strong>{{ pushPreview.appName }}</strong>
+          <span>{{ pushPreview.title }}</span>
+          <span>{{ pushPreview.message }}</span>
+          <small>Would open: {{ pushPreview.destination }}</small>
+        </div>
+
+        <p class="push-preview__safety" role="note">
+          This preview never calls Notification permission APIs, Angular SwPush, or
+          <code>/push_subscriptions</code>.
+        </p>
+
+        <a mat-stroked-button routerLink="/edit_profile">
+          <mat-icon aria-hidden="true">manage_accounts</mat-icon>
+          Open My Profile for real notifications
+        </a>
+      </section>
+    </mat-card-content>
+  </mat-card>
+</main>

@@ -23,6 +23,7 @@ import {
   Unit,
 } from 'src/app/api/models/doubtfire-model';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 
 interface BurndownPoint {
   name: string;
@@ -78,7 +79,7 @@ export class ProgressBurndownChartComponent
   yScaleMax: number = 100;
 
   /** Drives the privacy-safe status message below the chart. */
-  peerMedianState: PeerMedianState = 'loading';
+  peerMedianState: PeerMedianState = 'disabled';
 
   private seriesVisibility: Record<string, boolean> = {};
   private peerMedian: PeerMedianPoint[] = [];
@@ -89,6 +90,7 @@ export class ProgressBurndownChartComponent
   constructor(
     public viewContainerRef: ViewContainerRef,
     private peerProgressService: PeerProgressService,
+    readonly demoMode: DemoModeStore,
     @Inject(LOCALE_ID) private locale: string,
   ) {
     super(viewContainerRef);
@@ -107,7 +109,9 @@ export class ProgressBurndownChartComponent
       this.seriesVisibility[item.name] = true;
     });
 
-    this.loadPeerMedian();
+    if (this.demoMode.enabled) {
+      this.loadPeerMedian();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -137,7 +141,13 @@ export class ProgressBurndownChartComponent
     this.updateData();
 
     // The comparison cohort changes with the project, unit, or target grade.
-    this.loadPeerMedian();
+    if (this.demoMode.enabled) {
+      this.loadPeerMedian();
+    } else {
+      this.peerMedianState = 'disabled';
+      this.peerMedian = [];
+      this.updateData();
+    }
   }
 
   @HostListener('window:resize')
