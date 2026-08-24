@@ -24,6 +24,14 @@
       </mat-icon>
       View Task Planner
     </button>
+    <mat-form-field appearance="outline" class="w-full max-w-xs">
+      <mat-label>Grade to include</mat-label>
+      <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
+        @for (grade of gradeValues; track grade) {
+          <mat-option [value]="grade">{{ gradeLabel(grade) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
     <button
       class="download-ics-link"
       mat-stroked-button
