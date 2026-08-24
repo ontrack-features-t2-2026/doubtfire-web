@@ -26,6 +26,7 @@ import {
 } from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
+import {buildAuthCallbackFragment} from 'src/app/security/auth-callback';
 
 /**
  * The format for the data returned from the auth api.
@@ -368,11 +369,14 @@ export class AuthenticationService {
   public signInWithLti(userCredentials: {ltik: string; lti_token: string}): Observable<void> {
     return this.httpClient.post(`${this.AUTH_URL}/lti`, userCredentials).pipe(
       map((response: AuthResponse) => {
-        const username = encodeURIComponent(response.user['username']);
-        const authToken = encodeURIComponent(response.auth_token);
-        const ltik = encodeURIComponent(userCredentials.ltik);
+        const fragment = buildAuthCallbackFragment({
+          username: response.user['username'],
+          authToken: response.auth_token,
+          ltik: userCredentials.ltik,
+          isLtiLogin: true,
+        });
         setTimeout(() => {
-          window.location.href = `/sign_in?username=${username}&authToken=${authToken}&ltik=${ltik}&isLtiLogin=true`;
+          window.location.href = `/sign_in#${fragment}`;
         });
       }),
       catchError((error) => {
