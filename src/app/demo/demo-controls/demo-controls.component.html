@@ -73,30 +73,38 @@
           }
         </div>
 
-        <article aria-live="polite" class="ppi-preview-card">
+        <article
+          aria-labelledby="ppi-preview-card-title"
+          aria-live="polite"
+          class="ppi-preview-card"
+        >
           <header class="ppi-preview-card__header">
             <div class="ppi-preview-card__identity">
               <span aria-hidden="true" class="ppi-preview-card__avatar">
                 <mat-icon aria-hidden="true">groups</mat-icon>
               </span>
               <span>
-                <strong>Peer Progress Indicator</strong>
-                <small>
-                  See how your peers are progressing with this task
-                  <span>Anonymous</span>
-                </small>
+                <strong id="ppi-preview-card-title">Peer Progress Indicator</strong>
+                <small>Anonymous peers at your target grade</small>
               </span>
             </div>
 
             @if (!ppiPreview.isSuppressed) {
-              <mat-slide-toggle
-                aria-label="Show advanced peer status breakdown in the sample"
-                color="primary"
-                [checked]="ppiPreviewAdvanced"
-                (change)="setPpiPreviewAdvanced($event)"
+              <button
+                aria-controls="ppi-preview-advanced-panel"
+                aria-label="Advanced peer status breakdown"
+                class="ppi-preview-card__toggle"
+                role="switch"
+                type="button"
+                [attr.aria-checked]="ppiPreviewAdvanced"
+                [attr.aria-expanded]="ppiPreviewAdvanced"
+                (click)="setPpiPreviewAdvanced(!ppiPreviewAdvanced)"
               >
-                Advanced
-              </mat-slide-toggle>
+                <span aria-hidden="true" class="ppi-preview-card__toggle-track">
+                  <span class="ppi-preview-card__toggle-thumb"></span>
+                </span>
+                <span>Advanced</span>
+              </button>
             }
           </header>
 
@@ -110,25 +118,41 @@
             </div>
           } @else {
             <div class="ppi-preview-card__summary">
-              <span>
+              <span
+                aria-label="Peer completion progress at your target grade"
+                class="ppi-preview-card__value"
+              >
                 <strong>{{ formatPpiPercentage(ppiPreviewPercentage) }}%</strong>
-                of peers at your target grade have completed this task
+                <span>of peers have completed this task</span>
               </span>
-              <span>
-                <span class="ppi-preview-card__track">
+              <span class="ppi-preview-card__visual">
+                <span
+                  class="ppi-preview-card__track"
+                  role="progressbar"
+                  [attr.aria-label]="
+                    formatPpiPercentage(ppiPreviewPercentage) +
+                    '% of peers at your target grade have completed this task'
+                  "
+                  [attr.aria-valuemax]="100"
+                  [attr.aria-valuemin]="0"
+                  [attr.aria-valuenow]="ppiPreviewPercentage"
+                >
                   <span [style.width]="ppiPreviewWidth"></span>
                 </span>
-                <small>Anonymous cohort</small>
+                <small aria-hidden="true" class="ppi-preview-card__scale">
+                  <span>{{ formatPpiPercentage(ppiPreviewPercentage) }}%</span>
+                  <span>Peer cohort</span>
+                </small>
               </span>
             </div>
 
             @if (ppiPreviewAdvanced) {
-              <div class="ppi-preview-card__advanced">
+              <section class="ppi-preview-card__advanced" id="ppi-preview-advanced-panel">
                 <div class="ppi-preview-card__metrics">
-                  <span
+                  <span class="is-complete"
                     >Completed <strong>{{ ppiPreview.completedPercentage }}%</strong></span
                   >
-                  <span
+                  <span class="is-submitted"
                     >Submitted <strong>{{ ppiPreview.submittedPercentage }}%</strong></span
                   >
                 </div>
@@ -163,7 +187,7 @@
                     @for (segment of ppiPreviewSegments; track segment.status) {
                       <li>
                         <span [style.background-color]="segment.color"></span>
-                        {{ segment.label }}
+                        <span class="ppi-preview-legend__name">{{ segment.label }}</span>
                         <strong>{{ formatPpiPercentage(segment.percentage) }}%</strong>
                       </li>
                     }
@@ -207,7 +231,7 @@
                     </ul>
                   </div>
                 }
-              </div>
+              </section>
             }
           }
         </article>

@@ -6,7 +6,6 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {Observable, Subject, of, throwError} from 'rxjs';
 import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
 import {Task} from 'src/app/api/models/task';
@@ -39,13 +38,7 @@ describe('PpiWidgetComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
-      imports: [
-        CommonModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        MatButtonModule,
-        MatSlideToggleModule,
-      ],
+      imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule],
       providers: [{provide: PeerProgressIndicatorService, useValue: {getIndicator}}],
     }).compileComponents();
 
@@ -80,7 +73,9 @@ describe('PpiWidgetComponent', () => {
     const summary = fixture.nativeElement.querySelector('.ppi-value');
     expect(summary.textContent).toContain('60%');
     expect(summary.textContent).toContain('have submitted this task');
-    expect(summary.getAttribute('aria-label')).toBe('Peer submission progress');
+    expect(summary.getAttribute('aria-label')).toBe(
+      'Peer submission progress at your target grade',
+    );
   });
 
   it('shows a rounded zero as data rather than unavailable', () => {
@@ -207,10 +202,46 @@ describe('PpiWidgetComponent', () => {
     load(of(NORMAL_STATE));
     fixture.detectChanges();
 
-    const value = fixture.nativeElement.querySelector('[aria-label="Peer completion progress"]');
+    const value = fixture.nativeElement.querySelector(
+      '[aria-label="Peer completion progress at your target grade"]',
+    );
 
     expect(value).toBeTruthy();
     expect(value.textContent).toContain('10%');
+  });
+
+  it('keeps the visible summary concise while retaining cohort context for assistive technology', () => {
+    load(of(NORMAL_STATE));
+
+    const summary = fixture.nativeElement.querySelector('.ppi-value') as HTMLElement;
+    const progress = fixture.nativeElement.querySelector('.ppi-track') as HTMLElement;
+
+    expect(summary.querySelector('strong')?.textContent).toBe('10%');
+    expect(summary.querySelector('span')?.textContent).toBe('of peers have completed this task');
+    expect(summary.textContent).not.toContain('target grade');
+    expect(progress.getAttribute('aria-label')).toBe(
+      '10% of peers at your target grade have completed this task',
+    );
+  });
+
+  it('uses a compact accessible switch for the optional detailed panel', () => {
+    load(of(NORMAL_STATE));
+
+    const toggle = fixture.nativeElement.querySelector(
+      'button[role="switch"]',
+    ) as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeNull();
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
+    expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeTruthy();
   });
 
   it('reveals the full non-zero status distribution through the Advanced switch', () => {

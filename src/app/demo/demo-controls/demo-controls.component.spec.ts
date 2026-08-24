@@ -80,8 +80,7 @@ describe('DemoControlsComponent', () => {
     expect(text).toContain('Advanced details protected');
     expect(text).toContain('Rounded total 90%');
     expect(text).toContain('Rounded total 110%');
-    expect(text).toContain('Redo');
-    expect(text).toContain('Resubmit');
+    expect(fixture.nativeElement.querySelectorAll('.ppi-preview__choices button').length).toBe(5);
   });
 
   it('persists the switch and reloads to avoid mixed entity caches', () => {
@@ -104,11 +103,14 @@ describe('DemoControlsComponent', () => {
   });
 
   it('switches between complete and privacy-safe peer progress preview states locally', () => {
+    fixture.componentInstance.setPpiPreviewAdvanced(true);
+    fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Task status breakdown');
     expect(fixture.nativeElement.textContent).toContain('60%');
     expect(fixture.nativeElement.textContent).toContain('10%');
 
     fixture.componentInstance.setPpiPreview('details-protected');
+    fixture.componentInstance.setPpiPreviewAdvanced(true);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Detailed breakdown protected');
     expect(fixture.nativeElement.textContent).not.toContain('Redo');
@@ -121,11 +123,36 @@ describe('DemoControlsComponent', () => {
     httpTesting.expectNone((request) => request.url.includes('/peer_progress'));
   });
 
+  it('keeps the sample compact by default and exposes details through a small accessible switch', () => {
+    const preview = fixture.nativeElement.querySelector('.ppi-preview-card') as HTMLElement;
+    const toggle = preview.querySelector('button[role="switch"]') as HTMLButtonElement;
+    const progress = preview.querySelector('[role="progressbar"]') as HTMLElement;
+
+    expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
+    expect(toggle.getAttribute('aria-controls')).toBe('ppi-preview-advanced-panel');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(preview.querySelector('.ppi-preview-card__advanced')).toBeNull();
+    expect(progress.getAttribute('aria-label')).toBe(
+      '10% of peers at your target grade have completed this task',
+    );
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(preview.querySelector('#ppi-preview-advanced-panel')).toBeTruthy();
+    expect(preview.textContent).toContain('Redo');
+    expect(preview.textContent).toContain('Resubmit');
+  });
+
   it.each([
     {kind: 'rounded-90' as const, total: 90},
     {kind: 'rounded-110' as const, total: 110},
   ])('previews a $total% rounded vector without visually renormalising it', ({kind, total}) => {
     fixture.componentInstance.setPpiPreview(kind);
+    fixture.componentInstance.setPpiPreviewAdvanced(true);
     fixture.detectChanges();
 
     const independent = fixture.nativeElement.querySelector('.ppi-preview-independent');

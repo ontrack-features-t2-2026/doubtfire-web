@@ -19,25 +19,26 @@
       </span>
       <span>
         <span class="ppi-title" [id]="titleId">Peer Progress Indicator</span>
-        <span class="ppi-subtitle">
-          See how your peers are progressing with this task
-          <span class="ppi-anonymous">Anonymous</span>
-        </span>
+        <span class="ppi-subtitle">Anonymous peers at your target grade</span>
       </span>
     </div>
 
     @if (isCompactResult) {
-      <mat-slide-toggle
+      <button
         class="ppi-toggle"
-        color="primary"
+        role="switch"
+        type="button"
+        [attr.aria-checked]="advanced"
         [attr.aria-controls]="advancedPanelId"
         [attr.aria-expanded]="advanced"
         [attr.aria-label]="advancedToggleLabel"
-        [checked]="advanced"
-        (change)="setAdvanced($event.checked)"
+        (click)="setAdvanced(!advanced)"
       >
-        Advanced
-      </mat-slide-toggle>
+        <span aria-hidden="true" class="ppi-toggle-track">
+          <span class="ppi-toggle-thumb"></span>
+        </span>
+        <span>Advanced</span>
+      </button>
     }
   </header>
 
@@ -46,11 +47,13 @@
       <div
         class="ppi-value"
         [attr.aria-label]="
-          summaryVerb === 'completed' ? 'Peer completion progress' : 'Peer submission progress'
+          summaryVerb === 'completed'
+            ? 'Peer completion progress at your target grade'
+            : 'Peer submission progress at your target grade'
         "
       >
         <strong>{{ formatPercentage(summaryPercentage) }}%</strong>
-        <span>of peers at your target grade have {{ summaryVerb }} this task</span>
+        <span>of peers have {{ summaryVerb }} this task</span>
       </div>
 
       <div class="ppi-visual">
@@ -58,7 +61,10 @@
           class="ppi-track"
           role="progressbar"
           [attr.aria-label]="
-            formatPercentage(summaryPercentage) + '% of peers have ' + summaryVerb + ' this task'
+            formatPercentage(summaryPercentage) +
+            '% of peers at your target grade have ' +
+            summaryVerb +
+            ' this task'
           "
           [attr.aria-valuemax]="100"
           [attr.aria-valuemin]="0"
@@ -68,7 +74,7 @@
         </div>
         <div aria-hidden="true" class="ppi-scale">
           <span>{{ formatPercentage(summaryPercentage) }}%</span>
-          <span>Anonymous cohort</span>
+          <span>Peer cohort</span>
         </div>
       </div>
     </section>

@@ -44,7 +44,7 @@ export class DemoControlsComponent {
   ];
 
   ppiPreviewKind: PpiPreviewKind = 'full';
-  ppiPreviewAdvanced = true;
+  ppiPreviewAdvanced = false;
   private readonly ppiStatusDisplayIndex = new Map(
     TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status, index) => [status, index]),
   );
@@ -72,11 +72,11 @@ export class DemoControlsComponent {
 
   setPpiPreview(kind: PpiPreviewKind): void {
     this.ppiPreviewKind = kind;
-    this.ppiPreviewAdvanced = kind !== 'insufficient';
+    this.ppiPreviewAdvanced = false;
   }
 
-  setPpiPreviewAdvanced(change: MatSlideToggleChange): void {
-    this.ppiPreviewAdvanced = change.checked;
+  setPpiPreviewAdvanced(advanced: boolean): void {
+    this.ppiPreviewAdvanced = advanced;
   }
 
   get ppiPreview(): PeerProgressIndicator {

@@ -141,7 +141,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   }
 
   get advancedToggleLabel(): string {
-    return `${this.advanced ? 'Hide' : 'Show'} advanced peer status breakdown`;
+    return 'Advanced peer status breakdown';
   }
 
   get distributionNoticeTitle(): string {
