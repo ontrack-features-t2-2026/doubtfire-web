@@ -59,6 +59,10 @@ describe('FUnitTaskListComponent', () => {
   });
 
   beforeEach(() => {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+    });
     fixture = TestBed.createComponent(FUnitTaskListComponent);
     component = fixture.componentInstance;
     component.taskDefinitions = [];
@@ -69,6 +73,8 @@ describe('FUnitTaskListComponent', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('should create', () => {
     expect(component).toBeTruthy();
