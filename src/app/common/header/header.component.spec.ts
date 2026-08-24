@@ -1,5 +1,4 @@
 import {MediaObserver} from 'ng-flex-layout';
-import {of} from 'rxjs';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
@@ -10,6 +9,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Router} from '@angular/router';
+import {of} from 'rxjs';
 import {AuthenticationService} from 'src/app/api/models/doubtfire-model';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -69,6 +69,7 @@ describe('HeaderComponent', () => {
     let calendarModalServiceStub: {show: ReturnType<typeof vi.fn>};
 
     beforeEach(async () => {
+      TestBed.resetTestingModule();
       calendarModalServiceStub = {show: vi.fn()};
 
       await TestBed.configureTestingModule({
