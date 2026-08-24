@@ -1,5 +1,5 @@
 ### STAGE 1: Build ###
-FROM node:22 AS build
+FROM node:22.22.3-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   gettext-base \
@@ -11,10 +11,9 @@ USER node
 # Copy in doubtfire-web code
 WORKDIR /doubtfire-web
 COPY package.json package-lock.json ./
-RUN npm ci --force --include=optional
+RUN npm ci --include=optional
 
 COPY --chown=node:node . .
-RUN chmod 777 src
 
 ARG SENTRY_DSN
 ARG SENTRY_ORG
@@ -42,7 +41,7 @@ RUN --mount=type=secret,id=sentry_auth_token,uid=1000 \
 
 
 ## STAGE 2: Host ###
-FROM nginx:1.29.0-alpine
+FROM nginx:1.30.4-alpine@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
 
 # Remove the default Nginx configuration file
 RUN rm -v /etc/nginx/nginx.conf
