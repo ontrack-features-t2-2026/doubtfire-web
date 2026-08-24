@@ -2,17 +2,54 @@ import {Task} from '../models/task';
 import {buildCalendarEvent} from './calendar-event-builder';
 
 const DEFAULT_PRODID = '-//Doubtfire//Calendar Download//EN';
+const MAX_CONTENT_LINE_BYTES = 75;
+const utf8Encoder = new TextEncoder();
 
 function escapeIcsText(text: string): string {
   return text
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
+    .replace(/\r\n|\r|\n/g, '\\n');
 }
 
 function formatIcsDate(civilDate: string): string {
   return civilDate.replaceAll('-', '');
+}
+
+function nextCivilDate(civilDate: string): string {
+  const [year, month, day] = civilDate.split('-').map(Number);
+  const date = new Date(0);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day + 1);
+
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+/**
+ * Folds a content line at 75 UTF-8 octets without splitting a Unicode code point.
+ * Continuation lines start with a space, which counts toward their 75-octet limit.
+ */
+function foldIcsLine(line: string): string[] {
+  const folded: string[] = [];
+  let segment = '';
+  let segmentBytes = 0;
+
+  for (const character of line) {
+    const characterBytes = utf8Encoder.encode(character).length;
+    if (segment && segmentBytes + characterBytes > MAX_CONTENT_LINE_BYTES) {
+      folded.push(segment);
+      segment = ` ${character}`;
+      segmentBytes = 1 + characterBytes;
+    } else {
+      segment += character;
+      segmentBytes += characterBytes;
+    }
+  }
+
+  folded.push(segment);
+  return folded;
 }
 
 function formatIcsTimestamp(now: Date): string {
@@ -30,11 +67,10 @@ function formatIcsTimestamp(now: Date): string {
  * not a service and not inlined into any component, so CAL-F08's modal download can reuse it
  * directly.
  *
- * Matches webcal.rb's ICS conventions deliberately: DTSTART and DTEND are both set to the
- * same date, no exclusive-end advance, that convention belongs to CAL-F01's Google Calendar
- * URL, not to ICS. STATUS:CONFIRMED and the X-DOUBTFIRE-UNIT / X-DOUBTFIRE-TASK custom
- * properties are set per VEVENT, read from the task itself so every event is correctly
- * attributed even if the tasks span more than one unit.
+ * DTSTART is the task's due date and DTEND is the following date because RFC 5545 defines
+ * DTEND as exclusive and requires it to be later than DTSTART. STATUS:CONFIRMED and the
+ * X-DOUBTFIRE-UNIT / X-DOUBTFIRE-TASK custom properties are set per VEVENT, read from the task
+ * itself so every event is correctly attributed even if the tasks span more than one unit.
  */
 export function buildIcsCalendar(
   tasks: readonly Task[],
@@ -46,7 +82,7 @@ export function buildIcsCalendar(
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    `PRODID:${productName}`,
+    `PRODID:${escapeIcsText(productName)}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
   ];
@@ -57,15 +93,16 @@ export function buildIcsCalendar(
       continue;
     }
 
-    const date = formatIcsDate(event.date);
+    const startDate = formatIcsDate(event.date);
+    const endDate = formatIcsDate(nextCivilDate(event.date));
 
     lines.push(
       'BEGIN:VEVENT',
       `UID:${event.uid}`,
       `SUMMARY:${escapeIcsText(event.title)}`,
       'STATUS:CONFIRMED',
-      `DTSTART;VALUE=DATE:${date}`,
-      `DTEND;VALUE=DATE:${date}`,
+      `DTSTART;VALUE=DATE:${startDate}`,
+      `DTEND;VALUE=DATE:${endDate}`,
       `DTSTAMP:${dtstamp}`,
       `X-DOUBTFIRE-UNIT:${task.unit.id}`,
       `X-DOUBTFIRE-TASK:${task.definition.id}`,
@@ -75,5 +112,5 @@ export function buildIcsCalendar(
 
   lines.push('END:VCALENDAR');
 
-  return lines.join('\r\n') + '\r\n';
+  return lines.flatMap(foldIcsLine).join('\r\n') + '\r\n';
 }

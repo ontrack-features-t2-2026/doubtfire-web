@@ -50,14 +50,24 @@ describe('buildIcsCalendar', () => {
     expect(ics).toContain("SUMMARY:COS10001: 1.1P: A\\, B\\; C\\\\D's");
   });
 
-  it('sets DTSTART and DTEND to the same value, in YYYYMMDD form', () => {
+  it('sets DTSTART to the due date and exclusive DTEND to the following date', () => {
     const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
     const task = buildTask({dueDate});
 
     const ics = buildIcsCalendar([task]);
 
     expect(ics).toContain('DTSTART;VALUE=DATE:20260915');
-    expect(ics).toContain('DTEND;VALUE=DATE:20260915');
+    expect(ics).toContain('DTEND;VALUE=DATE:20260916');
+  });
+
+  it('advances an exclusive DTEND safely across year boundaries', () => {
+    const dueDate = new Date(2026, 11, 31, 23, 59, 59, 999);
+    const task = buildTask({dueDate});
+
+    const ics = buildIcsCalendar([task]);
+
+    expect(ics).toContain('DTSTART;VALUE=DATE:20261231');
+    expect(ics).toContain('DTEND;VALUE=DATE:20270101');
   });
 
   it('includes STATUS, X-DOUBTFIRE-UNIT, X-DOUBTFIRE-TASK and UID', () => {
@@ -92,6 +102,36 @@ describe('buildIcsCalendar', () => {
     expect(ics).toContain('\r\n');
     const withoutCrlf = ics.replaceAll('\r\n', '');
     expect(withoutCrlf.includes('\n')).toBe(false);
+  });
+
+  it('escapes every form of line break in text without leaving a control character', () => {
+    const task = buildTask({
+      name: 'First\r\nSecond\rThird\nFourth',
+      dueDate: new Date(2026, 8, 15, 23, 59, 59, 999),
+    });
+
+    const ics = buildIcsCalendar([task]);
+
+    expect(ics).toContain('SUMMARY:COS10001: 1.1P: First\\nSecond\\nThird\\nFourth');
+    expect(ics.replaceAll('\r\n', '')).not.toContain('\r');
+  });
+
+  it('folds long UTF-8 content lines at no more than 75 octets', () => {
+    const task = buildTask({
+      name: `Long task ${'é'.repeat(40)}`,
+      dueDate: new Date(2026, 8, 15, 23, 59, 59, 999),
+    });
+
+    const ics = buildIcsCalendar([task]);
+    const physicalSummaryLines = ics
+      .split('\r\n')
+      .filter((line) => line.startsWith('SUMMARY:') || line.startsWith(' '));
+
+    expect(physicalSummaryLines.length).toBeGreaterThan(1);
+    expect(physicalSummaryLines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(
+      true,
+    );
+    expect(physicalSummaryLines.slice(1).every((line) => line.startsWith(' '))).toBe(true);
   });
 
   it('falls through to definition.targetDate, proving the date comes from buildCalendarEvent, not a raw dueDate read', () => {
