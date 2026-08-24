@@ -4,6 +4,8 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   docker-web-server:
