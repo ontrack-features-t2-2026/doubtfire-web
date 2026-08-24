@@ -5,6 +5,7 @@ import {
   STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
+  USER_DISABLED_STATE,
   ZERO_PERCENT_STATE,
 } from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {resolvePeerProgressState} from './peer-progress-indicator-state';
@@ -58,6 +59,26 @@ describe('resolvePeerProgressState', () => {
     const result = resolvePeerProgressState(false, null, DISABLED_STATE);
     expect(result.state).toBe('disabled');
     expect(result.message).toBe(DISABLED_STATE.unavailableMessage);
+  });
+
+  it('returns preference-disabled without compact or detailed values when the user opts out', () => {
+    const result = resolvePeerProgressState(false, null, USER_DISABLED_STATE);
+
+    expect(result.state).toBe('preference-disabled');
+    expect(result.data?.completedPercentage).toBeNull();
+    expect(result.data?.submittedPercentage).toBeNull();
+    expect(result.data?.statusDistribution).toEqual([]);
+    expect(result.message).toContain('profile settings');
+  });
+
+  it('keeps an old API response usable as submission progress when completion is absent', () => {
+    const result = resolvePeerProgressState(false, null, {
+      ...NORMAL_STATE,
+      completedPercentage: null,
+    });
+
+    expect(result.state).toBe('success');
+    expect(result.data?.submittedPercentage).toBe(60);
   });
 
   it('returns stale without exposing a percentage when data is outdated', () => {

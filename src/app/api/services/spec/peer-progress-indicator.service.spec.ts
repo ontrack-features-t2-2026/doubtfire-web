@@ -6,6 +6,7 @@ import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator'
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {
+  DEMO_STATUS_DISTRIBUTION,
   DISABLED_STATE,
   NORMAL_STATE,
   SUPPRESSED_STATE,
@@ -81,13 +82,228 @@ describe('PeerProgressIndicatorService', () => {
       unitId: 1,
       targetGrade: null,
       submittedPercentage: null,
+      completedPercentage: null,
+      distributionAvailable: false,
+      statusDistribution: [],
+      isUserEnabled: true,
       isSuppressed: false,
       isStale: false,
       isFeatureEnabled: true,
       lastUpdatedAt: null,
       unavailableMessage: 'Peer progress is currently unavailable.',
+      unavailableReason: null,
+      distributionUnavailableReason: null,
     });
   });
+
+  it('maps the full quantised status distribution and compact completion metric', () => {
+    let result: PeerProgressIndicator | undefined;
+
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 60,
+      completed_percentage: 10,
+      distribution_available: true,
+      status_distribution: DEMO_STATUS_DISTRIBUTION,
+      is_user_enabled: true,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: '',
+      unavailable_reason: null,
+      distribution_unavailable_reason: null,
+    });
+
+    expect(result).toMatchObject({
+      submittedPercentage: 60,
+      completedPercentage: 10,
+      distributionAvailable: true,
+      statusDistribution: DEMO_STATUS_DISTRIBUTION,
+      isUserEnabled: true,
+    });
+  });
+
+  it.each([
+    ['a missing canonical status', DEMO_STATUS_DISTRIBUTION.slice(0, -1)],
+    ['a duplicate status', [...DEMO_STATUS_DISTRIBUTION.slice(0, -1), DEMO_STATUS_DISTRIBUTION[0]]],
+    [
+      'an unknown status',
+      [...DEMO_STATUS_DISTRIBUTION.slice(0, -1), {status: 'unknown_status', percentage: 0}],
+    ],
+    [
+      'a non-quantised percentage',
+      DEMO_STATUS_DISTRIBUTION.map((entry, index) =>
+        index === 0 ? {...entry, percentage: 15} : entry,
+      ),
+    ],
+  ])('fails the entire detailed vector closed for %s', (_label, statusDistribution) => {
+    let result: PeerProgressIndicator | undefined;
+
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 60,
+      completed_percentage: 10,
+      distribution_available: true,
+      status_distribution: statusDistribution,
+      is_user_enabled: true,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: '',
+      distribution_unavailable_reason: 'detailed_data_unavailable',
+    });
+
+    expect(result?.distributionAvailable).toBe(false);
+    expect(result?.statusDistribution).toEqual([]);
+    expect(result?.completedPercentage).toBe(10);
+  });
+
+  it('scrubs every compact and detailed value when the server reports the user preference off', () => {
+    let result: PeerProgressIndicator | undefined;
+
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 60,
+      completed_percentage: 10,
+      distribution_available: true,
+      status_distribution: DEMO_STATUS_DISTRIBUTION,
+      is_user_enabled: false,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: 'server-provided preference detail',
+      unavailable_reason: 'user_disabled',
+      distribution_unavailable_reason: 'user_disabled',
+    });
+
+    expect(result).toMatchObject({
+      submittedPercentage: null,
+      completedPercentage: null,
+      distributionAvailable: false,
+      statusDistribution: [],
+      isUserEnabled: false,
+      unavailableReason: 'user_disabled',
+    });
+  });
+
+  it('scrubs compact and detailed values from a suppressed response even if the payload is malformed', () => {
+    let result: PeerProgressIndicator | undefined;
+
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 60,
+      completed_percentage: 10,
+      distribution_available: true,
+      status_distribution: DEMO_STATUS_DISTRIBUTION,
+      is_user_enabled: true,
+      is_suppressed: true,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: 'Not enough students to show progress.',
+      unavailable_reason: 'insufficient_cohort',
+      distribution_unavailable_reason: 'insufficient_cohort',
+    });
+
+    expect(result).toMatchObject({
+      submittedPercentage: null,
+      completedPercentage: null,
+      distributionAvailable: false,
+      statusDistribution: [],
+      isSuppressed: true,
+    });
+  });
+
+  it('does not retain unrecognised reason strings from the API', () => {
+    let result: PeerProgressIndicator | undefined;
+
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 60,
+      completed_percentage: 10,
+      distribution_available: false,
+      status_distribution: null,
+      is_user_enabled: true,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: '',
+      unavailable_reason: 'sensitive-internal-reason',
+      distribution_unavailable_reason: 'sensitive-internal-detail',
+    });
+
+    expect(result?.unavailableReason).toBeNull();
+    expect(result?.distributionUnavailableReason).toBeNull();
+  });
+
+  it.each([
+    ['not finite', Number.NaN, Number.POSITIVE_INFINITY],
+    ['negative', -10, -20],
+    ['over 100', 110, 120],
+    ['not quantised', 15, 25],
+  ])(
+    'fails malformed compact percentages closed when they are %s',
+    (_label, submitted, completed) => {
+      let result: PeerProgressIndicator | undefined;
+
+      service.getIndicator(7, 99).subscribe((value) => {
+        result = value;
+      });
+
+      httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+        task_definition_id: 99,
+        unit_id: 1,
+        target_grade: 2,
+        submitted_percentage: submitted,
+        completed_percentage: completed,
+        distribution_available: false,
+        status_distribution: null,
+        is_user_enabled: true,
+        is_suppressed: false,
+        is_stale: false,
+        is_feature_enabled: true,
+        last_updated_at: '2026-08-23T00:00:00Z',
+        unavailable_message: '',
+      });
+
+      expect(result?.submittedPercentage).toBeNull();
+      expect(result?.completedPercentage).toBeNull();
+    },
+  );
 
   it('cancels the live HTTP request when the caller unsubscribes', () => {
     const subscription = service.getIndicator(7, 99).subscribe();

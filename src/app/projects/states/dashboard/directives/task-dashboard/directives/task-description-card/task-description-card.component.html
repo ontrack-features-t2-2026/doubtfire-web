@@ -12,10 +12,6 @@
     ></div>
     @if (task) {
       <f-task-date-slider [task]="task" />
-
-      @if (showPeerProgress) {
-        <f-ppi-widget [task]="task" [taskDef]="taskDef" />
-      }
     }
     <ul>
       <li>{{ grades.names[taskDef?.targetGrade] }} Task</li>

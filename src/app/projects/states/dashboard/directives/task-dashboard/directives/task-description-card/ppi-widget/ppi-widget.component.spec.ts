@@ -1,21 +1,27 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {CommonModule} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {Observable, Subject, of, throwError} from 'rxjs';
 import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {
+  DETAIL_PROTECTED_STATE,
   DISABLED_STATE,
   NORMAL_STATE,
+  ROUNDED_90_STATE,
+  ROUNDED_110_STATE,
   STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
+  USER_DISABLED_STATE,
   ZERO_PERCENT_STATE,
 } from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {PpiWidgetComponent} from './ppi-widget.component';
@@ -33,7 +39,13 @@ describe('PpiWidgetComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
-      imports: [MatIconModule, MatProgressSpinnerModule, MatButtonModule],
+      imports: [
+        CommonModule,
+        MatIconModule,
+        MatProgressSpinnerModule,
+        MatButtonModule,
+        MatSlideToggleModule,
+      ],
       providers: [{provide: PeerProgressIndicatorService, useValue: {getIndicator}}],
     }).compileComponents();
 
@@ -54,19 +66,29 @@ describe('PpiWidgetComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('shows the peer percentage on a normal response', () => {
+  it('shows the completion percentage on a normal response', () => {
     load(of(NORMAL_STATE));
     expect(getIndicator).toHaveBeenCalledWith(7, 99);
     expect(component.view.state).toBe('success');
-    expect(fixture.nativeElement.textContent).toContain('42%');
+    expect(fixture.nativeElement.textContent).toContain('10%');
+    expect(fixture.nativeElement.textContent).toContain('have completed this task');
+  });
+
+  it('labels the rolling-API fallback as submitted rather than completed', () => {
+    load(of({...NORMAL_STATE, completedPercentage: null}));
+
+    const summary = fixture.nativeElement.querySelector('.ppi-value');
+    expect(summary.textContent).toContain('60%');
+    expect(summary.textContent).toContain('have submitted this task');
+    expect(summary.getAttribute('aria-label')).toBe('Peer submission progress');
   });
 
   it('shows a rounded zero as data rather than unavailable', () => {
     load(of(ZERO_PERCENT_STATE));
     expect(component.view.state).toBe('no-data');
-    expect(fixture.nativeElement.textContent).toContain(
-      'Peer submission progress rounds to 0% for your target grade',
-    );
+    expect(fixture.nativeElement.textContent).toContain('0%');
+    expect(fixture.nativeElement.textContent).toContain('have completed this task');
+    expect(fixture.nativeElement.querySelector('.ppi-fill').style.width).toBe('0%');
   });
 
   it('shows the API-provided hidden message for a suppressed response', () => {
@@ -86,6 +108,15 @@ describe('PpiWidgetComponent', () => {
     load(of(DISABLED_STATE));
     expect(component.view.state).toBe('disabled');
     expect(fixture.nativeElement.textContent).toContain(DISABLED_STATE.unavailableMessage);
+  });
+
+  it('uses a local neutral message when the profile preference is disabled', () => {
+    load(of(USER_DISABLED_STATE));
+
+    expect(component.view.state).toBe('preference-disabled');
+    expect(fixture.nativeElement.textContent).toContain('Peer progress is turned off');
+    expect(fixture.nativeElement.textContent).toContain('profile settings');
+    expect(fixture.nativeElement.textContent).not.toContain('60%');
   });
 
   it('shows a distinct visible stale state when data is outdated', () => {
@@ -136,12 +167,12 @@ describe('PpiWidgetComponent', () => {
 
   it('does not render a stale value if a request fails after a new one has already started', () => {
     load(of(NORMAL_STATE));
-    expect(fixture.nativeElement.textContent).toContain('42%');
+    expect(fixture.nativeElement.textContent).toContain('10%');
 
     load(throwError(() => new Error('network down')));
     fixture.detectChanges();
     expect(component.view.state).toBe('error');
-    expect(fixture.nativeElement.textContent).not.toContain('42%');
+    expect(fixture.nativeElement.textContent).not.toContain('10%');
   });
 
   it('cancels a previous in-flight request when the task changes before it resolves', () => {
@@ -176,11 +207,76 @@ describe('PpiWidgetComponent', () => {
     load(of(NORMAL_STATE));
     fixture.detectChanges();
 
-    const value = fixture.nativeElement.querySelector(
-      '.ppi-widget:not(.ppi-widget--muted) span[aria-label="Peer submission progress"]',
-    );
+    const value = fixture.nativeElement.querySelector('[aria-label="Peer completion progress"]');
 
     expect(value).toBeTruthy();
-    expect(value.textContent).toContain('42%');
+    expect(value.textContent).toContain('10%');
+  });
+
+  it('reveals the full non-zero status distribution through the Advanced switch', () => {
+    load(of(NORMAL_STATE));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Task status breakdown');
+    expect(text).toContain('Redo');
+    expect(text).toContain('Resubmit');
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.ppi-independent')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.ppi-legend li').length).toBe(7);
+    expect(
+      Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.ppi-name')).map((label) =>
+        label.textContent.trim(),
+      ),
+    ).toEqual([
+      'Not Started',
+      'Working On It',
+      'Ready for Feedback',
+      'Resubmit',
+      'Redo',
+      'Complete',
+      'Fail',
+    ]);
+  });
+
+  it.each([
+    {state: ROUNDED_90_STATE, total: 90},
+    {state: ROUNDED_110_STATE, total: 110},
+  ])('does not visually renormalise a privacy-rounded $total% vector', ({state, total}) => {
+    load(of(state));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const independent = fixture.nativeElement.querySelector('.ppi-independent');
+    const workingFill = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] .ppi-independent__fill',
+    ) as HTMLElement;
+    const workingTrack = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] [role="progressbar"]',
+    ) as HTMLElement;
+
+    expect(component.distributionTotal).toBe(total);
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeNull();
+    expect(independent.textContent).toContain(`total ${total}%`);
+    expect(independent.textContent).toContain('not stretched to fill 100%');
+    expect(workingFill.style.width).toBe('20%');
+    expect(workingTrack.getAttribute('aria-valuenow')).toBe('20');
+    expect(workingTrack.getAttribute('aria-describedby')).toBe(component.independentScaleNoticeId);
+  });
+
+  it('keeps the compact value while explaining a privacy-withheld detailed vector', () => {
+    load(of(DETAIL_PROTECTED_STATE));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('10%');
+    expect(text).toContain('Detailed breakdown protected');
+    expect(text).not.toContain('Redo');
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeNull();
   });
 });

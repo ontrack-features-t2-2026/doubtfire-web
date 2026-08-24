@@ -77,11 +77,18 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       (subscription) => (this.pushSubscribed = subscription !== null),
     );
 
+    // Existing users from an older API response have no stored value. Treat
+    // that as the product default (on) until they explicitly opt out.
+    if (this.user.displayPeerProgress === undefined || this.user.displayPeerProgress === null) {
+      this.user.displayPeerProgress = true;
+    }
+
     if (!this.user.hasRunFirstTimeSetup) {
       this.user.optInToResearch = false;
       this.user.receiveFeedbackNotifications = true;
       this.user.receivePortfolioNotifications = true;
       this.user.receiveTaskNotifications = true;
+      this.user.displayPeerProgress = true;
     }
   }
 

@@ -92,6 +92,27 @@
 
       <f-notification-settings [user]="user"></f-notification-settings>
 
+      <section
+        aria-labelledby="peer-progress-preference-title"
+        class="peer-progress-preference"
+        fxFlexFill
+        fxLayout="column"
+      >
+        <h3 id="peer-progress-preference-title">Peer progress</h3>
+        <mat-slide-toggle
+          aria-describedby="peer-progress-preference-description"
+          color="primary"
+          name="displayPeerProgress"
+          [(ngModel)]="user.displayPeerProgress"
+        >
+          Display anonymous peer progress statistics
+        </mat-slide-toggle>
+        <small id="peer-progress-preference-description">
+          This controls whether you see the privacy-protected widget below your submission details.
+          It does not opt your anonymous task status out of authorised cohort aggregation.
+        </small>
+      </section>
+
       <!--
         Push opt-in. Subscribing has to come from a click: the browser only shows
         its permission prompt in response to a user gesture, and the service

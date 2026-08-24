@@ -68,12 +68,20 @@ describe('DemoControlsComponent', () => {
     expect(text).toContain('Off — quiet baseline');
     expect(text).toContain('one baseline unit (DEMO20007 when available)');
     expect(text).toContain('On — complete walkthrough');
-    expect(text).toContain('local 25-student cohort at roughly 40%');
+    expect(text).toContain('privacy-safe lifecycle spread (60% submitted and 10% complete)');
     expect(text).toContain('all seven curated local notifications');
     expect(text).toContain('live local project cards');
     expect(text).toContain('live notification bell');
     expect(text).toContain('Live task-level peer comparison');
-    expect(text).toContain('42% unit-summary sample');
+    expect(text).toContain('unit summary');
+    expect(text).toContain('Peer Progress Indicator visual preview');
+    expect(text).toContain('Full status data');
+    expect(text).toContain('Insufficient cohort');
+    expect(text).toContain('Advanced details protected');
+    expect(text).toContain('Rounded total 90%');
+    expect(text).toContain('Rounded total 110%');
+    expect(text).toContain('Redo');
+    expect(text).toContain('Resubmit');
   });
 
   it('persists the switch and reloads to avoid mixed entity caches', () => {
@@ -93,5 +101,47 @@ describe('DemoControlsComponent', () => {
     expect(requestPermission).not.toHaveBeenCalled();
     expect(requestSubscription).not.toHaveBeenCalled();
     httpTesting.expectNone((request) => request.url.includes('/push_subscriptions'));
+  });
+
+  it('switches between complete and privacy-safe peer progress preview states locally', () => {
+    expect(fixture.nativeElement.textContent).toContain('Task status breakdown');
+    expect(fixture.nativeElement.textContent).toContain('60%');
+    expect(fixture.nativeElement.textContent).toContain('10%');
+
+    fixture.componentInstance.setPpiPreview('details-protected');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Detailed breakdown protected');
+    expect(fixture.nativeElement.textContent).not.toContain('Redo');
+
+    fixture.componentInstance.setPpiPreview('insufficient');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Progress is hidden to protect privacy');
+    expect(fixture.nativeElement.textContent).toContain('Not enough students');
+
+    httpTesting.expectNone((request) => request.url.includes('/peer_progress'));
+  });
+
+  it.each([
+    {kind: 'rounded-90' as const, total: 90},
+    {kind: 'rounded-110' as const, total: 110},
+  ])('previews a $total% rounded vector without visually renormalising it', ({kind, total}) => {
+    fixture.componentInstance.setPpiPreview(kind);
+    fixture.detectChanges();
+
+    const independent = fixture.nativeElement.querySelector('.ppi-preview-independent');
+    const workingFill = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] .ppi-preview-independent__fill',
+    ) as HTMLElement;
+    const workingTrack = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] [role="progressbar"]',
+    ) as HTMLElement;
+
+    expect(fixture.componentInstance.ppiPreviewDistributionTotal).toBe(total);
+    expect(fixture.nativeElement.querySelector('.ppi-preview-bar')).toBeNull();
+    expect(independent.textContent).toContain(`total ${total}%`);
+    expect(independent.textContent).toContain('not stretched to fill 100%');
+    expect(workingFill.style.width).toBe('20%');
+    expect(workingTrack.getAttribute('aria-valuenow')).toBe('20');
+    expect(workingTrack.getAttribute('aria-describedby')).toBe('ppi-preview-independent-note');
   });
 });

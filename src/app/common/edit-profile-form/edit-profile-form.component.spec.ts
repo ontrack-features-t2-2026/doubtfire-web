@@ -23,6 +23,7 @@ const makeUser = (overrides: Partial<User> = {}): User =>
     receiveFeedbackNotifications: false,
     receivePortfolioNotifications: false,
     receiveTaskNotifications: false,
+    displayPeerProgress: true,
     ...overrides,
   }) as User;
 
@@ -107,6 +108,22 @@ describe('EditProfileFormComponent', () => {
     expect(component.user.receiveTaskNotifications).toBe(false);
   });
 
+  it("preserves an established user's explicit peer progress opt-out", () => {
+    dialogData.user = makeUser({displayPeerProgress: false});
+
+    createComponent();
+
+    expect(component.user.displayPeerProgress).toBe(false);
+  });
+
+  it('defaults a rolling-API user without the preference field to on', () => {
+    dialogData.user = makeUser({displayPeerProgress: undefined});
+
+    createComponent();
+
+    expect(component.user.displayPeerProgress).toBe(true);
+  });
+
   it('does not change another user when opened by an admin', () => {
     userServiceStub.currentUser = makeUser({
       id: 1,
@@ -145,6 +162,7 @@ describe('EditProfileFormComponent', () => {
     expect(component.user.receiveFeedbackNotifications).toBe(true);
     expect(component.user.receivePortfolioNotifications).toBe(true);
     expect(component.user.receiveTaskNotifications).toBe(true);
+    expect(component.user.displayPeerProgress).toBe(true);
   });
 
   it('applies defaults to a blank user opened from the admin screen', () => {
@@ -157,6 +175,7 @@ describe('EditProfileFormComponent', () => {
     expect(component.user.receiveFeedbackNotifications).toBe(true);
     expect(component.user.receivePortfolioNotifications).toBe(true);
     expect(component.user.receiveTaskNotifications).toBe(true);
+    expect(component.user.displayPeerProgress).toBe(true);
   });
 
   it('returns no instructions when nothing is blocking notifications', () => {
