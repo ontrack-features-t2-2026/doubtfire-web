@@ -15,6 +15,7 @@ import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
@@ -161,6 +162,11 @@ describe('HeaderComponent', () => {
           {provide: UserService, useValue: {currentUser: {role: 'Student', username: 'student_1'}}},
           {provide: AuthenticationService, useValue: emptyProvider},
           {provide: MediaObserver, useValue: mediaObserverStub},
+          {
+            provide: NotificationService,
+            useValue: {unreadCount$: of(0), refreshUnreadCount: vi.fn(() => of(0))},
+          },
+          {provide: DemoModeStore, useValue: {available: false}},
           {
             provide: DoubtfireConstants,
             useValue: {
