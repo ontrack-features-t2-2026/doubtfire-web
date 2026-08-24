@@ -22,7 +22,7 @@ if (environment.sentryDsn && telemetrySafe) {
     // and Session Replay can observe iframe/resource URLs outside beforeSend;
     // legacy SCORM URLs still contain a reusable credential in their path.
     // They must stay disabled until that launch protocol is redesigned.
-    enableLogs: true,
+    enableLogs: false,
     sendDefaultPii: false,
     beforeSend(event) {
       if (event.request?.url) {

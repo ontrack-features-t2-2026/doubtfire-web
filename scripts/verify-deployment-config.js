@@ -117,6 +117,11 @@ assert.doesNotMatch(
   'tracing and replay must stay disabled while SCORM uses credential-bearing paths',
 );
 assert.match(
+  applicationBootstrap,
+  /enableLogs:\s*false/,
+  'Sentry Logs must stay disabled for the errors-only telemetry policy',
+);
+assert.match(
   scormPlayerTemplate,
   /<iframe[^>]*data-sentry-block[^>]*referrerpolicy="no-referrer"/,
   'the SCORM iframe must suppress referrers and remain blocked from any future replay integration',
