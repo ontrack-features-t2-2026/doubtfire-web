@@ -41,6 +41,7 @@ export function getDueDateWarning(
 }
 
 export type DashboardTask = {
+  taskDefinitionId: number;
   title: string;
   subtitle: string;
   statusLabel: string;
