@@ -60,7 +60,8 @@
 }
 
 .progress-burndown__legend-item--hidden {
-  opacity: 0.55;
+  background: #f3f4f6;
+  color: #4b5563;
 
   .progress-burndown__legend-label {
     text-decoration: line-through;

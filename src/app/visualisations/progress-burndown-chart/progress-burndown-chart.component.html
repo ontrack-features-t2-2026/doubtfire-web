@@ -21,13 +21,13 @@
     </ngx-charts-line-chart>
   </div>
 
-  @if (data.length > 0) {
+  @if (temp.length > 0) {
     <div
       aria-label="Burndown chart series visibility"
       class="progress-burndown__legend"
       role="group"
     >
-      @for (series of data; track series.name; let index = $index) {
+      @for (series of temp; track series.name; let index = $index) {
         <button
           class="progress-burndown__legend-item"
           type="button"
@@ -39,7 +39,7 @@
           <span
             aria-hidden="true"
             class="progress-burndown__legend-swatch"
-            [style.background-color]="seriesColors[index] || '#777777'"
+            [style.background-color]="seriesColor(index)"
           ></span>
 
           <span class="progress-burndown__legend-label">
