@@ -1,5 +1,6 @@
 import {EntityCache} from 'ngx-entity-service';
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
@@ -64,14 +65,30 @@ export class CrossDashboardComponent implements OnInit {
     private globalStateService: GlobalStateService,
     private projectService: ProjectService,
     private changeDetectorRef: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
+    const requestedScope = this.route.snapshot.queryParamMap.get('scope');
+
+    if (requestedScope === 'active' || requestedScope === 'previous' || requestedScope === 'all') {
+      this.unitScope = requestedScope;
+    } else {
+      this.unitScope = 'active';
+    }
+
     this.globalStateService.onLoad(() => {
       this.globalStateService.currentUserProjects.values.subscribe((projects) => {
         const activeProjects = projects.filter((project) => project.unit.isActive);
         this.activeUnits = this.mapProjects(activeProjects);
         this.processTasks();
+
+        const needsPreviousUnits = this.unitScope === 'previous' || this.unitScope === 'all';
+
+        if (needsPreviousUnits && !this.previousUnitsLoaded && !this.loadingPreviousUnits) {
+          this.loadPreviousUnits();
+        }
       });
     });
   }
@@ -82,6 +99,13 @@ export class CrossDashboardComponent implements OnInit {
 
   setUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
+
+    void this.router.navigate([], {
+      queryParams: {scope},
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
     this.processTasks();
 
     const needsPreviousUnits = scope === 'previous' || scope === 'all';

@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
+import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, of, throwError} from 'rxjs';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
@@ -71,6 +72,18 @@ describe('CrossDashboardComponent', () => {
       query: projectServiceQuery,
     };
 
+    const activatedRouteStub = {
+      snapshot: {
+        queryParamMap: {
+          get: vi.fn().mockReturnValue(null),
+        },
+      },
+    };
+
+    const routerStub = {
+      navigate: vi.fn().mockResolvedValue(true),
+    };
+
     await TestBed.configureTestingModule({
       declarations: [CrossDashboardComponent],
       imports: [MatMenuModule],
@@ -82,6 +95,14 @@ describe('CrossDashboardComponent', () => {
         {
           provide: ProjectService,
           useValue: projectServiceStub,
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: activatedRouteStub,
+        },
+        {
+          provide: Router,
+          useValue: routerStub,
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -100,10 +121,81 @@ describe('CrossDashboardComponent', () => {
     expect(component.unitScope).toBe('active');
     expect(projectServiceQuery).not.toHaveBeenCalled();
   });
+  it('restores the unit scope from the URL', () => {
+    const route = TestBed.inject(ActivatedRoute) as unknown as {
+      snapshot: {
+        queryParamMap: {
+          get: ReturnType<typeof vi.fn>;
+        };
+      };
+    };
+
+    route.snapshot.queryParamMap.get.mockReturnValue('previous');
+
+    const newFixture = TestBed.createComponent(CrossDashboardComponent);
+    const newComponent = newFixture.componentInstance;
+
+    newFixture.detectChanges();
+
+    expect(newComponent.unitScope).toBe('previous');
+
+    newFixture.destroy();
+  });
+
+  it('falls back to Active units when the URL scope is invalid', () => {
+    const route = TestBed.inject(ActivatedRoute) as unknown as {
+      snapshot: {
+        queryParamMap: {
+          get: ReturnType<typeof vi.fn>;
+        };
+      };
+    };
+
+    route.snapshot.queryParamMap.get.mockReturnValue('invalid');
+
+    const newFixture = TestBed.createComponent(CrossDashboardComponent);
+    newFixture.detectChanges();
+
+    expect(newFixture.componentInstance.unitScope).toBe('active');
+
+    newFixture.destroy();
+  });
+
+  it('falls back to Active units when the URL scope is missing', () => {
+    const route = TestBed.inject(ActivatedRoute) as unknown as {
+      snapshot: {
+        queryParamMap: {
+          get: ReturnType<typeof vi.fn>;
+        };
+      };
+    };
+
+    route.snapshot.queryParamMap.get.mockReturnValue(null);
+
+    const newFixture = TestBed.createComponent(CrossDashboardComponent);
+    newFixture.detectChanges();
+
+    expect(newFixture.componentInstance.unitScope).toBe('active');
+
+    newFixture.destroy();
+  });
+
+  it('updates the URL when the unit scope changes', () => {
+    component.setUnitScope('previous');
+
+    const router = TestBed.inject(Router) as unknown as {
+      navigate: ReturnType<typeof vi.fn>;
+    };
+
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      queryParams: {scope: 'previous'},
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  });
 
   it('keeps only active projects in the active-unit collection', () => {
     projectsSubject.next([makeProject(1, 'COS10001', true), makeProject(2, 'COS30046', false)]);
-
     expect(component.activeUnits.map((unit) => unit.code)).toEqual(['COS10001']);
     expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['COS10001']);
   });
