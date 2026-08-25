@@ -1,6 +1,7 @@
 import {EntityCache} from 'ngx-entity-service';
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
+import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
 import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
@@ -32,7 +33,16 @@ type DashboardUnit = {
   code: string;
   name: string;
   tasks: DashboardTask[];
+  gradeSummaries: GradeCompletionSummary[];
   isPrevious: boolean;
+};
+
+type GradeCompletionSummary = {
+  targetGrade: number;
+  label: string;
+  completed: number;
+  total: number;
+  percentage: number | null;
 };
 
 @Component({
@@ -46,6 +56,19 @@ export class CrossDashboardComponent implements OnInit {
   previousUnits: DashboardUnit[] = [];
 
   unitScope: UnitScope = 'active';
+
+  globalSearchTerm = '';
+  selectedStatuses: TaskStatusEnum[] = [];
+  selectedGrades: number[] = [];
+
+  readonly statusOptions = TaskStatus.STATUS_KEYS.flatMap((value) => {
+    const label = TaskStatus.STATUS_LABELS.get(value);
+    return label ? [{value, label}] : [];
+  });
+  readonly gradeOptions = Grade.PASS_RANGE.map((value) => ({
+    value,
+    label: Grade.GRADES[value],
+  }));
 
   startDate = '';
   endDate = '';
@@ -91,6 +114,25 @@ export class CrossDashboardComponent implements OnInit {
     return !this.isDateRangeInvalid && (!!this.startDate || !!this.endDate);
   }
 
+  get hasGlobalTaskCriteria(): boolean {
+    return (
+      this.normaliseSearchText(this.globalSearchTerm).length > 0 ||
+      this.selectedStatuses.length > 0 ||
+      this.selectedGrades.length > 0
+    );
+  }
+
+  get hasGlobalToolbarChanges(): boolean {
+    return (
+      this.unitScope !== 'active' ||
+      this.globalSearchTerm.length > 0 ||
+      this.selectedStatuses.length > 0 ||
+      this.selectedGrades.length > 0 ||
+      !!this.startDate ||
+      !!this.endDate
+    );
+  }
+
   setUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
     this.processTasks();
@@ -100,6 +142,36 @@ export class CrossDashboardComponent implements OnInit {
     if (needsPreviousUnits && !this.previousUnitsLoaded && !this.loadingPreviousUnits) {
       this.loadPreviousUnits();
     }
+  }
+
+  setGlobalSearch(value: string): void {
+    this.globalSearchTerm = value ?? '';
+    this.processTasks();
+  }
+
+  setStatuses(statuses: readonly TaskStatusEnum[] | null): void {
+    this.selectedStatuses = [...(statuses ?? [])];
+    this.processTasks();
+  }
+
+  setGrades(grades: readonly number[] | null): void {
+    this.selectedGrades = [...(grades ?? [])];
+    this.processTasks();
+  }
+
+  clearGlobalFilters(): void {
+    this.globalSearchTerm = '';
+    this.selectedStatuses = [];
+    this.selectedGrades = [];
+    this.startDate = '';
+    this.endDate = '';
+
+    if (this.unitScope !== 'active') {
+      this.setUnitScope('active');
+      return;
+    }
+
+    this.processTasks();
   }
 
   setStartDate(value: string): void {
@@ -195,46 +267,86 @@ export class CrossDashboardComponent implements OnInit {
   private processTasks(): void {
     const units = this.getUnitsForCurrentScope();
 
-    this.unitsProcessed = units.map((unit) => ({
-      ...unit,
-      tasks: unit.tasks
-        .filter((task) => {
-          const filters = this.filters.get(unit.projectId) ?? [];
-          const isHiddenCompletedTask =
-            filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status);
+    this.unitsProcessed = units
+      .map((unit) => ({
+        unit,
+        globallyFilteredTasks: unit.tasks.filter((task) =>
+          this.taskMatchesGlobalCriteria(task, unit),
+        ),
+      }))
+      .filter(
+        ({globallyFilteredTasks}) =>
+          !this.hasGlobalTaskCriteria || globallyFilteredTasks.length > 0,
+      )
+      .map(({unit, globallyFilteredTasks}) => ({
+        ...unit,
+        gradeSummaries: this.buildGradeSummaries(unit.tasks),
+        tasks: globallyFilteredTasks
+          .filter((task) => {
+            const filters = this.filters.get(unit.projectId) ?? [];
+            const isHiddenCompletedTask =
+              filters.includes(Filter.HideCompleted) && completedTypes.includes(task.status);
 
-          return (
-            !isHiddenCompletedTask &&
-            this.taskMatchesDateRange(task) &&
-            this.taskMatchesSearch(task, unit.projectId)
-          );
-        })
-        .sort((a, b) => {
-          const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
+            return (
+              !isHiddenCompletedTask &&
+              this.taskMatchesDateRange(task) &&
+              this.taskMatchesPerUnitSearch(task, unit)
+            );
+          })
+          .sort((a, b) => {
+            const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
 
-          if (completedTypes.includes(a.status) && !completedTypes.includes(b.status)) {
-            return -1;
-          }
+            if (completedTypes.includes(a.status) && !completedTypes.includes(b.status)) {
+              return -1;
+            }
 
-          if (!completedTypes.includes(a.status) && completedTypes.includes(b.status)) {
-            return 1;
-          }
+            if (!completedTypes.includes(a.status) && completedTypes.includes(b.status)) {
+              return 1;
+            }
 
-          switch (sort) {
-            case SortMode.Recommended:
-              // TODO: Connect to recommender's points.
-              return 0;
-            case SortMode.SubmissionDate:
-              return this.compareDueDates(a.dueDate, b.dueDate);
-            case SortMode.Default:
-              return a.weight - b.weight;
-          }
+            switch (sort) {
+              case SortMode.Recommended:
+                // TODO: Connect to recommender's points.
+                return 0;
+              case SortMode.SubmissionDate:
+                return this.compareDueDates(a.dueDate, b.dueDate);
+              case SortMode.Default:
+                return a.weight - b.weight;
+            }
 
-          return 0;
-        }),
-    }));
+            return 0;
+          }),
+      }));
 
     this.changeDetectorRef.markForCheck();
+  }
+
+  private taskMatchesGlobalCriteria(task: DashboardTask, unit: DashboardUnit): boolean {
+    const matchesStatus =
+      this.selectedStatuses.length === 0 || this.selectedStatuses.includes(task.status);
+    const matchesGrade =
+      this.selectedGrades.length === 0 || this.selectedGrades.includes(task.targetGrade);
+
+    return matchesStatus && matchesGrade && this.taskMatchesGlobalSearch(task, unit);
+  }
+
+  private buildGradeSummaries(tasks: readonly DashboardTask[]): GradeCompletionSummary[] {
+    return this.selectedGrades.map((targetGrade) => {
+      const tasksInGrade = tasks.filter((task) => task.targetGrade === targetGrade);
+      const completed = tasksInGrade.filter((task) => task.status === 'complete').length;
+      const total = tasksInGrade.length;
+
+      return {
+        targetGrade,
+        label:
+          tasksInGrade[0]?.targetGradeLabel ??
+          this.gradeOptions.find((option) => option.value === targetGrade)?.label ??
+          '',
+        completed,
+        total,
+        percentage: total === 0 ? null : Math.round((completed / total) * 100),
+      };
+    });
   }
 
   private taskMatchesDateRange(task: DashboardTask): boolean {
@@ -286,8 +398,33 @@ export class CrossDashboardComponent implements OnInit {
     return firstTime - secondTime;
   }
 
-  private taskMatchesSearch(task: DashboardTask, projectId: number): boolean {
-    const rawSearchTerm = this.getSearchTerm(projectId);
+  private taskMatchesGlobalSearch(task: DashboardTask, unit: DashboardUnit): boolean {
+    return this.taskMatchesSearchText(task, this.globalSearchTerm, [
+      unit.code,
+      unit.name,
+      task.title,
+      task.abbreviation,
+      task.statusLabel,
+      task.targetGradeLabel,
+    ]);
+  }
+
+  private taskMatchesPerUnitSearch(task: DashboardTask, unit: DashboardUnit): boolean {
+    return this.taskMatchesSearchText(task, this.getSearchTerm(unit.projectId), [
+      task.title,
+      task.subtitle,
+      task.description,
+      task.abbreviation,
+      task.statusLabel,
+      unit.code,
+    ]);
+  }
+
+  private taskMatchesSearchText(
+    task: DashboardTask,
+    rawSearchTerm: string,
+    searchableValues: readonly string[],
+  ): boolean {
     const searchTerm = this.normaliseSearchText(rawSearchTerm);
 
     if (!searchTerm) {
@@ -308,15 +445,7 @@ export class CrossDashboardComponent implements OnInit {
     }
 
     const searchableText = this.normaliseSearchText(
-      [
-        task.title,
-        task.subtitle,
-        task.description,
-        task.abbreviation,
-        task.statusLabel,
-        task.unitCode,
-        this.formatDateForSearch(task.dueDate),
-      ].join(' '),
+      [...searchableValues, this.formatDateForSearch(task.dueDate)].join(' '),
     );
 
     return remainingSearchTerm.split(' ').every((term) => searchableText.includes(term));
@@ -371,13 +500,12 @@ export class CrossDashboardComponent implements OnInit {
     );
   }
 
-  private formatDateForSearch(date: Date): string {
-    const isoDate = this.formatDateAsIso(date);
-
-    if (!isoDate) {
+  private formatDateForSearch(date: Date | null | undefined): string {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
       return '';
     }
 
+    const isoDate = this.formatDateAsIso(date);
     const [year, month, day] = isoDate.split('-');
 
     return [displayedDueDateFormatter.format(date), `${day}/${month}/${year}`, isoDate].join(' ');
@@ -404,7 +532,11 @@ export class CrossDashboardComponent implements OnInit {
         projectId: project.id,
         code: unit.code,
         name: unit.name,
-        tasks: this.mapTasks(project.activeTasks(), project.id, unit.code),
+        // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
+        // `activeTasks()` excludes definitions above the student's current target grade,
+        // even though those tasks are returned by the API and remain available to them.
+        tasks: this.mapTasks(project.tasks, project.id, unit.code),
+        gradeSummaries: [],
         isPrevious: !unit.isActive,
       };
     });
@@ -422,6 +554,8 @@ export class CrossDashboardComponent implements OnInit {
         color: TaskStatus.STATUS_COLORS.get(task.status),
         comments: task.numNewComments ?? 0,
         status: task.status,
+        targetGrade: def.targetGrade,
+        targetGradeLabel: def.targetGradeText,
         weight: task.topWeight,
         projectId,
         description: def.description,
