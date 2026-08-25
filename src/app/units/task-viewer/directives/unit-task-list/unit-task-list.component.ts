@@ -101,13 +101,27 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
       .filter((taskDef) => this.shouldShowTaskDefinition(taskDef))
       .sort((a, b) => this.compareTaskDefinitions(a, b));
 
-    if (
-      this.selectedTaskDef &&
-      !this.filteredTaskDefinitions.some((taskDef) => taskDef.id === this.selectedTaskDef.id)
-    ) {
-      this.selectedTaskDefinition$?.next(null);
-      this.replaceSelectionUrl(null);
+    this.deselectHiddenTaskDefinition();
+  }
+
+  // The search term only narrows what the list shows, so typing must not close the
+  // open task. Drop the selection when the task itself has gone or a view filter
+  // hides it.
+  private deselectHiddenTaskDefinition(): void {
+    if (!this.selectedTaskDef) {
+      return;
     }
+
+    const selectedTaskDefinition = this.taskDefinitions?.find(
+      (taskDef) => taskDef.id === this.selectedTaskDef.id,
+    );
+
+    if (selectedTaskDefinition && this.shouldShowTaskDefinition(selectedTaskDefinition)) {
+      return;
+    }
+
+    this.selectedTaskDefinition$?.next(null);
+    this.replaceSelectionUrl(null);
   }
 
   public setSortBy(sortBy: TaskListSortOption): void {
@@ -179,7 +193,22 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     return (
       (this.viewPreferences.sortBy !== 'default' ? 1 : 0) +
       (this.viewPreferences.hideCompleted ? 1 : 0) +
-      (this.viewPreferences.showAboveTargetGrade ? 1 : 0)
+      (this.hidingTasksAboveTargetGrade ? 1 : 0)
+    );
+  }
+
+  // The list hides tasks beyond the target grade unless the student opts in, so the
+  // badge has to count the hiding, not the opt-in that switches it off.
+  public get hidingTasksAboveTargetGrade(): boolean {
+    return !this.viewPreferences.showAboveTargetGrade && this.effectiveTargetGrade !== null;
+  }
+
+  public get hasNonDefaultViewPreferences(): boolean {
+    return (
+      this.viewPreferences.sortBy !== DEFAULT_VIEW_PREFERENCES.sortBy ||
+      this.viewPreferences.sortDirection !== DEFAULT_VIEW_PREFERENCES.sortDirection ||
+      this.viewPreferences.hideCompleted !== DEFAULT_VIEW_PREFERENCES.hideCompleted ||
+      this.viewPreferences.showAboveTargetGrade !== DEFAULT_VIEW_PREFERENCES.showAboveTargetGrade
     );
   }
 
@@ -367,19 +396,26 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     }
 
     return !(
-      !this.viewPreferences.showAboveTargetGrade && this.isTaskDefinitionAboveTargetGrade(taskDef)
+      !this.viewPreferences.showAboveTargetGrade &&
+      this.isTaskDefinitionAboveTargetGrade(taskDef) &&
+      !this.hasNewComments(task)
     );
   }
 
   private isTaskDefinitionAboveTargetGrade(taskDef: TaskDefinition): boolean {
+    const targetGrade = this.effectiveTargetGrade;
+
+    return targetGrade !== null && taskDef.targetGrade > targetGrade;
+  }
+
+  private get effectiveTargetGrade(): number | null {
     const targetGrade = this.targetGrade ?? this.project?.targetGrade;
 
-    return (
-      !!this.project &&
-      targetGrade !== undefined &&
-      targetGrade !== null &&
-      taskDef.targetGrade > targetGrade
-    );
+    if (!this.project || targetGrade === undefined || targetGrade === null) {
+      return null;
+    }
+
+    return targetGrade;
   }
 
   private hasNewComments(task: Task): boolean {
