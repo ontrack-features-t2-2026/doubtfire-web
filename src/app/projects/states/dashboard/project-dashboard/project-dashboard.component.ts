@@ -155,9 +155,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       this.leftWidth = this.taskListCollapsedWidth;
     }
 
-    this.taskService.taskStatusUpdated$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
+    this.taskService.taskSubmissionCompleted$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
+      const activeProject = this.projectSubject.value;
       const selectedTaskDefinition = this.selectedTaskDefinition$.value;
-      if (selectedTaskDefinition && task.definition?.id === selectedTaskDefinition.id) {
+      if (
+        activeProject?.id === task.project?.id &&
+        selectedTaskDefinition?.id === task.definition?.id
+      ) {
         this.selectedTaskDefinition$.next(null);
       }
     });
