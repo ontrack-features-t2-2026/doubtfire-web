@@ -23,7 +23,9 @@
       <mat-form-field appearance="outline" class="w-full max-w-3xl">
         <mat-label>Target Grade</mat-label>
         <mat-select
+          aria-label="Target grade"
           class="w-full"
+          [disabled]="viewingOtherStudentProject"
           [(ngModel)]="selectedTargetGrade"
           (selectionChange)="onTargetGradeChange($event)"
         >

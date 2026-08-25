@@ -100,6 +100,21 @@ describe('ProgressDashboardComponent', () => {
     expect(component.numberOfTasks).toEqual({completed: 1, remaining: 2});
   });
 
+  it('locks the selector when staff are viewing another student project', async () => {
+    project.unit.myRole = 'Tutor';
+    project.student = {id: 99} as Project['student'];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const select = await loader.getHarness(
+      MatSelectHarness.with({selector: '[aria-label="Target grade"]'}),
+    );
+
+    expect(component.viewingOtherStudentProject).toBe(true);
+    expect(await select.isDisabled()).toBe(true);
+  });
+
   it('restores the previous target grade when the update fails', () => {
     projectServiceUpdate.mockReturnValueOnce(throwError(() => new Error('update failed')));
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
