@@ -206,6 +206,14 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Hosts re-emit the project they are already showing. The portfolios progress tab does it on
+    // every change detection pass, and the reset below would drop the loaded project back to its
+    // skeleton and close the open task each time. Activating is only for a project we are not
+    // already showing or already fetching, so a repeat of the active one is left alone.
+    if (projectId === this.activeProjectId) {
+      return;
+    }
+
     this.projectLoadCancel$.next();
     const activation = ++this.projectActivation;
     this.activeProjectId = projectId;
