@@ -1,5 +1,9 @@
 <div class="panel-full-screen flex h-full flex-col">
-  <div class="flex shrink-0 flex-wrap items-end gap-4 px-16 pt-4">
+  <div
+    aria-label="Global dashboard filters"
+    class="flex shrink-0 flex-wrap items-end gap-4 px-16 pt-4"
+    role="search"
+  >
     <mat-form-field appearance="outline" class="w-full max-w-64">
       <mat-label>Unit scope</mat-label>
       <mat-select [value]="unitScope" (selectionChange)="setUnitScope($event.value)">
@@ -8,6 +12,58 @@
         <mat-option value="all">All units</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full max-w-96 min-w-64">
+      <mat-label>Search all units and tasks</mat-label>
+      <input
+        aria-label="Global search"
+        autocomplete="off"
+        matInput
+        type="search"
+        [value]="globalSearchTerm"
+        (input)="setGlobalSearch($any($event.target).value)"
+      />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full max-w-64">
+      <mat-label>Task statuses</mat-label>
+      <mat-select
+        aria-label="Task statuses"
+        multiple
+        [value]="selectedStatuses"
+        (selectionChange)="setStatuses($event.value)"
+      >
+        @for (option of statusOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full max-w-64">
+      <mat-label>Target grades</mat-label>
+      <mat-select
+        aria-label="Target grades"
+        multiple
+        [value]="selectedGrades"
+        (selectionChange)="setGrades($event.value)"
+      >
+        @for (option of gradeOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button
+      class="mb-5 h-12"
+      mat-stroked-button
+      type="button"
+      [disabled]="!hasGlobalToolbarChanges"
+      (click)="clearGlobalFilters()"
+    >
+      Clear all
+    </button>
+
     <div class="flex flex-col gap-1 pb-5">
       <label class="font-medium" for="dashboard-start-date">Start date</label>
       <input
@@ -104,6 +160,28 @@
           </mat-menu>
         </div>
 
+        @if (unit.gradeSummaries.length > 0) {
+          <div
+            class="border-x border-gray-300 bg-gray-50 px-4 py-3"
+            [attr.aria-label]="'Grade task completion for ' + unit.code"
+          >
+            <p class="m-0 text-sm font-semibold">Grade task completion</p>
+            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              @for (summary of unit.gradeSummaries; track summary.targetGrade) {
+                <span>
+                  @if (summary.total === 0) {
+                    {{ summary.label }}: 0 tasks
+                  } @else {
+                    {{ summary.label }}: {{ summary.completed }} of {{ summary.total }} complete ({{
+                      summary.percentage
+                    }}%)
+                  }
+                </span>
+              }
+            </div>
+          </div>
+        }
+
         <div class="flex flex-col overflow-y-auto">
           @for (task of unit.tasks; track task.abbreviation) {
             <div class="border-b border-gray-300">
@@ -124,6 +202,20 @@
       </div>
     }
 
+    @if (
+      hasGlobalTaskCriteria &&
+      displayedUnits.length === 0 &&
+      !loadingPreviousUnits &&
+      !previousUnitsLoadError
+    ) {
+      <div
+        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded border border-gray-300 bg-white p-6"
+        role="status"
+      >
+        <p class="m-0">No tasks match the current global search and filters.</p>
+      </div>
+    }
+
     @if (unitScope !== 'active' && loadingPreviousUnits) {
       <div class="flex w-80 shrink-0 items-center self-start rounded border border-gray-300 p-6">
         Loading previous units...
@@ -141,7 +233,8 @@
       unitScope !== 'active' &&
       previousUnitsLoaded &&
       !loadingPreviousUnits &&
-      previousUnits.length === 0
+      previousUnits.length === 0 &&
+      !hasGlobalTaskCriteria
     ) {
       <div class="flex w-96 shrink-0 flex-col self-start overflow-hidden rounded shadow">
         <div class="bg-green-600 p-4 text-white">

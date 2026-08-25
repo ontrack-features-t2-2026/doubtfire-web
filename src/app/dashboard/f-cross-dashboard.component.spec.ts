@@ -1,11 +1,21 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatButtonModule} from '@angular/material/button';
+import {MatButtonHarness} from '@angular/material/button/testing';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSelectHarness} from '@angular/material/select/testing';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {BehaviorSubject, of, throwError} from 'rxjs';
+import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
 import {Task} from '../api/models/task';
-import {TaskStatusEnum} from '../api/models/task-status';
+import {TaskStatus, TaskStatusEnum} from '../api/models/task-status';
 import {ProjectService} from '../api/services/project.service';
 import {GlobalStateService} from '../projects/states/index/global-state.service';
 import {CrossDashboardComponent} from './f-cross-dashboard.component';
@@ -30,6 +40,8 @@ describe('CrossDashboardComponent', () => {
     status: TaskStatusEnum,
     dueDate: Date | null | undefined,
     topWeight: number = 0,
+    targetGrade: number = 0,
+    targetGradeText: string = Grade.GRADES[targetGrade],
   ): Task =>
     ({
       status,
@@ -38,19 +50,26 @@ describe('CrossDashboardComponent', () => {
       definition: {
         name,
         abbreviation,
-        targetGradeText: 'Pass',
+        targetGrade,
+        targetGradeText,
         description: `${name} description`,
         targetDate: dueDate,
       },
     }) as unknown as Task;
 
-  const makeProject = (id: number, code: string, isActive: boolean, tasks: Task[] = []): Project =>
+  const makeProject = (
+    id: number,
+    code: string,
+    isActive: boolean,
+    tasks: Task[] = [],
+    name: string = `${code} Unit`,
+  ): Project =>
     ({
       id,
       tasks,
       unit: {
         code,
-        name: `${code} Unit`,
+        name,
         isActive,
         taskDefinitions: [],
       },
@@ -75,7 +94,15 @@ describe('CrossDashboardComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [CrossDashboardComponent],
-      imports: [MatMenuModule],
+      imports: [
+        MatButtonModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatInputModule,
+        MatMenuModule,
+        MatSelectModule,
+        NoopAnimationsModule,
+      ],
       providers: [
         {
           provide: GlobalStateService,
@@ -108,6 +135,23 @@ describe('CrossDashboardComponent', () => {
 
     expect(component.activeUnits.map((unit) => unit.code)).toEqual(['COS10001']);
     expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['COS10001']);
+  });
+
+  it('includes authorised tasks above the project target grade', () => {
+    const passTask = makeTask('Pass Task', 'P1', 'complete', makeDate(10), 0, 0);
+    const distinctionTask = makeTask('Distinction Task', 'D1', 'redo', makeDate(11), 0, 2);
+    const project = makeProject(1, 'COS20007', true, [passTask, distinctionTask]);
+    const targetGradeTasks = vi.fn().mockReturnValue([passTask]);
+
+    project.targetGrade = 0;
+    project.activeTasks = targetGradeTasks;
+    projectsSubject.next([project]);
+
+    expect(targetGradeTasks).not.toHaveBeenCalled();
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'P1',
+      'D1',
+    ]);
   });
 
   it('loads and displays previous units in Previous units mode', () => {
@@ -197,7 +241,7 @@ describe('CrossDashboardComponent', () => {
     expect(component.displayedUnits).toHaveLength(2);
 
     const searchInputs = fixture.nativeElement.querySelectorAll(
-      'input[type="search"]',
+      'input[aria-label^="Search tasks in"]',
     ) as NodeListOf<HTMLInputElement>;
 
     expect(searchInputs).toHaveLength(2);
@@ -277,7 +321,7 @@ describe('CrossDashboardComponent', () => {
     await syncView();
 
     const searchInput = fixture.nativeElement.querySelector(
-      'input[type="search"]',
+      'input[aria-label^="Search tasks in"]',
     ) as HTMLInputElement;
 
     searchInput.value = 'retro';
@@ -635,5 +679,473 @@ describe('CrossDashboardComponent', () => {
     component.setEndDate('2026-08-20');
 
     expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['MATCH']);
+  });
+
+  it('renders one labelled global toolbar with canonical status and grade choices', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', makeDate(12)),
+      ]),
+    ]);
+
+    await syncView();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('[aria-label="Global dashboard filters"]'),
+    ).toHaveLength(1);
+    expect(
+      fixture.nativeElement.querySelectorAll('input[aria-label="Global search"]'),
+    ).toHaveLength(1);
+    expect(
+      fixture.nativeElement.querySelectorAll('input[aria-label^="Search tasks in"]'),
+    ).toHaveLength(1);
+
+    expect(component.statusOptions).toEqual(
+      TaskStatus.STATUS_KEYS.map((value) => ({
+        value,
+        label: TaskStatus.STATUS_LABELS.get(value),
+      })),
+    );
+    expect(component.statusOptions).toEqual(
+      expect.arrayContaining([
+        {value: 'complete', label: 'Complete'},
+        {value: 'not_started', label: 'Not Started'},
+        {value: 'redo', label: 'Redo'},
+        {value: 'fix_and_resubmit', label: 'Resubmit'},
+      ]),
+    );
+    expect(component.gradeOptions).toEqual([
+      {value: 0, label: 'Pass'},
+      {value: 1, label: 'Credit'},
+      {value: 2, label: 'Distinction'},
+      {value: 3, label: 'High Distinction'},
+    ]);
+  });
+
+  it('binds both multiple-select controls and Clear all through the rendered toolbar', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Security Pass Task', 'P1', 'complete', makeDate(10), 0, 0),
+        makeTask('Security Distinction Task', 'D1', 'redo', makeDate(11), 0, 2),
+      ]),
+    ]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const statusSelect = await loader.getHarness(
+      MatSelectHarness.with({selector: '[aria-label="Task statuses"]'}),
+    );
+    const gradeSelect = await loader.getHarness(
+      MatSelectHarness.with({selector: '[aria-label="Target grades"]'}),
+    );
+
+    expect(await statusSelect.isMultiple()).toBe(true);
+    expect(await gradeSelect.isMultiple()).toBe(true);
+
+    await statusSelect.open();
+    await statusSelect.clickOptions({text: /^(Redo|Complete)$/});
+    await statusSelect.close();
+
+    await gradeSelect.open();
+    await gradeSelect.clickOptions({text: /^(Pass|Distinction)$/});
+    await gradeSelect.close();
+
+    const globalSearch = fixture.nativeElement.querySelector(
+      'input[aria-label="Global search"]',
+    ) as HTMLInputElement;
+    globalSearch.value = 'security';
+    globalSearch.dispatchEvent(new Event('input', {bubbles: true}));
+    component.setStartDate('2026-08-01');
+    await syncView();
+
+    expect(component.selectedStatuses.slice().sort()).toEqual(['complete', 'redo']);
+    expect(component.selectedGrades).toEqual([0, 2]);
+    expect(await statusSelect.getValueText()).toContain('Redo');
+    expect(await statusSelect.getValueText()).toContain('Complete');
+    expect(await gradeSelect.getValueText()).toContain('Pass');
+    expect(await gradeSelect.getValueText()).toContain('Distinction');
+
+    const clearAll = await loader.getHarness(MatButtonHarness.with({text: 'Clear all'}));
+    expect(await clearAll.isDisabled()).toBe(false);
+    await clearAll.click();
+    await syncView();
+
+    expect(component.globalSearchTerm).toBe('');
+    expect(component.selectedStatuses).toEqual([]);
+    expect(component.selectedGrades).toEqual([]);
+    expect(component.startDate).toBe('');
+    expect(globalSearch.value).toBe('');
+    expect(await statusSelect.getValueText()).toBe('');
+    expect(await gradeSelect.getValueText()).toBe('');
+    expect(await clearAll.isDisabled()).toBe(true);
+  });
+
+  it('globally searches every required unit and task field case-insensitively', () => {
+    projectsSubject.next([
+      makeProject(
+        1,
+        'SIT764',
+        true,
+        [
+          makeTask(
+            'Individual Retrospective',
+            '5.1D',
+            'ready_for_feedback',
+            new Date(2026, 7, 12),
+            0,
+            2,
+          ),
+        ],
+        'Human Centred Design',
+      ),
+      makeProject(
+        2,
+        'SIT782',
+        true,
+        [makeTask('Network Plan', '2.1P', 'not_started', new Date(2026, 7, 18))],
+        'Secure Networks',
+      ),
+    ]);
+
+    const matchingQueries = [
+      '  sit764  ',
+      'HUMAN CENTRED',
+      'individual retrospective',
+      '5.1d',
+      'Awaiting Feedback',
+      'Distinction',
+      'Wednesday 12 August',
+      '12/08/2026',
+      '2026-08-12',
+    ];
+
+    for (const query of matchingQueries) {
+      component.setGlobalSearch(query);
+
+      expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764']);
+      expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['5.1D']);
+    }
+
+    component.setGlobalSearch(' - ');
+    expect(component.globalSearchTerm).toBe(' - ');
+    expect(component.hasGlobalTaskCriteria).toBe(false);
+    expect(component.hasGlobalToolbarChanges).toBe(true);
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764', 'SIT782']);
+
+    component.clearGlobalFilters();
+    expect(component.globalSearchTerm).toBe('');
+    expect(component.hasGlobalToolbarChanges).toBe(false);
+  });
+
+  it('filters by every trusted target-grade value and supports multiple grades', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Pass Task', 'LOOKS-HD', 'not_started', makeDate(10), 0, 0),
+        makeTask('Credit Task', 'CREDIT', 'not_started', makeDate(11), 0, 1),
+        makeTask('Distinction Task', 'DISTINCTION', 'not_started', makeDate(12), 0, 2),
+        makeTask('High Distinction Task', 'LOOKS-P', 'not_started', makeDate(13), 0, 3),
+      ]),
+    ]);
+
+    for (const option of component.gradeOptions) {
+      component.setGrades([option.value]);
+
+      expect(component.displayedUnits[0].tasks).toHaveLength(1);
+      expect(component.displayedUnits[0].tasks[0].targetGrade).toBe(option.value);
+      expect(component.displayedUnits[0].tasks[0].targetGradeLabel).toBe(option.label);
+    }
+
+    component.setGrades([0, 2]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.targetGrade)).toEqual([0, 2]);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'LOOKS-HD',
+      'DISTINCTION',
+    ]);
+  });
+
+  it('filters by every existing task status and supports multiple statuses', () => {
+    const tasks = TaskStatus.STATUS_KEYS.map((status, index) =>
+      makeTask(
+        `${TaskStatus.STATUS_LABELS.get(status)} Task`,
+        `TASK-${index}`,
+        status,
+        makeDate(10),
+      ),
+    );
+    projectsSubject.next([makeProject(1, 'SIT764', true, tasks)]);
+
+    for (const status of TaskStatus.STATUS_KEYS) {
+      component.setStatuses([status]);
+
+      expect(component.displayedUnits[0].tasks).toHaveLength(1);
+      expect(component.displayedUnits[0].tasks[0].status).toBe(status);
+    }
+
+    component.setStatuses(['complete', 'redo', 'fix_and_resubmit']);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.status).sort()).toEqual([
+      'complete',
+      'fix_and_resubmit',
+      'redo',
+    ]);
+  });
+
+  it('uses OR within filter groups and AND across search, status and grade groups', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Security Pass', 'MATCH-P', 'complete', makeDate(10), 0, 0),
+        makeTask('Security Credit', 'MATCH-C', 'fix_and_resubmit', makeDate(11), 0, 1),
+        makeTask('Security Distinction', 'GRADE-OUT', 'complete', makeDate(12), 0, 2),
+        makeTask('Security Redo', 'STATUS-OUT', 'redo', makeDate(13), 0, 0),
+        makeTask('Calendar Credit', 'SEARCH-OUT', 'complete', makeDate(14), 0, 1),
+      ]),
+    ]);
+
+    component.setGlobalSearch('security');
+    component.setStatuses(['complete', 'fix_and_resubmit']);
+    component.setGrades([0, 1]);
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'MATCH-P',
+      'MATCH-C',
+    ]);
+  });
+
+  it('applies global criteria in Previous units scope after authorised units load', () => {
+    projectServiceQuery.mockReturnValue(
+      of([
+        makeProject(2, 'SIT704', false, [
+          makeTask('Archived Pass Task', 'OLD-P', 'complete', makeDate(10), 0, 0),
+          makeTask('Archived Distinction Task', 'OLD-D', 'complete', makeDate(11), 0, 2),
+          makeTask('Archived Distinction Redo', 'OLD-REDO', 'redo', makeDate(12), 0, 2),
+        ]),
+      ]),
+    );
+
+    component.setUnitScope('previous');
+    component.setGlobalSearch('archived');
+    component.setStatuses(['complete']);
+    component.setGrades([2]);
+
+    expect(component.unitScope).toBe('previous');
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT704']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['OLD-D']);
+  });
+
+  it('applies global search before an independent per-unit search', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Security Report', 'REPORT', 'not_started', makeDate(10)),
+        makeTask('Security Plan', 'PLAN', 'not_started', makeDate(11)),
+      ]),
+      makeProject(2, 'SIT782', true, [
+        makeTask('Security Calendar', 'CALENDAR', 'not_started', makeDate(12)),
+      ]),
+    ]);
+
+    component.setGlobalSearch('security');
+
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764', 'SIT782']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'REPORT',
+      'PLAN',
+    ]);
+    expect(component.displayedUnits[1].tasks.map((task) => task.abbreviation)).toEqual([
+      'CALENDAR',
+    ]);
+
+    component.setSearch(1, 'report');
+
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764', 'SIT782']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['REPORT']);
+    expect(component.displayedUnits[1].tasks.map((task) => task.abbreviation)).toEqual([
+      'CALENDAR',
+    ]);
+
+    component.setSearch(1, '');
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'REPORT',
+      'PLAN',
+    ]);
+  });
+
+  it('clears global criteria, restores Active units and leaves canonical results', () => {
+    const activeProject = makeProject(1, 'SIT764', true, [
+      makeTask('Active Pass Task', 'ACTIVE-P', 'complete', makeDate(10), 0, 0),
+      makeTask('Active Credit Task', 'ACTIVE-C', 'not_started', makeDate(11), 0, 1),
+    ]);
+    const previousProject = makeProject(2, 'SIT704', false, [
+      makeTask('Previous Pass Task', 'PREVIOUS-P', 'complete', makeDate(12), 0, 0),
+    ]);
+
+    projectsSubject.next([activeProject]);
+    projectServiceQuery.mockReturnValue(of([activeProject, previousProject]));
+
+    component.setUnitScope('all');
+    component.setGlobalSearch('pass');
+    component.setStatuses(['complete']);
+    component.setGrades([0]);
+    component.setStartDate('2026-08-01');
+    component.setEndDate('2026-08-31');
+
+    expect(component.hasGlobalToolbarChanges).toBe(true);
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764', 'SIT704']);
+
+    component.clearGlobalFilters();
+
+    expect(component.unitScope).toBe('active');
+    expect(component.globalSearchTerm).toBe('');
+    expect(component.selectedStatuses).toEqual([]);
+    expect(component.selectedGrades).toEqual([]);
+    expect(component.startDate).toBe('');
+    expect(component.endDate).toBe('');
+    expect(component.hasGlobalToolbarChanges).toBe(false);
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['SIT764']);
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual([
+      'ACTIVE-P',
+      'ACTIVE-C',
+    ]);
+    expect(component.displayedUnits[0].gradeSummaries).toEqual([]);
+  });
+
+  it('removes globally empty units and renders the global no-results state', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', makeDate(12)),
+      ]),
+    ]);
+
+    component.setGlobalSearch('not a matching task');
+    await syncView();
+
+    expect(component.displayedUnits).toEqual([]);
+    expect(fixture.nativeElement.textContent).not.toContain('SIT764');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No tasks match the current global search and filters.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'No tasks match the current search and filters.',
+    );
+  });
+
+  it('renders the global no-results state when the selected scope contains no units', async () => {
+    projectsSubject.next([]);
+
+    component.setGlobalSearch('security');
+    await syncView();
+
+    expect(component.displayedUnits).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain(
+      'No tasks match the current global search and filters.',
+    );
+  });
+
+  it('keeps grade summaries independent of global and per-unit search and status filters', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Completed Pass One', 'P1', 'complete', makeDate(10), 0, 0),
+        makeTask('Completed Pass Two', 'P2', 'complete', makeDate(11), 0, 0),
+        makeTask('Open Pass One', 'P3', 'not_started', makeDate(12), 0, 0),
+        makeTask('Portfolio Pass', 'P4', 'assess_in_portfolio', makeDate(13), 0, 0),
+      ]),
+    ]);
+
+    component.setGrades([0]);
+    component.setStatuses(['not_started']);
+    component.setGlobalSearch('open');
+    component.setSearch(1, 'one');
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['P3']);
+    expect(component.displayedUnits[0].gradeSummaries).toEqual([
+      {
+        targetGrade: 0,
+        label: 'Pass',
+        completed: 2,
+        total: 4,
+        percentage: 50,
+      },
+    ]);
+    expect(fixture.nativeElement.textContent).toContain('Pass: 2 of 4 complete (50%)');
+  });
+
+  it('shows a zero-task summary for a selected grade on an otherwise visible unit', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Credit Task', 'C1', 'not_started', makeDate(10), 0, 1),
+      ]),
+    ]);
+
+    component.setGrades([0, 1]);
+    await syncView();
+
+    expect(component.displayedUnits).toHaveLength(1);
+    expect(component.displayedUnits[0].gradeSummaries).toEqual([
+      {
+        targetGrade: 0,
+        label: 'Pass',
+        completed: 0,
+        total: 0,
+        percentage: null,
+      },
+      {
+        targetGrade: 1,
+        label: 'Credit',
+        completed: 0,
+        total: 1,
+        percentage: 0,
+      },
+    ]);
+    expect(fixture.nativeElement.textContent).toContain('Pass: 0 tasks');
+    expect(fixture.nativeElement.textContent).toContain('Credit: 0 of 1 complete (0%)');
+    expect(fixture.nativeElement.textContent).not.toContain('Pass: 0 of 0 complete (0%)');
+  });
+
+  it('calculates summaries independently per unit using trusted task-definition labels', () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Foundation Complete', 'F1', 'complete', makeDate(10), 0, 0, 'Foundation'),
+        makeTask('Foundation Open', 'F2', 'not_started', makeDate(11), 0, 0, 'Foundation'),
+      ]),
+      makeProject(2, 'SIT782', true, [
+        makeTask('Entry Complete One', 'E1', 'complete', makeDate(12), 0, 0, 'Entry'),
+        makeTask('Entry Complete Two', 'E2', 'complete', makeDate(13), 0, 0, 'Entry'),
+        makeTask('Entry Open', 'E3', 'redo', makeDate(14), 0, 0, 'Entry'),
+      ]),
+    ]);
+
+    component.setGrades([0]);
+
+    expect(component.displayedUnits[0].gradeSummaries).toEqual([
+      {
+        targetGrade: 0,
+        label: 'Foundation',
+        completed: 1,
+        total: 2,
+        percentage: 50,
+      },
+    ]);
+    expect(component.displayedUnits[1].gradeSummaries).toEqual([
+      {
+        targetGrade: 0,
+        label: 'Entry',
+        completed: 2,
+        total: 3,
+        percentage: 67,
+      },
+    ]);
+  });
+
+  it('hides all grade summaries until a grade filter is selected', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [makeTask('Pass Task', 'P1', 'complete', makeDate(10), 0, 0)]),
+    ]);
+
+    await syncView();
+
+    expect(component.displayedUnits[0].gradeSummaries).toEqual([]);
+    expect(fixture.nativeElement.textContent).not.toContain('Grade task completion');
   });
 });
