@@ -36,6 +36,7 @@ describe('ProgressBurndownChartComponent', () => {
     fixture.detectChanges();
 
     expect(button.getAttribute('aria-pressed')).toBe('false');
-    expect(component.data[0].series[0].value).toBe(0);
+    // The hidden series leaves the chart data rather than being flattened to zero.
+    expect(component.data).toEqual([]);
   });
 });

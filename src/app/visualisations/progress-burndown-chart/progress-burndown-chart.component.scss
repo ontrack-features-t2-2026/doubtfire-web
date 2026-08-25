@@ -38,8 +38,13 @@
   outline-offset: 2px;
 }
 
+// A hidden series is still an operable control, so it is dimmed with its own colours
+// instead of opacity. Fading the whole button to 0.55 took the label to 2.96:1 against
+// the page. The grey fill and the line through it read as off, and the label holds
+// 6.87:1 on the fill.
 .burndown-legend-button[aria-pressed='false'] {
-  opacity: 0.55;
+  background: #f3f4f6;
+  color: #4b5563;
   text-decoration: line-through;
 }
 
