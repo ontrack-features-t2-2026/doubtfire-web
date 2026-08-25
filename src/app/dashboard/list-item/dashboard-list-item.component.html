@@ -8,6 +8,7 @@
       {{ task.title }}
     </h4>
     <p class="mb-0">{{ task.subtitle }}</p>
+    <p class="mt-1 mb-0 text-sm font-medium">Status: {{ task.statusLabel }}</p>
   </div>
   <div class="mr-6 ml-2 flex flex-row items-center justify-end gap-4">
     @if (!isExpanded && task.comments > 0) {
@@ -15,9 +16,15 @@
         <span class="m-auto text-xl font-medium text-white">{{ task.comments }}</span>
       </div>
     }
-    <mat-icon class="cursor-pointer" (click)="isExpanded = !isExpanded">
-      {{ isExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
-    </mat-icon>
+    <button
+      mat-icon-button
+      type="button"
+      [attr.aria-expanded]="isExpanded"
+      [attr.aria-label]="(isExpanded ? 'Collapse ' : 'Expand ') + task.title + ' details'"
+      (click)="isExpanded = !isExpanded"
+    >
+      <mat-icon>{{ isExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+    </button>
   </div>
 </div>
 <div class="flex flex-row">
