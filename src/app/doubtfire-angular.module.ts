@@ -293,6 +293,7 @@ import {StaffNotesComponent} from './projects/states/staff-notes/staff-notes.com
 import {TutorDiscussionComponent} from './projects/states/tutor-discussion/tutor-discussion.component';
 import {TutorNotesComponent} from './projects/states/tutor-notes/tutor-notes.component';
 import {TutorialsComponent} from './projects/states/tutorials/tutorials.component';
+import {InstallPromptService} from './sessions/install-prompt/install-prompt.service';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
@@ -713,6 +714,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
+    InstallPromptService,
     TaskOutcomeAlignmentService,
     // rootScopeProvider,
     {provide: MAT_DATE_LOCALE, useValue: enAU},
@@ -871,6 +873,7 @@ export class DoubtfireAngularModule {
     private constants: DoubtfireConstants,
     private title: Title,
     private updater: CheckForUpdateService,
+    private installer: InstallPromptService,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
   ) {
