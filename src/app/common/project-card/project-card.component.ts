@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import {Component, Input} from '@angular/core';
 
 export interface ProjectCardData {
   title: string;
@@ -11,8 +11,9 @@ export interface ProjectCardData {
 
 @Component({
   selector: 'project-card',
+  standalone: false,
   templateUrl: './project-card.component.html',
-  styleUrls: ['./project-card.component.scss']
+  styleUrls: ['./project-card.component.scss'],
 })
 export class ProjectCardComponent {
   @Input() project!: ProjectCardData;

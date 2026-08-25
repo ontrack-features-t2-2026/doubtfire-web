@@ -1,7 +1,4 @@
 // Lottie animation module
-}
-import {ProjectCardComponent} from './common/project-card/project-card.component';
-// Lottie animation module
 // import {LottieModule, LottieCacheModule} from 'ngx-lottie';
 import {PickerModule} from '@ctrl/ngx-emoji-mart';
 import {EmojiModule} from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -224,6 +221,7 @@ import {IsActiveUnitRole} from './common/pipes/is-active-unit-role.pipe';
 import {LocalizedDatePipe} from './common/pipes/localized-date.pipe';
 import {MarkedPipe} from './common/pipes/marked.pipe';
 import {SafePipe} from './common/pipes/safe.pipe';
+import {ProjectCardComponent} from './common/project-card/project-card.component';
 import {ProjectProgressBarComponent} from './common/project-progress-bar/project-progress-bar.component';
 import {ProjectProgressGaugeComponent} from './common/project-progress/project-progress-gauge.component';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
