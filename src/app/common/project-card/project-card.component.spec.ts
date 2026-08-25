@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProjectCardComponent, ProjectCardData } from './project-card.component';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ProjectCardComponent, ProjectCardData} from './project-card.component';
 
 describe('ProjectCardComponent', () => {
   let component: ProjectCardComponent;
@@ -11,12 +11,12 @@ describe('ProjectCardComponent', () => {
     status: 'In progress',
     progressSummary: 'Reusable dashboard project-card component is being prepared.',
     description: 'This card summarises one project without hardcoding the dashboard data.',
-    destinationUrl: '/projects/cpd-f02'
+    destinationUrl: '/projects/cpd-f02',
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ProjectCardComponent]
+      declarations: [ProjectCardComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProjectCardComponent);
@@ -47,16 +47,17 @@ describe('ProjectCardComponent', () => {
   });
 
   it('should handle missing optional fields', () => {
-    component.project = {
+    fixture.componentRef.setInput('project', {
       title: 'Sample Project',
       status: 'Completed',
       progressSummary: 'Core details are still displayed.',
-      destinationUrl: '/projects/sample'
-    };
+      destinationUrl: '/projects/sample',
+    });
 
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
+
     expect(text).toContain('Sample Project');
     expect(text).toContain('Completed');
     expect(text).toContain('Core details are still displayed.');
