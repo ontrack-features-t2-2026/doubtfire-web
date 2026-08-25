@@ -1,5 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {BreakpointObserver} from '@angular/cdk/layout';
+import {CommonModule} from '@angular/common';
+import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject, of, tap} from 'rxjs';
 import {Project, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
@@ -179,5 +182,115 @@ describe('ProjectDashboardComponent route reuse', () => {
     expect(delayedOldUnit.studentCache.add).not.toHaveBeenCalled();
 
     component.ngOnDestroy();
+  });
+});
+
+describe('ProjectDashboardComponent rendered by its host', () => {
+  let fixture: ComponentFixture<ProjectDashboardComponent>;
+  let component: ProjectDashboardComponent;
+  let hostProject$: BehaviorSubject<Project>;
+  let project: Project;
+  let unit: Unit;
+  let projectResponses: Subject<Project>[];
+  let projectGet: ReturnType<typeof vi.fn>;
+  let unitGet: ReturnType<typeof vi.fn>;
+
+  // The portfolios progress tab hands its dashboard a new task selection url every check, because
+  // the host builds that array in a getter. Each one re-runs the host's ngOnChanges, which pushes
+  // the project it is already showing back down the same subject.
+  const rebindHost = (): void => {
+    fixture.componentRef.setInput('taskSelectionUrlBase', [
+      '/units',
+      1,
+      'students',
+      'portfolios',
+      project.id,
+      'progress',
+    ]);
+    hostProject$.next(project);
+    fixture.detectChanges();
+  };
+
+  beforeEach(async () => {
+    unit = {
+      id: 101,
+      taskDefinitions: [],
+      studentCache: {add: vi.fn()},
+    } as unknown as Unit;
+    project = {
+      id: 2,
+      targetGrade: 0,
+      unit,
+      tasks: [],
+      findTaskForDefinition: () => null,
+    } as unknown as Project;
+
+    projectResponses = [];
+    projectGet = vi.fn(
+      (_params: {id: number}, options: {mappingCompleteCallback: (project: Project) => void}) => {
+        const response: Subject<Project> = new Subject();
+        projectResponses.push(response);
+        return response.pipe(tap((loaded) => options.mappingCompleteCallback(loaded)));
+      },
+    );
+    unitGet = vi.fn(() => of(unit));
+
+    await TestBed.configureTestingModule({
+      imports: [CommonModule],
+      declarations: [ProjectDashboardComponent],
+      providers: [
+        {provide: UserService, useValue: {}},
+        {provide: ProjectService, useValue: {get: projectGet}},
+        {provide: UnitService, useValue: {get: unitGet}},
+        {provide: GlobalStateService, useValue: {setView: vi.fn()}},
+        {
+          provide: ActivatedRoute,
+          useValue: {parent: {data: of({}), snapshot: {paramMap: convertToParamMap({})}}},
+        },
+        {
+          provide: BreakpointObserver,
+          useValue: {observe: () => of({matches: false, breakpoints: {}})},
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDashboardComponent);
+    component = fixture.componentInstance;
+    hostProject$ = new BehaviorSubject(project);
+    fixture.componentRef.setInput('project$', hostProject$);
+    fixture.detectChanges();
+  });
+
+  it('keeps the loaded project and the open task when the host re-emits the same project', () => {
+    projectResponses[0].next(project);
+    fixture.detectChanges();
+
+    const selectedTaskDefinition = {id: 7} as TaskDefinition;
+    component.selectedTaskDefinition$.next(selectedTaskDefinition);
+    fixture.detectChanges();
+
+    rebindHost();
+    rebindHost();
+
+    expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
+    expect(component.isProjectTaskListReady(project)).toBe(true);
+    expect(projectGet).toHaveBeenCalledTimes(1);
+    expect(unitGet).toHaveBeenCalledTimes(1);
+
+    fixture.destroy();
+  });
+
+  it('does not cancel a load that is still in flight when the same project comes back', () => {
+    rebindHost();
+
+    expect(projectGet).toHaveBeenCalledTimes(1);
+
+    projectResponses[0].next(project);
+    fixture.detectChanges();
+
+    expect(component.isProjectTaskListReady(project)).toBe(true);
+
+    fixture.destroy();
   });
 });
