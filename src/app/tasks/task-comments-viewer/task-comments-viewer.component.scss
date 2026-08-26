@@ -132,6 +132,20 @@ $comment-inner-border-radius: 4px;
     }
   }
 
+  // The reply/edit/delete actions used to be shown by a mouseover handler writing a flag
+  // on the comment, which no keyboard user could ever set. The reveal is CSS now, so it
+  // answers to focus inside the comment as well as to the pointer. It has to be opacity
+  // rather than display or visibility, both of which would drop the buttons out of the
+  // tab order and leave :focus-within with no way to ever become true.
+  .comment-overflow comment-bubble-action {
+    opacity: 0;
+  }
+
+  .anchor:hover .comment-overflow comment-bubble-action,
+  .anchor:focus-within .comment-overflow comment-bubble-action {
+    opacity: 1;
+  }
+
   .comment-by-other-user .comment-container {
     display: flex;
     flex-grow: 2;

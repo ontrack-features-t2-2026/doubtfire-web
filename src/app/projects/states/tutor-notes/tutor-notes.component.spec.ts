@@ -3,61 +3,32 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {EMPTY} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
-import {StaffNote} from 'src/app/api/models/staff-note';
-import {StaffNoteService} from 'src/app/api/services/staff-note.service';
+import {TutorNote} from 'src/app/api/models/tutor-note';
+import {TutorNoteService} from 'src/app/api/services/tutor-note.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {HumanizedDatePipe} from 'src/app/common/pipes/humanized-date.pipe';
 import {LocalizedDatePipe} from 'src/app/common/pipes/localized-date.pipe';
 import {MarkedPipe} from 'src/app/common/pipes/marked.pipe';
 import {AlertService} from 'src/app/common/services/alert.service';
-import {StaffNotesComponent} from './staff-notes.component';
+import {TutorNotesComponent} from './tutor-notes.component';
 
 const emptyProvider = {};
-const staffNoteServiceStub = {
-  loadStaffNotes: () => EMPTY,
-  updateStaffNoteReplies: () => undefined,
+const tutorNoteServiceStub = {
+  loadTutorNotes: () => EMPTY,
+  updateTutorNoteReplies: () => undefined,
 };
 
-describe('StaffNotesComponent', () => {
-  let component: StaffNotesComponent;
-  let fixture: ComponentFixture<StaffNotesComponent>;
+describe('TutorNotesComponent', () => {
+  let component: TutorNotesComponent;
+  let fixture: ComponentFixture<TutorNotesComponent>;
+  let note: TutorNote;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [StaffNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
+      declarations: [TutorNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
       providers: [
         {provide: UserService, useValue: emptyProvider},
-        {provide: StaffNoteService, useValue: staffNoteServiceStub},
-        {provide: AlertService, useValue: emptyProvider},
-        {provide: ConfirmationModalService, useValue: emptyProvider},
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    })
-      .overrideComponent(StaffNotesComponent, {set: {template: ''}})
-      .compileComponents();
-  });
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(StaffNotesComponent);
-    component = fixture.componentInstance;
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
-
-describe('StaffNotesComponent note actions', () => {
-  let component: StaffNotesComponent;
-  let fixture: ComponentFixture<StaffNotesComponent>;
-  let note: StaffNote;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [StaffNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
-      providers: [
-        {provide: UserService, useValue: emptyProvider},
-        {provide: StaffNoteService, useValue: staffNoteServiceStub},
+        {provide: TutorNoteService, useValue: tutorNoteServiceStub},
         {provide: AlertService, useValue: emptyProvider},
         {provide: ConfirmationModalService, useValue: emptyProvider},
       ],
@@ -66,17 +37,26 @@ describe('StaffNotesComponent note actions', () => {
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(StaffNotesComponent);
+    fixture = TestBed.createComponent(TutorNotesComponent);
     component = fixture.componentInstance;
-    note = {id: 7, replyToId: null, note: 'a note', user: {}, authorIsMe: true} as StaffNote;
+    note = {
+      id: 3,
+      replyToId: null,
+      note: 'a tutor note',
+      user: {},
+      authorIsMe: true,
+      noteIsForMe: true,
+      readByUnitRole: false,
+    } as TutorNote;
+    component.unitRole = {tutorNotesCache: {currentValues: [note]}} as never;
 
     fixture.detectChanges();
-    component.loadingStaffNotes = false;
-    component.project = {
-      student: {preferredName: 'Ada', lastName: 'Lovelace'},
-      staffNoteCache: {currentValues: [note]},
-    } as never;
+    component.loadingTutorNotes = false;
     fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 
   function card(): HTMLElement {

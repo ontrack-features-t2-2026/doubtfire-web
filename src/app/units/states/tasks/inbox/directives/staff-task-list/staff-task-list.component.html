@@ -288,10 +288,10 @@
             >
               <div
                 class="inbox-entry flex items-center"
-                [ngClass]="{hover: task.hover}"
+                [ngClass]="{hover: rowActionsShown(task)}"
                 (click)="setSelectedTask(task)"
-                (mouseout)="task.hover = task.optionsOpened"
-                (mouseover)="task.hover = allowHover"
+                (mouseout)="hideTaskActions(task)"
+                (mouseover)="showTaskActionsForPointer(task)"
               >
                 <span
                   class="notification"
@@ -363,23 +363,35 @@
                   [status]="task.status"
                 ></status-icon>
                 <div class="overflow" [hidden]="isNarrow">
-                  <button aria-label="task-overflow" mat-icon-button [hidden]="task.hover">
-                    <!-- <mat-icon class="warn-icon" *ngIf="task.similaritiesDetected">remove_red_eye</mat-icon> -->
+                  <!-- <mat-icon class="warn-icon" *ngIf="task.similaritiesDetected">remove_red_eye</mat-icon> -->
 
-                    @if (task.pinned) {
-                      <div class="pin-container">
-                        <mat-icon>push_pin</mat-icon>
-                      </div>
-                    }
-                  </button>
+                  <!--
+                    The pin says whether the task is pinned and has no action of its own, so
+                    it is not a button. As a button it was an unlabelled tab stop on every
+                    row, empty on the rows that were not pinned, and hiding it when the
+                    options button beside it took focus meant tab landed on it on the way in
+                    while shift-tab skipped it on the way back.
+                  -->
+                  @if (task.pinned) {
+                    <div
+                      aria-label="Pinned to your inbox"
+                      class="pin-container"
+                      role="img"
+                      [hidden]="rowActionsShown(task)"
+                    >
+                      <mat-icon>push_pin</mat-icon>
+                    </div>
+                  }
                   <button
                     aria-label="task overflow"
+                    class="task-options"
                     mat-icon-button
                     matTooltip="Submission options"
                     matTooltipPosition="right"
                     matTooltipShowDelay="400"
-                    [hidden]="!task.hover"
                     [matMenuTriggerFor]="overflowMenu"
+                    (blur)="hideTaskActionsForFocus(task)"
+                    (focus)="showTaskActionsForFocus(task)"
                     (menuClosed)="task.hover = false; task.optionsOpened = false"
                     (menuOpened)="setSelectedTask(task); task.optionsOpened = true"
                   >
