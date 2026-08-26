@@ -71,15 +71,15 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public animateBackground: boolean = false;
   public showDatesColumn: boolean = false;
-  public hideTasksAboveTargetGrade: boolean = false;
+  public showTasksAboveTargetGrade: boolean = false;
   public overlayLines: boolean = false;
 
   public get unit() {
     return this.project?.unit;
   }
 
-  private get hideTasksAboveTargetGradeStorageKey(): string {
-    return `ontrack.taskPlanner.${this.project?.id ?? 'unknown'}.hideTasksAboveTargetGrade`;
+  private get showTasksAboveTargetGradeStorageKey(): string {
+    return `ontrack.taskPlanner.${this.project?.id ?? 'unknown'}.showTasksAboveTargetGrade`;
   }
 
   constructor(
@@ -172,9 +172,12 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.taskPlannerPrerequisitesModal.show(this.project, td, prereqs);
   }
 
-  setHideTasksAboveTargetGrade(value: boolean) {
-    this.hideTasksAboveTargetGrade = value;
-    localStorage.setItem(this.hideTasksAboveTargetGradeStorageKey, JSON.stringify(value));
+  setShowTasksAboveTargetGrade(value: boolean) {
+    this.showTasksAboveTargetGrade = value;
+    this.preferenceStorage?.setItem(
+      this.showTasksAboveTargetGradeStorageKey,
+      JSON.stringify(value),
+    );
     this.refreshItems(false);
   }
 
@@ -570,7 +573,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadHideTasksAboveTargetGradePreference();
+    this.loadShowTasksAboveTargetGradePreference();
 
     this.viewOptions = {
       precisionUnit: 'day',
@@ -613,12 +616,12 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private loadHideTasksAboveTargetGradePreference(): void {
-    const rawPreference = localStorage.getItem(this.hideTasksAboveTargetGradeStorageKey);
+  private loadShowTasksAboveTargetGradePreference(): void {
+    const rawPreference = this.preferenceStorage?.getItem(this.showTasksAboveTargetGradeStorageKey);
     try {
-      this.hideTasksAboveTargetGrade = rawPreference ? JSON.parse(rawPreference) === true : false;
+      this.showTasksAboveTargetGrade = rawPreference ? JSON.parse(rawPreference) === true : false;
     } catch {
-      this.hideTasksAboveTargetGrade = false;
+      this.showTasksAboveTargetGrade = false;
     }
   }
 
@@ -701,6 +704,11 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshItems(scroll: boolean = true) {
+    const requestedTaskDefinitionId = scroll
+      ? this.route.snapshot.queryParamMap.get('taskDef')
+      : null;
+    this.revealRequestedTaskDefinition(requestedTaskDefinitionId);
+
     this.taskPrerequisites = this.allTaskPrerequisites.filter((pre) =>
       this.taskDefs().find((td) => td.id === pre.taskDefinitionId),
     );
@@ -813,9 +821,8 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.ganttComponent.scrollToToday();
     }
 
-    const taskDef = this.route.snapshot.queryParamMap.get('taskDef');
-    if (taskDef && scroll) {
-      const taskItem = this.items.find((item) => item.id === taskDef);
+    if (requestedTaskDefinitionId) {
+      const taskItem = this.items.find((item) => item.id === requestedTaskDefinitionId);
       if (taskItem) {
         this.ganttComponent.scrollToDate(taskItem.start);
         taskItem.highlighted = true;
@@ -849,7 +856,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return this.project.unit.taskDefinitions
       .filter(
-        (taskDef) => !this.hideTasksAboveTargetGrade || taskDef.targetGrade <= this.targetGrade,
+        (taskDef) => this.showTasksAboveTargetGrade || taskDef.targetGrade <= this.targetGrade,
       )
       .sort((a, b) => {
         const taskA = this.project.findTaskForDefinition(a.id);
@@ -860,5 +867,32 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         return new Date(dateA).getTime() - new Date(dateB).getTime();
       });
+  }
+
+  private revealRequestedTaskDefinition(taskDefinitionId: string | null): void {
+    const requestedTaskDefinition = taskDefinitionId
+      ? this.project.unit.taskDefinitions.find(
+          (taskDefinition) => taskDefinition.id.toString() === taskDefinitionId,
+        )
+      : null;
+
+    if (
+      requestedTaskDefinition?.targetGrade > this.targetGrade &&
+      !this.showTasksAboveTargetGrade
+    ) {
+      this.showTasksAboveTargetGrade = true;
+      this.preferenceStorage?.setItem(
+        this.showTasksAboveTargetGradeStorageKey,
+        JSON.stringify(true),
+      );
+    }
+  }
+
+  private get preferenceStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 }
