@@ -26,6 +26,11 @@ export class TaskPlannerCardComponent implements OnInit {
    */
   public selectedDownloadGrade: number;
 
+  /**
+   * Local to the download only, not persisted, same as selectedDownloadGrade above.
+   */
+  public excludeCompleted = false;
+
   constructor(
     @Inject(FileDownloaderService) private fileDownloader: FileDownloaderService,
     private gradeService: GradeService,
@@ -49,7 +54,7 @@ export class TaskPlannerCardComponent implements OnInit {
    * have loaded, rather than producing a technically-valid but empty .ics file.
    */
   public get hasDownloadableTasks(): boolean {
-    return !!this.project && this.tasksForSelectedGrade().length > 0;
+    return !!this.project && this.tasksForDownload().length > 0;
   }
 
   private tasksForSelectedGrade(): Task[] {
@@ -58,15 +63,21 @@ export class TaskPlannerCardComponent implements OnInit {
     );
   }
 
+  private tasksForDownload(): Task[] {
+    const tasks = this.tasksForSelectedGrade();
+    return this.excludeCompleted ? tasks.filter((task) => !task.inFinalState()) : tasks;
+  }
+
   public downloadIcs(): void {
     if (!this.hasDownloadableTasks) {
       return;
     }
 
-    const ics = buildIcsCalendar(this.tasksForSelectedGrade());
+    const ics = buildIcsCalendar(this.tasksForDownload());
     const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
     const url = window.URL.createObjectURL(blob);
-    const filename = `${this.project.unit.code}-tasks-${this.unit.gradeAbbreviation(this.selectedDownloadGrade)}.ics`;
+    const suffix = this.excludeCompleted ? '-outstanding' : '';
+    const filename = `${this.project.unit.code}-tasks-${this.unit.gradeAbbreviation(this.selectedDownloadGrade)}${suffix}.ics`;
 
     this.fileDownloader.downloadBlobToFile(url, filename);
     this.fileDownloader.releaseBlob(url);
