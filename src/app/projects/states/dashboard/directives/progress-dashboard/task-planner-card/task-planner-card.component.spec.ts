@@ -226,10 +226,7 @@ describe('TaskPlannerCardComponent', () => {
     fixture.detectChanges();
     component.excludeCompleted = true;
 
-    const ics = buildIcsCalendar(
-      component['tasksForDownload'](),
-      new Date('2026-08-24T00:00:00Z'),
-    );
+    const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
     expect(ics).not.toContain('UID:E-1');
     expect(ics).toContain('UID:E-2');
   });
@@ -242,10 +239,7 @@ describe('TaskPlannerCardComponent', () => {
     fixture.detectChanges();
 
     expect(component.excludeCompleted).toBe(false);
-    const ics = buildIcsCalendar(
-      component['tasksForDownload'](),
-      new Date('2026-08-24T00:00:00Z'),
-    );
+    const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
     expect(ics).toContain('UID:E-1');
     expect(ics).toContain('UID:E-2');
   });
