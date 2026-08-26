@@ -1,106 +1,93 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it} from 'vitest';
+import {provideHttpClient, withInterceptorsFromDi, withXhr} from '@angular/common/http';
+import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
 import {TestBed} from '@angular/core/testing';
-import {
-  DISABLED_STATE,
-  NORMAL_STATE,
-  STALE_STATE,
-  SUPPRESSED_STATE,
-  UNAVAILABLE_STATE,
-  ZERO_PERCENT_STATE,
-} from '../mock/peer-progress-indicator.mock';
+import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
+import API_URL from 'src/app/config/constants/apiUrl';
+import {DISABLED_STATE, NORMAL_STATE, SUPPRESSED_STATE} from '../mock/peer-progress-indicator.mock';
 import {PeerProgressIndicatorService} from '../peer-progress-indicator.service';
 
 describe('PeerProgressIndicatorService', () => {
   let service: PeerProgressIndicatorService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PeerProgressIndicatorService],
+      providers: [
+        PeerProgressIndicatorService,
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
+        provideHttpClientTesting(),
+      ],
     });
 
     service = TestBed.inject(PeerProgressIndicatorService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should return normal state', () => {
-    service.getIndicator(1, 10, 2, 'normal').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(NORMAL_STATE.submittedPercentage);
-      expect(result.isSuppressed).toBe(NORMAL_STATE.isSuppressed);
-      expect(result.isFeatureEnabled).toBe(NORMAL_STATE.isFeatureEnabled);
+  afterEach(() => {
+    httpMock.verify({ignoreCancelled: true});
+  });
 
-      // overwritten fields
-      expect(result.taskDefinitionId).toBe(1);
-      expect(result.unitId).toBe(10);
-      expect(result.targetGrade).toBe(2);
+  it('requests the authorised project/task route without client-supplied cohort parameters', () => {
+    service.getIndicator(7, 99).subscribe();
+
+    const request = httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`);
+
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.keys()).toEqual([]);
+
+    request.flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: 2,
+      submitted_percentage: 40,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: '2026-08-23T00:00:00Z',
+      unavailable_message: '',
     });
   });
 
-  it('should return zero percent state', () => {
-    service.getIndicator(2, 20, 1, 'zero').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(ZERO_PERCENT_STATE.submittedPercentage);
-      expect(result.isSuppressed).toBe(ZERO_PERCENT_STATE.isSuppressed);
+  it('maps the complete snake-case response and preserves nullable fields', () => {
+    let result: PeerProgressIndicator | undefined;
 
-      expect(result.taskDefinitionId).toBe(2);
-      expect(result.unitId).toBe(20);
-      expect(result.targetGrade).toBe(1);
+    service.getIndicator(7, 99).subscribe((value) => {
+      result = value;
+    });
+
+    httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
+      task_definition_id: 99,
+      unit_id: 1,
+      target_grade: null,
+      submitted_percentage: null,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: null,
+      unavailable_message: 'Peer progress is currently unavailable.',
+    });
+
+    expect(result).toEqual({
+      taskDefinitionId: 99,
+      unitId: 1,
+      targetGrade: null,
+      submittedPercentage: null,
+      isSuppressed: false,
+      isStale: false,
+      isFeatureEnabled: true,
+      lastUpdatedAt: null,
+      unavailableMessage: 'Peer progress is currently unavailable.',
     });
   });
 
-  it('should return suppressed state', () => {
-    service.getIndicator(3, 30, 0, 'suppressed').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(SUPPRESSED_STATE.submittedPercentage);
-      expect(result.isSuppressed).toBe(true);
-      expect(result.unavailableMessage).toBe(SUPPRESSED_STATE.unavailableMessage);
+  it('cancels the live HTTP request when the caller unsubscribes', () => {
+    const subscription = service.getIndicator(7, 99).subscribe();
+    const request = httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`);
 
-      expect(result.taskDefinitionId).toBe(3);
-      expect(result.unitId).toBe(30);
-      expect(result.targetGrade).toBe(0);
-    });
-  });
+    subscription.unsubscribe();
 
-  it('should return unavailable state', () => {
-    service.getIndicator(4, 40, 3, 'unavailable').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(UNAVAILABLE_STATE.submittedPercentage);
-      expect(result.unavailableMessage).toBe(UNAVAILABLE_STATE.unavailableMessage);
-
-      expect(result.taskDefinitionId).toBe(4);
-      expect(result.unitId).toBe(40);
-      expect(result.targetGrade).toBe(3);
-    });
-  });
-
-  it('should return stale state', () => {
-    service.getIndicator(5, 50, 2, 'stale').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(STALE_STATE.submittedPercentage);
-      expect(result.isStale).toBe(true);
-      expect(result.unavailableMessage).toBe(STALE_STATE.unavailableMessage);
-
-      expect(result.taskDefinitionId).toBe(5);
-      expect(result.unitId).toBe(50);
-      expect(result.targetGrade).toBe(2);
-    });
-  });
-
-  it('should return disabled state', () => {
-    service.getIndicator(6, 60, 1, 'disabled').subscribe((result) => {
-      expect(result.submittedPercentage).toBe(DISABLED_STATE.submittedPercentage);
-      expect(result.isFeatureEnabled).toBe(false);
-      expect(result.unavailableMessage).toBe(DISABLED_STATE.unavailableMessage);
-
-      expect(result.taskDefinitionId).toBe(6);
-      expect(result.unitId).toBe(60);
-      expect(result.targetGrade).toBe(1);
-    });
-  });
-
-  it('should fall back to unavailable state for unknown keys', () => {
-    service.getIndicator(99, 99, 0, 'unknown' as 'normal').subscribe((result) => {
-      expect(result.unavailableMessage).toBe(UNAVAILABLE_STATE.unavailableMessage);
-      expect(result.submittedPercentage).toBeNull();
-
-      expect(result.taskDefinitionId).toBe(99);
-      expect(result.unitId).toBe(99);
-      expect(result.targetGrade).toBe(0);
-    });
+    expect(request.cancelled).toBe(true);
   });
 
   describe('getMockUnitSummary', () => {
