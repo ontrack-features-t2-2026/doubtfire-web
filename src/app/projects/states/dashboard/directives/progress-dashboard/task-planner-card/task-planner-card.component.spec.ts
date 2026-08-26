@@ -3,12 +3,14 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSelectModule} from '@angular/material/select';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {TaskStatusEnum} from 'src/app/api/models/task-status';
 import {Unit} from 'src/app/api/models/unit';
 import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
@@ -16,7 +18,7 @@ import {GradeService} from 'src/app/common/services/grade.service';
 import {TaskPlannerCardComponent} from './task-planner-card.component';
 
 function buildProjectWithTasks(
-  tasks: {dueDate?: Date; targetGrade?: number}[],
+  tasks: {dueDate?: Date; targetGrade?: number; status?: TaskStatusEnum}[],
   projectTargetGrade: number | undefined = 0,
 ): Project {
   const unit = new Unit();
@@ -27,7 +29,7 @@ function buildProjectWithTasks(
   const project = new Project(unit);
   project.targetGrade = projectTargetGrade;
 
-  tasks.forEach(({dueDate, targetGrade}, index) => {
+  tasks.forEach(({dueDate, targetGrade, status}, index) => {
     const definition = new TaskDefinition(unit);
     definition.id = index + 1;
     definition.abbreviation = `${index + 1}.1P`;
@@ -40,6 +42,9 @@ function buildProjectWithTasks(
     task.definition = definition;
     task.dueDate = dueDate;
     task.project = project;
+    if (status) {
+      task.status = status;
+    }
 
     project.taskCache.add(task);
   });
@@ -63,7 +68,14 @@ describe('TaskPlannerCardComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [TaskPlannerCardComponent],
-      imports: [MatButtonModule, MatIconModule, MatSelectModule, FormsModule, NoopAnimationsModule],
+      imports: [
+        MatButtonModule,
+        MatCheckboxModule,
+        MatIconModule,
+        MatSelectModule,
+        FormsModule,
+        NoopAnimationsModule,
+      ],
       providers: [{provide: FileDownloaderService, useValue: fileDownloaderStub}, GradeService],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -201,6 +213,85 @@ describe('TaskPlannerCardComponent', () => {
     expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-C.ics',
+    );
+  });
+
+  it('excludes tasks in a final state from the generated calendar when excludeCompleted is on', () => {
+    // Task 1 is complete (a final status), Task 2 is still in progress. If the completed
+    // filter were ignored, both event UIDs would be present in the generated calendar.
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.excludeCompleted = true;
+
+    const ics = buildIcsCalendar(
+      component['tasksForDownload'](),
+      new Date('2026-08-24T00:00:00Z'),
+    );
+    expect(ics).not.toContain('UID:E-1');
+    expect(ics).toContain('UID:E-2');
+  });
+
+  it('includes both completed and outstanding tasks when excludeCompleted is off (default)', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+
+    expect(component.excludeCompleted).toBe(false);
+    const ics = buildIcsCalendar(
+      component['tasksForDownload'](),
+      new Date('2026-08-24T00:00:00Z'),
+    );
+    expect(ics).toContain('UID:E-1');
+    expect(ics).toContain('UID:E-2');
+  });
+
+  it('composes the completed filter with the grade filter', () => {
+    // Task 1: grade 0, complete. Task 2: grade 2, outstanding. Task 3: grade 0, outstanding.
+    // With selectedDownloadGrade 0 and excludeCompleted true, only Task 3 should remain.
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0, status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2, status: 'working_on_it'},
+      {dueDate: new Date(2026, 8, 22, 23, 59, 59, 999), targetGrade: 0, status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.selectedDownloadGrade = 0;
+    component.excludeCompleted = true;
+
+    const tasks = component['tasksForDownload']();
+    expect(tasks.map((task) => task.definition.id)).toEqual([3]);
+  });
+
+  it('hasDownloadableTasks becomes false when excluding completed tasks leaves nothing', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+    ]);
+    fixture.detectChanges();
+
+    expect(component.hasDownloadableTasks).toBe(true);
+
+    component.excludeCompleted = true;
+    expect(component.hasDownloadableTasks).toBe(false);
+  });
+
+  it('appends -outstanding to the filename when excludeCompleted is on', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.excludeCompleted = true;
+
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+
+    component.downloadIcs();
+
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-P-outstanding.ics',
     );
   });
 });
