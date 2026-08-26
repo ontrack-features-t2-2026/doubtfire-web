@@ -40,15 +40,23 @@ export class PeerProgressService {
   }
 
   private sampleProfile(project: Project, profile: number[]): PeerMedianPoint[] {
+    const asOf = Date.now();
     const weeks = MappingFunctions.step(
       project.unit.startDate.getTime(),
       project.unit.endDate.getTime(),
       MappingFunctions.weeksMs(1),
     );
 
-    return weeks.map((time, week) => ({
-      date: new Date(time).toISOString(),
-      remaining: profile[Math.round((week / Math.max(weeks.length - 1, 1)) * (profile.length - 1))],
-    }));
+    // Map against the whole unit before removing future points. Mapping only
+    // the elapsed weeks would incorrectly stretch the sample to 100% complete
+    // at today's date and make the demo look like the cohort has finished every
+    // task.
+    return weeks
+      .map((time, week) => ({
+        date: new Date(time).toISOString(),
+        remaining:
+          profile[Math.round((week / Math.max(weeks.length - 1, 1)) * (profile.length - 1))],
+      }))
+      .filter((point) => new Date(point.date).getTime() <= asOf);
   }
 }
