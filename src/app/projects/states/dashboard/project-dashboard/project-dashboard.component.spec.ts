@@ -4,6 +4,7 @@ import {ActivatedRoute, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject, of, tap} from 'rxjs';
 import {Project, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
+import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
@@ -52,6 +53,7 @@ describe('ProjectDashboardComponent route reuse', () => {
     const component = new ProjectDashboardComponent(
       {} as UserService,
       {get: projectGet} as unknown as ProjectService,
+      {} as TaskService,
       {get: unitGet} as unknown as UnitService,
       {setView} as unknown as GlobalStateService,
       {
@@ -98,6 +100,7 @@ describe('ProjectDashboardComponent route reuse', () => {
     const component = new ProjectDashboardComponent(
       {} as UserService,
       {get: projectGet} as unknown as ProjectService,
+      {} as TaskService,
       {get: unitGet} as unknown as UnitService,
       {setView: vi.fn()} as unknown as GlobalStateService,
       {
@@ -154,6 +157,7 @@ describe('ProjectDashboardComponent route reuse', () => {
     const component = new ProjectDashboardComponent(
       {} as UserService,
       {get: projectGet} as unknown as ProjectService,
+      {} as TaskService,
       {get: unitGet} as unknown as UnitService,
       {setView: vi.fn()} as unknown as GlobalStateService,
       {
