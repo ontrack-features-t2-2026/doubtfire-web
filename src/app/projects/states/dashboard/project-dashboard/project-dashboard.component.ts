@@ -14,6 +14,7 @@ import {ActivatedRoute} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
+import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
@@ -60,6 +61,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private currentUser: UserService,
     private projectService: ProjectService,
+    private taskService: TaskService,
     private unitService: UnitService,
     private globalStateService: GlobalStateService,
     private route: ActivatedRoute,
@@ -155,6 +157,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     if (this.defaultTaskListCollapsed) {
       this.leftWidth = this.taskListCollapsedWidth;
     }
+
+    this.taskService.taskStatusUpdated$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
+      const selectedTaskDefinition = this.selectedTaskDefinition$.value;
+      if (selectedTaskDefinition && task.definition?.id === selectedTaskDefinition.id) {
+        this.selectedTaskDefinition$.next(null);
+      }
+    });
 
     const initialProject$ =
       this.project$ ??
