@@ -1,4 +1,4 @@
-<div class="institution-settings-container">
+<div>
   <!-- <h1 class="py-2 text-center text-gray-800">Institution settings</h1> -->
   <mat-tab-group
     class="mx-auto mb-6 max-w-fit"
@@ -47,7 +47,9 @@
         </f-page-container>
       }
       @case ('turnitin') {
-        <f-tii-action-log></f-tii-action-log>
+        <div class="px-20">
+          <f-tii-action-log></f-tii-action-log>
+        </div>
       }
     }
   </div>
