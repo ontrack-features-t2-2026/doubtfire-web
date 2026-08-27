@@ -905,7 +905,11 @@ export class Task extends Entity {
     );
   }
 
-  public processTaskStatusChange(expectedStatus: TaskStatusEnum, alerts: AlertService) {
+  public processTaskStatusChange(
+    expectedStatus: TaskStatusEnum,
+    alerts: AlertService,
+    submissionCompleted: boolean = false,
+  ) {
     if (this.inTimeExceeded() && !this.isPastDeadline()) {
       alerts.message(
         'You have submitted after the deadline for feedback. Your task will not be reviewed by a tutor. It is now your responsibility to ensure this task meets the required standard.',
@@ -920,7 +924,7 @@ export class Task extends Entity {
     }
     this.getSubmissionDetails().subscribe();
     const taskService: TaskService = AppInjector.get(TaskService);
-    taskService.notifyStatusChange(this);
+    taskService.notifyTransitionComplete(this, submissionCompleted);
   }
 
   public async markAsDiscussed(reasonText?: string) {
@@ -994,6 +998,7 @@ export class Task extends Entity {
     status: TaskStatusEnum,
     markAsDiscussed?: boolean,
     triggerRecursiveFix?: boolean,
+    submissionCompleted: boolean = false,
   ) {
     const oldStatus = this.status;
     const oldGrade = this.grade;
@@ -1043,7 +1048,7 @@ export class Task extends Entity {
               this.project.taskCache.delete(this.definition.abbreviation);
               this.project.taskCache.add(this);
             }
-            this.processTaskStatusChange(status, alerts);
+            this.processTaskStatusChange(status, alerts, submissionCompleted);
             taskService.notifyStatusChange(this);
           },
           error: (error) => {
@@ -1093,7 +1098,12 @@ export class Task extends Entity {
     } else if (requiresFileUpload && !this.isReadyForUpload) {
       alerts.error('Complete Knowledge Check first to submit files', 6000);
     } else {
-      await this.updateTaskStatus(status);
+      await this.updateTaskStatus(
+        status,
+        undefined,
+        undefined,
+        TaskStatus.SUBMITTABLE_STATUSES.includes(status),
+      );
     }
   }
 
