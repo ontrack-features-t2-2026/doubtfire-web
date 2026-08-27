@@ -39,7 +39,10 @@ proposed as final and is not waiting on either ticket.
 
 ## 2. Audit of the current stylesheet, done for this ticket
 
-Commands were run from the repo root on branch `docs/theme-contract`, cut from `origin/11.0.x`.
+Commands were run from the repo root on branch `docs/theme-contract`, rebased onto `origin/11.0.x`
+at **`4034e7d1a`** (27 Aug 2026, the closure merge of PR #105). Every count below was re-taken on
+that commit. Appendix B has the full list with each command beside its result, and the note there
+on which nine numbers moved when the closure branch landed.
 
 ### 2.1 Versions
 
@@ -103,40 +106,56 @@ Those four flattened values land exactly on M2 grey 900 / 600 / 500 / 300. That 
 coincidence, it is how the palette was built, and it is why the light column in section 7 is a
 derivation and not an invention.
 
+The four **text and divider** rows are reproducible without Material installed: they are the
+alpha values above composited over white, and `flatten()` in Appendix A returns `#212121`,
+`#757575`, `#9e9e9e` and `#e0e0e0` exactly. The three **surface** rows (`#fafafa`, `#ffffff`,
+`#f5f5f5`) are read from the M2 palette, and `node_modules` is not installed in this worktree, so
+they are quoted from the package rather than re-checked here. They are the stock M2 grey 50 /
+white / grey 100 and nothing in the repo overrides them, but treat the file path as a pointer
+rather than a citation until someone re-runs it with dependencies installed.
+
 ### 2.4 Hard-coded colour, measured
 
 ```
 $ grep -rIoE '#[0-9a-fA-F]{3,8}\b' src --include='*.scss' | wc -l
-350
+471
 $ grep -rIlE 'rgba?\(|hsla?\(' src --include='*.scss' | wc -l
-20
+25
 $ find src -name '*.scss' | wc -l
-180
+189
 $ grep -rIoh '!important' src --include='*.scss' | wc -l
 63
 ```
 
-238 of the 350 hex literals are in three files that are palettes by design
-(`m3-theme.scss` 107, `theme.scss` 84, `task-status-colors.scss` 47). Of the rest, **105 are
+238 of the 471 hex literals are in three files that are palettes by design
+(`m3-theme.scss` 107, `theme.scss` 84, `task-status-colors.scss` 47). Of the rest, **226 are
 scattered across component SCSS under `src/app`**, 6 sit in other shared partials and 1 is in
 `styles.scss`.
 
 ```
 $ grep -rIoE '#[0-9a-fA-F]{3,8}\b' src/app --include='*.scss' | wc -l
-105
+226
 $ grep -rIlE '#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\(' src/app --include='*.scss' | wc -l
-36
+44
 $ grep -rIlE 'color|background|border|fill|stroke' src/app --include='*.scss' | wc -l
-48
+57
 $ find src/app -name '*.scss' | wc -l
-169
+178
 ```
 
-So **48 of the 169 component stylesheets under `src/app` declare a colour, a border or a fill**,
-against 36 that hold a hex or an `rgba()`. The wider grep is the honest one for sizing a
+So **57 of the 178 component stylesheets under `src/app` declare a colour, a border or a fill**,
+against 44 that hold a hex or an `rgba()`. The wider grep is the honest one for sizing a
 migration: it also catches `stroke: white`, `border-radius: $border-radius-base` and a
 `task-status-color($status)` call, none of which contain a literal but all of which a theme has
-to account for. 48 is the number to burn down, 105 is the number of literals inside it.
+to account for. 57 is the number to burn down, 226 is the number of literals inside it.
+
+The three palette files have not moved (107 / 84 / 47, unchanged), so the whole of the growth is
+in component stylesheets: the loose literal count more than doubled from 105 to 226 in a single
+closure merge. Two files new to this base carry 94 of the 226 between them,
+`ppi-widget.component.scss` with 50 and `demo-controls.component.scss` with 44. That is the rate
+this contract exists to stop, and it is the strongest argument for landing the section 10 lint
+gate early rather than after the migration — every week it is not in place, the burn-down grows
+faster than a migration ticket can shrink it.
 
 Templates carry colour too, as Tailwind arbitrary values:
 
@@ -183,14 +202,25 @@ Three urgency bands, no named token, one of them a Tailwind default grey.
 | Terminal output | `ansi-to-html`                                                              | Emits inline `style="color:#..."` from ANSI codes.                                                            |
 | Emoji picker    | `@ctrl/ngx-emoji-mart` (`picker.css`)                                       | Ships a `darkMode` input; `task-comment-composer.component.html:5` currently hard-codes `[darkMode]="false"`. |
 
-The two chart domains, verbatim:
+The two chart palettes, verbatim:
 
 ```ts
-// progress-burndown-chart.component.ts:60
-domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', 'transparent'],
-// project-progress-gauge.component.ts:41
+// visualisations/progress-burndown-chart/progress-burndown-chart.component.ts:70-76
+private readonly seriesPalette: string[] = [
+  '#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED',
+];
+// ...fed to the scheme at :81 as domain: [...this.seriesPalette]
+//    and per-series at :360 via seriesColor(index)
+
+// common/project-progress/project-progress-gauge.component.ts:41
 domain: ['#5AA454', '#E44D25', '#CFC0BB', '#7aa3e5', '#a8385d', '#aae3f5'],
 ```
+
+The burndown palette moved during the closure merge: it was an inline `domain` array and is now a
+named constant, and its fifth slot changed from `'transparent'` to a real fifth colour `#7C3AED`.
+That is one more series colour for THM-M04 to map onto `--ot-chart-*`, and section 8.2 allocates
+six slots, so it fits. The refactor is also the better shape to migrate — one constant to
+re-point instead of two call sites.
 
 ### 2.6 What does not exist yet
 
@@ -202,8 +232,12 @@ $ grep -rIn "color-scheme" src/ | wc -l
 $ grep -rIn "@media print" src/ | wc -l
 0
 $ grep -rIn "prefers-reduced-motion" src/ | wc -l
-0
+2
 ```
+
+The two `prefers-reduced-motion` blocks are new and both are component-local
+(`demo-controls.component.scss:497`, `ppi-widget.component.scss:503`). There is still no
+app-wide reduced-motion rule, so section 12 sets one rather than assuming it is covered.
 
 No dark preference is stored anywhere. `src/index.html` sets a fixed
 `<meta content="#3939ff" name="theme-color" />` and `src/manifest.webmanifest` sets
@@ -217,10 +251,30 @@ $ grep -rIhoE '^\s*--[a-z0-9-]+\s*:' src --include='*.scss' | tr -d ' ' | sort |
    3 --background-gray:   2 --mat-chip-disabled-label-text-color:
    1 --status-chip-bg:    1 --mat-tab-container-height:
    1 --mat-progress-bar-track-height:   1 --mat-progress-bar-active-indicator-height:
+   1 --mat-badge-text-color:   1 --mat-badge-container-overlap-offset:
+   1 --mat-badge-container-offset:
 ```
 
-Focus handling is a live risk: 11 `outline: none` / `outline: 0` declarations against only 7
-`:focus-visible` rules.
+Nine names, twelve declarations, and six of the nine are Material's own `--mat-*` overrides
+rather than anything of ours. The `--ot-` prefix still collides with nothing.
+
+Focus handling is a live risk, and the headline counts understate it. There are 11
+`outline: none` / `outline: 0` declarations and 11 `:focus-visible` rules, which reads as level
+where it used to read 11-against-7. It is not level. The two sets barely overlap:
+
+```
+$ comm -12 <(grep -rIlE "outline:\s*(none|0)" src --include='*.scss' | sort) \
+           <(grep -rIl "focus-visible" src --include='*.scss' | sort)
+src/app/common/file-uploader/file-uploader.component.scss
+```
+
+Ten files suppress an outline and seven declare a `:focus-visible` rule, but only **one file does
+both** — `file-uploader.component.scss`. The four `:focus-visible` rules added by the closure
+merge landed in four files that suppress no outline at all, three of which
+(`notifications-page`, `demo-controls`, `ppi-widget`) did not exist on the previous base. So the
+gap did not close: **nine of the ten outline-suppressing files still have no replacement ring**,
+exactly as before. This is why section 12 makes auditing all 11 suppressions a named item in
+THM-F01 rather than treating the ratio as evidence of anything.
 
 ### 2.7 The accessibility problem that already ships
 
@@ -260,7 +314,7 @@ semantic token layer on top now, and move Material onto tokens per component gro
 
 | Option                                                           | What it means                                                                             | Verdict                                                                                                                                                       |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 112 loose component hexes, and locks us further into an API Angular is winding down. |
+| A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose component hexes, and locks us further into an API Angular is winding down. |
 | B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                          |
 | **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                   |
 
@@ -269,22 +323,32 @@ semantic token layer on top now, and move Material onto tokens per component gro
 `m3-theme.scss` was generated from `#3939FF` and never wired up. Switching to it in one commit
 would, in a single PR: change every Material component's density, shape and typography scale at
 once; re-map the `warn` palette (M2 `#ef4444`) onto the M3 `error` ramp (`#ba1a1a`); and leave
-the 105 component-level hex literals and the 15 status colours untouched and now clashing with a
+the 226 component-level hex literals and the 15 status colours untouched and now clashing with a
 new set of greys. The failure mode is exactly the one this ticket exists to prevent: several
 people fixing different dark greys in parallel.
 
-It is also not a small change. `mat.define-theme` in `m3-theme.scss` is the older M3 entry point.
-The installed Material 22.0.2 exposes a newer one, `mat.theme()`, which supports
-`theme-type: color-scheme` and emits `light-dark()` values
-(`node_modules/@angular/material/core/tokens/_system.scss:57-82` and `:253`). If we are going to
-move Material, we should move to that, not to the generated file as written. That is a separate
-sized ticket, not a comment uncomment.
+It is also not a small change. `m3-theme.scss:138` and `:158` both call `mat.define-theme`, which
+is the older M3 entry point, and the file was generated against it (`m3-theme.scss:1`). Angular
+Material has since added `mat.theme()`, which takes a `theme-type` of `color-scheme` and emits
+both themes from one include. If we are going to move Material, that is the target, not the
+generated file as written — and either way it is a separately sized ticket, not a comment
+uncomment.
+
+> **Not verified here.** `node_modules` is not installed in this worktree, so the `mat.theme()`
+> behaviour above is stated from the Material 22 public API and **has not been checked against
+> the installed package**. An earlier draft pinned it to
+> `node_modules/@angular/material/core/tokens/_system.scss:57-82` and `:253`; those line numbers
+> are removed because nothing in this repo can confirm them and a citation nobody can check is
+> worth less than none. The rejection of option B does not rest on this paragraph — it rests on
+> the blast radius in the paragraph above it, which is verifiable in-tree. Whoever picks up the
+> Material migration ticket should confirm the API against the installed version before quoting
+> it.
 
 ### What C means concretely
 
 1. **Now (THM-F01).** `src/theme.scss` is untouched. A new token layer declares `--ot-*` on the
    root element for both themes. Nothing Material renders changes.
-2. **Now.** New and migrated code reads `--ot-*` only. The 105 loose literals get replaced page
+2. **Now.** New and migrated code reads `--ot-*` only. The 226 loose literals get replaced page
    by page (THM-M01 to M04) with no visual change in light mode.
 3. **Later, per component group.** Material components are pulled onto the tokens with
    `mat.theme-overrides()` or `--mat-*` system variables, one group per PR (buttons, then form
@@ -435,8 +499,17 @@ The bare `:root` first means the app is correct in light mode even if the script
 | Format              | A bare string. **Not** JSON, not an object, not a serialised class           |
 | Scope               | `localStorage`, per browser profile and origin. Section 6.2 adds the account |
 
-The key follows the convention already in the tree: `unit-task-list.component.ts:501-504` writes
-`ontrack.unitTaskList.${unitId}.viewPreferences`. Namespace, dot separators, camelCase leaf.
+The key follows the convention already in the tree, which now has two independent uses of it:
+
+```
+src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.ts:586
+  `ontrack.unitTaskList.${unitId}.viewPreferences`
+src/app/projects/states/plan/task-planner/task-planner.component.ts:82
+  `ontrack.taskPlanner.${projectId}.showTasksAboveTargetGrade`
+```
+
+Namespace, dot separators, camelCase leaf. `ontrack.theme.preference` is the same shape with no
+id segment, because the preference is per browser profile rather than per unit or per project.
 
 ### 6.1 Validation, and the rule that matters
 
@@ -505,15 +578,55 @@ OS appearance.
   enum and the boot script never parses a date.
 - The API carries the equivalent beside its field.
 - Newer wins. On a tie the account value wins, so two devices cannot ping-pong.
-- A local timestamp that is missing, unparseable or in the future counts as older, and the
-  account value is taken.
 - The winner is written to **both** sides in the same pass, so one round trip converges them.
+
+**Presence beats recency, and timestamps are only consulted when both sides hold a value.** This
+is the rule that decides the migration, so it is written as a table rather than as prose. Read
+"has a preference" as "holds one of the three allowlisted strings"; anything else is treated as
+absent, per 6.1.
+
+| Local preference | Account preference | Outcome                                                                        |
+| ---------------- | ------------------ | ------------------------------------------------------------------------------ |
+| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.     |
+| absent           | present            | Adopt the account value and write it locally. Rule 4.                          |
+| **present**      | **absent**         | **Keep the local value, upload it, and stamp `updatedAt` at the moment of the upload.** |
+| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                        |
+
+Only the fourth row consults a timestamp. So "a local timestamp that is missing, unparseable or
+in the future counts as older, and the account value is taken" applies **inside that row only**,
+where the account demonstrably holds a real choice. It must never be read as licence to discard a
+local preference against an empty account field.
+
+**Why the third row matters more than it looks.** It is not an edge case, it is day one of
+THM-B01 for the entire existing user base. Phase one writes only
+`ontrack.theme.preference`; the `updatedAt` key does not exist until phase two introduces it. So
+on the morning THM-B01 ships, every user who ever touched the toggle has a valid local
+preference, **no** local timestamp, and an empty account field. Under a naive reading of the
+timestamp clause — missing timestamp counts as older, so take the account — every one of them
+would silently have their theme reset to `system` by a backend migration they did not ask for.
+Presence beating recency is what prevents that, and it is why the ordering is fixed here rather
+than left to THM-B01.
+
+Two consequences that follow from the third row and are intended:
+
+- **The upload stamps `now`, and does not backdate.** The device cannot know when the preference
+  was originally chosen, and inventing a plausible earlier timestamp would be fabricating the
+  input to a conflict resolution. `now` is the honest value.
+- **If the same user migrates on two devices, the later sign-in wins.** Device A signs in, finds
+  an empty account, and uploads `dark` stamped `T1`. Device B signs in at `T2` holding `light`
+  with no timestamp; the account now has a value, so row four applies, B's missing timestamp
+  counts as older, and B adopts `dark`. Deterministic, converges in one pass, no ping-pong. It
+  does mean one device's pre-migration choice is dropped, which is the price of having no
+  timestamp to compare, and THM-Q01 should confirm it looks like a single repaint rather than a
+  fight.
 
 **4. A device that has never set a preference adopts the account value.** Nothing valid in
 `localStorage` means nothing to compare, so the account value is adopted, written locally, and
 the next boot on that device is flash-free. Until the response lands, that first session follows
 `system`. One repaint, on the first session on a new device, is the accepted cost of rule 1. It
-is stated behaviour, not a defect for THM-Q01 to raise.
+is stated behaviour, not a defect for THM-Q01 to raise. Where the account is *also* empty, row
+one of the table applies and nothing is written at all — a brand-new user is not given a stored
+preference they never chose.
 
 **5. The sync never blocks and never fails loudly.** A 4xx, a 5xx, an offline device, or a
 request still in flight, all leave the local value applied and in charge. The retry is the next
@@ -818,9 +931,15 @@ These belong in MG-05 and are proposed here so the reviewer knows what to enforc
    `dark:(bg|text|border|fill|stroke|ring|outline|from|via|to)-`.
 3. No new `--ot-*` name without an entry in section 7 or 8 of this document.
 
-Today's baseline for rule 1 is 105 literals in component SCSS under `src/app` plus 20 Tailwind
-arbitrary colour values across 9 template files. That number is the migration burn-down and
-should only go down.
+Today's baseline for rule 1 is **226** literals in component SCSS under `src/app` plus 20 Tailwind
+arbitrary colour values across 9 template files, measured on `11.0.x` at `4034e7d1a`. That number
+is the migration burn-down and should only go down.
+
+**Re-measure it before quoting it.** This baseline read 105 when it was first taken, against
+`efda57967` at 09:24 the same morning. One closure merge landed at 22:00 and it became 226. The
+figure more than doubled inside thirteen hours, so a burn-down target copied out of this document
+a week from now will be wrong. THM-M01 should re-run the command on the commit it actually
+branches from and record that figure on its own card rather than inheriting this one.
 
 ---
 
@@ -950,8 +1069,9 @@ not a nice-to-have.
 | Chart series                              | Legend text, plus dash pattern or marker shape for lines and a direct label or pattern for stacked areas.                                                |
 | Disabled controls                         | `disabled` / `aria-disabled` and a `not-allowed` cursor, not only a lighter grey.                                                                        |
 
-**Reduced motion.** The app has zero `prefers-reduced-motion` handling today. The theme
-transition is the first thing to respect it:
+**Reduced motion.** The app has two `prefers-reduced-motion` blocks today, both component-local
+(`demo-controls.component.scss:497` and `ppi-widget.component.scss:503`) and neither app-wide. So
+the global rule below is still new work, and it is the first thing the theme has to respect:
 
 ```scss
 @media (prefers-reduced-motion: reduce) {
@@ -975,8 +1095,8 @@ reads as a flicker and is a vestibular trigger.
   colour-only chip is not acceptable output.
 - `--ot-scrim` and `--ot-elevation-1` are suppressed in print.
 
-**Browser and PWA chrome — THM-W01.** `src/index.html:34` and `src/manifest.webmanifest` both pin
-`#3939ff` today, which paints a bright blue browser bar above a dark page.
+**Browser and PWA chrome — THM-W01.** `src/index.html:24` and `src/manifest.webmanifest:22` both
+pin `#3939ff` today, which paints a bright blue browser bar above a dark page.
 
 - Keep the static `<meta name="theme-color" content="#3939ff">` as the default for browsers that
   ignore media queries, and add two media-scoped tags:
@@ -1074,19 +1194,27 @@ Tailwind dark variant — THM-F03
 Account sync — THM-B01, phase two only
 
 20. No valid local key plus an account value adopts the account value and writes it locally.
-21. Local and account disagree: the newer `updatedAt` wins, both stores end equal after one pass,
-    and a tie takes the account value.
-22. A local timestamp that is missing, unparseable or in the future takes the account value.
-23. The sync request failing leaves the local preference applied and throws nothing out of the
+21. Local and account disagree, both present: the newer `updatedAt` wins, both stores end equal
+    after one pass, and a tie takes the account value.
+22. Both present, and the local timestamp is missing, unparseable or in the future: the account
+    value is taken. Assert this **only** with a non-empty account field, so the test cannot be
+    satisfied by code that discards a local preference against an empty one.
+23. **The migration case, one test per row of the 6.2 table.** In particular: a valid local
+    preference with **no** `updatedAt` key and an **empty** account field keeps the local value,
+    uploads it, and stamps `updatedAt`. Assert the local preference is unchanged, the request
+    body carries it, and the stamp is not backdated. This is the day-one state for every existing
+    user and it is the regression that would be invisible in staging, where accounts are new.
+24. Local absent and account empty writes nothing to either store and leaves the app on `system`.
+25. The sync request failing leaves the local preference applied and throws nothing out of the
     service.
-24. Setting the preference three times in quick succession sends one request.
-25. The account is sent the **stored** preference, never the resolved one — set `system` on a
+26. Setting the preference three times in quick succession sends one request.
+27. The account is sent the **stored** preference, never the resolved one — set `system` on a
     dark OS and assert the request body carries `system`.
-26. Signing out does not remove `ontrack.theme.preference`.
+28. Signing out does not remove `ontrack.theme.preference`.
 
 Visual regression
 
-27. One screenshot pair per theme covering the section 13 state matrix and the full 15-status
+29. One screenshot pair per theme covering the section 13 state matrix and the full 15-status
     set, diffed on every PR that touches the token layer. This is what catches a token someone
     "adjusted" that no unit test happens to assert.
 
@@ -1131,6 +1259,12 @@ Visual regression
     one repaint happens and looks like a repaint, not a flicker loop.
 23. Phase two only. Sign out, sign in as a different user on the same machine. The previous
     theme shows until the new preference arrives, then repaints once.
+24. Phase two only, and the one to run on a real account rather than a fresh test one. Reproduce
+    the migration: set a preference while phase one is live, delete
+    `ontrack.theme.preference.updatedAt` if the build wrote one, confirm the account field is
+    empty, then sign in on the phase-two build. The theme must survive. A user whose theme
+    silently reverts to `system` the day THM-B01 ships will read it as the feature breaking, and
+    it is the one failure here that would hit everybody at once.
 
 ---
 
@@ -1152,10 +1286,28 @@ Visual regression
   storing `dark` because the operating system happened to be dark would put the user's OS
   appearance in the database, which is the fingerprinting signal the next bullet rules out.
   Storing `system` does not.
-- **No tracking.** Theme choice is not sent to Google Analytics (`src/index.html:6-14`) or to
-  Sentry (`@sentry/angular`). It is not an event, a user property, or a breadcrumb. Reading a
-  user's OS appearance and reporting it is a fingerprinting signal and this feature does not do
-  it.
+- **No tracking.** There is no analytics tooling in this app to leak the preference to. No
+  Google Analytics, no tag manager, no product-analytics SDK:
+
+  ```
+  $ grep -rIn -E 'google-analytics|googletagmanager|gtag\(|analytics\.js|UA-[0-9]{4,}' src/
+  $ grep -inE 'analytics|gtag|tag-manager|segment|mixpanel|posthog|amplitude' package.json
+  ```
+
+  Both return nothing. The only `analytics` in `src/` is OnTrack's own Unit Analytics screen, and
+  the only third-party hosts `src/index.html` reaches are Google **Fonts** (`:7-14`) and a pair of
+  IE8 shims behind a conditional comment (`:33-34`). An earlier draft of this section cited
+  `src/index.html:6-14` as Google Analytics; that was wrong, those lines are the font stylesheets,
+  and the mistake is recorded here because a contract that miscites the codebase spends the
+  authority it runs on.
+
+  The one third-party reporter that **is** wired up is Sentry — `@sentry/angular` in
+  `package.json:48`, imported in `src/main.ts:1`, `src/app/doubtfire-angular.module.ts:6` and
+  `src/app/common/services/http-error.interceptor.ts:2`. The theme preference is never handed to
+  it: not as an event, a tag, a user property or a breadcrumb. Reading a user's OS appearance and
+  reporting it is a fingerprinting signal and this feature does not do it. If analytics is added
+  to OnTrack later, the theme preference stays out of it, and that is a review gate rather than a
+  preference.
 - **Not an authorisation or identity control.** `data-ot-theme` and
   `ontrack.theme.preference` are presentation state. They are attacker-controlled by definition,
   since any user can edit `localStorage`. **No permission check, no role check, no route guard,
@@ -1217,7 +1369,7 @@ The deliverable is an **approved** contract. Approval is not this document's to 
 | Accessibility review      | _(to be assigned)_ | ☐        |      | Sections 12, 13, and the Appendix A numbers |
 | Objective lead — THM-JL01 | Sanjana Bottu      | ☐        |      | Whole document, and the section 16 boundary |
 
-Until all three boxes are ticked, this is a draft and THM-F01 does not start.
+Until all four boxes are ticked, this is a draft and THM-F01 does not start.
 
 Two things a reviewer should push back on if they disagree, because both are judgement calls
 rather than derivations:
@@ -1233,7 +1385,11 @@ rather than derivations:
    simpler to implement and easier to reason about, but it means changing the theme on a shared
    lab machine silently loses the moment you sign in somewhere else. Last-write-wins costs a
    second storage key and a timestamp on the API side. If backend review would rather not carry
-   that, say so now, because THM-B01 cannot decide it alone.
+   that, say so now, because THM-B01 cannot decide it alone. Note that "the account always wins"
+   is **not** a simplification that removes the migration row from the 6.2 table — it makes that
+   row worse, because an empty account field would then beat a real local preference and reset
+   every existing user on the day THM-B01 ships. Whichever rule wins, presence still has to beat
+   recency.
 
 ---
 
@@ -1289,25 +1445,78 @@ THM-T01 item 14 turns this appendix into a test, so the numbers stop being a sna
 
 ## Appendix B — audit commands, for re-running
 
+Run from the repo root. The comment on each line is the value on the base named at the bottom.
+
 ```bash
-grep -rIoE '#[0-9a-fA-F]{3,8}\b' src --include='*.scss' | wc -l              # 350
-grep -rIlE 'rgba?\(|hsla?\(' src --include='*.scss' | wc -l                  #  20
+# Tree-wide colour and stylesheet inventory
+grep -rIoE '#[0-9a-fA-F]{3,8}\b' src --include='*.scss' | wc -l              # 471
+grep -rIlE 'rgba?\(|hsla?\(' src --include='*.scss' | wc -l                  #  25
 grep -rIoh '!important' src --include='*.scss' | wc -l                       #  63
-find src -name '*.scss' | wc -l                                              # 180
+find src -name '*.scss' | wc -l                                              # 189
+
+# The three palette files, and the split in section 2.4.
+# Note the `| wc -l`: `grep -c` counts matching *lines*, not matches, even with -o.
+# It happens to agree on these three files because each puts one hex per line. Do not
+# rely on that anywhere else.
+grep -oE '#[0-9a-fA-F]{3,8}\b' src/styles/m3-theme.scss | wc -l                   # 107
+grep -oE '#[0-9a-fA-F]{3,8}\b' src/theme.scss | wc -l                             #  84
+grep -oE '#[0-9a-fA-F]{3,8}\b' src/styles/common/task-status-colors.scss | wc -l  #  47
+#                                                            palette subtotal       238
+# Hex per file, to find where the loose literals concentrate
+grep -rIoE '#[0-9a-fA-F]{3,8}\b' src --include='*.scss' \
+  | cut -d: -f1 | sort | uniq -c | sort -rn | head           # ppi-widget 50, demo-controls 44
+# The non-app, non-palette remainder: 6 in shared partials + 1 in styles.scss
+grep -rIoE '#[0-9a-fA-F]{3,8}\b' src --include='*.scss' \
+  | grep -v '^src/app/' \
+  | grep -v -e '^src/styles/m3-theme.scss:' -e '^src/theme.scss:' \
+            -e '^src/styles/common/task-status-colors.scss:' \
+  | cut -d: -f1 | sort | uniq -c | sort -rn                                  #   7
+
+# What does not exist yet
 grep -rIn -- "--sys-" src/ | wc -l                                           #   0
 grep -rIn "prefers-color-scheme" src/ | wc -l                                #   0
 grep -rIn "color-scheme" src/ | wc -l                                        #   0
 grep -rIn "@media print" src/ | wc -l                                        #   0
-grep -rIn "prefers-reduced-motion" src/ | wc -l                              #   0
+grep -rIn "prefers-reduced-motion" src/ | wc -l                              #   2
+
+# Focus handling. The overlap matters more than either count
 grep -rIn "outline:\s*none\|outline:\s*0" src --include='*.scss' | wc -l     #  11
-grep -rIn "focus-visible" src --include='*.scss' | wc -l                     #   7
-grep -rIoE '#[0-9a-fA-F]{3,8}\b' src/app --include='*.scss' | wc -l          # 105
-grep -rIlE '#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\(' src/app --include='*.scss' | wc -l   #  36
-grep -rIlE 'color|background|border|fill|stroke' src/app --include='*.scss' | wc -l  #  48
-find src/app -name '*.scss' | wc -l                                          # 169
+grep -rIn "focus-visible" src --include='*.scss' | wc -l                     #  11
+comm -12 <(grep -rIlE "outline:\s*(none|0)" src --include='*.scss' | sort) \
+         <(grep -rIl "focus-visible" src --include='*.scss' | sort)          #   1 file
+
+# Custom properties already declared, to show the --ot- namespace is free
+grep -rIhoE '^\s*--[a-z0-9-]+\s*:' src --include='*.scss' \
+  | tr -d ' ' | sort | uniq -c                                    # 9 names, 12 declarations
+
+# The migration burn-down, section 10 rule 1
+grep -rIoE '#[0-9a-fA-F]{3,8}\b' src/app --include='*.scss' | wc -l          # 226
+grep -rIlE '#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\(' src/app --include='*.scss' | wc -l   #  44
+find src/app -name '*.scss' | wc -l                                          # 178
+
+# Section 2.4's "57 of the 178 component stylesheets declare a colour, a border or a fill".
+# The wider grep is deliberate: it catches stroke: white and task-status-color($status),
+# which carry no literal but still need a token.
+grep -rIlE 'color|background|border|fill|stroke' src/app --include='*.scss' | wc -l  #  57
+
+# Tailwind arbitrary colour values in templates: 20 occurrences across 9 files
 grep -rIhoE '\b(text|bg|border)-\[#[0-9a-fA-F]{3,8}\]' src \
-  --include='*.html' --include='*.ts' | sort | uniq -c | sort -rn            #  20 in 9 files
+  --include='*.html' --include='*.ts' | sort | uniq -c | sort -rn            #  20
+grep -rIlE '\b(text|bg|border)-\[#[0-9a-fA-F]{3,8}\]' src \
+  --include='*.html' --include='*.ts' | wc -l                                #   9
+
+# Section 15's "no analytics tooling". Both return nothing.
+grep -rIn -E 'google-analytics|googletagmanager|gtag\(|analytics\.js|UA-[0-9]{4,}' src/
+grep -inE 'analytics|gtag|tag-manager|segment|mixpanel|posthog|amplitude' package.json
 ```
 
-Counts were taken on `docs/theme-contract`, cut from `origin/11.0.x`. Re-run before quoting them
-in a later document.
+**Counts were taken on `11.0.x` at `4034e7d1a`, 27 Aug 2026 22:00 +1000**, which is the commit
+this branch is rebased onto. Pin the base whenever you quote one of these, because they move: the
+first pass at this audit ran on `efda57967` the same morning and the closure merge at #105 moved
+**nine** of them within the day — the four tree-wide counts, `prefers-reduced-motion`,
+`focus-visible`, and all three `src/app` figures. What did **not** move is as important: the
+three palette files, `!important`, every `outline: none`, both Tailwind template counts, and the
+four counts that are still zero. `#3939ff`, the 15 status colours and every contrast ratio in
+sections 7, 8 and Appendix A were unaffected. The drift is entirely in how much unmigrated colour
+there is, not in what any colour is, which is why the token tables survived the merge untouched
+and only the sizing did not.
