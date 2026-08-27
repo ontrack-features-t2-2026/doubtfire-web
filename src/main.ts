@@ -18,11 +18,11 @@ if (environment.sentryDsn && telemetrySafe) {
     tunnel: '/api/client-reports',
     release: environment.sentryRelease || undefined,
     dist: environment.sentryDist || undefined,
-    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
-    tracesSampleRate: 1,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1,
-    enableLogs: true,
+    // Keep telemetry to redacted error events for this release. Browser tracing
+    // and Session Replay can observe iframe/resource URLs outside beforeSend;
+    // legacy SCORM URLs still contain a reusable credential in their path.
+    // They must stay disabled until that launch protocol is redesigned.
+    enableLogs: false,
     sendDefaultPii: false,
     beforeSend(event) {
       if (event.request?.url) {

@@ -11,7 +11,7 @@ import {
   Output,
 } from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BehaviorSubject, Observable, Subject, first, of, takeUntil} from 'rxjs';
+import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
@@ -51,7 +51,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   private readonly projectSubject: BehaviorSubject<Project> = new BehaviorSubject(null);
 
   private readonly destroy$: Subject<void> = new Subject();
+  private readonly projectLoadCancel$: Subject<void> = new Subject();
   private projectReady = false;
+  private activeProjectId: number | null = null;
+  private projectActivation = 0;
 
   projectTasks = [];
 
@@ -167,20 +170,28 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     });
 
     const initialProject$ =
-      this.project$ ?? of(this.route.parent?.snapshot.data.project as Project);
-    this.project$ = this.projectSubject.asObservable();
-    initialProject$.pipe(first()).subscribe((project) => {
-      this.projectSubject.next(project);
-      this.loadProject(
-        project?.id ?? Number(this.route.parent?.snapshot.paramMap.get('projectId')),
+      this.project$ ??
+      this.route.parent.data.pipe(
+        map((data) => data.project as Project),
+        filter((project): project is Project => !!project),
       );
-    });
+    this.project$ = this.projectSubject.asObservable();
+    initialProject$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((project) =>
+        this.activateProject(
+          project,
+          project?.id ?? Number(this.route.parent?.snapshot.paramMap.get('projectId')),
+        ),
+      );
 
     window.dispatchEvent(new Event('resize'));
   }
 
   ngOnDestroy(): void {
     document.body.classList.remove('split-pane-resizing');
+    this.projectLoadCancel$.next();
+    this.projectLoadCancel$.complete();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -190,7 +201,26 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
-  private loadProject(projectId: number): void {
+  private activateProject(project: Project, projectId: number): void {
+    if (!projectId) {
+      return;
+    }
+
+    this.projectLoadCancel$.next();
+    const activation = ++this.projectActivation;
+    this.activeProjectId = projectId;
+    this.projectReady = false;
+    this.selectedTaskDefinition$.next(null);
+    this.projectSubject.next(project);
+
+    if (project?.unit?.id) {
+      this.globalStateService.setView(ViewType.PROJECT, project);
+    }
+
+    this.loadProject(projectId, activation);
+  }
+
+  private loadProject(projectId: number, activation: number): void {
     if (!projectId) {
       return;
     }
@@ -200,32 +230,48 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         {id: projectId},
         {
           cacheBehaviourOnGet: 'cacheQuery',
-          mappingCompleteCallback: (project: Project) => this.loadUnit(project),
+          mappingCompleteCallback: (project: Project) => {
+            if (activation === this.projectActivation && project.id === this.activeProjectId) {
+              this.loadUnit(project, activation);
+            }
+          },
         },
       )
+      .pipe(takeUntil(this.projectLoadCancel$), takeUntil(this.destroy$))
       .subscribe();
   }
 
-  private loadUnit(project: Project): void {
+  private loadUnit(project: Project, activation: number): void {
     const unitId = project.unit?.id;
     if (!unitId) {
-      this.showLoadedProject(project);
+      this.showLoadedProject(project, activation);
       return;
     }
 
-    this.unitService.get(unitId).subscribe({
-      next: (unit) => {
-        project.unit = unit;
-        unit.studentCache.add(project);
-        this.showLoadedProject(project);
-      },
-      error: () => {
-        this.showLoadedProject(project);
-      },
-    });
+    this.unitService
+      .get(unitId)
+      .pipe(takeUntil(this.projectLoadCancel$), takeUntil(this.destroy$))
+      .subscribe({
+        next: (unit) => {
+          if (activation !== this.projectActivation || project.id !== this.activeProjectId) {
+            return;
+          }
+
+          project.unit = unit;
+          unit.studentCache.add(project);
+          this.showLoadedProject(project, activation);
+        },
+        error: () => {
+          this.showLoadedProject(project, activation);
+        },
+      });
   }
 
-  private showLoadedProject(project: Project): void {
+  private showLoadedProject(project: Project, activation: number): void {
+    if (activation !== this.projectActivation || project.id !== this.activeProjectId) {
+      return;
+    }
+
     this.projectReady = true;
     this.globalStateService.setView(ViewType.PROJECT, project);
     this.projectSubject.next(project);

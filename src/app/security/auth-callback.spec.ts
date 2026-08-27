@@ -80,11 +80,14 @@ describe('authentication callback security', () => {
   });
 
   it('redacts callback secrets from telemetry URLs', () => {
+    const callbackUsername = 'student.person@example.edu';
     const redacted = redactAuthCallbackFromUrl(
-      `https://ontrack.example/sign_in?authToken=${SENTINEL}#ltik=${SENTINEL}`,
+      `https://ontrack.example/sign_in?authToken=${SENTINEL}&username=${encodeURIComponent(callbackUsername)}#ltik=${SENTINEL}&user_name=${encodeURIComponent(callbackUsername)}`,
     );
 
     expect(redacted).not.toContain(SENTINEL);
+    expect(redacted).not.toContain('student.person');
+    expect(redacted).not.toContain(encodeURIComponent(callbackUsername));
     expect(redacted).toContain('%5BFiltered%5D');
   });
 

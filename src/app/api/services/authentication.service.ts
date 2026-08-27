@@ -1,14 +1,30 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
-import {AsyncSubject, Observable, catchError, map, throwError} from 'rxjs';
+import {
+  AsyncSubject,
+  EMPTY,
+  Observable,
+  Subject,
+  Subscription,
+  catchError,
+  map,
+  of,
+  switchMap,
+  takeUntil,
+  tap,
+  throwError,
+} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
+import {NotificationService} from 'src/app/api/services/notification.service';
+import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {
   type AuthenticatedSettingsResponseFormat,
   DoubtfireConstants,
 } from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {buildAuthCallbackFragment} from 'src/app/security/auth-callback';
 
@@ -45,16 +61,36 @@ export class AuthenticationService {
    */
   private authComplete$: AsyncSubject<boolean> = new AsyncSubject<boolean>();
 
+  /**
+   * Cancels a protected settings request as soon as sign out starts. A plain
+   * Subject is intentional: requests created by a later session must not see a
+   * previous session's cancellation event.
+   */
+  private authenticatedSettingsCancellation$: Subject<void> = new Subject<void>();
+
+  /**
+   * Changes on sign out so a response belonging to an earlier session cannot
+   * publish settings or complete authentication for the current session.
+   */
+  private authenticationGeneration = 0;
+
+  /**
+   * Only the newest settings response for the current session may update the
+   * singleton constants. Token refresh can legitimately overlap a prior read.
+   */
+  private authenticatedSettingsRequestId = 0;
+
   constructor(
     private httpClient: HttpClient,
     private userService: UserService,
     private alertService: AlertService,
     private angularRouter: Router,
     private doubtfireConstants: DoubtfireConstants,
+    private demoMode: DemoModeStore,
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
-    localStorage.removeItem(this.USERNAME_KEY);
+    this.browserStorage?.removeItem(this.USERNAME_KEY);
   }
 
   private actionAuthFailed() {
@@ -79,18 +115,33 @@ export class AuthenticationService {
       return;
     }
 
+    const authenticationGeneration = this.authenticationGeneration;
+
     // Attempt to get an access token using the refresh token cookie
     this.httpClient.post(this.AUTH_URL + '/access-token', {}).subscribe({
       next: (response: AuthResponse | null) => {
+        if (authenticationGeneration !== this.authenticationGeneration) {
+          return;
+        }
+
         if (response && response.auth_token) {
-          this.setupUserFromResponse(response, firstTime);
-          loginResultCallback(true);
+          this.setupUserFromResponse(response, firstTime, authenticationGeneration).subscribe({
+            next: () => loginResultCallback(true),
+            error: () => {
+              this.actionAuthFailed();
+              loginResultCallback(false);
+            },
+          });
         } else {
           this.actionAuthFailed();
           loginResultCallback(false);
         }
       },
       error: (_error) => {
+        if (authenticationGeneration !== this.authenticationGeneration) {
+          return;
+        }
+
         // Will occur on 404 when the refresh token cookie is not present
         this.actionAuthFailed();
         loginResultCallback(false);
@@ -111,11 +162,22 @@ export class AuthenticationService {
   }
 
   public get rememberMe(): boolean {
-    return localStorage.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
+    return this.browserStorage?.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
   }
 
   public set rememberMe(remember: boolean) {
-    localStorage.setItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN, remember ? 'true' : 'false');
+    this.browserStorage?.setItem(
+      this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN,
+      remember ? 'true' : 'false',
+    );
+  }
+
+  private get browserStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -164,13 +226,54 @@ export class AuthenticationService {
     );
   }
 
-  private loadAuthenticatedSettings(): void {
-    const url: string = `${this.doubtfireConstants.API_URL}/settings`;
+  private isCurrentAuthentication(userId: number, authenticationGeneration: number): boolean {
+    return (
+      authenticationGeneration === this.authenticationGeneration &&
+      userId === this.userService.currentUser.id &&
+      !!this.userService.currentUser.authenticationToken
+    );
+  }
 
-    this.httpClient.get<AuthenticatedSettingsResponseFormat>(url).subscribe({
-      next: (settings) => this.doubtfireConstants.applyAuthenticatedSettings(settings),
-      error: (error) => console.error('Unable to load authenticated settings', error),
-    });
+  private loadAuthenticatedSettings(
+    userId: number,
+    authenticationGeneration: number,
+  ): Observable<void> {
+    const url: string = `${this.doubtfireConstants.API_URL}/settings`;
+    const requestId = ++this.authenticatedSettingsRequestId;
+
+    return this.httpClient.get<AuthenticatedSettingsResponseFormat>(url).pipe(
+      takeUntil(this.authenticatedSettingsCancellation$),
+      switchMap((settings) => {
+        if (
+          !this.isCurrentAuthentication(userId, authenticationGeneration) ||
+          requestId !== this.authenticatedSettingsRequestId
+        ) {
+          return EMPTY;
+        }
+
+        this.doubtfireConstants.applyAuthenticatedSettings(settings);
+
+        return of(void 0);
+      }),
+      catchError((error) => {
+        if (
+          !this.isCurrentAuthentication(userId, authenticationGeneration) ||
+          requestId !== this.authenticatedSettingsRequestId
+        ) {
+          return EMPTY;
+        }
+
+        // A failed settings read must not leave a previous session's feature
+        // flags or VAPID key active. Stale overlapping requests return above and
+        // cannot reset or publish authentication readiness.
+        this.doubtfireConstants.resetAuthenticatedSettings();
+        console.error('Unable to load authenticated settings', error);
+
+        // Settings are fail closed, but their availability must not turn valid
+        // credentials into a failed sign in.
+        return of(void 0);
+      }),
+    );
   }
 
   /**
@@ -179,7 +282,11 @@ export class AuthenticationService {
    *
    * @param response the response from the authentication API
    */
-  private setupUserFromResponse(response: AuthResponse, firstTime: boolean = true): void {
+  private setupUserFromResponse(
+    response: AuthResponse,
+    firstTime: boolean = true,
+    authenticationGeneration: number = this.authenticationGeneration,
+  ): Observable<void> {
     // Extract relevant data from response and construct user object to store in cache.
     const user: User = this.userService.cache.getOrCreate(
       response.user['id'],
@@ -194,19 +301,23 @@ export class AuthenticationService {
     // Record the current user
     this.userService.currentUser = user;
 
-    // Load feature flags using the newly issued authentication token.
-    this.loadAuthenticatedSettings();
+    // Feature flags are part of authentication readiness. Consumers use their
+    // current values synchronously, so do not load globals, publish authComplete
+    // or complete signIn until this authenticated request has settled.
+    return this.loadAuthenticatedSettings(user.id, authenticationGeneration).pipe(
+      tap(() => {
+        if (firstTime) {
+          // Load everything!
+          AppInjector.get(GlobalStateService).loadGlobals();
+          // Update token in one hour
+          setTimeout(() => this.cycleAccessToken(), 1000 * 60 * 60);
+        }
 
-    if (firstTime) {
-      // Load everything!
-      AppInjector.get(GlobalStateService).loadGlobals();
-      // Update token in one hour
-      setTimeout(() => this.cycleAccessToken(), 1000 * 60 * 60);
-    }
-
-    // Inidcate that the authentication was successful
-    this.authComplete$.next(true);
-    this.authComplete$.complete();
+        // Indicate that authentication and its protected settings are ready.
+        this.authComplete$.next(true);
+        this.authComplete$.complete();
+      }),
+    );
   }
 
   /**
@@ -217,8 +328,8 @@ export class AuthenticationService {
    *
    * @param callback the callback function to call
    */
-  public afterAuthCall(callback: (result: boolean) => void): void {
-    this.authComplete$.subscribe({
+  public afterAuthCall(callback: (result: boolean) => void): Subscription {
+    return this.authComplete$.subscribe({
       next: (result) => {
         callback(result);
       },
@@ -238,10 +349,14 @@ export class AuthenticationService {
           remember: boolean;
         },
   ): Observable<void> {
+    const authenticationGeneration = this.authenticationGeneration;
+
     return this.httpClient.post(this.AUTH_URL, userCredentials).pipe(
-      map((response: AuthResponse) => {
-        this.setupUserFromResponse(response);
-      }),
+      switchMap((response: AuthResponse) =>
+        authenticationGeneration === this.authenticationGeneration
+          ? this.setupUserFromResponse(response, true, authenticationGeneration)
+          : EMPTY,
+      ),
       catchError((error) => {
         // this.authComplete$.next(false);
         // this.authComplete$.complete();
@@ -271,6 +386,16 @@ export class AuthenticationService {
   }
 
   public signOut(ssoSignOut = true): void {
+    this.demoMode.reset();
+
+    // Invalidate authentication work before the asynchronous push and token
+    // teardown. This prevents a late /settings response from restoring values
+    // after sign out or completing an obsolete sign-in observable.
+    this.authenticationGeneration += 1;
+    this.authenticatedSettingsRequestId += 1;
+    this.authenticatedSettingsCancellation$.next();
+    this.doubtfireConstants.resetAuthenticatedSettings();
+
     // This function is called after the token is deleted...
     const doSignOut = () => {
       // Setup ability to auth again
@@ -285,6 +410,12 @@ export class AuthenticationService {
       globalStateService.clearUnitsAndProjects();
       this.userService.cache.clear();
 
+      // Notifications are per user and NotificationService is a root singleton,
+      // so its cache and unread count outlive the session. Sign out routes
+      // rather than reloading, so nothing else drops them and the next person on
+      // a shared machine would see this user's messages.
+      AppInjector.get(NotificationService).reset();
+
       // Trigger the UI changes
       globalStateService.hideHeader();
       globalStateService.setView(ViewType.OTHER);
@@ -298,13 +429,37 @@ export class AuthenticationService {
     };
 
     // If we have a token, delete it...
+    const deleteTokenAndSignOut = () => {
+      if (this.userService.currentUser.authenticationToken) {
+        this.httpClient.delete(this.AUTH_URL, {params: {remember: false}}).subscribe({
+          next: (_response) => doSignOut(),
+          error: (_response) => doSignOut(),
+        });
+      } else {
+        doSignOut();
+      }
+    };
+
+    // Drop the push registration before the auth token goes.
+    //
+    // The subscription belongs to whoever enabled it, and the browser keeps it
+    // across sign out. On a shared machine that means the next person to sign in
+    // would keep receiving the previous user's notifications on this device.
+    //
+    // Order matters twice over. DELETE /push_subscriptions needs the token, so
+    // it has to run first, and sign out must never be blocked by it, so both
+    // outcomes continue. Resolved through AppInjector rather than the
+    // constructor to avoid a circular dependency, the same as GlobalStateService
+    // above.
     if (this.userService.currentUser.authenticationToken) {
-      this.httpClient.delete(this.AUTH_URL, {params: {remember: false}}).subscribe({
-        next: (_response) => doSignOut(),
-        error: (_response) => doSignOut(),
-      });
+      AppInjector.get(PushNotificationService)
+        .unsubscribeQuietly()
+        .subscribe({
+          next: () => deleteTokenAndSignOut(),
+          error: () => deleteTokenAndSignOut(),
+        });
     } else {
-      doSignOut();
+      deleteTokenAndSignOut();
     }
   }
 

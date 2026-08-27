@@ -17,3 +17,18 @@
     transform: scale(1.5);
   }
 }
+
+// The unread count beside "Notifications" in the account menu, which is the only
+// way to the notifications on a phone. A pill rather than a matBadge: inside a
+// mat-menu-item a badge is positioned against the item's own box and ends up
+// over the label.
+.notification-menu-count {
+  background: #d93025;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 8px;
+  padding: 3px 7px;
+}

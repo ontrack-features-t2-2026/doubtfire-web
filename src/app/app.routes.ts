@@ -4,9 +4,13 @@ import {InstitutionSettingsComponent} from './admin/institution-settings/institu
 import {FUnitsComponent} from './admin/states/units/units.component';
 import {FUsersComponent} from './admin/states/users/users.component';
 import {roleWhitelistGuard} from './common/guards/role-whitelist.guard';
+import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
+import {DemoControlsComponent} from './demo/demo-controls/demo-controls.component';
+import {demoToolsGuard} from './demo/demo-tools.guard';
 import {TimeoutComponent} from './errors/states/timeout/timeout.component';
 import {UnauthorisedComponent} from './errors/states/unauthorised/unauthorised.component';
 import {AcceptEulaComponent} from './eula/accept-eula/accept-eula.component';
@@ -44,6 +48,13 @@ export const routes: Routes = [
   {path: 'timeout', component: TimeoutComponent},
   {path: 'success-close', component: SuccessCloseComponent},
   {path: 'edit_profile', component: EditProfileComponent},
+  {path: 'notifications', component: NotificationsPageComponent},
+  {
+    path: 'demo-controls',
+    component: DemoControlsComponent,
+    canActivate: [demoToolsGuard],
+    data: {pageTitle: 'Demo controls'},
+  },
   {path: 'eula', component: AcceptEulaComponent},
   {path: 'lti', component: LtiDashboardComponent},
   {path: 'lti/link', component: LtiUnitLinkComponent},
@@ -69,6 +80,12 @@ export const routes: Routes = [
   },
   {path: 'view-all-units', component: FUnitsComponent, data: {mode: 'tutor'}},
   {path: 'view-all-projects', component: FUnitsComponent, data: {mode: 'student'}},
+  {
+    path: 'dashboard',
+    component: CrossDashboardComponent,
+    canActivate: [roleWhitelistGuard],
+    data: {roleWhitelist: ['Student'], pageTitle: 'Dashboard'},
+  },
   {
     path: 'admin/units',
     component: FUnitsComponent,

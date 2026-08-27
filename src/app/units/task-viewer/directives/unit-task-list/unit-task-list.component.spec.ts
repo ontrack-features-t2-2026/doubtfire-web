@@ -1,16 +1,22 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
+import {BehaviorSubject, Subject} from 'rxjs';
+import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {FUnitTaskListComponent} from './unit-task-list.component';
 
 const emptyProvider = {};
+
+const flushTaskSelection = async (): Promise<void> => {
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+};
 
 const taskDefinition = (
   id: number,
   abbreviation: string,
   startDate = new Date(2026, 0, id + 1),
+  targetGrade = 0,
 ): TaskDefinition =>
   ({
     id,
@@ -18,6 +24,7 @@ const taskDefinition = (
     abbreviation,
     name: abbreviation,
     startDate,
+    targetGrade,
   }) as TaskDefinition;
 
 const taskForDefinition = (definition: TaskDefinition, topWeight: number): Task =>
@@ -29,13 +36,21 @@ const taskForDefinition = (definition: TaskDefinition, topWeight: number): Task 
 describe('FUnitTaskListComponent', () => {
   let component: FUnitTaskListComponent;
   let fixture: ComponentFixture<FUnitTaskListComponent>;
+  let routeParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
 
   beforeEach(async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
+    routeParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+
     await TestBed.configureTestingModule({
       declarations: [FUnitTaskListComponent],
       providers: [
         {provide: Router, useValue: emptyProvider},
-        {provide: ActivatedRoute, useValue: emptyProvider},
+        {
+          provide: ActivatedRoute,
+          useValue: {paramMap: routeParamMap$.asObservable()},
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -50,6 +65,13 @@ describe('FUnitTaskListComponent', () => {
     });
     fixture = TestBed.createComponent(FUnitTaskListComponent);
     component = fixture.componentInstance;
+    component.taskDefinitions = [];
+    component.tasks = [];
+    component.selectedTaskDefinition$ = new BehaviorSubject<TaskDefinition>(null);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   afterEach(() => vi.unstubAllGlobals());
@@ -58,11 +80,130 @@ describe('FUnitTaskListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('follows task route changes without recreating the component', async () => {
+    const firstTask = taskDefinition(1, '1.1P');
+    const secondTask = taskDefinition(2, '2.3P');
+
+    component.taskDefinitions = [firstTask, secondTask];
+
+    fixture.detectChanges();
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: firstTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(firstTask);
+    expect(component.selectedTaskDef).toBe(firstTask);
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: secondTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(secondTask);
+    expect(component.selectedTaskDef).toBe(secondTask);
+  });
+
+  it('clears a stale selection when the route task does not exist', async () => {
+    const existingTask = taskDefinition(1, '1.1P');
+
+    component.taskDefinitions = [existingTask];
+
+    fixture.detectChanges();
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: existingTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(existingTask);
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: 'does-not-exist',
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBeNull();
+    expect(component.selectedTaskDef).toBeNull();
+  });
+
+  it('clears the selection when the task parameter is removed', async () => {
+    const existingTask = taskDefinition(1, '1.1P');
+
+    component.taskDefinitions = [existingTask];
+
+    fixture.detectChanges();
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: existingTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(existingTask);
+
+    routeParamMap$.next(convertToParamMap({}));
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBeNull();
+    expect(component.selectedTaskDef).toBeNull();
+  });
+
+  it('stops following route changes after the component is destroyed', async () => {
+    const firstTask = taskDefinition(1, '1.1P');
+    const secondTask = taskDefinition(2, '2.3P');
+
+    component.taskDefinitions = [firstTask, secondTask];
+
+    fixture.detectChanges();
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: firstTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(firstTask);
+
+    component.ngOnDestroy();
+
+    routeParamMap$.next(
+      convertToParamMap({
+        taskAbbreviation: secondTask.abbreviation,
+      }),
+    );
+
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(firstTask);
+    expect(component.selectedTaskDef).toBe(firstTask);
+  });
+
   it('sorts task definitions by task top weight by default', () => {
     const middlePriorityTask = taskDefinition(0, 'C');
     const lowPriorityTask = taskDefinition(1, 'A');
     const highPriorityTask = taskDefinition(2, 'B');
+
     component.taskDefinitions = [lowPriorityTask, middlePriorityTask, highPriorityTask];
+
     component.tasks = [
       taskForDefinition(middlePriorityTask, 1),
       taskForDefinition(lowPriorityTask, 2),
@@ -82,7 +223,9 @@ describe('FUnitTaskListComponent', () => {
     const middlePriorityTask = taskDefinition(0, 'C');
     const lowPriorityTask = taskDefinition(1, 'A');
     const highPriorityTask = taskDefinition(2, 'B');
+
     component.taskDefinitions = [lowPriorityTask, middlePriorityTask, highPriorityTask];
+
     component.tasks = [
       taskForDefinition(middlePriorityTask, 1),
       taskForDefinition(lowPriorityTask, 2),
@@ -90,6 +233,7 @@ describe('FUnitTaskListComponent', () => {
     ];
 
     component.setSortBy('abbreviation');
+
     expect(component.filteredTaskDefinitions).toEqual([
       lowPriorityTask,
       highPriorityTask,
@@ -97,6 +241,7 @@ describe('FUnitTaskListComponent', () => {
     ]);
 
     component.setSortBy('default');
+
     expect(component.filteredTaskDefinitions).toEqual([
       highPriorityTask,
       middlePriorityTask,
@@ -108,10 +253,85 @@ describe('FUnitTaskListComponent', () => {
     const firstTask = taskDefinition(0, 'C');
     const secondTask = taskDefinition(1, 'A');
     const thirdTask = taskDefinition(2, 'B');
+
     component.taskDefinitions = [thirdTask, firstTask, secondTask];
 
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([firstTask, secondTask, thirdTask]);
+  });
+
+  it('shows only tasks at or below the project target grade by default', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    const distinctionTask = taskDefinition(3, 'D1', undefined, 2);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask, distinctionTask];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask]);
+    expect(component.activeViewPreferenceCount).toBe(0);
+  });
+
+  it('reveals tasks beyond the target grade only when explicitly selected', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask];
+    component.tasks = [];
+
+    component.toggleShowAboveTargetGrade(true);
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+    expect(component.activeViewPreferenceCount).toBe(1);
+
+    component.resetViewPreferences();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask]);
+    expect(component.activeViewPreferenceCount).toBe(0);
+  });
+
+  it('reapplies target-grade filtering when the selected target changes', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    component.project = {
+      id: 10,
+      targetGrade: 0,
+      unit: {id: 20},
+    } as Project;
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask];
+    component.tasks = [];
+    component.applyFilters();
+
+    component.targetGrade = 1;
+    component.project.targetGrade = 1;
+    component.ngOnChanges({targetGrade: new SimpleChange(0, 1, false)});
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+
+  it('does not grade-filter an all-tasks list without a student project', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const distinctionTask = taskDefinition(2, 'D1', undefined, 2);
+    component.mode = 'all-tasks';
+    component.taskDefinitions = [passTask, distinctionTask];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, distinctionTask]);
   });
 });

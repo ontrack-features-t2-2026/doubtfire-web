@@ -53,6 +53,7 @@ describe('UserService', () => {
         firstName: 'Jake',
         lastName: 'renzella',
         email: 'jake@jake.jake',
+        displayPeerProgress: false,
       });
     });
 
@@ -74,7 +75,23 @@ describe('UserService', () => {
       receive_portfolio_notifications: false,
       receive_feedback_notifications: false,
       receive_task_notifications: false,
+      display_peer_progress: false,
     });
+  });
+
+  it('serialises the peer progress display preference when updating a profile', () => {
+    const user = new User();
+    user.id = 1;
+    user.displayPeerProgress = false;
+
+    userService.update(user).subscribe();
+
+    const req = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toMatchObject({
+      user: {display_peer_progress: false},
+    });
+    req.flush({id: 1, display_peer_progress: false});
   });
 
   it('should create a new user', () => {

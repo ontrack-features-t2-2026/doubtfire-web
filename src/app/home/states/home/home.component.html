@@ -128,18 +128,33 @@
             }
           </div>
         }
-        <a routerLink="/view-all-projects">
-          <button
-            aria-label="view all projects"
-            color="primary"
-            extended
-            mat-fab
-            matTooltip="View previous units"
-            matTooltipPosition="above"
-          >
-            <mat-icon style="color: white">history</mat-icon> View all
-          </button>
-        </a>
+        <!-- Cross-unit dashboard feature -->
+        <div class="flex h-60 flex-col items-start justify-around">
+          <a routerLink="/dashboard">
+            <button
+              aria-label="view cross-unit dashboard"
+              color="primary"
+              extended
+              mat-fab
+              matTooltip="View current units"
+              matTooltipPosition="above"
+            >
+              <mat-icon style="color: white">dashboard</mat-icon> View all
+            </button>
+          </a>
+          <a routerLink="/view-all-projects">
+            <button
+              aria-label="view previous projects"
+              color="primary"
+              extended
+              mat-fab
+              matTooltip="View previous units"
+              matTooltipPosition="above"
+            >
+              <mat-icon style="color: white">history</mat-icon> View previous
+            </button>
+          </a>
+        </div>
       </div>
     </div>
   </div>

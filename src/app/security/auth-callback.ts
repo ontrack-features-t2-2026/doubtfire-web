@@ -18,6 +18,7 @@ const CALLBACK_KEYS = [
   'isLtiLogin',
 ] as const;
 const SECRET_KEYS = ['authToken', 'auth_token', 'ltiToken', 'lti_token', 'ltik'] as const;
+const TELEMETRY_KEYS = [...SECRET_KEYS, 'username', 'user_name'] as const;
 
 let pendingCallback: AuthCallbackParameters | undefined;
 
@@ -128,7 +129,7 @@ export const redactAuthCallbackFromUrl = (value: string): string => {
       '$1[Filtered]/[Filtered]',
     );
 
-    for (const key of SECRET_KEYS) {
+    for (const key of TELEMETRY_KEYS) {
       if (url.searchParams.has(key)) {
         url.searchParams.set(key, '[Filtered]');
       }

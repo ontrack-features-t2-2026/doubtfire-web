@@ -1,0 +1,28 @@
+CPD sizing investigation verification
+Date: 2026-08-23
+Branch: docs/cpd-sizing-investigation
+Target: feature/cross-unit
+
+1. npm run lint
+   Result: PASS
+   Detail: All files pass linting.
+
+2. npm run typecheck
+   Result: PASS
+   Detail: Angular compiler typecheck exited with code 0.
+
+3. npm run test:ci
+   Result: PASS
+   Detail: 60 test files passed. 119 tests passed and 1 existing test is marked todo.
+
+4. CI=true npm run build -- --no-progress
+   Result: PASS
+   Detail: Application bundle generation completed successfully.
+
+5. git diff --check
+   Result: PASS
+   Detail: No whitespace errors.
+
+The initial lint run exposed 25 Prettier warnings already present on the shared target branch in
+unit-task-editor.component.html and unit-task-editor.component.ts. The formatter made mechanical
+style-only changes to those two files. No behavior was changed.

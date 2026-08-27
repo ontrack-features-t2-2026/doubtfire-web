@@ -15,6 +15,10 @@ export interface AuthenticatedSettingsResponseFormat {
   overseerEnabled: boolean;
   tiiEnabled: boolean;
   d2lEnabled: boolean;
+  // Optional so an existing caller that predates push still type-checks, and
+  // because applyAuthenticatedSettings already defaults both below.
+  pushEnabled?: boolean;
+  vapidPublicKey?: string | null;
 }
 
 export interface LogoSettings {
@@ -69,6 +73,21 @@ export class DoubtfireConstants {
    * Whether or not the TurnItIn integration is enabled.
    */
   public IsTiiEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  /**
+   * Whether the api has VAPID keys configured. False means push cannot work at
+   * all, so the opt-in is not offered.
+   *
+   * Populated after sign-in, not at bootstrap. /settings is authenticated, and
+   * the pre-auth client here deliberately carries no token.
+   */
+  public IsPushEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  /**
+   * The VAPID public key the browser needs to subscribe to push. Not a secret —
+   * it is sent to the push service in the clear. Empty until settings load.
+   */
+  public VapidPublicKey: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   private readonly publicSettingsUrl: string = `${this.API_URL}/settings/public`;
   private readonly legacySettingsUrl: string = `${this.API_URL}/settings`;
@@ -127,5 +146,22 @@ export class DoubtfireConstants {
     this.IsOverseerEnabled.next(result.overseerEnabled);
     this.IsTiiEnabled.next(result.tiiEnabled);
     this.IsD2LEnabled.next(result.d2lEnabled);
+    this.IsPushEnabled.next(result.pushEnabled ?? false);
+    this.VapidPublicKey.next(result.vapidPublicKey ?? '');
+  }
+
+  /**
+   * Remove configuration that may only be used by an authenticated session.
+   *
+   * DoubtfireConstants is a root singleton, so these subjects otherwise retain
+   * the previous session's values after sign out. Keep the defaults fail closed
+   * while signed out and when the authenticated settings request fails.
+   */
+  public resetAuthenticatedSettings(): void {
+    this.IsOverseerEnabled.next(false);
+    this.IsTiiEnabled.next(false);
+    this.IsD2LEnabled.next(false);
+    this.IsPushEnabled.next(false);
+    this.VapidPublicKey.next('');
   }
 }
