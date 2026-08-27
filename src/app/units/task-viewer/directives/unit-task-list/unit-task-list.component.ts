@@ -20,7 +20,7 @@ interface TaskListViewPreferences {
   sortBy: TaskListSortOption;
   sortDirection: TaskListSortDirection;
   hideCompleted: boolean;
-  hideAboveTargetGrade: boolean;
+  showAboveTargetGrade: boolean;
 }
 
 interface TaskListSortOptionView {
@@ -33,7 +33,7 @@ const DEFAULT_VIEW_PREFERENCES: TaskListViewPreferences = {
   sortBy: 'default',
   sortDirection: 'asc',
   hideCompleted: false,
-  hideAboveTargetGrade: false,
+  showAboveTargetGrade: false,
 };
 
 const START_APPROACHING_DAYS = 7;
@@ -48,6 +48,7 @@ const START_APPROACHING_DAYS = 7;
 export class FUnitTaskListComponent implements OnChanges, OnInit {
   @Input() mode: 'project' | 'all-tasks';
   @Input() project: Project;
+  @Input() targetGrade: number;
   @Input() taskDefinitions: readonly TaskDefinition[];
   @Input() tasks: readonly Task[];
   @Input() isCollapsed = false;
@@ -99,6 +100,28 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     this.filteredTaskDefinitions = matchingTaskDefinitions
       .filter((taskDef) => this.shouldShowTaskDefinition(taskDef))
       .sort((a, b) => this.compareTaskDefinitions(a, b));
+
+    this.deselectHiddenTaskDefinition();
+  }
+
+  // The search term only narrows what the list shows, so typing must not close the
+  // open task. Drop the selection when the task itself has gone or a view filter
+  // hides it.
+  private deselectHiddenTaskDefinition(): void {
+    if (!this.selectedTaskDef) {
+      return;
+    }
+
+    const selectedTaskDefinition = this.taskDefinitions?.find(
+      (taskDef) => taskDef.id === this.selectedTaskDef.id,
+    );
+
+    if (selectedTaskDefinition && this.shouldShowTaskDefinition(selectedTaskDefinition)) {
+      return;
+    }
+
+    this.selectedTaskDefinition$?.next(null);
+    this.replaceSelectionUrl(null);
   }
 
   public setSortBy(sortBy: TaskListSortOption): void {
@@ -127,10 +150,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     this.applyFilters();
   }
 
-  public toggleHideAboveTargetGrade(value: boolean): void {
+  public toggleShowAboveTargetGrade(value: boolean): void {
     this.viewPreferences = {
       ...this.viewPreferences,
-      hideAboveTargetGrade: value,
+      showAboveTargetGrade: value,
     };
     this.persistViewPreferences();
     this.applyFilters();
@@ -170,7 +193,22 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     return (
       (this.viewPreferences.sortBy !== 'default' ? 1 : 0) +
       (this.viewPreferences.hideCompleted ? 1 : 0) +
-      (this.viewPreferences.hideAboveTargetGrade ? 1 : 0)
+      (this.hidingTasksAboveTargetGrade ? 1 : 0)
+    );
+  }
+
+  // The list hides tasks beyond the target grade unless the student opts in, so the
+  // badge has to count the hiding, not the opt-in that switches it off.
+  public get hidingTasksAboveTargetGrade(): boolean {
+    return !this.viewPreferences.showAboveTargetGrade && this.effectiveTargetGrade !== null;
+  }
+
+  public get hasNonDefaultViewPreferences(): boolean {
+    return (
+      this.viewPreferences.sortBy !== DEFAULT_VIEW_PREFERENCES.sortBy ||
+      this.viewPreferences.sortDirection !== DEFAULT_VIEW_PREFERENCES.sortDirection ||
+      this.viewPreferences.hideCompleted !== DEFAULT_VIEW_PREFERENCES.hideCompleted ||
+      this.viewPreferences.showAboveTargetGrade !== DEFAULT_VIEW_PREFERENCES.showAboveTargetGrade
     );
   }
 
@@ -179,15 +217,13 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
       this.loadViewPreferences();
     }
 
-    if ('project' in changes || 'taskDefinitions' in changes || 'tasks' in changes) {
+    if (
+      'project' in changes ||
+      'targetGrade' in changes ||
+      'taskDefinitions' in changes ||
+      'tasks' in changes
+    ) {
       this.applyFilters();
-
-      if (
-        this.selectedTaskDef &&
-        !this.filteredTaskDefinitions?.some((taskDef) => taskDef.id === this.selectedTaskDef.id)
-      ) {
-        this.selectedTaskDefinition$.next(null);
-      }
     }
   }
 
@@ -275,6 +311,12 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
       if (param) {
         const taskDef = this.taskDefinitions.find((t) => t.abbreviation === param);
 
+        if (taskDef && this.isTaskDefinitionAboveTargetGrade(taskDef)) {
+          this.viewPreferences = {...this.viewPreferences, showAboveTargetGrade: true};
+          this.persistViewPreferences();
+          this.applyFilters();
+        }
+
         if (taskDef !== current) {
           this.selectedTaskDefinition$.next(taskDef);
         }
@@ -354,11 +396,26 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
     }
 
     return !(
-      this.viewPreferences.hideAboveTargetGrade &&
-      this.project?.targetGrade !== undefined &&
-      this.project?.targetGrade !== null &&
-      taskDef.targetGrade > this.project.targetGrade
+      !this.viewPreferences.showAboveTargetGrade &&
+      this.isTaskDefinitionAboveTargetGrade(taskDef) &&
+      !this.hasNewComments(task)
     );
+  }
+
+  private isTaskDefinitionAboveTargetGrade(taskDef: TaskDefinition): boolean {
+    const targetGrade = this.effectiveTargetGrade;
+
+    return targetGrade !== null && taskDef.targetGrade > targetGrade;
+  }
+
+  private get effectiveTargetGrade(): number | null {
+    const targetGrade = this.targetGrade ?? this.project?.targetGrade;
+
+    if (!this.project || targetGrade === undefined || targetGrade === null) {
+      return null;
+    }
+
+    return targetGrade;
   }
 
   private hasNewComments(task: Task): boolean {
@@ -434,7 +491,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
   }
 
   private loadViewPreferences(): void {
-    const rawPreferences = localStorage.getItem(this.viewPreferencesStorageKey);
+    const rawPreferences = this.viewPreferencesStorage?.getItem(this.viewPreferencesStorageKey);
 
     if (!rawPreferences) {
       this.viewPreferences = {...DEFAULT_VIEW_PREFERENCES};
@@ -450,7 +507,9 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
           ? parsedPreferences.sortDirection
           : migratedSort.sortDirection,
         hideCompleted: !!parsedPreferences.hideCompleted,
-        hideAboveTargetGrade: !!parsedPreferences.hideAboveTargetGrade,
+        // The legacy preference was named `hideAboveTargetGrade` and defaulted to false,
+        // which made higher-grade tasks visible. Treat legacy records as the new default.
+        showAboveTargetGrade: parsedPreferences.showAboveTargetGrade === true,
       };
     } catch {
       this.viewPreferences = {...DEFAULT_VIEW_PREFERENCES};
@@ -458,7 +517,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
   }
 
   private persistViewPreferences(): void {
-    localStorage.setItem(this.viewPreferencesStorageKey, JSON.stringify(this.viewPreferences));
+    this.viewPreferencesStorage?.setItem(
+      this.viewPreferencesStorageKey,
+      JSON.stringify(this.viewPreferences),
+    );
   }
 
   private isSortOption(value: unknown): value is TaskListSortOption {
@@ -501,5 +563,13 @@ export class FUnitTaskListComponent implements OnChanges, OnInit {
   private get viewPreferencesStorageKey(): string {
     const unitId = this.project?.unit?.id ?? this.taskDefinitions?.[0]?.unit?.id ?? 'unknown';
     return `ontrack.unitTaskList.${unitId}.viewPreferences`;
+  }
+
+  private get viewPreferencesStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 }
