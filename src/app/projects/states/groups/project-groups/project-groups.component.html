@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-[90vw]">
+<f-page-container>
   @if (unit.hasGroupwork()) {
     <f-group-set-manager [project]="project" [selectedGroupSet]="selectedGroupSet" [unit]="unit">
     </f-group-set-manager>
@@ -9,4 +9,4 @@
       <p class="p-1 text-center text-gray-500">There is no group work enabled for this unit.</p>
     </div>
   }
-</div>
+</f-page-container>

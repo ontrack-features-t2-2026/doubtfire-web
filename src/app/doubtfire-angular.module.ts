@@ -214,6 +214,7 @@ import {TutorNotesModalComponent} from './common/modals/tutor-notes-modal/tutor-
 import {NotificationSettingsComponent} from './common/notification-settings/notification-settings.component';
 import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
+import {PageContainerComponent} from './common/page-container/page-container.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
 import {HumanizedDatePipe} from './common/pipes/humanized-date.pipe';
@@ -572,6 +573,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskStatusCardComponent,
     TaskDueCardComponent,
     FooterComponent,
+    PageContainerComponent,
     TaskAssessmentCardComponent,
     TaskSubmissionCardComponent,
     TaskDashboardComponent,
