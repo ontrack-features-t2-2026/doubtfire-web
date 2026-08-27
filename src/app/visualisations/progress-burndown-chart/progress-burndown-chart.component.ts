@@ -1,4 +1,4 @@
-import {Color, LegendPosition, ScaleType} from '@swimlane/ngx-charts';
+import {Color, ScaleType} from '@swimlane/ngx-charts';
 import {formatDate} from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -43,7 +43,7 @@ export class ProgressBurndownChartComponent
   temp: BurndownSeries[] = [];
 
   // options
-  legend: boolean = true;
+  legend: boolean = false;
   showLabels: boolean = true;
   animations: boolean = true;
   xAxis: boolean = true;
@@ -52,12 +52,20 @@ export class ProgressBurndownChartComponent
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
   yAxisLabel: string = 'Tasks Remaining';
-  legendPosition: LegendPosition = LegendPosition.Below;
+  // ngx-charts hands the scheme domain to the series by position, so the full palette is
+  // kept here and the scheme is narrowed to whatever is on show.
+  private readonly seriesPalette: string[] = [
+    '#AAAAAA',
+    '#777777',
+    '#0079d8',
+    '#E01B5D',
+    'transparent',
+  ];
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', 'transparent'],
+    domain: [...this.seriesPalette],
   };
   yScaleMin: number = 0;
   yScaleMax: number = 100;
@@ -135,27 +143,40 @@ export class ProgressBurndownChartComponent
     }
 
     this.temp = JSON.parse(JSON.stringify(formattedData));
-    this.data = formattedData;
+    this.seriesVisibility = Object.fromEntries(formattedData.map((series) => [series.name, true]));
+    this.applyVisibility();
   }
 
   onSelect(event: string | BurndownPoint): void {
     if (this.isLegend(event)) {
-      const tempData = JSON.parse(JSON.stringify(this.data));
-      if (this.isDataShown(event)) {
-        tempData.forEach((series) => {
-          if (series.name === event) {
-            series.series.forEach((point) => (point.value = 0));
-          }
-        });
-      } else {
-        const originalSeries = this.temp.find((series) => series.name === event);
-        const seriesIndex = tempData.findIndex((series) => series.name === event);
-        if (seriesIndex >= 0) {
-          tempData[seriesIndex] = JSON.parse(JSON.stringify(originalSeries));
-        }
-      }
-      this.data = tempData;
+      this.toggleSeries(event);
     }
+  }
+
+  toggleSeries(name: string): void {
+    if (!this.temp.some((series) => series.name === name)) {
+      return;
+    }
+
+    this.seriesVisibility[name] = !this.isDataShown(name);
+    this.applyVisibility();
+  }
+
+  // A hidden series is dropped from the chart data. Zeroing its points instead left the
+  // line drawn flat along the x axis while its legend button said it was off.
+  private applyVisibility(): void {
+    const shown = this.temp
+      .map((series, index) => ({series, index}))
+      .filter((entry) => this.isDataShown(entry.series.name));
+
+    this.data = shown.map((entry) => ({
+      name: entry.series.name,
+      series: entry.series.series.map((point) => ({...point})),
+    }));
+    this.colorScheme = {
+      ...this.colorScheme,
+      domain: shown.map((entry) => this.seriesColor(entry.index)),
+    };
   }
 
   isLegend(event: string | BurndownPoint): event is string {
@@ -163,8 +184,11 @@ export class ProgressBurndownChartComponent
   }
 
   isDataShown(name: string): boolean {
-    const series = this.data.find((series) => series.name === name);
-    return series && series.series.some((point) => point.value !== 0);
+    return this.seriesVisibility[name] !== false;
+  }
+
+  seriesColor(index: number): string {
+    return this.seriesPalette[index % this.seriesPalette.length];
   }
 
   public formatPerc(input: number) {

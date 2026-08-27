@@ -1,9 +1,7 @@
-<div class="chart-container flex h-full min-h-[320px] pb-6">
+<div class="chart-container flex min-w-0">
   <ngx-charts-line-chart
     class="progress-burndown-chart h-full flex-1"
     [legend]="legend"
-    [legendPosition]="legendPosition"
-    [legendTitle]="''"
     [results]="data"
     [scheme]="colorScheme"
     [showXAxisLabel]="showXAxisLabel"
@@ -21,3 +19,23 @@
   >
   </ngx-charts-line-chart>
 </div>
+
+@if (temp.length > 0) {
+  <div aria-label="Burndown chart series" class="burndown-legend" role="group">
+    @for (series of temp; track series.name; let index = $index) {
+      <button
+        class="burndown-legend-button"
+        type="button"
+        [attr.aria-pressed]="isDataShown(series.name)"
+        (click)="toggleSeries(series.name)"
+      >
+        <span
+          aria-hidden="true"
+          class="burndown-legend-swatch"
+          [style.background-color]="seriesColor(index)"
+        ></span>
+        <span>{{ series.name }}</span>
+      </button>
+    }
+  </div>
+}
