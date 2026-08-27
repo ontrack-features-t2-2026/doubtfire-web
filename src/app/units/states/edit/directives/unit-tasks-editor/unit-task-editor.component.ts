@@ -127,10 +127,16 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   }
 
   public selectTaskDefinition(taskDefinition: TaskDefinition) {
+    // Clicking the task that is already open is not a discard, so it must not
+    // ask. Keep this ahead of the guard.
     if (this.selectedTaskDefinition === taskDefinition) {
       return;
     }
 
+    this.confirmDiscardingUnsavedTask(() => this.applySelectedTaskDefinition(taskDefinition));
+  }
+
+  private applySelectedTaskDefinition(taskDefinition: TaskDefinition) {
     this.selectedTaskDefinition = taskDefinition;
 
     // Record original save data if none present
@@ -143,6 +149,32 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       .subscribe({
         error: () => this.alerts.error('Error loading task feedback templates.'),
       });
+  }
+
+  // A task being edited is unsaved if it has never been saved at all, or if it
+  // has been changed since it was loaded.
+  //
+  // isNew has to be tested and it has to come first. TaskDefinition.hasChanges
+  // returns false when there is no originalSaveData, and only selectTaskDefinition
+  // and a successful save ever set that, so a brand new task with every field
+  // filled in reports no changes whatsoever. A guard built on hasChanges alone
+  // protects the case that was already safe and leaves this one exactly as it was.
+  private hasUnsavedTaskDefinition(): boolean {
+    const selected = this.selectedTaskDefinition;
+    return !!selected && (selected.isNew || this.taskDefinitionHasChanges(selected));
+  }
+
+  private confirmDiscardingUnsavedTask(proceed: () => void) {
+    if (!this.hasUnsavedTaskDefinition()) {
+      proceed();
+      return;
+    }
+
+    this.confirmationModal.show(
+      'Discard unsaved task',
+      'This task has not been saved yet. If you continue it will be lost.',
+      proceed,
+    );
   }
 
   public isSelectedTaskDefinition(taskDefinition: TaskDefinition): boolean {
@@ -159,6 +191,15 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     }
 
     this.taskDefinitionSource.filter = filterValue.trim().toLowerCase();
+
+    // No dialog here on purpose. The box is [(ngModel)] bound and this runs from
+    // ngModelChange, so the character is already typed by the time we see it, and
+    // cancelling would mean writing the text back one keystroke at a time while
+    // the convenor answers a modal per letter. Filtering the list underneath an
+    // open editor is the behaviour that was wanted anyway.
+    if (this.hasUnsavedTaskDefinition()) {
+      return;
+    }
 
     this.selectedTaskDefinition = null;
   }
@@ -226,6 +267,10 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   }
 
   public createTaskDefinition() {
+    this.confirmDiscardingUnsavedTask(() => this.buildNewTaskDefinition());
+  }
+
+  private buildNewTaskDefinition() {
     const abbr = this.guessTaskAbbreviation();
     const task = new TaskDefinition(this.unit);
 
