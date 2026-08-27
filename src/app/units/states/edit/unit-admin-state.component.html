@@ -12,11 +12,16 @@
 
   <div class="min-h-0 flex-1">
     @if (loadingUnit) {
-      <f-page-container>
+      <f-page-container [fullWidth]="currentTab.routeSegment === 'tasks'">
         <div aria-busy="true" aria-label="Loading unit details">
           <div class="flex flex-col">
             <ngx-skeleton-loader
-              [theme]="{width: '220px', height: '24px', 'border-radius': '999px', margin: '0 0 8px'}"
+              [theme]="{
+                width: '220px',
+                height: '24px',
+                'border-radius': '999px',
+                margin: '0 0 8px',
+              }"
             ></ngx-skeleton-loader>
             <ngx-skeleton-loader
               [theme]="{width: '420px', height: '14px', 'border-radius': '999px', margin: '0'}"
@@ -88,7 +93,7 @@
         }
         @case ('tasks') {
           @if (unit) {
-            <f-page-container>
+            <f-page-container [fullWidth]="true">
               <f-unit-task-editor [unit]="unit"></f-unit-task-editor>
             </f-page-container>
           }

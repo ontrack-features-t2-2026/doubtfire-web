@@ -12,8 +12,8 @@
           View and adjust the due dates for your tasks. Remember to leave time to get and respond to
           feedback.
         } @else {
-          View the task deadlines for your project, so you can organise your work and ensure you meet
-          all submission requirements on time.
+          View the task deadlines for your project, so you can organise your work and ensure you
+          meet all submission requirements on time.
         }
       </p>
       <p>
@@ -43,7 +43,9 @@
     </div>
   </f-page-container>
 
-  <f-page-container [style.height.px]="(planner?.items.length + 2) * 43">
-    <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
+  <f-page-container [fullWidth]="true">
+    <div [style.height.px]="(planner?.items.length + 2) * 43">
+      <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
+    </div>
   </f-page-container>
 }

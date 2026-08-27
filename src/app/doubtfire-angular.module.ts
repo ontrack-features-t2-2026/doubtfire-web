@@ -184,7 +184,6 @@ import {TasksForInboxSearchPipe} from './common/filters/tasks-for-inbox-search.p
 import {TasksInTutorialsPipe} from './common/filters/tasks-in-tutorials.pipe';
 import {TasksOfTaskDefinitionPipe} from './common/filters/tasks-of-task-definition.pipe';
 import {FooterComponent} from './common/footer/footer.component';
-import {PageContainerComponent} from './common/page-container/page-container.component';
 import {GradeIconComponent} from './common/grade-icon/grade-icon.component';
 import {HeaderComponent} from './common/header/header.component';
 import {TaskDropdownComponent} from './common/header/task-dropdown/task-dropdown.component';
@@ -212,6 +211,7 @@ import {SpecConModalService} from './common/modals/spec-con-modal/spec-con-modal
 import {TaskAssessmentModalComponent} from './common/modals/task-assessment-modal/task-assessment-modal.component';
 import {TutorNotesModalComponent} from './common/modals/tutor-notes-modal/tutor-notes-modal.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
+import {PageContainerComponent} from './common/page-container/page-container.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
 import {HumanizedDatePipe} from './common/pipes/humanized-date.pipe';
