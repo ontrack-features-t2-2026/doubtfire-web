@@ -10,8 +10,8 @@ import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {AlertService} from '../../services/alert.service';
 import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
+import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 
 @Component({
@@ -109,7 +109,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const feedUrl = `${this.constants.API_URL}/webcal/${this.webcal.guid}.ics`;
+    const feedUrl = `${this.constants.API_URL}/webcal/${this.webcal.guid}`;
     this.fileDownloader.downloadFile(feedUrl, 'ontrack-calendar.ics');
   }
 
