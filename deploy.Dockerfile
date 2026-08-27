@@ -1,5 +1,10 @@
 ### STAGE 1: Build ###
-FROM node:22.22.3-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 AS build
+FROM node:22.23.2-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5 AS build
+
+# Keep the build package manager aligned with the development image. npm 11
+# removes the vulnerable dependencies bundled with this Node 22 base.
+RUN npm install --global npm@11.19.1 \
+  && npm cache clean --force
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   gettext-base \
@@ -42,6 +47,10 @@ RUN --mount=type=secret,id=sentry_auth_token,uid=1000 \
 
 ## STAGE 2: Host ###
 FROM nginx:1.30.4-alpine@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46
+
+# The pinned Nginx image predates Alpine's OpenSSL 3.5.8 security update.
+# Upgrade only the affected runtime libraries rather than the whole base.
+RUN apk upgrade --no-cache libcrypto3 libssl3
 
 # Remove the default Nginx configuration file
 RUN rm -v /etc/nginx/nginx.conf

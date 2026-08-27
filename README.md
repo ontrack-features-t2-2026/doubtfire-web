@@ -89,6 +89,13 @@ docker build -f deploy.Dockerfile -t doubtfire-web:handover .
 docker run --rm -p 8080:80 doubtfire-web:handover
 ```
 
+The root `Dockerfile` is the bind-mounted development image: it contains the
+source tree, npm, and development dependencies so that local Compose workflows
+can rebuild on startup. Do not publish or assess it as the production runtime.
+Release vulnerability scans must build `deploy.Dockerfile` and scan its final
+Nginx image digest; build-stage and development-image findings should be tracked
+separately.
+
 The Dockerfile pins its Node and Nginx base images by multi-architecture digest
 and performs the build as the unprivileged `node` user. Refresh those digests
 deliberately as part of a reviewed dependency update; do not replace them with
