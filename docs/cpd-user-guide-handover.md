@@ -8,8 +8,8 @@ This document serves as the primary user guide for students interacting with the
 
 ### 1. Unit Scopes
 The dashboard allows students to filter visible projects using the **Unit scope** dropdown. 
-* **Active units:** Displays currently enrolled and active projects[cite: 2].
-* **Previous units:** Displays completed or archived projects from past teaching periods. If no historical data exists, a "No previous units are available" message is displayed[cite: 2].
+* **Active units:** Displays currently enrolled and active projects.
+* **Previous units:** Displays completed or archived projects from past teaching periods. If no historical data exists, a "No previous units are available" message is displayed.
 * **All units:** Combines both active and previous units into a single consolidated view.
 
 ![Unit Scope Dropdown](assets/unit-scope-dropdown.png)
@@ -17,8 +17,8 @@ The dashboard allows students to filter visible projects using the **Unit scope*
 ### 2. Searching and Filtering
 The dashboard features a global toolbar to filter tasks across all visible units.
 * **Global Search:** Filters tasks across all units by matching text in the task name or description. 
-* **Task Statuses:** A dropdown to filter tasks by current state (e.g., Redo, Resubmit, Complete).
-* **Target Grades:** A dropdown to filter tasks by their target grade tier (e.g., Pass, Credit, Distinction, High Distinction).
+* **Task Statuses:** A dropdown to filter tasks by current state (Redo, Resubmit, Complete).
+* **Target Grades:** A dropdown to filter tasks by their target grade tier (Pass, Credit, Distinction, High Distinction).
 * **Date Filters:** Start and End date pickers to isolate tasks due within a specific timeframe.
 * **Clear Controls:** The "Clear all" button resets global search, status, and grade filters, while "Clear dates" specifically resets the date range boundaries.
 * **Empty States:** If filter combinations yield no results, the interface cleanly displays "No tasks match the current global search and filters." or "No tasks are available.".
