@@ -4,8 +4,8 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {AlertService} from '../../services/alert.service';
 import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
+import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 import {CalendarModalComponent} from './calendar-modal.component';
 
@@ -53,7 +53,7 @@ describe('CalendarModalComponent', () => {
 
     expect(fileDownloaderStub.downloadFile).toHaveBeenCalledOnce();
     expect(fileDownloaderStub.downloadFile).toHaveBeenCalledWith(
-      'https://doubtfire.test/api/webcal/abc-123.ics',
+      'https://doubtfire.test/api/webcal/abc-123',
       'ontrack-calendar.ics',
     );
   });
