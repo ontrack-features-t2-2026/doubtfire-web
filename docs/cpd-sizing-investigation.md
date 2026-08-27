@@ -8,7 +8,7 @@ Status: Investigation complete. An initial responsive sizing adjustment was impl
 
 This report explains why the Cross-Project Dashboard (CPD) became noticeably larger when its 10.x feature implementation was moved to the 11.x codebase. It records the reproduction, affected dimensions, source and dependency history, existing remediation, remaining limitations, and implementation guidance.
 
-This investigation does not change CPD production code, dashboard behavior, or the implementation completed by CPD-Q04. Two unit-task editor files receive mechanical, behavior-neutral formatting because the target branch's existing warnings prevented the required lint check from passing.
+This investigation does not change CPD production code, dashboard behavior, or the implementation completed by CPD-Q04. The docs-only replacement branch contains only this report and its evidence artifacts; it changes no source or configuration files.
 
 ## Finding
 
@@ -34,7 +34,8 @@ A secondary height issue has the same migration boundary. Commit [`edab0928c`](h
 | 11.x CPD reintroduction | [`2c6d2786e`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/2c6d2786e) | `11.0.0-45`, no Bootstrap, Angular Material 22.0.2, Tailwind 4.3.1 | Reintroduced the legacy class values after the repository-wide rescaling. |
 | 11.x before CPD-Q04 | [`b9386055`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/b9386055) | 11.x | Reproduction baseline immediately before the responsive sizing adjustment. |
 | CPD-Q04 implementation | [`854f9ce9b`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/854f9ce9ba5f100b0425996c3f5d7e248faa6b32) | 11.x | Existing production remediation by SandilBandara in PR #34. |
-| Current shared feature | [`53f1c5532`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/53f1c5532eefc75cadf7834748a5a85c2bc6b3e8) | 11.x | Investigation target and PR base, `feature/cross-unit`. |
+| Investigation snapshot | [`53f1c5532`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/53f1c5532eefc75cadf7834748a5a85c2bc6b3e8) | 11.x | Source snapshot used for the measurements and original investigation. |
+| Docs-only replacement base | [`9962e7ea1`](https://github.com/ontrack-features-t2-2026/doubtfire-web/commit/9962e7ea171a2bf6d7a12be50874fa5c7ee77e21) | 11.x | Current `feature/cross-unit` base used to re-home the report. The relevant sizing classes are unchanged from the investigation snapshot. |
 
 ## Reproduction
 
@@ -114,21 +115,20 @@ The affected legacy-derived sizing values span three CPD templates.
 
 [`f-cross-dashboard.component.html`](../src/app/dashboard/f-cross-dashboard.component.html):
 
-- Line 3: fluid unit-scope selector with a 256 px maximum.
-- Line 50: fixed horizontal card strip with 32 px gaps, 64 px side padding, and intentional horizontal scrolling.
-- Line 52: 512 px fixed unit card.
-- Line 72: 224 px search field.
-- Lines 80 and 91: Angular Material icon buttons. Their larger accessible control footprints are a secondary header-space constraint and should not be globally reduced to solve this local issue.
+- The unit-scope selector is fluid with a 256 px maximum.
+- The fixed horizontal card strip has 32 px gaps, 64 px side padding, and intentional horizontal scrolling.
+- The fixed unit card is 512 px and its task-search field is 224 px.
+- The sort and filter controls use Angular Material icon buttons. Their larger accessible control footprints are a secondary header-space constraint and should not be globally reduced to solve this local issue.
 
 [`dashboard-list-item.component.html`](../src/app/dashboard/list-item/dashboard-list-item.component.html):
 
-- Lines 2 and 12: `mr-6`, `ml-2`, and `gap-4` row spacing.
-- Lines 2 and 3: `w-4` task rail and `py-4` row padding.
-- Lines 14 and 15: `size-8` comment badge and `text-xl` badge text.
+- `mr-6`, `ml-2`, and `gap-4` control row spacing.
+- `w-4` controls the task rail and `py-4` controls row padding.
+- `size-8` and `text-xl` control the comment badge and its text.
 
 [`expanded-list-item.component.html`](../src/app/dashboard/list-item/expanded-list-item/expanded-list-item.component.html):
 
-- Lines 2, 3, 5, and 10: `mr-6`, `w-4`, `pb-4`, `pt-2`, and `gap-2` expanded-row spacing.
+- `mr-6`, `w-4`, `pb-4`, `pt-2`, and `gap-2` control expanded-row spacing.
 
 Related history and context:
 
@@ -169,5 +169,5 @@ No further production change is made by this investigation branch. Any follow-up
 - Verified the Bootstrap removal commit and its explicit 60 percent rescaling rationale.
 - Calculated the relevant rem-to-pixel values and one-card containment thresholds.
 - Reviewed privacy-safe evidence at the specified desktop, tablet, and phone widths.
-- Confirmed that this branch changes no CPD behavior; its only source changes are the formatter's mechanical lint cleanup in two unit-task editor files.
-- Ran the repository lint, typecheck, full test, and production build checks recorded in the PR.
+- Confirmed that the docs-only replacement changes no source, configuration, or CPD behavior.
+- Ran the repository lint, typecheck, full test, and production build checks recorded with the evidence.

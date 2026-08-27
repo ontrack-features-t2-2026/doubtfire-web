@@ -100,6 +100,21 @@ describe('ProgressDashboardComponent', () => {
     expect(component.numberOfTasks).toEqual({completed: 1, remaining: 2});
   });
 
+  it('locks the selector when staff are viewing another student project', async () => {
+    project.unit.myRole = 'Tutor';
+    project.student = {id: 99} as Project['student'];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const select = await loader.getHarness(
+      MatSelectHarness.with({selector: '[aria-label="Target grade"]'}),
+    );
+
+    expect(component.viewingOtherStudentProject).toBe(true);
+    expect(await select.isDisabled()).toBe(true);
+  });
+
   it('restores the previous target grade when the update fails', () => {
     projectServiceUpdate.mockReturnValueOnce(throwError(() => new Error('update failed')));
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -122,15 +137,34 @@ describe('ProgressDashboardComponent', () => {
     const cardTitles = Array.from(host.querySelectorAll<HTMLElement>('mat-card-title'));
     const burndownCard = cardTitles
       .find((title) => title.textContent.trim() === 'Progress Burndown')
-      ?.closest('mat-card');
+      ?.closest('mat-card') as HTMLElement;
     const statusCard = cardTitles
       .find((title) => title.textContent.trim() === 'Task Statuses')
-      ?.closest('mat-card');
-    const burndownContent = burndownCard?.querySelector('mat-card-content');
+      ?.closest('mat-card') as HTMLElement;
+    const burndownContent = burndownCard?.querySelector('mat-card-content') as HTMLElement;
 
-    expect(burndownCard?.classList.contains('max-h-[600px]')).toBe(false);
-    expect(statusCard?.classList.contains('max-h-[600px]')).toBe(false);
-    expect(burndownContent?.classList.contains('overflow-hidden')).toBe(false);
+    // jsdom loads no stylesheets and lays nothing out, so every element measures 0 high
+    // and a utility class never reaches getComputedStyle. The computed pair catches a cap
+    // set inline or in the component styles, and the class scan covers the utility route
+    // the regression actually took, for any height cap rather than the one literal value.
+    const clipping = (element: HTMLElement) => {
+      const computed = getComputedStyle(element);
+      return {
+        maxHeight: computed.maxHeight,
+        overflowY: computed.overflowY,
+        clippingClasses: Array.from(element.classList).filter((name) =>
+          /^max-h-|^overflow-(y-)?hidden$/.test(name),
+        ),
+      };
+    };
+    const uncapped = {maxHeight: 'none', overflowY: 'visible', clippingClasses: []};
+
+    expect(burndownCard).toBeTruthy();
+    expect(statusCard).toBeTruthy();
+    expect(burndownContent).toBeTruthy();
+    expect(clipping(burndownCard)).toEqual(uncapped);
+    expect(clipping(statusCard)).toEqual(uncapped);
+    expect(clipping(burndownContent)).toEqual(uncapped);
   });
 
   it('renders fabricated unit peer progress only while demo mode is enabled', () => {

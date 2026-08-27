@@ -25,13 +25,39 @@ const taskDefinition = (
     name: abbreviation,
     startDate,
     targetGrade,
+    targetGradeText: 'Pass',
   }) as TaskDefinition;
 
-const taskForDefinition = (definition: TaskDefinition, topWeight: number): Task =>
+const taskForDefinition = (
+  definition: TaskDefinition,
+  topWeight: number,
+  numNewComments = 0,
+): Task =>
   ({
     definition,
     topWeight,
+    numNewComments,
   }) as Task;
+
+const studentProject = () =>
+  ({
+    id: 10,
+    targetGrade: 0,
+    unit: {id: 20},
+    calcTopTasks: () => undefined,
+  }) as unknown as Project;
+
+// Mirrors the wiring ngOnInit does, without the route lookup it also performs.
+const openTaskDefinition = (
+  component: FUnitTaskListComponent,
+  taskDef: TaskDefinition,
+): BehaviorSubject<TaskDefinition> => {
+  const selectedTaskDefinition$: BehaviorSubject<TaskDefinition> = new BehaviorSubject(taskDef);
+  component.selectedTaskDefinition$ = selectedTaskDefinition$;
+  selectedTaskDefinition$.subscribe((value) => (component.selectedTaskDef = value));
+
+  return selectedTaskDefinition$;
+};
 
 describe('FUnitTaskListComponent', () => {
   let component: FUnitTaskListComponent;
@@ -277,7 +303,7 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask]);
-    expect(component.activeViewPreferenceCount).toBe(0);
+    expect(component.activeViewPreferenceCount).toBe(1);
   });
 
   it('reveals tasks beyond the target grade only when explicitly selected', () => {
@@ -295,12 +321,12 @@ describe('FUnitTaskListComponent', () => {
     component.toggleShowAboveTargetGrade(true);
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
-    expect(component.activeViewPreferenceCount).toBe(1);
+    expect(component.activeViewPreferenceCount).toBe(0);
 
     component.resetViewPreferences();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask]);
-    expect(component.activeViewPreferenceCount).toBe(0);
+    expect(component.activeViewPreferenceCount).toBe(1);
   });
 
   it('reapplies target-grade filtering when the selected target changes', () => {
@@ -333,5 +359,104 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, distinctionTask]);
+  });
+
+  it('keeps the open task selected when the search term stops matching it', () => {
+    const openTask = taskDefinition(1, 'P1');
+    const otherTask = taskDefinition(2, 'P2');
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [openTask, otherTask];
+    component.tasks = [];
+    const selectedTaskDefinition$ = openTaskDefinition(component, openTask);
+
+    component.searchText = 'P1';
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([openTask]);
+    expect(selectedTaskDefinition$.value).toBe(openTask);
+
+    component.searchText = 'P2';
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([otherTask]);
+    expect(selectedTaskDefinition$.value).toBe(openTask);
+  });
+
+  it('drops the selection when a view filter hides the open task', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask];
+    component.tasks = [];
+    component.toggleShowAboveTargetGrade(true);
+    const selectedTaskDefinition$ = openTaskDefinition(component, creditTask);
+
+    component.toggleShowAboveTargetGrade(false);
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask]);
+    expect(selectedTaskDefinition$.value).toBeNull();
+  });
+
+  it('drops the selection when the open task leaves the task definitions', () => {
+    const passTask = taskDefinition(1, 'P1');
+    const removedTask = taskDefinition(2, 'P2');
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, removedTask];
+    component.tasks = [];
+    const selectedTaskDefinition$ = openTaskDefinition(component, removedTask);
+
+    component.taskDefinitions = [passTask];
+    component.applyFilters();
+
+    expect(selectedTaskDefinition$.value).toBeNull();
+  });
+
+  it('badges the filter button while tasks beyond the target grade are hidden', () => {
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [taskDefinition(1, 'P1')];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.hidingTasksAboveTargetGrade).toBe(true);
+    expect(component.activeViewPreferenceCount).toBe(1);
+    expect(component.hasNonDefaultViewPreferences).toBe(false);
+
+    component.toggleShowAboveTargetGrade(true);
+
+    expect(component.hidingTasksAboveTargetGrade).toBe(false);
+    expect(component.activeViewPreferenceCount).toBe(0);
+    expect(component.hasNonDefaultViewPreferences).toBe(true);
+  });
+
+  it('does not badge target-grade hiding on an all-tasks list', () => {
+    component.mode = 'all-tasks';
+    component.taskDefinitions = [taskDefinition(1, 'P1')];
+    component.tasks = [];
+
+    component.applyFilters();
+
+    expect(component.activeViewPreferenceCount).toBe(0);
+  });
+
+  it('still shows a task beyond the target grade when it has unread comments', () => {
+    const passTask = taskDefinition(1, 'P1', undefined, 0);
+    const creditTask = taskDefinition(2, 'C1', undefined, 1);
+    const distinctionTask = taskDefinition(3, 'D1', undefined, 2);
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [passTask, creditTask, distinctionTask];
+    component.tasks = [
+      taskForDefinition(creditTask, 2, 3),
+      taskForDefinition(distinctionTask, 3, 0),
+    ];
+
+    component.applyFilters();
+
+    expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
   });
 });

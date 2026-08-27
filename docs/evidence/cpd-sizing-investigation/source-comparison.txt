@@ -30,8 +30,8 @@ commit: 2c6d2786e9484c57436099d25281aa45fa89453c
 finding: copied the legacy CPD utility classes after Bootstrap had been removed, reintroducing the
   unscaled w-[34rem], w-64, px-16, gap-8, gap-4, and p-4 values
 
-Current feature/cross-unit
-commit: 53f1c5532eefc75cadf7834748a5a85c2bc6b3e8
+Current feature/cross-unit docs-only replacement base
+commit: 9962e7ea171a2bf6d7a12be50874fa5c7ee77e21
 package version: 11.0.0-45
 component classes:
   dashboard strip: flex min-h-0 flex-1 flex-row gap-8 overflow-x-auto px-16 pb-4

@@ -305,10 +305,31 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
 
     expect(component.isDataShown('Target')).toBe(false);
     expect(component.isDataShown('Peer median (demo)')).toBe(true);
+    expect(seriesNames(component)).not.toContain('Target');
+    expect(component.temp.map((series) => series.name)).toContain('Target');
 
     component.onSelect('Target');
 
     expect(component.isDataShown('Target')).toBe(true);
+    expect(seriesNames(component)).toContain('Target');
+  });
+
+  it('does not mistake a genuine all-zero series for a hidden series', () => {
+    const getCohortMedian = vi.fn();
+    const {component, project} = makeHarness(getCohortMedian, false);
+
+    project.burndownChartData.push({
+      key: 'Zero progress',
+      values: [
+        [project.unit.startDate.getTime(), 0],
+        [project.unit.endDate.getTime(), 0],
+      ],
+    });
+
+    initialise(component);
+
+    expect(component.isDataShown('Zero progress')).toBe(true);
+    expect(seriesNames(component)).toContain('Zero progress');
   });
 
   it('hides axis titles on narrow screens', () => {

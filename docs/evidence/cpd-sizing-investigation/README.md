@@ -1,6 +1,8 @@
 # CPD sizing investigation evidence
 
-Date: 2026-08-23
+Evidence captured: 2026-08-23
+
+Docs-only replacement prepared: 2026-08-27
 
 Report: [`docs/cpd-sizing-investigation.md`](../../cpd-sizing-investigation.md)
 
@@ -13,7 +15,8 @@ This folder contains the evidence for `CPD - Investigate sizing issue`. All visi
 - CPD reintroduction on 11.x: `2c6d2786e9484c57436099d25281aa45fa89453c`.
 - 11.x before the responsive adjustment: `b9386055`.
 - CPD-Q04 responsive adjustment: `854f9ce9ba5f100b0425996c3f5d7e248faa6b32`.
-- Current `feature/cross-unit` baseline: `53f1c5532eefc75cadf7834748a5a85c2bc6b3e8`.
+- Investigation snapshot: `53f1c5532eefc75cadf7834748a5a85c2bc6b3e8`.
+- Docs-only replacement base: `9962e7ea171a2bf6d7a12be50874fa5c7ee77e21`.
 
 ## Deterministic comparison set
 
@@ -38,7 +41,13 @@ Supporting files:
 - `verification.txt` records the passing repository checks.
 - `SHA256SUMS` provides integrity checks for every evidence artifact.
 
-The harness images are deterministic layout reconstructions, not signed-in application screenshots. This limitation is intentional so the root-scale comparison is repeatable and privacy-safe.
+Verify the evidence integrity from the repository root:
+
+```sh
+cd docs/evidence/cpd-sizing-investigation && shasum -a 256 -c SHA256SUMS
+```
+
+The harness images are deterministic layout reconstructions, not signed-in application screenshots. This limitation is intentional so the root-scale comparison is repeatable and privacy-safe. The exported raster dimensions may exclude browser chrome or scrollbar pixels, so `measurements.txt` is the authoritative record of the captured DOM client and scroll widths.
 
 ## CPD-Q04 application capture set
 
