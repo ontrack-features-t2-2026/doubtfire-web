@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -44,9 +44,15 @@ describe('FUnitTaskListComponent', () => {
   });
 
   beforeEach(() => {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+    });
     fixture = TestBed.createComponent(FUnitTaskListComponent);
     component = fixture.componentInstance;
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('should create', () => {
     expect(component).toBeTruthy();
