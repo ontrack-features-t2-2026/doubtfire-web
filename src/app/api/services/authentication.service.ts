@@ -385,6 +385,55 @@ export class AuthenticationService {
     );
   }
 
+  // Removes this user's unsent comment drafts from browser storage, along with
+  // any left over from before drafts were scoped to a user, which belong to
+  // nobody and would otherwise sit there for good.
+  //
+  // Keys are collected first and deleted afterwards. Calling removeItem inside a
+  // forward loop over localStorage.key(i) shifts the indices along and skips
+  // every second match.
+  private clearCommentDrafts(userId?: number): void {
+    const draftPrefix = 'task_comment_draft_';
+    const userPrefix = userId ? `${draftPrefix}uid${userId}_` : null;
+
+    try {
+      const doomed: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(draftPrefix)) {
+          continue;
+        }
+        // This user's drafts, and the old unscoped keys which have a task id
+        // straight after the prefix rather than a user id.
+        if ((userPrefix && key.startsWith(userPrefix)) || !this.isUserScopedDraftKey(key)) {
+          doomed.push(key);
+        }
+      }
+      doomed.forEach((key) => localStorage.removeItem(key));
+    } catch (e) {
+      console.error('Error clearing comment drafts:', e);
+    }
+
+    try {
+      if (userId) {
+        sessionStorage.removeItem(`task_comments_submitted_${userId}`);
+      }
+      sessionStorage.removeItem('task_comments_submitted');
+    } catch (e) {
+      console.error('Error clearing submitted comment tasks:', e);
+    }
+  }
+
+  // A scoped key is task_comment_draft_uid<userId>_<rest>. Anything else under
+  // the prefix was written before drafts were scoped to a user, belongs to
+  // nobody, and nothing will ever read it again. A legacy key starts with a task
+  // or project id, or the literal 'unknown', so it can never begin with uid
+  // followed by digits.
+  private isUserScopedDraftKey(key: string): boolean {
+    const rest = key.substring('task_comment_draft_'.length);
+    return /^uid\d+_/.test(rest);
+  }
+
   public signOut(ssoSignOut = true): void {
     this.demoMode.reset();
 
@@ -401,6 +450,12 @@ export class AuthenticationService {
       // Setup ability to auth again
       this.authComplete$.complete();
       this.authComplete$ = new AsyncSubject<boolean>();
+
+      // Unsent comment drafts live in browser storage and sign out routes rather
+      // than reloading, so nothing else drops them. Clear them before the current
+      // user is replaced, otherwise the prefix is built from the anonymous user
+      // and nothing matches.
+      this.clearCommentDrafts(this.userService.currentUser?.id);
 
       // Change the current user to the anonymous user
       this.userService.currentUser = this.userService.anonymousUser;
