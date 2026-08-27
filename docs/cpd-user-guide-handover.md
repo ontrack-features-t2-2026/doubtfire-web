@@ -30,14 +30,32 @@ The dashboard features a global toolbar to filter tasks across all visible units
 
 ![Global Search and Filters](assets/global-filters.png)
 
-### 3. Grade Completion Summaries
+### 3. Phone Layout
+
+On screens narrower than 640 px, the dashboard uses a stacked layout designed
+for touch and keyboard use rather than a horizontally scrolling row of unit
+cards.
+
+- The unit scope and global search stay at the top of the page.
+- Secondary filters move into a **More filters** disclosure. Its label includes
+  the number of active secondary filters so hidden filter state remains visible.
+- Projects become full-width disclosures, and opening one project closes the
+  previously open project. Each closed header still shows the unit, project
+  state, matching-task count and nearest actionable deadline.
+- Task actions wrap within the viewport. The page must not require horizontal
+  panning at supported phone widths down to 320 px.
+
+At 640 px and wider, the desktop/tablet layout remains a horizontally arranged
+set of independently scrolling unit cards, with the full filter toolbar visible.
+
+### 4. Grade Completion Summaries
 
 When one or more target-grade filters are selected, each visible unit card displays a **Grade task completion** summary for those tiers.
 
 - It displays counts and percentages, such as "Pass: 1 of 3 complete (33%)".
 - These percentages represent _task completion counts_ for the selected tier. They are **not** predicted final grades or official academic marks.
 
-### 4. Due Date Warnings & Limitations
+### 5. Due Date Warnings & Limitations
 
 The dashboard provides visual urgency indicators for approaching task deadlines.
 
@@ -48,13 +66,15 @@ The dashboard provides visual urgency indicators for approaching task deadlines.
 
 Warnings are shown only for tasks that have not been submitted. The dashboard uses `Task.localDueDate()`, which prefers the task-specific due date supplied by the API before falling back to the task definition. The dashboard does not independently grant or calculate extensions; the project record remains the authoritative deadline source.
 
-### 5. Accessibility
+### 6. Accessibility
 
 - **Keyboard navigation:** Filter controls and task-detail toggles are keyboard operable, and per-unit search controls have visible focus styling.
+- **Project disclosures:** Phone project headers expose their expanded state,
+  keep a visible focus indicator and preserve focus when filters are cleared.
 - **Screen readers:** Task-detail buttons expose their expanded state and use task-specific Expand/Collapse labels. Decorative warning icons are hidden from assistive technology.
 - **Non-colour meaning:** Due warnings include visible text such as "Overdue" or "Due within 3 days", so colour is not the only signal.
 
-### 6. Authorized Data Boundary (Privacy)
+### 7. Authorized Data Boundary (Privacy)
 
 The Cross-Project Dashboard uses the authenticated student's authorised project and task responses.
 
@@ -68,8 +88,9 @@ The Cross-Project Dashboard uses the authenticated student's authorised project 
 ### 1. Architecture & Key Files
 
 - **Target branch:** `11.0.x`
-- **Main component:** `src/app/dashboard/f-cross-dashboard.component.ts` handles unit scopes, global and per-unit filtering, grade completion summaries and previous-unit loading.
-- **Main template:** `src/app/dashboard/f-cross-dashboard.component.html` defines the filter toolbar, unit cards and empty/error states.
+- **Main component:** `src/app/dashboard/f-cross-dashboard.component.ts` handles unit scopes, global and per-unit filtering, grade completion summaries, previous-unit loading and the single-open phone disclosure state.
+- **Main template:** `src/app/dashboard/f-cross-dashboard.component.html` defines the filter toolbar, responsive project disclosures/cards and empty/error states.
+- **Responsive styling:** `src/app/dashboard/f-cross-dashboard.component.scss` switches the stacked phone experience at 640 px while retaining the wider horizontal card layout.
 - **Due-warning component:** `src/app/dashboard/list-item/dashboard-list-item.component.ts` owns warning thresholds and labels.
 - **Test suites:** The adjacent component specs cover unit scopes, global/per-unit search, status/grade/date filters, summaries, warnings and accessibility state.
 
@@ -91,4 +112,4 @@ The following limitations remain post-MVP work:
 
 ### 4. Verification Basis
 
-This guide was reconciled with the merged `11.0.x` implementation after the Cross-Project Dashboard closure merge. The two screenshots use demonstration units and contain no real student records. Before changing the guide, rerun the dashboard-focused component specs and verify the screenshots still match the current toolbar and unit-scope labels.
+This guide was reconciled with the merged `11.0.x` implementation after the Cross-Project Dashboard closure and phone-layout merges. The two screenshots show the wider toolbar using demonstration units and contain no real student records. Before changing the guide, rerun the dashboard-focused component specs, verify the screenshots still match the current wider toolbar and unit-scope labels, and check computed layout at 320 px, 390 px, 640 px and a desktop width.
