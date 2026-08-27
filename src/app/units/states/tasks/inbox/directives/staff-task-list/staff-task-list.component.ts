@@ -154,18 +154,16 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       this.syncSelectedTaskFromTaskKey();
     }
 
-    if (!this.isTaskDefMode || !this.filters) {
-      return;
-    }
-
     const unitChanged =
       !!changes.unit &&
       !changes.unit.isFirstChange() &&
       changes.unit.currentValue?.id &&
       changes.unit.previousValue?.id !== changes.unit.currentValue?.id;
 
-    if (unitChanged) {
-      this.refreshData();
+    // This used to sit behind an isTaskDefMode guard, so the inbox kept the previous
+    // unit's students, tutors and tasks on screen after a unit switch.
+    if (unitChanged && this.unit && this.unitRole) {
+      this.initialiseForUnit();
     }
   }
 
@@ -200,6 +198,15 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     if (navigator.maxTouchPoints > 1) {
       this.allowHover = false;
     }
+
+    this.initialiseForUnit();
+  }
+
+  // The filter defaults, the student and tutor lists and the task query are all built
+  // from the routed unit, so they have to be rebuilt when it changes. The router reuses
+  // this component across a unit switch, so ngOnInit does not run a second time.
+  private initialiseForUnit(): void {
+    this.fetchedAllTasks = false;
 
     // Does the current user have any tutorials?
     this.userHasTutorials =
