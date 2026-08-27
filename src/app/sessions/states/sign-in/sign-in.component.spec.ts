@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {HttpClient} from '@angular/common/http';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Router} from '@angular/router';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -23,7 +23,6 @@ describe('SignInComponent', () => {
         {provide: AuthenticationService, useValue: emptyProvider},
         {provide: UserService, useValue: emptyProvider},
         {provide: Router, useValue: emptyProvider},
-        {provide: ActivatedRoute, useValue: emptyProvider},
         {provide: DoubtfireConstants, useValue: emptyProvider},
         {provide: HttpClient, useValue: emptyProvider},
         {provide: GlobalStateService, useValue: emptyProvider},
