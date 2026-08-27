@@ -83,13 +83,23 @@ for (const [name, workflow] of deploymentWorkflows) {
 }
 assert.match(
   dockerfile,
-  /^FROM node:22\.22\.3-bookworm-slim@sha256:[0-9a-f]{64} AS build$/m,
+  /^FROM node:22\.23\.2-bookworm-slim@sha256:[0-9a-f]{64} AS build$/m,
   'the release build must pin the supported Node image digest',
+);
+assert.match(
+  dockerfile,
+  /npm install --global npm@11\.19\.1/,
+  'the release build must install the reviewed npm security update',
 );
 assert.match(
   dockerfile,
   /^FROM nginx:1\.30\.4-alpine@sha256:[0-9a-f]{64}$/m,
   'the release runtime must pin the Nginx image digest',
+);
+assert.match(
+  dockerfile,
+  /^RUN apk upgrade --no-cache libcrypto3 libssl3$/m,
+  'the release runtime must install the reviewed Alpine OpenSSL security update',
 );
 assert.doesNotMatch(
   dockerfile,
