@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it} from 'vitest';
+import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Project} from 'src/app/api/models/doubtfire-model';
 import {TaskVisualisationComponent} from './task-visualisation.component';
-import {SimpleChange} from '@angular/core';
 
 describe('TaskVisualisationComponent', () => {
   let fixture: ComponentFixture<TaskVisualisationComponent>;
