@@ -314,7 +314,7 @@ semantic token layer on top now, and move Material onto tokens per component gro
 
 | Option                                                           | What it means                                                                             | Verdict                                                                                                                                                       |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose component hexes, and locks us further into an API Angular is winding down. |
+| A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose hexes outside the three palette files, and locks us further into an API Angular is winding down. |
 | B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                          |
 | **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                   |
 
@@ -1513,8 +1513,8 @@ grep -inE 'analytics|gtag|tag-manager|segment|mixpanel|posthog|amplitude' packag
 **Counts were taken on `11.0.x` at `4034e7d1a`, 27 Aug 2026 22:00 +1000**, which is the commit
 this branch is rebased onto. Pin the base whenever you quote one of these, because they move: the
 first pass at this audit ran on `efda57967` the same morning and the closure merge at #105 moved
-**nine** of them within the day — the four tree-wide counts, `prefers-reduced-motion`,
-`focus-visible`, and all three `src/app` figures. What did **not** move is as important: the
+**nine** of them within the day — three of the four tree-wide counts, `prefers-reduced-motion`,
+`focus-visible`, and all four `src/app` figures. What did **not** move is as important: the
 three palette files, `!important`, every `outline: none`, both Tailwind template counts, and the
 four counts that are still zero. `#3939ff`, the 15 status colours and every contrast ratio in
 sections 7, 8 and Appendix A were unaffected. The drift is entirely in how much unmigrated colour
