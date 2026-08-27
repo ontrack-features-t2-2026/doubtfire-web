@@ -88,7 +88,7 @@
       }
       @if (selectedTaskDefinition) {
         @if (isPhoneLayout) {
-          <section class="mobile-task-view min-w-0 flex-1 bg-white" aria-label="Selected task">
+          <section aria-label="Selected task" class="mobile-task-view min-w-0 flex-1 bg-white">
             <header class="mobile-task-toolbar">
               <div class="mobile-task-heading">
                 <div class="min-w-0 px-3">
@@ -101,7 +101,7 @@
                 </div>
               </div>
 
-              <nav class="mobile-task-tabs" aria-label="Task navigation">
+              <nav aria-label="Task navigation" class="mobile-task-tabs">
                 <button
                   aria-label="Back to task list"
                   class="mobile-task-tab"
