@@ -324,6 +324,10 @@ describe('ProjectDashboardComponent rendered by its host', () => {
       providers: [
         {provide: UserService, useValue: {}},
         {provide: ProjectService, useValue: {get: projectGet}},
+        {
+          provide: TaskService,
+          useValue: {taskSubmissionCompleted$: new Subject<Task>()},
+        },
         {provide: UnitService, useValue: {get: unitGet}},
         {provide: GlobalStateService, useValue: {setView: vi.fn()}},
         {
