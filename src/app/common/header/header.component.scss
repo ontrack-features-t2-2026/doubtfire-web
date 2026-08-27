@@ -32,3 +32,36 @@
   margin-left: 8px;
   padding: 3px 7px;
 }
+
+// Keep the secondary QR entry out of the account menu unless the toolbar is
+// narrow enough that the primary action would push the account avatar offscreen.
+.qr-account-menu-action {
+  display: none;
+}
+
+@media (max-width: 399px) {
+  .mat-toolbar {
+    padding-inline: 8px;
+
+    // Allow longer route labels to yield space to the account action instead
+    // of increasing the page's horizontal scroll width.
+    task-dropdown {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+
+  .qr-toolbar-action {
+    display: none;
+  }
+
+  .qr-account-menu-action {
+    display: flex;
+  }
+
+  .account-menu-trigger {
+    min-width: 48px;
+    padding-inline: 8px;
+  }
+}

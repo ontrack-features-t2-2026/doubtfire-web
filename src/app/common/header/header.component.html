@@ -63,7 +63,12 @@
       </button>
     }
     @if (currentUnit && !isTutorDiscussionRoute) {
-      <button mat-icon-button (click)="showMyQr()">
+      <button
+        aria-label="Show my QR code"
+        class="qr-toolbar-action"
+        mat-icon-button
+        (click)="showMyQr()"
+      >
         <mat-icon>qr_code_scanner</mat-icon>
       </button>
     }
@@ -108,7 +113,13 @@
       }
     </mat-menu>
 
-    <button mat-button [matMenuTriggerFor]="menu2" (menuOpened)="refreshMobileUnreadCount()">
+    <button
+      aria-label="Open account menu"
+      class="account-menu-trigger"
+      mat-button
+      [matMenuTriggerFor]="menu2"
+      (menuOpened)="refreshMobileUnreadCount()"
+    >
       <user-icon [size]="32" [user]="currentUser"></user-icon>
     </button>
     <mat-menu #menu2="matMenu">
@@ -126,6 +137,12 @@
           @if (unreadNotifications) {
             <span class="notification-menu-count">{{ unreadNotifications }}</span>
           }
+        </button>
+      }
+      @if (currentUnit && !isTutorDiscussionRoute) {
+        <button class="qr-account-menu-action" mat-menu-item (click)="showMyQr()">
+          <mat-icon aria-label="Show my QR code" matListItemIcon>qr_code_scanner</mat-icon>
+          Show my QR code
         </button>
       }
       @if (demoMode.available) {

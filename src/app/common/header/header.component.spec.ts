@@ -10,7 +10,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Router} from '@angular/router';
 import {Observable, defer, of} from 'rxjs';
-import {AuthenticationService} from 'src/app/api/models/doubtfire-model';
+import {AuthenticationService, Unit} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -181,7 +181,7 @@ describe('HeaderComponent', () => {
           {provide: SidekiqJobService, useValue: {sidekiqJobsSubject: of([])}},
           {provide: SidekiqJobsModalService, useValue: emptyProvider},
           {provide: QrModalService, useValue: emptyProvider},
-          {provide: Router, useValue: emptyProvider},
+          {provide: Router, useValue: {url: '/projects/1/dashboard'}},
           {provide: TutorNotesModalService, useValue: emptyProvider},
         ],
         schemas: [NO_ERRORS_SCHEMA],
@@ -217,6 +217,32 @@ describe('HeaderComponent', () => {
 
       expect(openCalendarSpy).toHaveBeenCalledOnce();
       expect(calendarModalServiceStub.show).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the QR action in the account menu when the narrow toolbar action is hidden', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      component.currentUnit = {id: 1} as Unit;
+      const showMyQrSpy = vi.spyOn(component, 'showMyQr').mockImplementation(() => undefined);
+      fixture.detectChanges();
+
+      const toolbarAction: HTMLButtonElement =
+        fixture.nativeElement.querySelector('.qr-toolbar-action');
+      const accountMenuTrigger: HTMLButtonElement =
+        fixture.nativeElement.querySelector('.account-menu-trigger');
+
+      expect(toolbarAction).not.toBeNull();
+      expect(accountMenuTrigger).not.toBeNull();
+
+      accountMenuTrigger.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const menuAction: HTMLButtonElement = document.querySelector('.qr-account-menu-action');
+      expect(menuAction).not.toBeNull();
+
+      menuAction.click();
+      expect(showMyQrSpy).toHaveBeenCalledOnce();
     });
   });
 });
