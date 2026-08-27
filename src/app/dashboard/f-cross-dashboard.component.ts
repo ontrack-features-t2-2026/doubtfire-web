@@ -19,7 +19,7 @@ import {
   TaskRecommendationService,
 } from '../api/services/task-recommendation.service';
 import {TaskService} from '../api/services/task.service';
-import {DashboardTask} from './list-item/dashboard-list-item.component';
+import {DashboardTask, getDueDateWarning} from './list-item/dashboard-list-item.component';
 
 type UnitScope = 'active' | 'previous' | 'all';
 
@@ -42,12 +42,24 @@ const displayedDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
   month: 'long',
 });
 
+const mobileDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
+  day: 'numeric',
+  month: 'short',
+});
+
+type MobileUnitSummary = {
+  taskCountLabel: string;
+  deadlineLabel: string;
+  hasDeadlineWarning: boolean;
+};
+
 type DashboardUnit = {
   projectId: number;
   code: string;
   name: string;
   tasks: DashboardTask[];
   gradeSummaries: GradeCompletionSummary[];
+  mobileSummary: MobileUnitSummary;
   isPrevious: boolean;
 };
 
@@ -62,6 +74,7 @@ type GradeCompletionSummary = {
 @Component({
   selector: 'f-cross-dashboard',
   templateUrl: './f-cross-dashboard.component.html',
+  styleUrl: './f-cross-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -94,6 +107,8 @@ export class CrossDashboardComponent implements OnInit {
   filterOptions = Object.values(Filter);
   sortOptions = Object.values(SortMode);
   unitsProcessed: DashboardUnit[] = [];
+  expandedMobileProjectId: number | null = null;
+  mobileGlobalFiltersExpanded = false;
 
   private readonly previousProjectsCache: EntityCache<Project> = new EntityCache();
   private filters: Map<number, Filter[]> = new Map();
@@ -182,8 +197,18 @@ export class CrossDashboardComponent implements OnInit {
     );
   }
 
+  get mobileSecondaryFilterCount(): number {
+    return (
+      this.selectedStatuses.length +
+      this.selectedGrades.length +
+      Number(!!this.startDate) +
+      Number(!!this.endDate)
+    );
+  }
+
   setUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
+    this.expandedMobileProjectId = null;
     this.processTasks();
 
     const needsPreviousUnits = scope === 'previous' || scope === 'all';
@@ -196,6 +221,18 @@ export class CrossDashboardComponent implements OnInit {
   setGlobalSearch(value: string): void {
     this.globalSearchTerm = value ?? '';
     this.processTasks();
+  }
+
+  toggleMobileProject(projectId: number): void {
+    this.expandedMobileProjectId = this.expandedMobileProjectId === projectId ? null : projectId;
+  }
+
+  toggleMobileGlobalFilters(): void {
+    this.mobileGlobalFiltersExpanded = !this.mobileGlobalFiltersExpanded;
+  }
+
+  isMobileProjectExpanded(projectId: number): boolean {
+    return this.expandedMobileProjectId === projectId;
   }
 
   setStatuses(statuses: readonly TaskStatusEnum[] | null): void {
@@ -366,6 +403,11 @@ export class CrossDashboardComponent implements OnInit {
           }),
       }));
 
+    this.unitsProcessed = this.unitsProcessed.map((unit) => ({
+      ...unit,
+      mobileSummary: this.buildMobileUnitSummary(unit.tasks),
+    }));
+
     this.changeDetectorRef.markForCheck();
   }
 
@@ -433,6 +475,39 @@ export class CrossDashboardComponent implements OnInit {
         percentage: total === 0 ? null : Math.round((completed / total) * 100),
       };
     });
+  }
+
+  private buildMobileUnitSummary(tasks: readonly DashboardTask[]): MobileUnitSummary {
+    const taskCount = tasks.length;
+    const nextDueTask = tasks
+      .filter(
+        (task) =>
+          task.showDueWarning &&
+          !finalTypes.includes(task.status) &&
+          task.dueDate instanceof Date &&
+          !Number.isNaN(task.dueDate.getTime()),
+      )
+      .sort((first, second) => this.compareDueDates(first.dueDate, second.dueDate))[0];
+
+    if (!nextDueTask || !(nextDueTask.dueDate instanceof Date)) {
+      return {
+        taskCountLabel: `${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}`,
+        deadlineLabel: 'No upcoming deadlines',
+        hasDeadlineWarning: false,
+      };
+    }
+
+    const warning = getDueDateWarning(nextDueTask.dueDate, true);
+
+    return {
+      taskCountLabel: `${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}`,
+      deadlineLabel: warning
+        ? `${warning.label}: ${nextDueTask.abbreviation}`
+        : `Next due ${mobileDueDateFormatter.format(nextDueTask.dueDate)}: ${
+            nextDueTask.abbreviation
+          }`,
+      hasDeadlineWarning: warning !== null,
+    };
   }
 
   private taskMatchesDateRange(task: DashboardTask): boolean {
@@ -623,6 +698,11 @@ export class CrossDashboardComponent implements OnInit {
         // even though those tasks are returned by the API and remain available to them.
         tasks: this.mapTasks(project.tasks, project.id, unit.code),
         gradeSummaries: [],
+        mobileSummary: {
+          taskCountLabel: '0 tasks',
+          deadlineLabel: 'No upcoming deadlines',
+          hasDeadlineWarning: false,
+        },
         isPrevious: !unit.isActive,
       };
     });

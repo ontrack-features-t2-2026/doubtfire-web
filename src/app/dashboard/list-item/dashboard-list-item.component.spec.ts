@@ -128,6 +128,14 @@ describe('DashboardListItemComponent', () => {
     expect(button.getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('uses a keyboard-focusable link for the task title', () => {
+    const titleLink = fixture.nativeElement.querySelector('h4 a') as HTMLAnchorElement;
+
+    expect(titleLink).not.toBeNull();
+    expect(titleLink.textContent.trim()).toBe('Security Review');
+    expect(titleLink.classList).toContain('focus-visible:outline-2');
+  });
+
   it('renders warning text and an icon alongside the separate status colour', () => {
     fixture.componentRef.setInput('task', {
       taskDefinitionId: 10,

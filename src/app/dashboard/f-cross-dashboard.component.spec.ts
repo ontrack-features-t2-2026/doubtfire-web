@@ -938,6 +938,12 @@ describe('CrossDashboardComponent', () => {
     ]);
     await syncView();
 
+    const mobileFilterToggle = fixture.nativeElement.querySelector(
+      'button[data-mobile-global-filter-toggle]',
+    ) as HTMLButtonElement;
+    mobileFilterToggle.click();
+    await syncView();
+
     const loader = TestbedHarnessEnvironment.loader(fixture);
     const statusSelect = await loader.getHarness(
       MatSelectHarness.with({selector: '[aria-label="Task statuses"]'}),
@@ -967,6 +973,7 @@ describe('CrossDashboardComponent', () => {
 
     expect(component.selectedStatuses.slice().sort()).toEqual(['complete', 'redo']);
     expect(component.selectedGrades).toEqual([0, 2]);
+    expect(component.mobileSecondaryFilterCount).toBe(5);
     expect(await statusSelect.getValueText()).toContain('Redo');
     expect(await statusSelect.getValueText()).toContain('Complete');
     expect(await gradeSelect.getValueText()).toContain('Pass');
@@ -981,10 +988,44 @@ describe('CrossDashboardComponent', () => {
     expect(component.selectedStatuses).toEqual([]);
     expect(component.selectedGrades).toEqual([]);
     expect(component.startDate).toBe('');
+    expect(component.mobileSecondaryFilterCount).toBe(0);
+    expect(component.mobileGlobalFiltersExpanded).toBe(true);
     expect(globalSearch.value).toBe('');
     expect(await statusSelect.getValueText()).toBe('');
     expect(await gradeSelect.getValueText()).toBe('');
     expect(await clearAll.isDisabled()).toBe(true);
+  });
+
+  it('keeps secondary filters in a labelled mobile disclosure with an active count', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const toggle = fixture.nativeElement.querySelector(
+      'button[data-mobile-global-filter-toggle]',
+    ) as HTMLButtonElement;
+    const filters = fixture.nativeElement.querySelector(
+      '#dashboard-secondary-filters',
+    ) as HTMLElement;
+
+    expect(toggle.classList).toContain('min-h-12');
+    expect(toggle.getAttribute('aria-controls')).toBe('dashboard-secondary-filters');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(filters.classList).not.toContain('is-mobile-open');
+    expect(toggle.textContent).not.toContain('active');
+
+    component.setStatuses(['complete', 'redo']);
+    component.setGrades([1]);
+    component.setStartDate('2026-08-01');
+    await syncView();
+
+    expect(component.mobileSecondaryFilterCount).toBe(4);
+    expect(toggle.textContent).toContain('4 active');
+
+    toggle.click();
+    await syncView();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(filters.classList).toContain('is-mobile-open');
   });
 
   it('globally searches every required unit and task field case-insensitively', () => {
@@ -1354,5 +1395,120 @@ describe('CrossDashboardComponent', () => {
 
     expect(component.displayedUnits[0].gradeSummaries).toEqual([]);
     expect(fixture.nativeElement.textContent).not.toContain('Grade task completion');
+  });
+
+  it('renders one accessible mobile accordion control and summary per unit', async () => {
+    const overdueDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const laterDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+    projectsSubject.next([
+      makeProject(
+        1,
+        'SIT764',
+        true,
+        [
+          makeTask('Overdue review', 'OVERDUE', 'not_started', overdueDate),
+          makeTask('Later review', 'LATER', 'not_started', laterDate),
+        ],
+        'Human Centred Design',
+      ),
+      makeProject(2, 'SIT782', true, [makeTask('Submitted plan', 'DONE', 'complete', laterDate)]),
+    ]);
+
+    await syncView();
+
+    const toggles = fixture.nativeElement.querySelectorAll(
+      'button[data-mobile-unit-toggle]',
+    ) as NodeListOf<HTMLButtonElement>;
+
+    expect(toggles).toHaveLength(2);
+    expect(toggles[0].parentElement?.tagName).toBe('H2');
+    expect(toggles[0].classList).toContain('min-h-12');
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
+    expect(toggles[0].getAttribute('aria-controls')).toBe(
+      'dashboard-unit-controls-1 dashboard-unit-content-1',
+    );
+    expect(toggles[0].textContent).toContain('SIT764');
+    expect(toggles[0].textContent).toContain('Human Centred Design · Active');
+    expect(toggles[0].textContent).toContain('2 tasks');
+    expect(toggles[0].textContent).toContain('Overdue: OVERDUE');
+    expect(toggles[1].textContent).toContain('1 task');
+    expect(toggles[1].textContent).toContain('No upcoming deadlines');
+    expect(toggles[0].querySelector('a, input, button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#dashboard-unit-controls-1')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#dashboard-unit-content-1')).not.toBeNull();
+
+    // The responsive view reuses each task row instead of duplicating separate mobile markup.
+    expect(fixture.nativeElement.querySelectorAll('f-dashboard-list-item')).toHaveLength(3);
+  });
+
+  it('opens only one mobile unit at a time and resets expansion when scope changes', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true), makeProject(2, 'SIT782', true)]);
+    await syncView();
+
+    const toggles = fixture.nativeElement.querySelectorAll(
+      'button[data-mobile-unit-toggle]',
+    ) as NodeListOf<HTMLButtonElement>;
+    const firstControls = fixture.nativeElement.querySelector(
+      '#dashboard-unit-controls-1',
+    ) as HTMLElement;
+    const firstContent = fixture.nativeElement.querySelector(
+      '#dashboard-unit-content-1',
+    ) as HTMLElement;
+    const secondContent = fixture.nativeElement.querySelector(
+      '#dashboard-unit-content-2',
+    ) as HTMLElement;
+
+    toggles[0].click();
+    await syncView();
+
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+    expect(firstControls.classList).toContain('is-mobile-open');
+    expect(firstContent.classList).toContain('is-mobile-open');
+
+    toggles[1].click();
+    await syncView();
+
+    expect(toggles[0].getAttribute('aria-expanded')).toBe('false');
+    expect(toggles[1].getAttribute('aria-expanded')).toBe('true');
+    expect(firstControls.classList).not.toContain('is-mobile-open');
+    expect(firstContent.classList).not.toContain('is-mobile-open');
+    expect(secondContent.classList).toContain('is-mobile-open');
+
+    component.setUnitScope('active');
+    await syncView();
+
+    expect(component.expandedMobileProjectId).toBeNull();
+    expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('uses phone-safe widths while retaining the fixed desktop card strip', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const toolbar = fixture.nativeElement.querySelector(
+      '[aria-label="Global dashboard filters"]',
+    ) as HTMLElement;
+    const globalSearchField = fixture.nativeElement
+      .querySelector('input[aria-label="Global search"]')
+      .closest('mat-form-field') as HTMLElement;
+    const layout = fixture.nativeElement.querySelector('.dashboard-units-layout') as HTMLElement;
+    const card = layout.querySelector('section') as HTMLElement;
+
+    expect(Array.from(toolbar.classList)).toEqual(expect.arrayContaining(['px-4', 'sm:px-16']));
+    expect(Array.from(globalSearchField.classList)).toEqual(
+      expect.arrayContaining(['min-w-0', 'sm:min-w-64']),
+    );
+    expect(Array.from(layout.classList)).toEqual(
+      expect.arrayContaining([
+        'flex-col',
+        'overflow-x-hidden',
+        'sm:flex-row',
+        'sm:overflow-x-auto',
+      ]),
+    );
+    expect(Array.from(card.classList)).toEqual(
+      expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:w-128']),
+    );
   });
 });
