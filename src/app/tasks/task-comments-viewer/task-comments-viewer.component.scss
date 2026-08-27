@@ -2,7 +2,7 @@
 @use 'styles/mixins/scrollable' as *;
 
 :host {
-  min-width: 230px;
+  min-width: 0;
 }
 
 ::ng-deep .text-bubble .comment-text .markdown-to-html p {
@@ -69,7 +69,7 @@ $comment-inner-border-radius: 4px;
 }
 
 :host {
-  overflow-x: none;
+  overflow-x: hidden;
 
   p#commentTimestamp {
     color: #9696969d;
