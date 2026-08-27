@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {Project, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
@@ -38,5 +38,24 @@ describe('ProgressBurndownChartComponent', () => {
     expect(button.getAttribute('aria-pressed')).toBe('false');
     // The hidden series leaves the chart data rather than being flattened to zero.
     expect(component.data).toEqual([]);
+  });
+});
+
+describe('ProgressBurndownChartComponent route reuse', () => {
+  it('refreshes chart data for a different project at the same grade', () => {
+    const previousProject = {id: 2} as Project;
+    const refreshBurndownChartData = vi.fn();
+    const nextProject = {id: 18, refreshBurndownChartData} as unknown as Project;
+    const component = Object.create(
+      ProgressBurndownChartComponent.prototype,
+    ) as ProgressBurndownChartComponent;
+    component.project = nextProject;
+    component.grade = 0;
+    const updateData = vi.spyOn(component, 'updateData').mockImplementation(() => undefined);
+
+    component.ngOnChanges({project: new SimpleChange(previousProject, nextProject, false)});
+
+    expect(refreshBurndownChartData).toHaveBeenCalled();
+    expect(updateData).toHaveBeenCalled();
   });
 });

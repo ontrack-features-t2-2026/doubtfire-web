@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
@@ -196,5 +196,54 @@ describe('ProgressDashboardComponent layout', () => {
     expect(clipping(burndownCard)).toEqual(uncapped);
     expect(clipping(statusCard)).toEqual(uncapped);
     expect(clipping(burndownContent)).toEqual(uncapped);
+  });
+});
+
+describe('ProgressDashboardComponent route reuse', () => {
+  it('refreshes summary data when the active project changes', () => {
+    const gradeValuesFor = vi.fn(() => [0]);
+    const component = new ProgressDashboardComponent(
+      {
+        grades: {0: 'Pass'},
+        gradeValues: [0],
+        gradeValuesFor,
+      } as unknown as GradeService,
+      {} as ProjectService,
+      {} as AlertService,
+      {} as UserService,
+    );
+    // The counts come from activeTasks() filtered on status, not from
+    // numberTasks(), so the two projects have to differ in their completed
+    // tally for this to prove anything. First is 1 of 3, next is 2 of 4.
+    const firstProject = {
+      id: 2,
+      targetGrade: 0,
+      unit: {gradeDefinitions: [{value: 0, label: 'Pass'}]},
+      activeTasks: vi.fn(() => [{status: 'complete'}, {status: 'not_started'}, {status: 'fix'}]),
+      refreshBurndownChartData: vi.fn(),
+    } as unknown as Project;
+    const nextProject = {
+      id: 18,
+      targetGrade: 0,
+      unit: {gradeDefinitions: [{value: 0, label: 'Pass'}]},
+      activeTasks: vi.fn(() => [
+        {status: 'complete'},
+        {status: 'complete'},
+        {status: 'not_started'},
+        {status: 'fix'},
+      ]),
+      refreshBurndownChartData: vi.fn(),
+    } as unknown as Project;
+    component.project = firstProject;
+    component.ngOnInit();
+    expect(component.numberOfTasks).toEqual({completed: 1, remaining: 2});
+    vi.clearAllMocks();
+
+    component.project = nextProject;
+    component.ngOnChanges({project: new SimpleChange(firstProject, nextProject, false)});
+
+    expect(gradeValuesFor).toHaveBeenCalledWith(nextProject.unit);
+    expect(component.numberOfTasks).toEqual({completed: 2, remaining: 2});
+    expect(nextProject.refreshBurndownChartData).toHaveBeenCalled();
   });
 });

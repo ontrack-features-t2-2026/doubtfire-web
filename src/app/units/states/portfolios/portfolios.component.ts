@@ -47,6 +47,8 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   private selectedProjectId: number | null = null;
+  private progressTaskSelectionUrlBaseCache: unknown[] | null = null;
+  private progressTaskSelectionUrlBaseKey: string | null = null;
 
   constructor(
     private projectService: ProjectService,
@@ -102,7 +104,23 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    return ['/units', this.unit.id, 'students', 'portfolios', this.selectedProject.id, 'progress'];
+    // Cache the array so the binding keeps the same reference between change detection passes.
+    // A new literal each call makes the input dirty every check, which pushes the progress tab
+    // to re-emit its project over and over.
+    const key = `${this.unit.id}/${this.selectedProject.id}`;
+    if (key !== this.progressTaskSelectionUrlBaseKey) {
+      this.progressTaskSelectionUrlBaseKey = key;
+      this.progressTaskSelectionUrlBaseCache = [
+        '/units',
+        this.unit.id,
+        'students',
+        'portfolios',
+        this.selectedProject.id,
+        'progress',
+      ];
+    }
+
+    return this.progressTaskSelectionUrlBaseCache;
   }
 
   public studentSelected(project: Project): void {
