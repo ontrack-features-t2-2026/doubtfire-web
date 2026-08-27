@@ -1,11 +1,13 @@
 <div class="flex flex-row">
   <div class="mr-6 w-4 shrink-0" [style.background-color]="task.color"></div>
   <div class="flex min-w-0 shrink grow flex-col py-4">
-    <h4
-      class="mb-1 min-w-0 grow truncate"
-      [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation]"
-    >
-      {{ task.title }}
+    <h4 class="mb-1 min-w-0 grow">
+      <a
+        class="block truncate rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation]"
+      >
+        {{ task.title }}
+      </a>
     </h4>
     <div class="flex flex-wrap items-center gap-2">
       <p class="mb-0">{{ task.subtitle }}</p>
