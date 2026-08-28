@@ -142,14 +142,14 @@ describe('StaffTaskListComponent', () => {
   it('cancels the previous task query when the unit changes', () => {
     const unitA = unitStub(1, 'LA1');
     const unitB = unitStub(2, 'LB1');
-    const requests = new Map<number, Subject<never[]>>();
+    const requests: Map<number, Subject<never[]>> = new Map();
 
     component.unit = unitA;
     component.unitRole = unitRoleStub(11);
     component.filters = {};
     component.taskData = {
       source: (unit: Unit) => {
-        const request = new Subject<never[]>();
+        const request: Subject<never[]> = new Subject();
         requests.set(unit.id, request);
         return request;
       },
