@@ -1,6 +1,8 @@
 // MN-C03: one security boundary for every notification destination.
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
+import {AuthenticationService} from './authentication.service';
 
 export const NOTIFICATION_ROUTE_FALLBACK = '/notifications';
 
@@ -21,7 +23,11 @@ function hasControlCharacters(value: string): boolean {
 
 @Injectable({providedIn: 'root'})
 export class NotificationRouteService {
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authentication: AuthenticationService,
+    private authReturnUrl: AuthReturnUrlService,
+  ) {}
 
   public resolve(link: unknown): string {
     if (typeof link !== 'string') {
@@ -53,6 +59,19 @@ export class NotificationRouteService {
 
   public navigate(link: unknown): Promise<boolean> {
     const target = this.resolve(link);
+
+    // A service-worker click can reach an already-open anonymous client after
+    // the one-off startup authentication check has finished. Save the already
+    // allow-listed notification target and enter the normal sign-in flow now,
+    // rather than waiting for a protected request to fail.
+    if (!this.authentication.isAuthenticated()) {
+      this.authReturnUrl.remember(target);
+      if (this.currentPath() === '/sign_in') {
+        return Promise.resolve(true);
+      }
+      return this.router.navigateByUrl('/sign_in');
+    }
+
     if (this.currentPath() === target) {
       return Promise.resolve(true);
     }

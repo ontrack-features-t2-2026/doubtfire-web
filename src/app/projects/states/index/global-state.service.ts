@@ -18,6 +18,7 @@ import {
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 /**
  * The different types of views that can be shown. Used by the header to determine details to show.
@@ -114,6 +115,7 @@ export class GlobalStateService implements OnDestroy {
     private router: Router,
     private alerts: AlertService,
     private mediaObserver: MediaObserver,
+    private authReturnUrl: AuthReturnUrlService,
   ) {
     this.loadedUnitRoles = this.unitRoleService.cache;
     this.loadedUnits = this.unitService.cache;
@@ -136,6 +138,7 @@ export class GlobalStateService implements OnDestroy {
 
           // and if we are not going to the sign in page, then redirect to it
           if (window.location.pathname !== '/sign_in') {
+            this.authReturnUrl.rememberCurrentUrl();
             this.router.navigateByUrl('/sign_in');
           }
         }

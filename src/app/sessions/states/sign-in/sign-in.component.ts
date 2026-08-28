@@ -8,6 +8,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {consumeAuthCallback} from 'src/app/security/auth-callback';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 type signInData =
   | {
@@ -45,6 +46,8 @@ export class SignInComponent implements OnInit {
 
   public redirectingSSO: boolean = false;
 
+  private postSignInNavigationStarted = false;
+
   // Get query params from the resolve in the router state
   @Input() username: string;
   @Input() authToken: string;
@@ -60,6 +63,7 @@ export class SignInComponent implements OnInit {
     private http: HttpClient,
     private globalState: GlobalStateService,
     private alerts: AlertService,
+    private authReturnUrl: AuthReturnUrlService,
   ) {}
 
   ngOnInit(): void {
@@ -73,17 +77,7 @@ export class SignInComponent implements OnInit {
     this.authService.afterAuthCall((result) => {
       if (result) {
         this.isLoading = false;
-
-        if (this.isLtiLogin && this.ltik) {
-          this.globalState.hideHeader();
-          this.userService.currentUser.ltik = this.ltik;
-          return this.router.navigateByUrl('/lti');
-        } else if (this.userService.currentUser.hasRunFirstTimeSetup === false) {
-          return this.router.navigateByUrl('/welcome');
-        } else {
-          this.globalState.goHome();
-          return this.router.navigateByUrl('/home');
-        }
+        return this.actionSignInSuccess();
       }
       this.isLoading = true;
     });
@@ -194,9 +188,28 @@ export class SignInComponent implements OnInit {
    * Perform the actions needed when the user successfully signs in.
    */
   private actionSignInSuccess(): void {
-    this.router.navigateByUrl(
-      this.userService.currentUser.hasRunFirstTimeSetup === false ? '/welcome' : '/home',
-    );
+    // Authentication completion is observed both by afterAuthCall and by the
+    // direct sign-in subscription. Only the first observer should navigate;
+    // otherwise the second one can replace a restored deep link with /home.
+    if (this.postSignInNavigationStarted) {
+      return;
+    }
+    this.postSignInNavigationStarted = true;
+
+    if (this.isLtiLogin && this.ltik) {
+      this.globalState.hideHeader();
+      this.userService.currentUser.ltik = this.ltik;
+      void this.router.navigateByUrl('/lti');
+      return;
+    }
+
+    if (this.userService.currentUser.hasRunFirstTimeSetup === false) {
+      void this.router.navigateByUrl('/welcome');
+      return;
+    }
+
+    this.globalState.goHome();
+    void this.router.navigateByUrl(this.authReturnUrl.consume() ?? '/home');
   }
 
   /**
@@ -233,14 +246,7 @@ export class SignInComponent implements OnInit {
     this.signingIn = true;
 
     this.authService.signIn(signInCredentials).subscribe({
-      next: () => {
-        if (this.isLtiLogin) {
-          this.userService.currentUser.ltik = this.ltik;
-          this.router.navigateByUrl('/lti');
-        } else {
-          this.actionSignInSuccess();
-        }
-      },
+      next: () => this.actionSignInSuccess(),
       error: (err) => {
         this.signingIn = false;
         this.formData.password = '';
