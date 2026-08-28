@@ -41,7 +41,9 @@ describe('FUsersComponent CSV import result', () => {
       },
     });
 
-    expect(alerts.success).toHaveBeenCalledOnce();
+    expect(alerts.success).toHaveBeenCalledWith(
+      '50 users successfully updated, 0 users ignored, 0 users contained an error in the CSV...',
+    );
     expect(alerts.error).not.toHaveBeenCalled();
     expect(userService.query).toHaveBeenCalledOnce();
   });
@@ -55,7 +57,9 @@ describe('FUsersComponent CSV import result', () => {
       },
     });
 
-    expect(alerts.error).toHaveBeenCalledOnce();
+    expect(alerts.error).toHaveBeenCalledWith(
+      '0 users successfully updated, 0 users ignored, 1 users contained an error in the CSV...Invalid user\n',
+    );
     expect(alerts.success).not.toHaveBeenCalled();
     expect(userService.query).toHaveBeenCalledOnce();
   });
