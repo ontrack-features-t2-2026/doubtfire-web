@@ -17,7 +17,7 @@ describe('SignInComponent', () => {
   let fixture: ComponentFixture<SignInComponent>;
   let afterAuthCallback: ((result: boolean) => void) | undefined;
   let router: {navigateByUrl: ReturnType<typeof vi.fn>};
-  let authReturnUrl: {consume: ReturnType<typeof vi.fn>};
+  let authReturnUrl: {consume: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>};
   let userService: {currentUser: {hasRunFirstTimeSetup: boolean; ltik?: string}};
   let globalState: {
     goHome: ReturnType<typeof vi.fn>;
@@ -28,7 +28,7 @@ describe('SignInComponent', () => {
   beforeEach(async () => {
     afterAuthCallback = undefined;
     router = {navigateByUrl: vi.fn().mockResolvedValue(true)};
-    authReturnUrl = {consume: vi.fn().mockReturnValue(null)};
+    authReturnUrl = {consume: vi.fn().mockReturnValue(null), clear: vi.fn()};
     userService = {currentUser: {hasRunFirstTimeSetup: true}};
     globalState = {
       goHome: vi.fn(),
@@ -116,6 +116,21 @@ describe('SignInComponent', () => {
     component.signIn({username: 'student', password: 'password', remember: true, autoLogin: false});
 
     expect(router.navigateByUrl).toHaveBeenCalledWith('/welcome');
+    expect(authReturnUrl.clear).toHaveBeenCalledOnce();
+    expect(authReturnUrl.consume).not.toHaveBeenCalled();
+  });
+
+  it('keeps LTI routing ahead of and clears a pending destination', () => {
+    component.isLtiLogin = true;
+    component.ltik = 'launch-token';
+    authReturnUrl.consume.mockReturnValue('/projects/2/dashboard/1.1P/feedback');
+
+    component.signIn({username: 'student', password: 'password', remember: true, autoLogin: false});
+
+    expect(globalState.hideHeader).toHaveBeenCalledOnce();
+    expect(userService.currentUser.ltik).toBe('launch-token');
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/lti');
+    expect(authReturnUrl.clear).toHaveBeenCalledOnce();
     expect(authReturnUrl.consume).not.toHaveBeenCalled();
   });
 });

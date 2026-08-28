@@ -197,6 +197,7 @@ export class SignInComponent implements OnInit {
     this.postSignInNavigationStarted = true;
 
     if (this.isLtiLogin && this.ltik) {
+      this.authReturnUrl.clear();
       this.globalState.hideHeader();
       this.userService.currentUser.ltik = this.ltik;
       void this.router.navigateByUrl('/lti');
@@ -204,6 +205,7 @@ export class SignInComponent implements OnInit {
     }
 
     if (this.userService.currentUser.hasRunFirstTimeSetup === false) {
+      this.authReturnUrl.clear();
       void this.router.navigateByUrl('/welcome');
       return;
     }
