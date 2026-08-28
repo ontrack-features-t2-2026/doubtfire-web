@@ -26,6 +26,7 @@ import {
   TaskComment,
   TaskCommentService,
 } from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
@@ -87,6 +88,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   public $userIsTyping: BehaviorSubject<boolean> = new BehaviorSubject(false);
   private draftSaveSubscription = new Subscription();
   private readonly DRAFT_KEY_PREFIX = 'task_comment_draft_';
+  private readonly SUBMITTED_KEY_PREFIX = 'task_comments_submitted_';
   public isDraftLoaded = false;
   private submittedTaskIds: Set<number | string> = new Set();
 
@@ -122,11 +124,13 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     private alerts: AlertService,
     @Inject(TaskCommentService) private taskCommentService: TaskCommentService,
     private cdRef: ChangeDetectorRef,
+    private userService: UserService,
   ) {
     this.differ = this.differs.find({}).create();
-    // submitted tasks from sessionStorage
+    // submitted tasks from sessionStorage, for this user only
     try {
-      const saved = sessionStorage.getItem('task_comments_submitted');
+      const key = this.submittedKey();
+      const saved = key ? sessionStorage.getItem(key) : null;
       if (saved) {
         this.submittedTaskIds = new Set(JSON.parse(saved));
       }
@@ -199,10 +203,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
         // Update session storage
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
@@ -215,10 +219,39 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.saveCurrentDraft();
   }
 
-  private getDraftKey(task: Task): string {
+  // The id of whoever is signed in, or null during sign out when currentUser has
+  // already been swapped for the anonymous user. A draft with nobody to own it is
+  // not worth keeping, so callers return early on null rather than inventing a
+  // key. The id and not the username or the email: ids are stable, and an email
+  // in a storage key is personal data sitting in plain sight in dev tools.
+  private currentUserId(): number | null {
+    const id = this.userService?.currentUser?.id;
+    return typeof id === 'number' && id > 0 ? id : null;
+  }
+
+  private submittedKey(): string | null {
+    const userId = this.currentUserId();
+    return userId === null ? null : `${this.SUBMITTED_KEY_PREFIX}${userId}`;
+  }
+
+  // The key used to name a task identified the task and never the person, so on a
+  // shared machine the next person to open the same task was handed the previous
+  // person's unsent words.
+  //
+  // The user segment is written as uid<id> rather than the bare number. A legacy
+  // key is task_comment_draft_<taskId> or task_comment_draft_<projectId>_<defId>,
+  // so a bare number would make task_comment_draft_5_7 mean both "user 5, task 7"
+  // and "project 5, definition 7". The marker makes the two shapes impossible to
+  // confuse, which is what lets sign out sweep the old ones safely.
+  private getDraftKey(task: Task): string | null {
+    const userId = this.currentUserId();
+    if (userId === null) {
+      return null;
+    }
+
     // If task has an ID, use it
     if (task.id) {
-      return `${this.DRAFT_KEY_PREFIX}${task.id}`;
+      return `${this.DRAFT_KEY_PREFIX}uid${userId}_${task.id}`;
     }
 
     // For "not started" tasks, create a composite key using only valid properties
@@ -226,7 +259,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     // Fix: Use task.definition.id instead of task.definition_id
     const definitionId = task.definition?.id || 'unknown';
 
-    return `${this.DRAFT_KEY_PREFIX}${projectId}_${definitionId}`;
+    return `${this.DRAFT_KEY_PREFIX}uid${userId}_${projectId}_${definitionId}`;
   }
 
   private hasContent(raw: string): boolean {
@@ -240,6 +273,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
 
     try {
       let raw: string;
@@ -277,6 +313,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
+
     try {
       const draft = localStorage.getItem(draftKey);
 
@@ -538,10 +578,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         this.submittedTaskIds.add(taskKey);
 
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
