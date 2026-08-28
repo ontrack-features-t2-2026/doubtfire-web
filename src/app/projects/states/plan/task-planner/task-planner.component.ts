@@ -17,6 +17,7 @@ import {
   Input,
   OnDestroy,
   OnInit,
+  TemplateRef,
   ViewChild,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -57,6 +58,13 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() targetGrade: number;
 
   @ViewChild('gantt') ganttComponent: NgxGanttComponent;
+
+  /**
+   * The markup for a single gantt bar. ngx-gantt stamps this out itself once it has
+   * measured the chart, so holding the reference here is what lets the bar be rendered
+   * and driven on its own, away from that measurement.
+   */
+  @ViewChild('bar') barTemplate: TemplateRef<{item: TaskGanttItem}>;
 
   public viewType: GanttViewType = GanttViewType.day;
   public viewOptions: GanttViewOptions;
@@ -164,6 +172,18 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       // Restore full opacity
       color.default = color.default.slice(0, -4) + '1)';
     }
+  }
+
+  /**
+   * Open the prerequisites modal from the keyboard. The bar carries role="button" and
+   * tabindex="0" so it can be reached by tab, and a span gets no activation behaviour of
+   * its own, so Enter and Space have to be wired up by hand. Space is prevented from
+   * scrolling the planner underneath. The key is already matched by the (keydown.enter)
+   * and (keydown.space) bindings, which is why this takes a plain Event.
+   */
+  onBarKeydown(event: Event, item: TaskGanttItem) {
+    event.preventDefault();
+    this.barClick(item);
   }
 
   barClick(item: TaskGanttItem) {

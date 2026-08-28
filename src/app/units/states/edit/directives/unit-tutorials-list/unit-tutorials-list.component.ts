@@ -276,7 +276,7 @@ export class UnitTutorialsListComponent
             isAsc,
           );
         case 'tutor':
-          return this.sortCompare(a.tutor.name, b.tutor.name, isAsc);
+          return this.sortCompare(a.tutor?.name ?? '', b.tutor?.name ?? '', isAsc);
         default:
           return 0;
       }

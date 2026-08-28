@@ -613,6 +613,60 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       });
   }
 
+  /**
+   * The task whose row actions are being held open by keyboard focus, if any. Focus is
+   * tracked separately from task.hover so that neither path can close the other: tabbing
+   * away used to run the same handler as mouseout and would fade the options button out
+   * from under a pointer that was still sitting on the row.
+   */
+  focusedTaskId: number | null = null;
+
+  /**
+   * Reveal the row actions because the pointer is over the row. Touch devices opt out
+   * of hover entirely via allowHover, which is why this is not simply `true`.
+   */
+  showTaskActionsForPointer(task: Task) {
+    task.hover = this.allowHover;
+  }
+
+  /**
+   * Hide the row actions again once the pointer leaves. This is the original mouseout
+   * behaviour and it deliberately touches nothing the keyboard owns.
+   */
+  hideTaskActions(task: Task) {
+    task.hover = task.optionsOpened;
+  }
+
+  /**
+   * Reveal the row actions because the submission options button took keyboard focus.
+   * Unlike the pointer path this always applies, since a keyboard is usable on a touch
+   * device even when hover is not.
+   */
+  showTaskActionsForFocus(task: Task) {
+    this.focusedTaskId = task.id;
+  }
+
+  /**
+   * Release the keyboard's hold on the row. Another row may already have claimed focus
+   * by the time this runs, so only the row that took it can give it back.
+   */
+  hideTaskActionsForFocus(task: Task) {
+    if (this.focusedTaskId === task.id) {
+      this.focusedTaskId = null;
+    }
+  }
+
+  /**
+   * Whether the row is showing its submission options in place of the pin indicator. Any
+   * one of the three reasons is enough: the pointer is on the row, the keyboard is on the
+   * options button, or the overflow menu it opened is still up. The menu case has to be
+   * here as well as in the pointer path, because opening the menu from the keyboard moves
+   * focus into the menu and so blurs the button that opened it.
+   */
+  rowActionsShown(task: Task): boolean {
+    return task.hover || task.optionsOpened || this.focusedTaskId === task.id;
+  }
+
   setSelectedTask(task: Task) {
     this.selectedTaskService.setSelectedTask(task);
     this.taskData.selectedTask = task;

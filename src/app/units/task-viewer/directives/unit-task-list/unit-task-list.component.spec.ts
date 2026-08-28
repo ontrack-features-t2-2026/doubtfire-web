@@ -137,6 +137,27 @@ describe('FUnitTaskListComponent', () => {
     expect(component.selectedTaskDef).toBe(secondTask);
   });
 
+  // The unit resolves progressively, so on a hard refresh of a deep link the
+  // route parameter arrives while taskDefinitions is still empty. Nothing used to
+  // re-apply it once the list turned up, and the screen landed on no task.
+  it('applies a deep linked task once the task definitions arrive', async () => {
+    const task = taskDefinition(1, '1.1P');
+
+    component.taskDefinitions = [];
+    fixture.detectChanges();
+
+    routeParamMap$.next(convertToParamMap({taskAbbreviation: task.abbreviation}));
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBeNull();
+
+    component.taskDefinitions = [task];
+    component.ngOnChanges({taskDefinitions: {} as never});
+    await flushTaskSelection();
+
+    expect(component.selectedTaskDefinition$.value).toBe(task);
+  });
+
   it('clears a stale selection when the route task does not exist', async () => {
     const existingTask = taskDefinition(1, '1.1P');
 

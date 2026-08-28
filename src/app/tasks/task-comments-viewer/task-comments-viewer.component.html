@@ -1,6 +1,6 @@
 <div
   appDragDrop
-  class="comments-panel flex h-full min-h-87.5 flex-col"
+  class="comments-panel flex h-full min-h-0 flex-col"
   (fileDropped)="uploadFiles($event)"
 >
   <div
@@ -22,12 +22,7 @@
       <div class="comments-scroll-content" [hidden]="loading">
         <span>
           @for (comment of task.comments; track comment) {
-            <div
-              class="anchor"
-              id="comment-{{ comment.id }}"
-              (mouseout)="comment.hover = false"
-              (mouseover)="comment.hover = true"
-            >
+            <div class="anchor" id="comment-{{ comment.id }}">
               @if (comment.shouldShowTimestamp) {
                 <p
                   id="commentTimestamp"
@@ -275,7 +270,6 @@
                     <div class="comment-overflow">
                       <comment-bubble-action
                         [comment]="comment"
-                        [hidden]="!comment.hover"
                         [sharedData]="sharedCommentComposerData"
                       ></comment-bubble-action>
                     </div>

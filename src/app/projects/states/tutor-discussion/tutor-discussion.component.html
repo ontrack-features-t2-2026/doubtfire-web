@@ -104,12 +104,7 @@
           >
             @if (task) {
               <div class="w-full" id="{{ task.id }}">
-                <div
-                  class="inbox-entry flex items-center"
-                  [ngClass]="{hover: task.hover}"
-                  (mouseout)="task.hover = task.optionsOpened"
-                  (mouseover)="task.hover = allowHover"
-                >
+                <div class="inbox-entry flex items-center">
                   <span
                     class="notification"
                     [ngClass]="{
