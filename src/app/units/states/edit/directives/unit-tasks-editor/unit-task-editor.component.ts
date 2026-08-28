@@ -171,8 +171,8 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     }
 
     this.confirmationModal.show(
-      'Discard unsaved task',
-      'This task has not been saved yet. If you continue it will be lost.',
+      'Discard unsaved changes',
+      'This task has unsaved changes. If you continue, they will be lost.',
       proceed,
     );
   }

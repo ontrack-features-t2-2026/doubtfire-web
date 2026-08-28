@@ -66,6 +66,11 @@ describe('UnitTaskEditorComponent unsaved task guard', () => {
     component.selectTaskDefinition(other as never);
 
     expect(confirmationModal.show).toHaveBeenCalledTimes(1);
+    expect(confirmationModal.show).toHaveBeenCalledWith(
+      'Discard unsaved changes',
+      'This task has unsaved changes. If you continue, they will be lost.',
+      expect.any(Function),
+    );
     expect(component.selectedTaskDefinition).toBe(task);
 
     // Running the callback is what the convenor choosing to discard looks like.
