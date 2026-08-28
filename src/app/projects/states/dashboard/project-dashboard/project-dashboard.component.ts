@@ -9,6 +9,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
@@ -17,6 +18,7 @@ import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {FUnitTaskListComponent} from 'src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
 
 @Component({
@@ -27,6 +29,8 @@ import {GlobalStateService, ViewType} from '../../index/global-state.service';
   standalone: false,
 })
 export class ProjectDashboardComponent implements OnInit, OnDestroy {
+  @ViewChild('leftPanel') private leftPanel?: FUnitTaskListComponent;
+
   @Input() public project$: Observable<Project>;
   @Input() public defaultTaskListCollapsed = false;
   @Input() public taskSelectionUrlBase: unknown[] | null = null;
@@ -78,8 +82,11 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public startLeftX = 0;
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
+  public isPhoneLayout = false;
+  public mobilePane: 'task' | 'feedback' = 'task';
 
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
+  private readonly phoneBreakpoint = '(max-width: 639.98px)';
 
   public get commentsPanelCollapsed(): boolean {
     return this.isCommentsNarrow && this.commentsCollapsed;
@@ -154,6 +161,33 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         window.dispatchEvent(new Event('resize'));
       });
 
+    this.breakpointObserver
+      .observe(this.phoneBreakpoint)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({matches}) => {
+        this.isPhoneLayout = matches;
+        if (matches && this.selectedTaskDefinition$.value) {
+          this.mobilePane = this.shouldOpenFeedback(this.selectedTaskDefinition$.value)
+            ? 'feedback'
+            : 'task';
+        }
+        window.dispatchEvent(new Event('resize'));
+      });
+
+    this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDefinition) => {
+      if (!taskDefinition) {
+        this.mobilePane = 'task';
+        return;
+      }
+
+      if (this.isPhoneLayout) {
+        // A task opened from a notification/deep link should expose its feedback immediately.
+        // A task chosen from the list is selected before its route is updated, so it starts on
+        // the task pane instead.
+        this.mobilePane = this.shouldOpenFeedback(taskDefinition) ? 'feedback' : 'task';
+      }
+    });
+
     if (this.defaultTaskListCollapsed) {
       this.leftWidth = this.taskListCollapsedWidth;
     }
@@ -199,6 +233,30 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public toggleCommentsPanel(): void {
     this.commentsCollapsed = !this.commentsCollapsed;
     window.dispatchEvent(new Event('resize'));
+  }
+
+  public showMobilePane(pane: 'task' | 'feedback'): void {
+    this.mobilePane = pane;
+  }
+
+  public clearTaskSelection(): void {
+    const selectedTaskDefinition = this.selectedTaskDefinition$.value;
+    if (selectedTaskDefinition && this.leftPanel) {
+      // Let the task list clear both its shared selection and the task segment in the URL.
+      this.leftPanel.setSelectedTaskDefinition(selectedTaskDefinition);
+    } else {
+      this.selectedTaskDefinition$.next(null);
+    }
+    this.mobilePane = 'task';
+  }
+
+  private get hasTaskRouteSelection(): boolean {
+    return !!this.route.snapshot?.paramMap?.get('taskAbbreviation');
+  }
+
+  private shouldOpenFeedback(taskDefinition: TaskDefinition): boolean {
+    const task = this.projectSubject.value?.findTaskForDefinition(taskDefinition.id);
+    return this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0;
   }
 
   private activateProject(project: Project, projectId: number): void {
