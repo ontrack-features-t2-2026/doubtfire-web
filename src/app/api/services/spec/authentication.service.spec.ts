@@ -11,6 +11,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 import {AuthenticationService} from '../authentication.service';
 import {NotificationService} from '../notification.service';
 import {PushNotificationService} from '../push-notification.service';
@@ -52,6 +53,10 @@ describe('AuthenticationService', () => {
     };
   };
   let router: {navigateByUrl: ReturnType<typeof vi.fn>};
+  let authReturnUrl: {
+    rememberCurrentUrl: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
   let constants: {
     API_URL: string;
     SignoutURL: string | undefined;
@@ -110,6 +115,7 @@ describe('AuthenticationService', () => {
       },
     };
     router = {navigateByUrl: vi.fn()};
+    authReturnUrl = {rememberCurrentUrl: vi.fn(), clear: vi.fn()};
     constants = {
       API_URL,
       SignoutURL: undefined,
@@ -129,6 +135,7 @@ describe('AuthenticationService', () => {
         {provide: AlertService, useValue: {error: vi.fn()}},
         {provide: DoubtfireConstants, useValue: constants},
         {provide: DemoModeStore, useValue: demoMode},
+        {provide: AuthReturnUrlService, useValue: authReturnUrl},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -194,6 +201,7 @@ describe('AuthenticationService', () => {
     // count would otherwise survive into the next person's session.
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
     expect(demoMode.reset).toHaveBeenCalledTimes(1);
+    expect(authReturnUrl.clear).toHaveBeenCalledTimes(1);
   });
 
   // unsubscribeQuietly is the "never throw" variant, and sign out is also wired
@@ -223,6 +231,21 @@ describe('AuthenticationService', () => {
     expect(constants.resetAuthenticatedSettings).toHaveBeenCalledTimes(1);
     httpMock.expectNone((r) => r.url === AUTH_URL && r.method === 'DELETE');
     expect(userService.currentUser).toBe(userService.anonymousUser);
+  });
+
+  it('remembers the current protected route before showing authentication timeout', () => {
+    vi.useFakeTimers();
+    try {
+      service.timeoutAuthentication();
+
+      expect(authReturnUrl.rememberCurrentUrl).toHaveBeenCalledOnce();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(500);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/timeout');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not complete sign in until authenticated settings are applied', () => {
@@ -316,6 +339,7 @@ describe('AuthenticationService', () => {
 
     service.signOut(false);
 
+    expect(authReturnUrl.clear).not.toHaveBeenCalled();
     expect(settingsRequest.cancelled).toBe(true);
     expect(constants.resetAuthenticatedSettings).toHaveBeenCalledTimes(1);
     expect(constants.applyAuthenticatedSettings).not.toHaveBeenCalled();

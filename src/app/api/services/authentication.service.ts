@@ -27,6 +27,7 @@ import {
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {buildAuthCallbackFragment} from 'src/app/security/auth-callback';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 /**
  * The format for the data returned from the auth api.
@@ -87,6 +88,7 @@ export class AuthenticationService {
     private angularRouter: Router,
     private doubtfireConstants: DoubtfireConstants,
     private demoMode: DemoModeStore,
+    private authReturnUrl: AuthReturnUrlService,
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
@@ -94,6 +96,7 @@ export class AuthenticationService {
   }
 
   private actionAuthFailed() {
+    this.authReturnUrl.rememberCurrentUrl();
     this.signOut(false);
   }
 
@@ -435,6 +438,10 @@ export class AuthenticationService {
   }
 
   public signOut(ssoSignOut = true): void {
+    if (ssoSignOut) {
+      this.authReturnUrl.clear();
+    }
+
     this.demoMode.reset();
 
     // Invalidate authentication work before the asynchronous push and token
@@ -520,6 +527,7 @@ export class AuthenticationService {
 
   public timeoutAuthentication(): void {
     if (window.location.pathname !== '/timeout') {
+      this.authReturnUrl.rememberCurrentUrl();
       this.alertService.error('Authentication timed out', 6000);
       setTimeout(() => this.angularRouter.navigateByUrl('/timeout'), 500);
     }

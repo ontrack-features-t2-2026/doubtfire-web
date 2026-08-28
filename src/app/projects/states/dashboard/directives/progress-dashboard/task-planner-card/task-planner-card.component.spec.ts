@@ -99,6 +99,21 @@ describe('TaskPlannerCardComponent', () => {
     expect(downloadButton.disabled).toBe(false);
   });
 
+  it('stacks the planner controls with space for the floating grade label', () => {
+    component.project = buildProjectWithTasks([]);
+    fixture.detectChanges();
+
+    const controls: HTMLElement = fixture.nativeElement.querySelector('.task-planner-controls');
+    const plannerButton = controls.querySelector('button');
+    const gradeField = controls.querySelector('mat-form-field');
+    const downloadButton = controls.querySelector('.download-ics-link');
+
+    expect(controls.classList.contains('flex-col')).toBe(true);
+    expect(controls.classList.contains('gap-4')).toBe(true);
+    expect(plannerButton?.nextElementSibling).toBe(gradeField);
+    expect(gradeField?.nextElementSibling).toBe(downloadButton);
+  });
+
   it('does not call the file downloader when there are no active tasks, guarding against an empty file', () => {
     component.project = buildProjectWithTasks([]);
     fixture.detectChanges();

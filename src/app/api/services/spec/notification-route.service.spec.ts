@@ -1,10 +1,14 @@
 // MN-C03 targeted route-boundary tests.
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {Router} from '@angular/router';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
+import {AuthenticationService} from '../authentication.service';
 import {NOTIFICATION_ROUTE_FALLBACK, NotificationRouteService} from '../notification-route.service';
 
 describe('NotificationRouteService', () => {
   let router: {url: string; navigateByUrl: ReturnType<typeof vi.fn>};
+  let authentication: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let authReturnUrl: {remember: ReturnType<typeof vi.fn>};
   let service: NotificationRouteService;
 
   beforeEach(() => {
@@ -12,7 +16,13 @@ describe('NotificationRouteService', () => {
       url: '/home',
       navigateByUrl: vi.fn().mockResolvedValue(true),
     };
-    service = new NotificationRouteService(router as unknown as Router);
+    authentication = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    authReturnUrl = {remember: vi.fn()};
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+    );
   });
 
   it('accepts each approved notification route family', () => {
@@ -142,6 +152,25 @@ describe('NotificationRouteService', () => {
     await service.navigate('https://example.test/steal');
 
     expect(router.navigateByUrl).toHaveBeenCalledWith(NOTIFICATION_ROUTE_FALLBACK);
+  });
+
+  it('saves an allow-listed target before sending an anonymous client to sign in', async () => {
+    authentication.isAuthenticated.mockReturnValue(false);
+    const target = '/projects/23/dashboard/1.1P/feedback';
+
+    await service.navigate(target);
+
+    expect(authReturnUrl.remember).toHaveBeenCalledWith(target);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/sign_in');
+  });
+
+  it('never saves an unvalidated notification destination', async () => {
+    authentication.isAuthenticated.mockReturnValue(false);
+
+    await service.navigate('https://evil.example/steal');
+
+    expect(authReturnUrl.remember).toHaveBeenCalledWith(NOTIFICATION_ROUTE_FALLBACK);
+    expect(authReturnUrl.remember).not.toHaveBeenCalledWith('https://evil.example/steal');
   });
 
   it('does not navigate twice when a closed-app launch already opened the target', async () => {
