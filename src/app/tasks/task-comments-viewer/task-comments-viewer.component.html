@@ -183,7 +183,8 @@
                     @if (!!comment.replyToId) {
                       <a
                         class="original-comment"
-                        (click)="scrollToComment(comment.originalComment.id)"
+                        [class.disabled]="!comment.originalComment"
+                        (click)="scrollToComment(comment.originalComment?.id)"
                       >
                         <p class="reply-text">
                           <mat-icon inline>reply</mat-icon>

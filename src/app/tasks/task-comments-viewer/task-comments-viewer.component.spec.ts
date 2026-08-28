@@ -47,4 +47,10 @@ describe('TaskCommentsViewerComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  // Regression: clicking the reply banner of a deleted comment used to pass an
+  // undefined id and throw when scrollIntoView was called on a null element.
+  it('scrollToComment does not throw when the comment id is missing', () => {
+    expect(() => component.scrollToComment(undefined)).not.toThrow();
+  });
 });
