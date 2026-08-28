@@ -15,6 +15,7 @@ import {User} from 'src/app/api/models/user/user';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {PushBlocker, PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 
 @Component({
@@ -30,6 +31,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private authService: AuthenticationService,
+    private alerts: AlertService,
     @Optional()
     @Inject(MAT_DIALOG_DATA)
     public data: {user: User; mode: 'edit' | 'create' | 'new'; modal: boolean},
@@ -49,6 +51,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   @Input() modal: boolean = false;
 
   public user: User;
+  public saving = false;
   public externalName = this.constants.ExternalName;
   public initialFirstName: string;
   public formPronouns = {pronouns: ''};
@@ -187,6 +190,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   public submit(): void {
     this.user.pronouns = this.customPronouns ? this.user.pronouns : this.formPronouns.pronouns;
     this.user.hasRunFirstTimeSetup = true;
+    this.saving = true;
 
     if (this.newUser) {
       this.userService.create(this.user).subscribe({
@@ -199,8 +203,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
             horizontalPosition: 'end',
             verticalPosition: 'top',
           });
+          this.saving = false;
         },
-        error: (error) => console.log(error),
+        error: (error) => {
+          this.alerts.error(error, 6000);
+          this.saving = false;
+        },
       });
     } else {
       this.userService.update(this.user).subscribe({
@@ -219,8 +227,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
               verticalPosition: 'top',
             });
           }
+          this.saving = false;
         },
-        error: (error) => console.log(error),
+        error: (error) => {
+          this.alerts.error(error, 6000);
+          this.saving = false;
+        },
       });
     }
   }
