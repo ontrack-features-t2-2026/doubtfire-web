@@ -272,6 +272,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
 
   private syncSelectedTaskRoute(pane: 'overview' | 'task' | 'feedback'): void {
     const selectedTaskDefinition = this.selectedTaskDefinition$.value;
+    // The dashboard is also embedded in the staff portfolio progress screen, whose task
+    // destination is supplied by its host. That route has no feedback suffix and must not be
+    // replaced with the student's standalone project dashboard route.
+    if (this.taskSelectionUrlBase) {
+      return;
+    }
+
     const projectId =
       this.activeProjectId ?? Number(this.route.parent?.snapshot.paramMap.get('projectId'));
     if (!selectedTaskDefinition || !projectId) {
