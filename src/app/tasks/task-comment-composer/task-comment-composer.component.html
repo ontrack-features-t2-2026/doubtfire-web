@@ -80,7 +80,7 @@
   <div class="composer-container flex flex-row items-center justify-around">
     <div class="composer-action-group" [@shrinkgrow]="$userIsTyping | async">
       <!-- if active -->
-      <div class="flex flex-row items-center justify-start">
+      <div class="composer-action-row flex flex-row items-center justify-start">
         @if ($userIsTyping | async) {
           <button
             aria-label="Expand action buttons"
@@ -115,8 +115,8 @@
 
         @if (!isEditing) {
           <button
-            aria-label="attach a file icon button"
-            class="btn-no-outline"
+            aria-label="Attach a file"
+            class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Attach a file"
             matTooltipShowDelay="400"
@@ -138,8 +138,8 @@
 
         @if (!isEditing) {
           <button
-            aria-label="audio recording button"
-            class="btn-no-outline"
+            aria-label="Record audio feedback"
+            class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Send a recording"
             matTooltipShowDelay="400"
