@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs';
+import {Observable, Subscription} from 'rxjs';
 import {
   Project,
   Task,
@@ -48,6 +48,8 @@ import {BatchFeedbackWorkflowDialogComponent} from './batch-feedback-workflow-di
 })
 export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('searchDialog') searchDialog: TemplateRef<object>;
+
+  private taskRequestSub?: Subscription;
 
   @Input() task: Task;
   @Input() project: Project;
@@ -154,22 +156,21 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       this.syncSelectedTaskFromTaskKey();
     }
 
-    if (!this.isTaskDefMode || !this.filters) {
-      return;
-    }
-
     const unitChanged =
       !!changes.unit &&
       !changes.unit.isFirstChange() &&
       changes.unit.currentValue?.id &&
       changes.unit.previousValue?.id !== changes.unit.currentValue?.id;
 
-    if (unitChanged) {
-      this.refreshData();
+    // This used to sit behind an isTaskDefMode guard, so the inbox kept the previous
+    // unit's students, tutors and tasks on screen after a unit switch.
+    if (unitChanged && this.unit && this.unitRole) {
+      this.initialiseForUnit();
     }
   }
 
   ngOnDestroy(): void {
+    this.taskRequestSub?.unsubscribe();
     this.hotkeys.removeShortcuts('control.shift.arrowdown');
     this.hotkeys.removeShortcuts('control.shift.arrowup');
   }
@@ -200,6 +201,15 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     if (navigator.maxTouchPoints > 1) {
       this.allowHover = false;
     }
+
+    this.initialiseForUnit();
+  }
+
+  // The filter defaults, the student and tutor lists and the task query are all built
+  // from the routed unit, so they have to be rebuilt when it changes. The router reuses
+  // this component across a unit switch, so ngOnInit does not run a second time.
+  private initialiseForUnit(): void {
+    this.fetchedAllTasks = false;
 
     // Does the current user have any tutorials?
     this.userHasTutorials =
@@ -572,8 +582,12 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     const fetchMyStudentsOnly = this.filters.tutorialIdSelected === 'mine';
 
     this.loading = true;
+    // A unit or filter change can start a second query before the previous one
+    // returns. Cancel the older query so it cannot land late and put stale tasks
+    // back on screen after the component has moved to the new unit.
+    this.taskRequestSub?.unsubscribe();
     // Tasks for feedback or tasks for task, depending on the data source
-    this.taskData
+    this.taskRequestSub = this.taskData
       .source(this.unit, this.filters?.taskDefinitionIdSelected, fetchMyStudentsOnly)
       .subscribe({
         next: (response) => {

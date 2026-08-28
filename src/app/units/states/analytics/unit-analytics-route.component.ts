@@ -1,7 +1,15 @@
 import {formatDate} from '@angular/common';
-import {ChangeDetectionStrategy, Component, Inject, Input, LOCALE_ID, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  Input,
+  LOCALE_ID,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {Observable, first, of} from 'rxjs';
+import {Observable, Subscription, distinctUntilChanged, of} from 'rxjs';
 import {SidekiqJob} from 'src/app/api/models/sidekiq-job';
 import {Unit} from 'src/app/api/models/unit';
 import {UserService} from 'src/app/api/services/user.service';
@@ -16,10 +24,12 @@ import {AlertService} from 'src/app/common/services/alert.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UnitAnalyticsComponent implements OnInit {
+export class UnitAnalyticsComponent implements OnInit, OnDestroy {
   @Input() public unit$: Observable<Unit>;
 
   public unit: Unit;
+
+  private unitSub?: Subscription;
 
   constructor(
     private sidekiqProgressModalService: SidekiqProgressModalService,
@@ -33,9 +43,15 @@ export class UnitAnalyticsComponent implements OnInit {
 
   ngOnInit(): void {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
-    this.unit$?.pipe(first()).subscribe((unit) => {
-      this.unit = unit;
-    });
+    this.unitSub = this.unit$
+      ?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id))
+      .subscribe((unit) => {
+        this.unit = unit;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.unitSub?.unsubscribe();
   }
 
   get role() {
