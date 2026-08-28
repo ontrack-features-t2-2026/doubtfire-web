@@ -24,16 +24,16 @@ describe('FUsersComponent CSV import result', () => {
     };
 
     component = new FUsersComponent(
-      userService as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      alerts as any,
+      userService as unknown as ConstructorParameters<typeof FUsersComponent>[0],
+      {} as ConstructorParameters<typeof FUsersComponent>[1],
+      {} as ConstructorParameters<typeof FUsersComponent>[2],
+      {} as ConstructorParameters<typeof FUsersComponent>[3],
+      alerts as unknown as ConstructorParameters<typeof FUsersComponent>[4],
     );
   });
 
   it('shows a success alert when the CSV import has no errors', () => {
-    (component as any).onUserUploadSuccess({
+    component['onUserUploadSuccess']({
       body: {
         errors: [],
         success: Array(50).fill({}),
@@ -47,7 +47,7 @@ describe('FUsersComponent CSV import result', () => {
   });
 
   it('shows an error alert when the CSV import contains errors', () => {
-    (component as any).onUserUploadSuccess({
+    component['onUserUploadSuccess']({
       body: {
         errors: [{message: 'Invalid user'}],
         success: [],
