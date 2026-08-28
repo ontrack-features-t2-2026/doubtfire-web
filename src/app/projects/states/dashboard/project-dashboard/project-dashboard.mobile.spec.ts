@@ -3,7 +3,7 @@ import {BreakpointObserver, BreakpointState} from '@angular/cdk/layout';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ActivatedRoute, convertToParamMap} from '@angular/router';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject, of, tap} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -21,6 +21,8 @@ describe('ProjectDashboardComponent phone task workspace', () => {
   let observeBreakpoint: ReturnType<typeof vi.fn>;
   let routeTaskAbbreviation: string | null;
   let routeMobilePane: string | null;
+  let routeParams$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let routerNavigate: ReturnType<typeof vi.fn>;
 
   const taskDefinition = {
     id: 42,
@@ -52,6 +54,8 @@ describe('ProjectDashboardComponent phone task workspace', () => {
   beforeEach(async () => {
     routeTaskAbbreviation = null;
     routeMobilePane = null;
+    routeParams$ = new BehaviorSubject(convertToParamMap({}));
+    routerNavigate = vi.fn().mockResolvedValue(true);
     task.numNewComments = 1;
     phoneState$ = new BehaviorSubject<BreakpointState>({
       matches: true,
@@ -89,13 +93,12 @@ describe('ProjectDashboardComponent phone task workspace', () => {
         {
           provide: ActivatedRoute,
           useFactory: () => ({
+            paramMap: routeParams$.asObservable(),
             snapshot: {
-              get data() {
-                return routeMobilePane ? {mobilePane: routeMobilePane} : {};
-              },
               get paramMap() {
                 return convertToParamMap({
                   taskAbbreviation: routeTaskAbbreviation,
+                  mobilePane: routeMobilePane,
                 });
               },
             },
@@ -109,12 +112,19 @@ describe('ProjectDashboardComponent phone task workspace', () => {
           }),
         },
         {provide: BreakpointObserver, useValue: {observe: observeBreakpoint}},
+        {provide: Router, useValue: {navigate: routerNavigate}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
   });
 
   const createComponent = (): void => {
+    routeParams$.next(
+      convertToParamMap({
+        taskAbbreviation: routeTaskAbbreviation,
+        mobilePane: routeMobilePane,
+      }),
+    );
     fixture = TestBed.createComponent(ProjectDashboardComponent);
     component = fixture.componentInstance;
     component.project$ = of(project);
@@ -254,6 +264,38 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(component.mobilePane).toBe('feedback');
     expect(query('.mobile-task-pane task-comments-viewer')).not.toBeNull();
     expect(query('.mobile-task-pane f-task-dashboard')).toBeNull();
+  });
+
+  it('reopens feedback when the same task receives another notification after changing panes', () => {
+    routeTaskAbbreviation = taskDefinition.abbreviation;
+    routeMobilePane = 'feedback';
+    task.numNewComments = 0;
+    createComponent();
+    renderSelectedTask();
+
+    query<HTMLButtonElement>('button[aria-label="Show project overview"]')?.click();
+    fixture.detectChanges();
+
+    expect(component.mobilePane).toBe('overview');
+    expect(routerNavigate).toHaveBeenLastCalledWith(
+      ['/projects', project.id, 'dashboard', taskDefinition.abbreviation],
+      {replaceUrl: true},
+    );
+
+    routeMobilePane = null;
+    routeParams$.next(convertToParamMap({taskAbbreviation: taskDefinition.abbreviation}));
+    routeMobilePane = 'feedback';
+    routeParams$.next(
+      convertToParamMap({
+        taskAbbreviation: taskDefinition.abbreviation,
+        mobilePane: routeMobilePane,
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(component.mobilePane).toBe('feedback');
+    expect(query('.mobile-task-pane task-comments-viewer')).not.toBeNull();
+    expect(query('.mobile-overview-pane')).toBeNull();
   });
 
   it('returns to the full-width task list from the selected phone workspace', () => {

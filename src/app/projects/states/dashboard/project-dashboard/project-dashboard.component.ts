@@ -11,7 +11,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -70,6 +70,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private globalStateService: GlobalStateService,
     private route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
+    private angularRouter: Router,
   ) {}
 
   public readonly taskListCollapsedWidth = 75;
@@ -188,6 +189,16 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       }
     });
 
+    this.route.paramMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      if (
+        this.isPhoneLayout &&
+        params.get('mobilePane') === 'feedback' &&
+        this.selectedTaskDefinition$.value
+      ) {
+        this.mobilePane = 'feedback';
+      }
+    });
+
     if (this.defaultTaskListCollapsed) {
       this.leftWidth = this.taskListCollapsedWidth;
     }
@@ -237,6 +248,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
 
   public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {
     this.mobilePane = pane;
+    this.syncSelectedTaskRoute(pane);
   }
 
   public clearTaskSelection(): void {
@@ -255,7 +267,33 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   }
 
   private get hasFeedbackRouteSelection(): boolean {
-    return this.route.snapshot?.data?.['mobilePane'] === 'feedback';
+    return this.route.snapshot?.paramMap?.get('mobilePane') === 'feedback';
+  }
+
+  private syncSelectedTaskRoute(pane: 'overview' | 'task' | 'feedback'): void {
+    const selectedTaskDefinition = this.selectedTaskDefinition$.value;
+    const projectId =
+      this.activeProjectId ?? Number(this.route.parent?.snapshot.paramMap.get('projectId'));
+    if (!selectedTaskDefinition || !projectId) {
+      return;
+    }
+
+    const feedbackRoute = pane === 'feedback';
+    if (feedbackRoute === this.hasFeedbackRouteSelection) {
+      return;
+    }
+
+    const commands: Array<string | number> = [
+      '/projects',
+      projectId,
+      'dashboard',
+      selectedTaskDefinition.abbreviation,
+    ];
+    if (feedbackRoute) {
+      commands.push('feedback');
+    }
+
+    void this.angularRouter.navigate(commands, {replaceUrl: true});
   }
 
   private shouldOpenFeedback(taskDefinition: TaskDefinition): boolean {

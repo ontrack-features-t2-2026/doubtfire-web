@@ -3,7 +3,7 @@ import {BreakpointObserver} from '@angular/cdk/layout';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ActivatedRoute, convertToParamMap} from '@angular/router';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, EMPTY, Subject, of, tap} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -52,6 +52,7 @@ describe('ProjectDashboardComponent task selection', () => {
           provide: BreakpointObserver,
           useValue: {observe: () => of({matches: false, breakpoints: {}})},
         },
+        {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -145,6 +146,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
@@ -192,6 +194,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
@@ -249,6 +252,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
