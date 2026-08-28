@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs';
+import {Observable, Subscription} from 'rxjs';
 import {
   Project,
   Task,
@@ -48,6 +48,8 @@ import {BatchFeedbackWorkflowDialogComponent} from './batch-feedback-workflow-di
 })
 export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('searchDialog') searchDialog: TemplateRef<object>;
+
+  private taskRequestSub?: Subscription;
 
   @Input() task: Task;
   @Input() project: Project;
@@ -168,6 +170,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.taskRequestSub?.unsubscribe();
     this.hotkeys.removeShortcuts('control.shift.arrowdown');
     this.hotkeys.removeShortcuts('control.shift.arrowup');
   }
@@ -579,8 +582,12 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     const fetchMyStudentsOnly = this.filters.tutorialIdSelected === 'mine';
 
     this.loading = true;
+    // A unit or filter change can start a second query before the previous one
+    // returns. Cancel the older query so it cannot land late and put stale tasks
+    // back on screen after the component has moved to the new unit.
+    this.taskRequestSub?.unsubscribe();
     // Tasks for feedback or tasks for task, depending on the data source
-    this.taskData
+    this.taskRequestSub = this.taskData
       .source(this.unit, this.filters?.taskDefinitionIdSelected, fetchMyStudentsOnly)
       .subscribe({
         next: (response) => {

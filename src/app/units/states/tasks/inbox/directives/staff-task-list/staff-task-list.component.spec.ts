@@ -4,7 +4,7 @@ import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {EMPTY, of} from 'rxjs';
+import {EMPTY, Subject, of} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
@@ -137,5 +137,39 @@ describe('StaffTaskListComponent', () => {
 
     expect(component.filters.tutorialIdSelected).toBe('all');
     expect(component.filters.unitRoleIdSelected).toBe('all');
+  });
+
+  it('cancels the previous task query when the unit changes', () => {
+    const unitA = unitStub(1, 'LA1');
+    const unitB = unitStub(2, 'LB1');
+    const requests = new Map<number, Subject<never[]>>();
+
+    component.unit = unitA;
+    component.unitRole = unitRoleStub(11);
+    component.filters = {};
+    component.taskData = {
+      source: (unit: Unit) => {
+        const request = new Subject<never[]>();
+        requests.set(unit.id, request);
+        return request;
+      },
+      selectedTask: null,
+      taskKey: null,
+      onSelectedTaskChange: () => {},
+      taskDefMode: false,
+    };
+
+    component.ngOnInit();
+
+    component.unit = unitB;
+    component.unitRole = unitRoleStub(12);
+    component.filters = {};
+    component.ngOnChanges({unit: new SimpleChange(unitA, unitB, false)});
+
+    requests.get(unitA.id)?.next([]);
+    expect(component.loading).toBe(true);
+
+    requests.get(unitB.id)?.next([]);
+    expect(component.loading).toBe(false);
   });
 });

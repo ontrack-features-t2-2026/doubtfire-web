@@ -223,10 +223,11 @@ export class UnitTaskInboxStateComponent implements OnInit, OnDestroy {
       this.globalStateService.setView(ViewType.UNIT, unit);
     }
 
-    this.filters = {
-      ...this.filters,
-      ...this.getFilterOverrides(unit),
-    };
+    // Filter objects contain tutorials and role ids from one unit. Reusing the
+    // previous object after a route change can leave the new unit filtered by a
+    // tutorial that does not exist there, making a successfully loaded inbox
+    // appear empty. Start from the new route's overrides for each unit instead.
+    this.filters = {...this.getFilterOverrides(unit)};
 
     this.projectService
       .loadStudents(unit)

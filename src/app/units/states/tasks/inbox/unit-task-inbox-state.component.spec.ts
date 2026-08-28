@@ -165,4 +165,22 @@ describe('UnitTaskInboxStateComponent', () => {
 
     expect(component.unit.id).toBe(402);
   });
+
+  it('drops filters that refer to the previous unit', () => {
+    const component = TestBed.createComponent(UnitTaskInboxStateComponent).componentInstance;
+    const unit$: Subject<Unit> = new Subject();
+    component.unit$ = unit$;
+    component.ngOnInit();
+
+    unit$.next(unitStub(501));
+    component.filters = {
+      tutorialIdSelected: 5010,
+      tutorials: [{id: 5010}] as never,
+      unitRoleIdSelected: 5011,
+    };
+
+    unit$.next(unitStub(502));
+
+    expect(component.filters).toEqual({});
+  });
 });
