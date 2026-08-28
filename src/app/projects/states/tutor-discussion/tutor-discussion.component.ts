@@ -66,7 +66,6 @@ export class TutorDiscussionComponent implements AfterViewInit, OnDestroy {
   public project: Project | null;
 
   public selectedTask: Task | null;
-  public allowHover = true;
   public isNarrow = false;
 
   public scanningQr: boolean = false;
