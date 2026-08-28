@@ -48,6 +48,7 @@ const START_APPROACHING_DAYS = 7;
 })
 export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   private readonly destroy$: Subject<void> = new Subject();
+  private routeTaskAbbreviation: string | null = null;
 
   @Input() mode: 'project' | 'all-tasks';
   @Input() project: Project;
@@ -227,6 +228,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       'tasks' in changes
     ) {
       this.applyFilters();
+      this.applyRouteTaskSelection();
     }
   }
 
@@ -315,31 +317,46 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     // a dashboard the user is already looking at runs into. A notification
     // linking to a task is exactly that.
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      const param = params.get('taskAbbreviation');
-
-      queueMicrotask(() => {
-        // Read inside the microtask, not outside. taskDefinitions arrives as an
-        // input and the value here has to be whatever is current when the
-        // comparison actually happens.
-        const current = this.selectedTaskDefinition$.value;
-
-        const nextTaskDefinition = param
-          ? (this.taskDefinitions?.find(
-              (taskDefinition) => taskDefinition.abbreviation === param,
-            ) ?? null)
-          : null;
-
-        if (nextTaskDefinition && this.isTaskDefinitionAboveTargetGrade(nextTaskDefinition)) {
-          this.viewPreferences = {...this.viewPreferences, showAboveTargetGrade: true};
-          this.persistViewPreferences();
-          this.applyFilters();
-        }
-
-        if (nextTaskDefinition !== current) {
-          this.selectedTaskDefinition$.next(nextTaskDefinition);
-        }
-      });
+      this.routeTaskAbbreviation = params.get('taskAbbreviation');
+      queueMicrotask(() => this.applyRouteTaskSelection());
     });
+  }
+
+  // Applies whatever the route currently names, using the task definitions that
+  // exist at the moment it runs. Called from the paramMap subscription and again
+  // from ngOnChanges, because the unit resolves progressively and taskDefinitions
+  // is usually still empty when the parameter first arrives. Without the second
+  // call a hard refresh on a deep link lands on nothing.
+  private applyRouteTaskSelection(): void {
+    const current = this.selectedTaskDefinition$.value;
+
+    const nextTaskDefinition = this.routeTaskAbbreviation
+      ? (this.taskDefinitions?.find(
+          (taskDefinition) => taskDefinition.abbreviation === this.routeTaskAbbreviation,
+        ) ?? null)
+      : null;
+
+    // An empty list means the unit has not finished resolving, not that the task
+    // is missing. Leave the selection alone and wait for ngOnChanges to call back
+    // once the definitions arrive. A loaded list that does not contain the
+    // abbreviation is a different thing and still clears the selection below.
+    if (this.routeTaskAbbreviation && !this.taskDefinitions?.length) {
+      return;
+    }
+
+    if (nextTaskDefinition && this.isTaskDefinitionAboveTargetGrade(nextTaskDefinition)) {
+      this.viewPreferences = {...this.viewPreferences, showAboveTargetGrade: true};
+      this.persistViewPreferences();
+      this.applyFilters();
+    }
+
+    // The comparison is what stops a click looping. Selecting a task navigates,
+    // that navigation makes paramMap emit, and the emission comes straight back
+    // in here. It also collapses the duplicate write from the second rendered
+    // instance of this component in the parent template.
+    if (nextTaskDefinition !== current) {
+      this.selectedTaskDefinition$.next(nextTaskDefinition);
+    }
   }
 
   ngOnDestroy(): void {

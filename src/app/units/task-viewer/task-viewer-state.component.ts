@@ -20,14 +20,13 @@ export class TaskViewerStateComponent {
     private router: Router,
   ) {
     this.unit$ = of(this.route.parent.snapshot.data.unit);
-    const taskAbbreviation = this.route.snapshot.paramMap.get('taskAbbreviation');
-    if (taskAbbreviation) {
-      this.unit$.subscribe((unit) => {
-        this.selectedTaskDefinition$.next(
-          unit.taskDefinitions.find((taskDef) => taskDef.abbreviation === taskAbbreviation) ?? null,
-        );
-      });
-    }
+
+    // The task abbreviation is deliberately not read here. This component is
+    // reused when only the route parameter changes, so a snapshot read runs once
+    // and leaves the first task selected for the life of the screen. The child
+    // task list follows route.paramMap instead, and it is the one component
+    // shared by all three routes that carry a :taskAbbreviation, so the read
+    // belongs there and only there.
   }
 
   /**
