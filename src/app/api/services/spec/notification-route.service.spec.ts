@@ -21,6 +21,7 @@ describe('NotificationRouteService', () => {
       '/projects/1/dashboard',
       '/projects/23/groups',
       '/projects/23/dashboard/1.1P',
+      '/projects/23/dashboard/1.1P/feedback',
       '/projects/23/dashboard/T1.1',
       '/projects/23/dashboard/HD1.2',
       '/projects/23/dashboard/10.1H',
@@ -51,6 +52,7 @@ describe('NotificationRouteService', () => {
       '/projects/1//dashboard',
       '/projects/1/dashboard/',
       '/projects/1/dashboard/1.1P/extra',
+      '/projects/1/dashboard/1.1P/feedback/extra',
       '/projects/1/dashboard/line\nbreak',
       `/projects/1/dashboard/${'A1'.repeat(20)}`,
     ];

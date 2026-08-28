@@ -9,7 +9,8 @@ const CONTROL_CHARACTER_MAX = 0x1f;
 const DELETE_CHARACTER = 0x7f;
 const FORBIDDEN_ROUTE_TEXT = /[\s\\?#%]/;
 const PROJECT_ROOT_ROUTE = /^\/projects\/[1-9]\d*\/(?:dashboard|groups)$/;
-const PROJECT_TASK_ROUTE = /^\/projects\/[1-9]\d*\/dashboard\/[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/;
+const PROJECT_TASK_ROUTE =
+  /^\/projects\/[1-9]\d*\/dashboard\/[A-Za-z0-9][A-Za-z0-9._-]{0,31}(?:\/feedback)?$/;
 
 function hasControlCharacters(value: string): boolean {
   return Array.from(value).some((character) => {

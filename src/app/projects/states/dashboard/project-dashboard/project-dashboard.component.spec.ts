@@ -3,7 +3,7 @@ import {BreakpointObserver} from '@angular/cdk/layout';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ActivatedRoute, convertToParamMap} from '@angular/router';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, EMPTY, Subject, of, tap} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -52,6 +52,7 @@ describe('ProjectDashboardComponent task selection', () => {
           provide: BreakpointObserver,
           useValue: {observe: () => of({matches: false, breakpoints: {}})},
         },
+        {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -145,6 +146,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
@@ -192,6 +194,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
@@ -249,6 +252,7 @@ describe('ProjectDashboardComponent route reuse', () => {
         },
       } as unknown as ActivatedRoute,
       {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
     );
     component.project$ = routeProjects.asObservable();
 
@@ -277,6 +281,7 @@ describe('ProjectDashboardComponent rendered by its host', () => {
   let projectResponses: Subject<Project>[];
   let projectGet: ReturnType<typeof vi.fn>;
   let unitGet: ReturnType<typeof vi.fn>;
+  let routerNavigate: ReturnType<typeof vi.fn>;
 
   // The portfolios progress tab hands its dashboard a new task selection url every check, because
   // the host builds that array in a getter. Each one re-runs the host's ngOnChanges, which pushes
@@ -317,6 +322,7 @@ describe('ProjectDashboardComponent rendered by its host', () => {
       },
     );
     unitGet = vi.fn(() => of(unit));
+    routerNavigate = vi.fn().mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
       imports: [CommonModule],
@@ -338,6 +344,7 @@ describe('ProjectDashboardComponent rendered by its host', () => {
           provide: BreakpointObserver,
           useValue: {observe: () => of({matches: false, breakpoints: {}})},
         },
+        {provide: Router, useValue: {navigate: routerNavigate}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -377,6 +384,18 @@ describe('ProjectDashboardComponent rendered by its host', () => {
     fixture.detectChanges();
 
     expect(component.isProjectTaskListReady(project)).toBe(true);
+
+    fixture.destroy();
+  });
+
+  it('does not navigate out of an embedded staff portfolio when its phone pane changes', () => {
+    rebindHost();
+    component.selectedTaskDefinition$.next({id: 7, abbreviation: '1.1P'} as TaskDefinition);
+
+    component.showMobilePane('feedback');
+
+    expect(component.mobilePane).toBe('feedback');
+    expect(routerNavigate).not.toHaveBeenCalled();
 
     fixture.destroy();
   });

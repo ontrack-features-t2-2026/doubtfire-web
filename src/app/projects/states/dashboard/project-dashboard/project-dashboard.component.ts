@@ -11,7 +11,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -70,6 +70,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private globalStateService: GlobalStateService,
     private route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
+    private angularRouter: Router,
   ) {}
 
   public readonly taskListCollapsedWidth = 75;
@@ -83,7 +84,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
   public isPhoneLayout = false;
-  public mobilePane: 'task' | 'feedback' = 'task';
+  public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
 
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
   private readonly phoneBreakpoint = '(max-width: 639.98px)';
@@ -188,6 +189,16 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       }
     });
 
+    this.route.paramMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      if (
+        this.isPhoneLayout &&
+        params.get('mobilePane') === 'feedback' &&
+        this.selectedTaskDefinition$.value
+      ) {
+        this.mobilePane = 'feedback';
+      }
+    });
+
     if (this.defaultTaskListCollapsed) {
       this.leftWidth = this.taskListCollapsedWidth;
     }
@@ -235,8 +246,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
-  public showMobilePane(pane: 'task' | 'feedback'): void {
+  public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {
     this.mobilePane = pane;
+    this.syncSelectedTaskRoute(pane);
   }
 
   public clearTaskSelection(): void {
@@ -254,9 +266,49 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     return !!this.route.snapshot?.paramMap?.get('taskAbbreviation');
   }
 
+  private get hasFeedbackRouteSelection(): boolean {
+    return this.route.snapshot?.paramMap?.get('mobilePane') === 'feedback';
+  }
+
+  private syncSelectedTaskRoute(pane: 'overview' | 'task' | 'feedback'): void {
+    const selectedTaskDefinition = this.selectedTaskDefinition$.value;
+    // The dashboard is also embedded in the staff portfolio progress screen, whose task
+    // destination is supplied by its host. That route has no feedback suffix and must not be
+    // replaced with the student's standalone project dashboard route.
+    if (this.taskSelectionUrlBase) {
+      return;
+    }
+
+    const projectId =
+      this.activeProjectId ?? Number(this.route.parent?.snapshot.paramMap.get('projectId'));
+    if (!selectedTaskDefinition || !projectId) {
+      return;
+    }
+
+    const feedbackRoute = pane === 'feedback';
+    if (feedbackRoute === this.hasFeedbackRouteSelection) {
+      return;
+    }
+
+    const commands: Array<string | number> = [
+      '/projects',
+      projectId,
+      'dashboard',
+      selectedTaskDefinition.abbreviation,
+    ];
+    if (feedbackRoute) {
+      commands.push('feedback');
+    }
+
+    void this.angularRouter.navigate(commands, {replaceUrl: true});
+  }
+
   private shouldOpenFeedback(taskDefinition: TaskDefinition): boolean {
     const task = this.projectSubject.value?.findTaskForDefinition(taskDefinition.id);
-    return this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0;
+    return (
+      this.hasFeedbackRouteSelection ||
+      (this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0)
+    );
   }
 
   private activateProject(project: Project, projectId: number): void {
