@@ -82,6 +82,12 @@
   color: #3939ff;
 }
 
+.mobile-task-tab:disabled {
+  cursor: default;
+  background: white;
+  color: #94a3b8;
+}
+
 .mobile-task-pane {
   min-width: 0;
   min-height: 0;
@@ -100,7 +106,15 @@
 }
 
 @media (max-width: 639.98px) {
+  .project-dashboard-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
   .project-dashboard-layout {
+    height: auto !important;
+    min-height: 0;
+    flex: 1;
     width: 100%;
   }
 

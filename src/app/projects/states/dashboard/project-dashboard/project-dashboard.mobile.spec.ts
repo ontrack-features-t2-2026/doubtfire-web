@@ -136,6 +136,23 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(query('.comments-sidebar')).toBeNull();
   });
 
+  it('keeps task navigation visible while the phone task list is open', () => {
+    createComponent();
+
+    const taskListButton = query<HTMLButtonElement>('button[aria-label="Show task list"]');
+    const detailsButton = query<HTMLButtonElement>('button[aria-label="Show task details"]');
+    const feedbackButton = query<HTMLButtonElement>('button[aria-label="Show feedback"]');
+
+    expect(query('nav[aria-label="Task navigation"]')).not.toBeNull();
+    expect(taskListButton?.getAttribute('aria-pressed')).toBe('true');
+    expect(taskListButton?.classList).toContain('mobile-task-tab--active');
+    expect(detailsButton?.disabled).toBe(true);
+    expect(feedbackButton?.disabled).toBe(true);
+    expect(query('.project-task-list-panel')?.classList).not.toContain(
+      'project-task-list-panel--phone-hidden',
+    );
+  });
+
   it('opens task details first when a student selects a task from the phone list', () => {
     createComponent();
     renderSelectedTask();
@@ -190,13 +207,17 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     const clearThroughTaskList = vi.fn(() => component.selectedTaskDefinition$.next(null));
     Reflect.set(component, 'leftPanel', {setSelectedTaskDefinition: clearThroughTaskList});
 
-    query<HTMLButtonElement>('button[aria-label="Back to task list"]')?.click();
+    query<HTMLButtonElement>('button[aria-label="Show task list"]')?.click();
     fixture.detectChanges();
 
     expect(clearThroughTaskList).toHaveBeenCalledWith(taskDefinition);
     expect(component.selectedTaskDefinition$.value).toBeNull();
     expect(component.mobilePane).toBe('task');
     expect(query('.mobile-task-view')).toBeNull();
+    expect(query('nav[aria-label="Task navigation"]')).not.toBeNull();
+    expect(
+      query<HTMLButtonElement>('button[aria-label="Show task list"]')?.getAttribute('aria-pressed'),
+    ).toBe('true');
     expect(query('.project-task-list-panel')?.classList).not.toContain(
       'project-task-list-panel--phone-hidden',
     );
