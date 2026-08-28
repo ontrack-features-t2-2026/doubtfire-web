@@ -10,6 +10,8 @@ const AUTH_FLOW_PATHS = new Set([
   '/welcome',
   '/unauthorised',
   '/success-close',
+  '/lti',
+  '/lti/link',
 ]);
 
 const CALLBACK_SECRET_KEYS = new Set(['authToken', 'auth_token', 'ltiToken', 'lti_token', 'ltik']);
@@ -113,7 +115,12 @@ export class AuthReturnUrlService {
 
   public consume(): string | null {
     const entry = this.readAndRemove();
-    if (!entry || Date.now() - entry.capturedAt > MAX_AGE_MS || entry.capturedAt > Date.now()) {
+    if (
+      !entry ||
+      !Number.isFinite(entry.capturedAt) ||
+      Date.now() - entry.capturedAt > MAX_AGE_MS ||
+      entry.capturedAt > Date.now()
+    ) {
       return null;
     }
 

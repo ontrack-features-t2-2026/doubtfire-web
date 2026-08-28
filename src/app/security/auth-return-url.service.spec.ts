@@ -40,6 +40,8 @@ describe('AuthReturnUrlService', () => {
     '/sign_in?returnUrl=%2Fprojects%2F2',
     '/timeout',
     '/welcome',
+    '/lti',
+    '/lti/link',
   ])('rejects unsafe or auth-loop destination %s', (target) => {
     expect(service.remember(target)).toBe(false);
     expect(service.consume()).toBeNull();
@@ -74,6 +76,15 @@ describe('AuthReturnUrlService', () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000);
     service.remember('/projects/2/dashboard/1.1P/feedback');
     clock.mockReturnValue(1_000 + 30 * 60 * 1000 + 1);
+
+    expect(service.consume()).toBeNull();
+  });
+
+  it('drops a stored destination with a non-finite timestamp', () => {
+    sessionStorage.setItem(
+      'doubtfire_auth_return_url',
+      '{"url":"/projects/2/dashboard/1.1P/feedback","capturedAt":1e999}',
+    );
 
     expect(service.consume()).toBeNull();
   });
