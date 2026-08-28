@@ -83,7 +83,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
   public isPhoneLayout = false;
-  public mobilePane: 'task' | 'feedback' = 'task';
+  public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
 
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
   private readonly phoneBreakpoint = '(max-width: 639.98px)';
@@ -235,7 +235,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
-  public showMobilePane(pane: 'task' | 'feedback'): void {
+  public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {
     this.mobilePane = pane;
   }
 
