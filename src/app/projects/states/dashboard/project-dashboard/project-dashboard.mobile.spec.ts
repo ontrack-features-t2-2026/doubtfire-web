@@ -20,6 +20,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
   let commentsState$: BehaviorSubject<BreakpointState>;
   let observeBreakpoint: ReturnType<typeof vi.fn>;
   let routeTaskAbbreviation: string | null;
+  let routeMobilePane: string | null;
 
   const taskDefinition = {
     id: 42,
@@ -50,6 +51,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
 
   beforeEach(async () => {
     routeTaskAbbreviation = null;
+    routeMobilePane = null;
     task.numNewComments = 1;
     phoneState$ = new BehaviorSubject<BreakpointState>({
       matches: true,
@@ -88,6 +90,9 @@ describe('ProjectDashboardComponent phone task workspace', () => {
           provide: ActivatedRoute,
           useFactory: () => ({
             snapshot: {
+              get data() {
+                return routeMobilePane ? {mobilePane: routeMobilePane} : {};
+              },
               get paramMap() {
                 return convertToParamMap({
                   taskAbbreviation: routeTaskAbbreviation,
@@ -237,6 +242,18 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(component.mobilePane).toBe('task');
     expect(query('.mobile-task-pane f-task-dashboard')).not.toBeNull();
     expect(query('.mobile-task-pane task-comments-viewer')).toBeNull();
+  });
+
+  it('opens an explicit feedback destination even after its comments were already read', () => {
+    routeTaskAbbreviation = taskDefinition.abbreviation;
+    routeMobilePane = 'feedback';
+    task.numNewComments = 0;
+    createComponent();
+    renderSelectedTask();
+
+    expect(component.mobilePane).toBe('feedback');
+    expect(query('.mobile-task-pane task-comments-viewer')).not.toBeNull();
+    expect(query('.mobile-task-pane f-task-dashboard')).toBeNull();
   });
 
   it('returns to the full-width task list from the selected phone workspace', () => {

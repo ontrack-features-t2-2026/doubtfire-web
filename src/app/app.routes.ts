@@ -337,6 +337,11 @@ export const routes: Routes = [
             data: {task: 'Dashboard'},
           },
           {
+            path: 'dashboard/:taskAbbreviation/feedback',
+            component: ProjectDashboardComponent,
+            data: {task: 'Dashboard', mobilePane: 'feedback'},
+          },
+          {
             path: 'dashboard/:taskAbbreviation',
             component: ProjectDashboardComponent,
             data: {task: 'Dashboard'},

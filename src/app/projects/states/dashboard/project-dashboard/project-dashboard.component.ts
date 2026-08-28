@@ -254,9 +254,16 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     return !!this.route.snapshot?.paramMap?.get('taskAbbreviation');
   }
 
+  private get hasFeedbackRouteSelection(): boolean {
+    return this.route.snapshot?.data?.['mobilePane'] === 'feedback';
+  }
+
   private shouldOpenFeedback(taskDefinition: TaskDefinition): boolean {
     const task = this.projectSubject.value?.findTaskForDefinition(taskDefinition.id);
-    return this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0;
+    return (
+      this.hasFeedbackRouteSelection ||
+      (this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0)
+    );
   }
 
   private activateProject(project: Project, projectId: number): void {
