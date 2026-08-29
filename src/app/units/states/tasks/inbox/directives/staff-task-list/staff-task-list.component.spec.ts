@@ -1,10 +1,10 @@
 import {HotkeysService} from '@ngneat/hotkeys';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {UserService} from 'src/app/api/models/doubtfire-model';
+import {Task, UserService} from 'src/app/api/models/doubtfire-model';
 import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {CsvResultModalService} from 'src/app/common/modals/csv-result-modal/csv-result-modal.service';
@@ -53,5 +53,20 @@ describe('StaffTaskListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('previousTask does not throw before the task queue has loaded', () => {
+    component.filteredTasks = null;
+    expect(() => component.previousTask()).not.toThrow();
+  });
+
+  it('previousTask selects nothing when no task is selected', () => {
+    vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
+    const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    component.filteredTasks = [{}, {}] as unknown as Task[];
+
+    component.previousTask();
+
+    expect(setSelected).not.toHaveBeenCalled();
   });
 });

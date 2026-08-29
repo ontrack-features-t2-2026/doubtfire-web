@@ -647,8 +647,11 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   previousTask(): void {
+    if (!this.filteredTasks) {
+      return;
+    }
     const currentTaskIndex = this.filteredTasks.findIndex((task) => this.isSelectedTask(task));
-    if (currentTaskIndex === 0) {
+    if (currentTaskIndex <= 0) {
       return;
     }
     const newTask = this.filteredTasks[currentTaskIndex - 1];
