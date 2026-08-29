@@ -169,6 +169,7 @@ import {MicrophoneTesterComponent} from './common/audio-recorder/audio/microphon
 import {ChartBaseComponent} from './common/chart-base/chart-base-component/chart-base-component.component';
 import {DragDropDirective} from './common/directives/drag-drop.directive';
 import {EditProfileFormComponent} from './common/edit-profile-form/edit-profile-form.component';
+import {EmptyStateComponent} from './common/empty-state/empty-state.component';
 import {FChipComponent} from './common/f-chip/chip.component';
 import {FeedbackTemplateEditorComponent} from './common/feedback-template-editor/feedback-template-editor.component';
 import {FileDownloaderService} from './common/file-downloader/file-downloader.service';
@@ -877,6 +878,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     MonacoEditorModule.forRoot(),
     MatChipListbox,
     NgxSkeletonLoaderModule,
+    EmptyStateComponent,
   ],
   bootstrap: [AppComponent],
 })

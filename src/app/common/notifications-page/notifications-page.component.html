@@ -44,12 +44,11 @@
       <button class="notifications-retry" mat-stroked-button (click)="load()">Try again</button>
     </div>
   } @else if (!notifications.length) {
-    <div class="notifications-placeholder py-6">
-      <p>You have no notifications yet.</p>
-      <p class="notification-time">
-        Comments on your tasks, feedback and reminders will show up here.
-      </p>
-    </div>
+    <f-empty-state
+      icon="notifications_none"
+      heading="You have no notifications yet."
+      message="Comments on your tasks, feedback and reminders will show up here."
+    ></f-empty-state>
   } @else {
     <!--
       Plain buttons rather than mat-list-item. Material lays a list row out with
