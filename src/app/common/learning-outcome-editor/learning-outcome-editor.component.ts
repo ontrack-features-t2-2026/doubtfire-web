@@ -421,11 +421,13 @@ export class LearningOutcomeEditorComponent implements OnChanges, OnInit, AfterV
   }
 
   getNextOutcomeNumber(): number {
-    if (this.outcomeSource.data && this.outcomeSource.data.length > 0) {
-      let abbr = this.outcomeSource.data[this.outcomeSource.data.length - 1].abbreviation;
-      abbr = abbr.replace(this.abbreviationPrefix, '');
-      return Number(abbr) + 1;
-    }
-    return 1;
+    const prefix = this.abbreviationPrefix;
+    const numbers = (this.outcomeSource.data || [])
+      .map((outcome) => outcome.abbreviation ?? '')
+      .filter((abbreviation) => abbreviation.startsWith(prefix))
+      .map((abbreviation) => abbreviation.slice(prefix.length))
+      .filter((suffix) => /^\d+$/.test(suffix))
+      .map((suffix) => Number(suffix));
+    return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
   }
 }
