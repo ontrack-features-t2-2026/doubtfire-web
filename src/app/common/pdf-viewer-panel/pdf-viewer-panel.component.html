@@ -11,12 +11,17 @@
       </div>
       <div class="pull-right btn-group">
         @if (resourcesUrl) {
-          <a class="btn btn-primary" (click)="downloadResources()">
-            <mat-icon inline>download</mat-icon><span> Resources</span>
-          </a>
+          <button type="button" class="btn btn-primary" (click)="downloadResources()">
+            <mat-icon inline aria-hidden="true">download</mat-icon><span> Resources</span>
+          </button>
         }
-        <button class="btn btn-success" (click)="downloadPdf()">
-          <mat-icon inline>download</mat-icon><span [hidden]="!resourcesUrl"> PDF</span>
+        <button
+          type="button"
+          class="btn btn-success"
+          aria-label="Download submission PDF"
+          (click)="downloadPdf()"
+        >
+          <mat-icon inline aria-hidden="true">download</mat-icon><span [hidden]="!resourcesUrl"> PDF</span>
         </button>
       </div>
     </div>
