@@ -96,6 +96,11 @@ export class GroupSetManagerComponent implements OnInit {
     const group = this.selectedGroup;
     const savedName = group.name;
     const previousName = this.originalGroupName;
+    // Treat the submitted name as the new selection baseline immediately. A
+    // user can select another group before the request completes, and
+    // newGroupSelected() must not undo the name that is already being saved.
+    // The captured previousName remains available for an error rollback.
+    this.originalGroupName = savedName;
     this.groupService
       .update(
         {
@@ -109,10 +114,6 @@ export class GroupSetManagerComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          // Only advance the baseline if this group is still selected.
-          if (this.selectedGroup === group) {
-            this.originalGroupName = savedName;
-          }
           this.alertService.success('Successfully updated group', 3000);
         },
         error: (error) => {
