@@ -112,9 +112,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           } // might be signing out, or the data has been cleared
           this.unitRoles = unitRoles;
 
-          this.filteredUnitRoles = this.isActiveUnitRole
-            .transform(this.unitRoles)
-            .filter((role) => this.isUniqueRole(role));
+          this.filteredUnitRoles = this.uniqueUnitRoles(this.unitRoles);
         },
         error: (err) => {
           console.log(`Error fetching unit roles: ${err}`);
@@ -219,10 +217,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  isUniqueRole = (unit) => {
-    const units = this.unitRoles.filter((role: UnitRole) => role.unit?.id === unit.unit?.id);
-    return units.length == 1 || unit.role == 'Tutor';
-  };
+  // Keep one unit role per unit, plus every tutor role. Count the roles per
+  // unit once up front rather than rescanning unitRoles for each role, which
+  // was quadratic and reran on every unit-role cache emission (FEPERF-19).
+  uniqueUnitRoles(unitRoles: UnitRole[]): UnitRole[] {
+    const countByUnit: Map<number | undefined, number> = new Map();
+    unitRoles.forEach((role) => {
+      const id = role.unit?.id;
+      countByUnit.set(id, (countByUnit.get(id) ?? 0) + 1);
+    });
+
+    return this.isActiveUnitRole
+      .transform(unitRoles)
+      .filter((role) => countByUnit.get(role.unit?.id) === 1 || role.role === 'Tutor');
+  }
 
   updateSelectedProject(project: Project): void {
     this.currentProject = project;
