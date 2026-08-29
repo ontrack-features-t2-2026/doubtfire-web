@@ -292,7 +292,11 @@ export class FileUploaderComponent implements OnInit, OnChanges {
           } catch (e) {
             console.error(e);
             if (xhr.status === 0) {
-              response = {error: `Could not connect to ${this.externalName} the server`};
+              if (navigator.onLine === false) {
+                response = {error: 'You appear to be offline. Your files have not been submitted.'};
+              } else {
+                response = {error: `Could not connect to the ${this.externalName} server.`};
+              }
             } else {
               response = xhr.responseText;
             }
