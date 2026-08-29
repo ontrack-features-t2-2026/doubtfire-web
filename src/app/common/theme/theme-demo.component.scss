@@ -136,7 +136,8 @@
 
   // Live states on the Normal cell, so keyboard and pointer both prove out.
   &:hover {
-    background: linear-gradient(var(--ot-color-hover), var(--ot-color-hover)), var(--ot-color-surface);
+    background:
+      linear-gradient(var(--ot-color-hover), var(--ot-color-hover)), var(--ot-color-surface);
   }
 
   &:focus-visible {
@@ -146,7 +147,8 @@
 
   // Static reproductions of each state, so every cell is visible without interaction.
   &--hover {
-    background: linear-gradient(var(--ot-color-hover), var(--ot-color-hover)), var(--ot-color-surface);
+    background:
+      linear-gradient(var(--ot-color-hover), var(--ot-color-hover)), var(--ot-color-surface);
   }
 
   &--focus {
