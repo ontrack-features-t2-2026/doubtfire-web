@@ -3,6 +3,11 @@
 @use '@worktile/gantt/styles/index';
 @use 'theme' as *;
 @use 'styles/common/typeface';
+// Theme foundation (THM-F01): the --ot-* token layer. These two partials are the
+// only place a colour value is declared. Light is the bare :root default so the
+// app stays correct even if the pre-hydration marker script (THM-F04) never runs.
+@use 'styles/tokens/light';
+@use 'styles/tokens/dark';
 @use 'tailwindcss';
 @config '../tailwind.config.js';
 

@@ -68,6 +68,12 @@ export const routes: Routes = [
   {path: 'edit_profile', component: EditProfileComponent},
   {path: 'notifications', component: NotificationsPageComponent},
   {
+    path: 'theme-demo',
+    loadComponent: () =>
+      import('./common/theme/theme-demo.component').then((m) => m.ThemeDemoComponent),
+    data: {pageTitle: 'Theme foundation'},
+  },
+  {
     path: 'demo-controls',
     component: DemoControlsComponent,
     canActivate: [demoToolsGuard],
