@@ -11,6 +11,6 @@ Each calendar feature shipped with its own unit tests, so this note records the 
 | CAL-F07 exclude completed | `task-planner-card.component.spec.ts` | excluded-when-on, included-when-off, composition with the grade filter, the guard, the filename suffix, and an ICS-content discriminator |
 | CAL-F08 download a copy | `calendar-modal.component.spec.ts` | downloads with an enabled calendar and a guid, and the disabled and no-guid guards |
 
-Each feature includes at least one discriminating test, one that fails if the behaviour were bypassed rather than merely present, and every spec uses `afterEach(() => vi.restoreAllMocks())` to avoid the repo-wide gap where Vitest spies otherwise leak between tests in a file.
+Each feature includes at least one discriminating test, one that fails if the behaviour were bypassed rather than merely present. Every listed spec that installs Vitest spies uses `afterEach(() => vi.restoreAllMocks())` so those spies do not leak between tests in a file; `calendar-event-builder.spec.ts` installs no spies and therefore needs no cleanup hook.
 
 Conclusion: dedicated test coverage for the calendar work is satisfied by the specs that shipped with each feature PR, so no separate suite is required. This ticket is closed by documenting that coverage.
