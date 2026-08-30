@@ -4,7 +4,9 @@
 
 .welcome-heading {
   margin-bottom: 30px;
-  color: black;
+  // THM-M01: was hardcoded black, invisible in dark. Text token resolves to the
+  // same near-black in light and flips with the marker.
+  color: var(--ot-color-text, #000);
   font-size: 24px;
 }
 
@@ -14,7 +16,7 @@
   padding-top: 42px;
 
   p {
-    color: black;
+    color: var(--ot-color-text, #000);
   }
 
   img: {
@@ -42,7 +44,7 @@ h1 {
     margin-left: 8px;
     font-family: 'Grotesk';
     font-size: 2em;
-    color: black;
+    color: var(--ot-color-text, #000);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

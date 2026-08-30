@@ -163,3 +163,97 @@ $is-dark-theme: map.get($color-config, 'is-dark');
 
 @include mat.all-component-typographies($theme);
 @include mat.all-component-themes($theme);
+
+// SPIKE (THM-M01): a dark Material theme keyed to the resolved marker. Emits only
+// component *colours* (typography/density stay from the light include above), so
+// every Material component flips to dark when <html data-ot-theme="dark">.
+//
+// The brand blue #3939ff is too saturated for a dark surface (it "shakes" and
+// reads harsh). This is the same blue desaturated into a slate-friendly indigo,
+// with 500 = #5457e5 to match --ot-color-primary exactly, so chips, buttons and
+// progress bars stop fighting the token accent.
+$md-formatif-dark: (
+  50: #eef0ff,
+  100: #e0e3fe,
+  200: #c7ccfc,
+  300: #a7aef9,
+  400: #818cf8,
+  500: #5457e5,
+  600: #464add,
+  700: #4a51d6,
+  800: #3d43ad,
+  900: #2f347f,
+  A100: #ffffff,
+  A200: #e0e3ff,
+  A400: #b3b8ff,
+  A700: #9aa0ff,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+    A100: #000000,
+    A200: #000000,
+    A400: #000000,
+    A700: #000000,
+  ),
+);
+// Default 500 = #5457e5 with a white contrast (white measures 5.4:1 on it), so
+// filled buttons, the fab and progress bars read as one indigo with white labels,
+// matching --ot-color-primary. (contrast for 500 is #ffffff in the map above.)
+$primary-dark: mat.m2-define-palette($md-formatif-dark, 500, 300, 700);
+
+$dark-theme: mat.m2-define-dark-theme(
+  (
+    color: (
+      primary: $primary-dark,
+      accent: $accent,
+      warn: $warn,
+    ),
+  )
+);
+
+:root[data-ot-theme='dark'] {
+  @include mat.all-component-colors($dark-theme);
+
+  // The app background is emitted once in light (mat.app-background, outside this
+  // scope), so force the main containers onto the page token here.
+  &,
+  .mat-app-background,
+  .mat-drawer-container,
+  .mat-sidenav-content,
+  .welcome .content {
+    background-color: var(--ot-color-page);
+    color: var(--ot-color-text);
+  }
+
+  // M2's dark theme paints every raised surface a neutral warm #424242, which
+  // fights the cool slate ramp and reads muddy. Repoint the container colours onto
+  // the raised token so cards, menus, dialogs and select panels sit in the same
+  // family as the page. Angular Material 22 reads the --mat-* tokens (the --mdc-*
+  // ones are not honoured), and the card also needs the literal background because
+  // M2 paints it directly.
+  .mat-mdc-card {
+    --mat-card-elevated-container-color: var(--ot-color-surface-raised);
+    --mat-card-outlined-container-color: var(--ot-color-surface-raised);
+    background-color: var(--ot-color-surface-raised);
+    color: var(--ot-color-text);
+  }
+  .mat-mdc-menu-panel {
+    --mat-menu-container-color: var(--ot-color-surface-raised);
+  }
+  .mat-mdc-dialog-container {
+    --mat-dialog-container-color: var(--ot-color-surface-raised);
+  }
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel {
+    --mat-select-panel-background-color: var(--ot-color-surface-raised);
+    background-color: var(--ot-color-surface-raised);
+  }
+}
