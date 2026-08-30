@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {MediaObserver} from 'ng-flex-layout';
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
@@ -99,7 +98,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: (shouldShow) => {
           this.showHeader = shouldShow;
         },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
         error: (err) => {
           console.log(`Error showing header: ${err}`);
         },
@@ -157,7 +156,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.currentProject = null;
           }
         },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
         error: (err) => {
           console.log(`Error on switching view and entity: ${err}`);
         },

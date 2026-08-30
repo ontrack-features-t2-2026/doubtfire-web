@@ -8,7 +8,7 @@ interface FileDownloaderData {
   success: (url: string, response: HttpResponse<Blob>) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   failure: (error: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   binaryData: Blob[];
 }
 

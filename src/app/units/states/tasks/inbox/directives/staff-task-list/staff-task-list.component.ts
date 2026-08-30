@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow, @typescript-eslint/no-shadow */
 import {HotkeysService} from '@ngneat/hotkeys';
 import {
   ChangeDetectionStrategy,
