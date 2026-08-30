@@ -24,5 +24,5 @@ export class EmptyStateComponent {
 
   /** Omit to render no action. */
   @Input() actionLabel?: string;
-  @Output() action = new EventEmitter<void>();
+  @Output() action: EventEmitter<void> = new EventEmitter();
 }
