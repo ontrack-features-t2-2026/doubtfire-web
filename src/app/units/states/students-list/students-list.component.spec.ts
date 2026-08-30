@@ -1,7 +1,8 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {MatPaginator} from '@angular/material/paginator';
+import {MatTableModule} from '@angular/material/table';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
@@ -9,6 +10,7 @@ import {Unit} from 'src/app/api/models/unit';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {UnitStudentEnrolmentModalService} from '../../modals/unit-student-enrolment-modal/unit-student-enrolment-modal.service';
 import {UnitRootStateComponent} from '../../unit-root-state.component';
 import {StudentsListComponent} from './students-list.component';
@@ -100,5 +102,50 @@ describe('StudentsListComponent', () => {
 
     expect(component.unit.id).toBe(unitA.id);
     expect(component.dataSource.data).toBe(firstData);
+  });
+});
+
+describe('StudentsListComponent empty state', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [StudentsListComponent],
+      imports: [MatTableModule, EmptyStateComponent],
+      providers: [
+        {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
+        {provide: Router, useValue: {}},
+        {provide: UserService, useValue: {currentUser: {id: 1}}},
+        {
+          provide: TaskService,
+          useValue: {statusColors: new Map(), statusLabels: new Map()},
+        },
+        {provide: ProjectService, useValue: {loadStudents: () => of([])}},
+        {provide: UnitStudentEnrolmentModalService, useValue: {}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  it('renders the empty state only while the filtered list has no rows', () => {
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    const component = fixture.componentInstance;
+    component.unit$ = of(unitStub(1, []));
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeTruthy();
+
+    component.dataSource.data = [
+      {
+        student: {name: 'Cy Cole', username: 'cycole'},
+        hasTutor: () => true,
+        matches: () => true,
+        taskStats: [],
+      } as unknown as Project,
+    ];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeFalsy();
   });
 });

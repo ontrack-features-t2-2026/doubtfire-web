@@ -187,8 +187,12 @@
       ></tr>
 
       <tr *matNoDataRow class="mat-row">
-        <td class="mat-cell p-2.5 text-center" [attr.colspan]="displayedColumns.length">
-          No students were found using the filters specified.
+        <td class="mat-cell p-2.5" [attr.colspan]="displayedColumns.length">
+          <f-empty-state
+            heading="No students found"
+            icon="search_off"
+            message="No students were found using the filters specified."
+          ></f-empty-state>
         </td>
       </tr>
     </table>
