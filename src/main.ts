@@ -7,10 +7,12 @@ import {
   captureAndScrubAuthCallback,
   redactAuthCallbackFromUrl,
 } from './app/security/auth-callback';
+import {captureAndScrubAdditionalEmailVerification} from './app/security/additional-email-verification-callback';
 
 // Authentication callbacks may contain a one-time credential. Remove it from
 // browser history before any telemetry SDK or application code can observe it.
 const telemetrySafe = captureAndScrubAuthCallback();
+captureAndScrubAdditionalEmailVerification();
 
 if (environment.sentryDsn && telemetrySafe) {
   Sentry.init({

@@ -47,4 +47,23 @@ describe('TaskDefinitionService grade due-date mapping', () => {
       gradeDate.startDate.getHours(),
     ]).toEqual([2026, 8, 8, 0]);
   });
+
+  it('maps the authoritative task-sheet filename and keeps a safe legacy fallback', () => {
+    const service = new TaskDefinitionService(null, null, null, null);
+    const unit = new Unit();
+    unit.code = 'COS10001';
+    const taskDefinition = service.buildInstance(
+      {
+        abbreviation: '1.1P',
+        task_sheet_filename: 'COS10001-1.1P-TaskSheet.pdf',
+      },
+      {constructorParams: unit},
+    );
+
+    expect(taskDefinition.taskSheetFilename).toBe('COS10001-1.1P-TaskSheet.pdf');
+    expect(taskDefinition.effectiveTaskSheetFilename).toBe('COS10001-1.1P-TaskSheet.pdf');
+
+    taskDefinition.taskSheetFilename = undefined;
+    expect(taskDefinition.effectiveTaskSheetFilename).toBe('COS10001-1.1P-TaskSheet.pdf');
+  });
 });

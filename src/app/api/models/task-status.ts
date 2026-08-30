@@ -45,6 +45,15 @@ export class TaskStatus {
     'rediscuss',
   ];
 
+  /**
+   * Keep URL, API and presentation filters on the persistence vocabulary above.
+   * Query parameters are untrusted strings, so every route consumer must pass
+   * through this guard before using one as a task status.
+   */
+  public static isStatus(value: unknown): value is TaskStatusEnum {
+    return typeof value === 'string' && this.STATUS_KEYS.includes(value as TaskStatusEnum);
+  }
+
   // Student-facing lifecycle order for an anonymous peer distribution. This
   // differs from persistence/API order, which is not intended as presentation.
   public static readonly PEER_PROGRESS_DISPLAY_ORDER: TaskStatusEnum[] = [

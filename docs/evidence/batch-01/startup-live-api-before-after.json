@@ -1,0 +1,142 @@
+{
+  "capturedAt": "2026-08-29T02:40:14.749Z",
+  "timezone": "Australia/Melbourne",
+  "frontendPath": "/Users/ryan/Downloads/test-codex/phone-evidence-20260828/doubtfire-web",
+  "frontendRevision": "024e12ee15e7c0309d36a621aff29b98bb4d8f6e",
+  "baseUrl": "http://localhost:4200",
+  "runs": 5,
+  "authenticationMs": 842.8,
+  "method": {
+    "before": "settings; campuses + teaching periods; unit roles; projects; fixed 800 ms wait",
+    "after": "settings; campuses + teaching periods; unit roles + projects; no fixed wait",
+    "note": "Paired live-API orchestration replay. It measures the startup request contract, not paint time."
+  },
+  "summary": {
+    "beforeMedianMs": 1125.1,
+    "afterMedianMs": 364.8,
+    "medianReductionMs": 760.3,
+    "medianReductionPercent": 67.6
+  },
+  "samples": [
+    {
+      "run": 1,
+      "mode": "before",
+      "totalMs": 2118.8,
+      "requests": [
+        {"name": "settings", "durationMs": 101.5, "status": 200},
+        {"name": "campuses", "durationMs": 40.9, "status": 200},
+        {"name": "teaching-periods", "durationMs": 101.3, "status": 200},
+        {"name": "unit-roles", "durationMs": 41.2, "status": 200},
+        {"name": "projects", "durationMs": 1071.1, "status": 200}
+      ]
+    },
+    {
+      "run": 1,
+      "mode": "after",
+      "totalMs": 400.2,
+      "requests": [
+        {"name": "settings", "durationMs": 54.5, "status": 200},
+        {"name": "campuses", "durationMs": 29.4, "status": 200},
+        {"name": "teaching-periods", "durationMs": 35.3, "status": 200},
+        {"name": "unit-roles", "durationMs": 41.9, "status": 200},
+        {"name": "projects", "durationMs": 308.9, "status": 200}
+      ]
+    },
+    {
+      "run": 2,
+      "mode": "after",
+      "totalMs": 364.8,
+      "requests": [
+        {"name": "settings", "durationMs": 39.6, "status": 200},
+        {"name": "campuses", "durationMs": 18.1, "status": 200},
+        {"name": "teaching-periods", "durationMs": 66.4, "status": 200},
+        {"name": "unit-roles", "durationMs": 37.5, "status": 200},
+        {"name": "projects", "durationMs": 257.6, "status": 200}
+      ]
+    },
+    {
+      "run": 2,
+      "mode": "before",
+      "totalMs": 1146.2,
+      "requests": [
+        {"name": "settings", "durationMs": 14.6, "status": 200},
+        {"name": "campuses", "durationMs": 9.9, "status": 200},
+        {"name": "teaching-periods", "durationMs": 49, "status": 200},
+        {"name": "unit-roles", "durationMs": 38.7, "status": 200},
+        {"name": "projects", "durationMs": 241.5, "status": 200}
+      ]
+    },
+    {
+      "run": 3,
+      "mode": "before",
+      "totalMs": 1125.1,
+      "requests": [
+        {"name": "settings", "durationMs": 41.9, "status": 200},
+        {"name": "campuses", "durationMs": 19.2, "status": 200},
+        {"name": "teaching-periods", "durationMs": 25.8, "status": 200},
+        {"name": "unit-roles", "durationMs": 20.5, "status": 200},
+        {"name": "projects", "durationMs": 220.4, "status": 200}
+      ]
+    },
+    {
+      "run": 3,
+      "mode": "after",
+      "totalMs": 588.8,
+      "requests": [
+        {"name": "settings", "durationMs": 92.5, "status": 200},
+        {"name": "campuses", "durationMs": 64.3, "status": 200},
+        {"name": "teaching-periods", "durationMs": 103.4, "status": 200},
+        {"name": "unit-roles", "durationMs": 65, "status": 200},
+        {"name": "projects", "durationMs": 391.6, "status": 200}
+      ]
+    },
+    {
+      "run": 4,
+      "mode": "after",
+      "totalMs": 333.8,
+      "requests": [
+        {"name": "settings", "durationMs": 20.6, "status": 200},
+        {"name": "campuses", "durationMs": 21.3, "status": 200},
+        {"name": "teaching-periods", "durationMs": 27.1, "status": 200},
+        {"name": "unit-roles", "durationMs": 34, "status": 200},
+        {"name": "projects", "durationMs": 285.4, "status": 200}
+      ]
+    },
+    {
+      "run": 4,
+      "mode": "before",
+      "totalMs": 1123.9,
+      "requests": [
+        {"name": "settings", "durationMs": 20, "status": 200},
+        {"name": "campuses", "durationMs": 26.2, "status": 200},
+        {"name": "teaching-periods", "durationMs": 38.2, "status": 200},
+        {"name": "unit-roles", "durationMs": 30.4, "status": 200},
+        {"name": "projects", "durationMs": 229.6, "status": 200}
+      ]
+    },
+    {
+      "run": 5,
+      "mode": "before",
+      "totalMs": 1095,
+      "requests": [
+        {"name": "settings", "durationMs": 24, "status": 200},
+        {"name": "campuses", "durationMs": 13.4, "status": 200},
+        {"name": "teaching-periods", "durationMs": 20.6, "status": 200},
+        {"name": "unit-roles", "durationMs": 20.8, "status": 200},
+        {"name": "projects", "durationMs": 223.1, "status": 200}
+      ]
+    },
+    {
+      "run": 5,
+      "mode": "after",
+      "totalMs": 193.6,
+      "requests": [
+        {"name": "settings", "durationMs": 28.8, "status": 200},
+        {"name": "campuses", "durationMs": 14.1, "status": 200},
+        {"name": "teaching-periods", "durationMs": 17.7, "status": 200},
+        {"name": "unit-roles", "durationMs": 24.1, "status": 200},
+        {"name": "projects", "durationMs": 146.6, "status": 200}
+      ]
+    }
+  ]
+}

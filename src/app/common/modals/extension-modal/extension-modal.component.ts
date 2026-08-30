@@ -5,7 +5,6 @@ import {ErrorStateMatcher} from '@angular/material/core';
 import {MatDatepickerInputEvent} from '@angular/material/datepicker';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {Task, TaskComment, TaskCommentService} from 'src/app/api/models/doubtfire-model';
-import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from '../../services/alert.service';
 
 /** Error when invalid control is dirty, touched, or submitted. */
@@ -19,20 +18,26 @@ export class ReasonErrorStateMatcher implements ErrorStateMatcher {
 @Component({
   selector: 'extension-modal',
   templateUrl: './extension-modal.component.html',
+  styleUrl: './extension-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
 export class ExtensionModalComponent {
   protected reasonMinLength: number = 15;
   protected reasonMaxLength: number = 256;
+  submitting = false;
+  errorMessage = '';
+  private allowClose = false;
+  private dateChanged = false;
   constructor(
     public dialogRef: MatDialogRef<ExtensionModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: {task: Task; afterApplication?: () => void},
+    @Inject(LOCALE_ID) public currentLocale: string,
     private alerts: AlertService,
+    private taskComments: TaskCommentService,
   ) {}
 
   matcher = new ReasonErrorStateMatcher();
-  currentLocale = AppInjector.get(LOCALE_ID);
   extensionData = new FormGroup({
     extensionReason: new FormControl('', [
       Validators.required,
@@ -64,20 +69,46 @@ export class ExtensionModalComponent {
   maxDate = this.data.task.localDeadlineDate(); // deadline, hard deadline
   extensionDate = new Date(this.minDate);
   addEvent(type: string, event: MatDatepickerInputEvent<Date>) {
-    this.extensionDate = new Date(event.value);
+    if (event.value) {
+      this.extensionDate = new Date(event.value);
+      this.dateChanged = true;
+    }
+  }
+
+  public get isDirty(): boolean {
+    return this.extensionData.dirty || this.dateChanged;
+  }
+
+  public canClose(): boolean {
+    if (this.allowClose || !this.isDirty) {
+      return true;
+    }
+
+    return globalThis.confirm('Discard this extension request? Your entered details will be lost.');
+  }
+
+  public requestClose(): void {
+    this.dialogRef.close();
   }
 
   private scrollCommentsDown(): void {
     setTimeout(() => {
       const objDiv = document.querySelector('div.comments-body');
-      // let wrappedResult = angular.element(objDiv);
-      objDiv.scrollTop = objDiv.scrollHeight;
+      if (objDiv instanceof HTMLElement) {
+        objDiv.scrollTop = objDiv.scrollHeight;
+      }
     }, 50);
   }
 
-  submitApplication() {
-    const tcs: TaskCommentService = AppInjector.get(TaskCommentService);
-    tcs
+  submitApplication(): void {
+    if (this.submitting || this.extensionData.invalid) {
+      this.extensionData.markAllAsTouched();
+      return;
+    }
+
+    this.submitting = true;
+    this.errorMessage = '';
+    this.taskComments
       .requestExtension(
         this.extensionData.controls.extensionReason.value,
         this.extensionDuration,
@@ -91,10 +122,14 @@ export class ExtensionModalComponent {
           if (typeof this.data.afterApplication === 'function') {
             this.data.afterApplication();
           }
+          this.allowClose = true;
+          this.dialogRef.close();
         }).bind(this),
 
-        error: ((response: never) => {
-          this.alerts.error('Error requesting extension ' + response);
+        error: (() => {
+          this.submitting = false;
+          this.errorMessage = 'The extension request could not be sent. Please try again.';
+          this.alerts.error(this.errorMessage, 4000);
         }).bind(this),
       });
   }

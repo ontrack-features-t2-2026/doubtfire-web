@@ -12,6 +12,8 @@ import {
   BaseAudioRecorderComponent,
   RecordingEvent,
 } from 'src/app/common/audio-recorder/audio/base-audio-recorder';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
+import {AudioPlaybackCoordinatorService} from 'src/app/common/services/audio-playback-coordinator.service';
 import {MediaRecorderService} from 'src/app/common/services/recorder-service';
 
 @Component({
@@ -38,8 +40,10 @@ export class IntelligentDiscussionRecorderComponent
   constructor(
     private mediaRecorderService: MediaRecorderService,
     private taskCommentService: TaskCommentService,
+    playbackCoordinator: AudioPlaybackCoordinatorService,
+    appLifecycle: AppLifecycleService,
   ) {
-    super(mediaRecorderService);
+    super(mediaRecorderService, playbackCoordinator, appLifecycle);
   }
 
   ngAfterViewInit() {
@@ -96,7 +100,7 @@ export class IntelligentDiscussionRecorderComponent
 
       this.canvas.width = WIDTH = this.canvas.clientWidth;
       this.canvas.height = HEIGHT = this.canvas.clientHeight;
-      requestAnimationFrame(draw);
+      this.scheduleVisualisationFrame(draw);
       analyser.getByteTimeDomainData(dataArray);
       analyser.getByteFrequencyData(dataArray);
 

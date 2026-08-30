@@ -34,6 +34,38 @@
   min-width: 0;
 }
 
+.progress-burndown__summary {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+
+  > div {
+    background: #f7f7fa;
+    border: 1px solid #dddde7;
+    border-radius: 0.5rem;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+  }
+
+  dt {
+    align-items: center;
+    color: #555565;
+    display: flex;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.4rem;
+    margin: 0;
+  }
+
+  dd {
+    color: #25252f;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0.25rem 0 0;
+  }
+}
+
 .progress-burndown__legend-item {
   display: inline-flex;
   align-items: center;
@@ -48,14 +80,18 @@
   font: inherit;
   line-height: 1.25;
   cursor: pointer;
-
-  &:hover {
-    background: rgba(127, 127, 127, 0.16);
-  }
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 
   &:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 2px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .progress-burndown__legend-item:hover {
+    background: rgba(127, 127, 127, 0.16);
   }
 }
 
@@ -127,6 +163,10 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.4rem;
+  }
+
+  .progress-burndown__summary {
+    grid-template-columns: 1fr;
   }
 
   .progress-burndown__legend-item {

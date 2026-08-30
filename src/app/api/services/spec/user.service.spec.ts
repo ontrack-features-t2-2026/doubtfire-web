@@ -54,6 +54,8 @@ describe('UserService', () => {
         lastName: 'renzella',
         email: 'jake@jake.jake',
         displayPeerProgress: false,
+        institutionalIdentityManaged: true,
+        emailEditable: false,
       });
     });
 
@@ -76,6 +78,8 @@ describe('UserService', () => {
       receive_feedback_notifications: false,
       receive_task_notifications: false,
       display_peer_progress: false,
+      institutional_identity_managed: true,
+      email_editable: false,
     });
   });
 

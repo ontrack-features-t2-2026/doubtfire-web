@@ -10,12 +10,18 @@
     <div class="pb-3">
       <ol>
         @for (file of extraFiles; track file) {
-          <li class="flex items-center justify-between border-b-2 border-b-gray-100 py-1">
-            <div class="flex items-center justify-between gap-1">
-              <mat-icon>{{ icons[file.kind] }}</mat-icon>
-              {{ file.name }}
+          <li class="portfolio-extra-file">
+            <div class="portfolio-extra-file__name">
+              <mat-icon aria-hidden="true">{{ icons[file.kind] }}</mat-icon>
+              <span>{{ file.name }}</span>
             </div>
-            <button color="primary" mat-button (click)="deleteFileFromPortfolio(file)">
+            <button
+              color="primary"
+              mat-button
+              type="button"
+              [attr.aria-label]="'Remove ' + file.name + ' from portfolio'"
+              (click)="deleteFileFromPortfolio(file)"
+            >
               Remove
             </button>
           </li>
@@ -36,6 +42,7 @@
       </mat-form-field>
     </div>
     <f-file-uploader
+      class="portfolio-file-uploader"
       [files]="uploadFileType"
       [isUploading]="isUploading"
       [onSuccess]="addNewFilesToPortfolio.bind(this)"
@@ -45,7 +52,7 @@
     >
     </f-file-uploader>
   </mat-card-content>
-  <mat-card-footer class="flex w-full justify-between p-3">
+  <mat-card-footer class="portfolio-step-actions">
     <button mat-raised-button (click)="advanceActiveTab(-1)">Back</button>
     <button color="primary" mat-raised-button (click)="advanceActiveTab(1)">Next</button>
   </mat-card-footer>

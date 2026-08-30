@@ -1,19 +1,39 @@
 .notification-settings {
-  gap: 12px;
-  padding: 12px 0;
+  border: 1px solid #d4d4d8;
+  border-radius: 12px;
+  gap: 10px;
+  margin-block: 16px;
+  padding: 16px;
+  width: 100%;
 }
 
 .notification-settings h3,
 .notification-settings__intro {
+  color: #52525b;
   margin: 0;
 }
 
 .notification-setting {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  display: grid;
+  gap: 2px;
+  min-height: 64px;
+  padding: 8px 10px;
 }
 
-.notification-setting small {
-  margin-left: 32px;
+.notification-setting mat-checkbox {
+  width: 100%;
+}
+
+.notification-setting__help {
+  color: #52525b;
+  line-height: 1.4;
+  padding: 0 8px 4px 40px;
+}
+
+@media (max-width: 420px) {
+  .notification-settings {
+    padding: 14px;
+  }
 }

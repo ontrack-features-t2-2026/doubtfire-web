@@ -72,10 +72,11 @@ describe('ProjectDashboardComponent task selection', () => {
     expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
   });
 
-  it('returns to the dashboard after the selected task submission completes', () => {
+  it('keeps the submitted task selected after its upload completes', () => {
     taskSubmissionCompleted$.next({project, definition: selectedTaskDefinition} as Task);
 
-    expect(component.selectedTaskDefinition$.value).toBeNull();
+    expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
+    expect(component.mobilePane).toBe('task');
   });
 
   it('ignores submission events from another project or task definition', () => {

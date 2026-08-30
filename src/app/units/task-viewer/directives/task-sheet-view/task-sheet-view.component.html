@@ -2,7 +2,10 @@
   @switch (taskDef) {
     @case (taskDef) {
       @if (taskDef?.hasTaskSheet) {
-        <f-pdf-viewer [pdfUrl]="taskDef.getTaskPDFUrl()"></f-pdf-viewer>
+        <f-pdf-viewer
+          [filename]="taskDef.effectiveTaskSheetFilename"
+          [pdfUrl]="taskDef.getTaskPDFUrl()"
+        ></f-pdf-viewer>
       } @else {
         <div fxFlexFill fxLayout="column" fxLayoutAlign="center center">
           <mat-icon>subtitles_off</mat-icon> No Task Sheet

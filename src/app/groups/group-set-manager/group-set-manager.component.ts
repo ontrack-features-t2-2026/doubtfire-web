@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+} from '@angular/core';
 import {FormControl} from '@angular/forms';
 import {Observable, map, startWith} from 'rxjs';
 import {Group, GroupSet, Project, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
@@ -12,7 +19,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class GroupSetManagerComponent implements OnInit {
+export class GroupSetManagerComponent implements OnInit, OnChanges {
   @Input() project: Project;
   @Input() unit: Unit;
   @Input() selectedGroupSet: GroupSet;
@@ -37,6 +44,13 @@ export class GroupSetManagerComponent implements OnInit {
       startWith(''),
       map((value) => this._filter(value)),
     );
+    this.selectCurrentProjectGroup();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['project'] || changes['selectedGroupSet']) {
+      this.selectCurrentProjectGroup();
+    }
   }
 
   get groupSelectHandler() {
@@ -108,8 +122,15 @@ export class GroupSetManagerComponent implements OnInit {
         },
         error: (error) => {
           this.selectedGroup.name = this.originalGroupName;
-          this.alertService.error(`Failed to update gorup: ${error}`, 6000);
+          this.alertService.error(`Failed to update group: ${error}`, 6000);
         },
       });
+  }
+
+  private selectCurrentProjectGroup(): void {
+    const currentGroup = this.project?.groupForGroupSet(this.selectedGroupSet);
+    if (currentGroup && currentGroup.id !== this.selectedGroup?.id) {
+      this.newGroupSelected(currentGroup);
+    }
   }
 }

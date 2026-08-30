@@ -1,0 +1,19 @@
+<main aria-labelledby="verification-title" class="verification">
+  <mat-icon aria-hidden="true">
+    {{
+      state === 'verified'
+        ? 'mark_email_read'
+        : state === 'error'
+          ? 'error_outline'
+          : 'hourglass_top'
+    }}
+  </mat-icon>
+  <h1 id="verification-title">Additional notification email</h1>
+  <p aria-live="polite">{{ message }}</p>
+
+  @if (state === 'verified') {
+    <a color="primary" mat-flat-button routerLink="/edit_profile">Review notification settings</a>
+  } @else if (state === 'error') {
+    <a mat-stroked-button routerLink="/edit_profile">Request a new verification link</a>
+  }
+</main>

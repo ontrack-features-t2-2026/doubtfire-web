@@ -68,7 +68,7 @@ export class TaskPlannerCardComponent implements OnInit {
     const url = window.URL.createObjectURL(blob);
     const filename = `${this.project.unit.code}-tasks-${this.unit.gradeAbbreviation(this.selectedDownloadGrade)}.ics`;
 
-    this.fileDownloader.downloadBlobToFile(url, filename);
+    this.fileDownloader.downloadBlobToFileWithFeedback(url, filename);
     this.fileDownloader.releaseBlob(url);
   }
 }

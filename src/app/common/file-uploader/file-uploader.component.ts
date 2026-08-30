@@ -96,6 +96,7 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   @Input() onFailure?: (response) => void;
   @Input() onComplete?: () => void;
   @Input() onClickFailureCancel?: () => void;
+  @Input() onCancelUpload?: () => void;
 
   @Input() isUploading: boolean;
   @Input() isReady: boolean;
@@ -129,6 +130,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   ) {}
 
   private externalName: string = 'OnTrack';
+  private activeRequest?: XMLHttpRequest;
+  private uploadWasCancelled = false;
 
   ngOnInit(): void {
     this.showUploader = !this.asButton;
@@ -222,6 +225,10 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     return this.uploadZones.every((zone) => zone.model?.length);
   }
 
+  hasSelectedFiles(): boolean {
+    return this.uploadZones.some((zone) => zone.model?.length);
+  }
+
   updateReadyState(ready: boolean) {
     this.isReady = ready;
     this.isReadyChange.emit(ready);
@@ -256,6 +263,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     this.isUploading = true;
 
     const xhr = new XMLHttpRequest();
+    this.activeRequest = xhr;
+    this.uploadWasCancelled = false;
     const form = new FormData();
 
     // Append files
@@ -284,7 +293,12 @@ export class FileUploaderComponent implements OnInit, OnChanges {
 
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
-        setTimeout(() => {
+        this.activeRequest = undefined;
+        if (this.uploadWasCancelled) {
+          return;
+        }
+
+        queueMicrotask(() => {
           this.uploadingInfo.complete = true;
           let response;
           try {
@@ -306,13 +320,13 @@ export class FileUploaderComponent implements OnInit, OnChanges {
               if (this.resetAfterUpload) {
                 this.resetUploader();
               }
-            }, 2500);
+            }, 800);
           } else {
             this.onFailure?.(response);
             this.uploadingInfo.success = false;
             this.uploadingInfo.error = (response?.error ?? 'Unknown error') as string;
           }
-        }, 2000);
+        });
       }
     };
     const method = this.method ?? 'POST';
@@ -322,6 +336,19 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     xhr.setRequestHeader('Username', this.userService.currentUser.username);
 
     xhr.send(form);
+  }
+
+  cancelUpload(): void {
+    if (!this.activeRequest || !this.isUploading || this.uploadingInfo?.complete) {
+      return;
+    }
+
+    this.uploadWasCancelled = true;
+    this.activeRequest.abort();
+    this.activeRequest = undefined;
+    this.uploadingInfo = null;
+    this.isUploading = false;
+    this.onCancelUpload?.();
   }
 
   // onClickFailureCancelInternal() {

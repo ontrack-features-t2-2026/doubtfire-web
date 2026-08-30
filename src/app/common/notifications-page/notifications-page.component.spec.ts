@@ -40,6 +40,7 @@ describe('NotificationsPageComponent', () => {
     list: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
     markAllRead: ReturnType<typeof vi.fn>;
+    deleteAll: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
   };
   let authenticationService: {afterAuthCall: ReturnType<typeof vi.fn>};
@@ -95,6 +96,7 @@ describe('NotificationsPageComponent', () => {
       list: vi.fn().mockReturnValue(list),
       markRead: vi.fn(() => answers('markRead', undefined)),
       markAllRead: vi.fn(() => answers('markAllRead', undefined)),
+      deleteAll: vi.fn(() => answers('deleteAll', 2)),
       remove: vi.fn(() => answers('remove', undefined)),
     };
     // Signed in and settled, unless a test says otherwise.
@@ -424,6 +426,64 @@ describe('NotificationsPageComponent', () => {
       expect(alerts.success).toHaveBeenCalledWith('All notifications marked as read');
     });
 
+    it('shows both bulk actions with visible labels on the page', () => {
+      expect(pageText()).toContain('Mark all read');
+      expect(pageText()).toContain('Delete all');
+    });
+
+    it('asks with the affected count before deleting all', () => {
+      component.confirmDeleteAll();
+
+      expect(confirmationModal.show).toHaveBeenCalledTimes(1);
+      expect(confirmationModal.show.mock.calls[0][0]).toBe('Delete all notifications');
+      expect(confirmationModal.show.mock.calls[0][1]).toContain('all 2 notifications');
+      expect(notificationService.deleteAll).not.toHaveBeenCalled();
+    });
+
+    it('deletes the confirmed snapshot and reaches the empty state', () => {
+      component.confirmDeleteAll();
+      confirmed();
+      fixture.detectChanges();
+
+      expect(notificationService.deleteAll).toHaveBeenCalledWith(2);
+      expect(subscribedTo.has('deleteAll')).toBe(true);
+      expect(component.notifications).toHaveLength(0);
+      expect(pageText()).toContain('You have no notifications yet');
+      expect(alerts.success).toHaveBeenCalledWith('2 notifications deleted');
+    });
+
+    it('does not delete all when the confirmation is cancelled', () => {
+      component.confirmDeleteAll();
+      cancelled();
+
+      expect(notificationService.deleteAll).not.toHaveBeenCalled();
+      expect(component.notifications).toHaveLength(2);
+    });
+
+    it('keeps a notification that arrives after the confirmed boundary', () => {
+      component.confirmDeleteAll();
+      component.notifications.unshift(notification(3));
+
+      confirmed();
+      fixture.detectChanges();
+
+      expect(notificationService.deleteAll).toHaveBeenCalledWith(2);
+      expect(component.notifications.map((row) => row.id)).toEqual([3]);
+    });
+
+    it('keeps every row and reports an error when delete all fails', () => {
+      notificationService.deleteAll.mockReturnValue(
+        throwError(() => new Error('DELETE all failed')),
+      );
+
+      component.confirmDeleteAll();
+      confirmed();
+      fixture.detectChanges();
+
+      expect(component.notifications).toHaveLength(2);
+      expect(alerts.error).toHaveBeenCalledWith('Your notifications could not be deleted');
+    });
+
     it('keeps the focused action available but disabled when nothing is unread', () => {
       const refresh = reloadWith();
       refresh.next([read(2), read(1)]);
@@ -469,12 +529,11 @@ describe('NotificationsPageComponent', () => {
       expect(button.getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('offers it on a phone, where nothing refreshes the shared unread count', () => {
+    it('offers it before the shared unread-count refresh completes', () => {
       // The button is drawn from the rows this page loaded and not from
-      // NotificationService.unreadCount$. That subject seeds at zero and the
-      // only thing that refreshes it is the bell, which the header does not
-      // render below xs. Reading it here would hide this button on the one size
-      // where this page is the only way to the notifications at all.
+      // NotificationService.unreadCount$. That subject seeds at zero and is
+      // refreshed independently by the bell, so it can still be zero while the
+      // page has already loaded unread rows.
       expect(markAllButton()).not.toBeNull();
       expect(notificationService.list).toHaveBeenCalledTimes(1);
     });

@@ -4,7 +4,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatSelectModule} from '@angular/material/select';
+import {MatSelectChange, MatSelectModule} from '@angular/material/select';
 import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {ActivatedRoute} from '@angular/router';
@@ -21,6 +21,8 @@ describe('ProjectPlanComponent', () => {
   let component: ProjectPlanComponent;
   let fixture: ComponentFixture<ProjectPlanComponent>;
   let project: Project;
+  let projectService: {update: ReturnType<typeof vi.fn>};
+  let calendarModal: {show: ReturnType<typeof vi.fn>};
 
   const buildProject = (myRole: string, studentId: number): Project =>
     ({
@@ -39,6 +41,8 @@ describe('ProjectPlanComponent', () => {
 
   const createComponent = async (currentProject: Project) => {
     project = currentProject;
+    projectService = {update: vi.fn(() => of(project))};
+    calendarModal = {show: vi.fn()};
 
     await TestBed.configureTestingModule({
       declarations: [ProjectPlanComponent],
@@ -51,9 +55,9 @@ describe('ProjectPlanComponent', () => {
             gradeLabel: (grade: number) => (grade === 0 ? 'Pass' : 'Credit'),
           },
         },
-        {provide: ProjectService, useValue: {update: vi.fn()}},
+        {provide: ProjectService, useValue: projectService},
         {provide: AlertService, useValue: {success: vi.fn(), error: vi.fn()}},
-        {provide: CalendarModalService, useValue: {show: vi.fn()}},
+        {provide: CalendarModalService, useValue: calendarModal},
         {provide: UserService, useValue: {currentUser: {id: 25}}},
         {provide: ActivatedRoute, useValue: {parent: null}},
       ],
@@ -88,5 +92,39 @@ describe('ProjectPlanComponent', () => {
 
     expect(component.viewingOtherStudentProject).toBe(true);
     expect(await (await targetGradeSelect()).isDisabled()).toBe(true);
+  });
+
+  it('groups target grade and calendar access as clear primary controls', async () => {
+    await createComponent(buildProject('Student', 25));
+
+    const controls: HTMLElement = fixture.nativeElement.querySelector('.planner-primary-controls');
+    const calendarButton: HTMLButtonElement = controls.querySelector('button');
+
+    expect(controls.getAttribute('aria-label')).toBe('Task planner controls');
+    expect(controls.querySelector('[aria-label="Target grade"]')).not.toBeNull();
+    expect(calendarButton.textContent).toContain('Open calendar');
+
+    calendarButton.click();
+    expect(calendarModal.show).toHaveBeenCalledWith(null);
+  });
+
+  it('uses a finite initial planner height before child items are available', async () => {
+    await createComponent(buildProject('Student', 25));
+
+    const surface = fixture.nativeElement.querySelector('.task-planner-surface') as HTMLElement;
+    expect(surface.style.height).toBe('86px');
+    expect(surface.style.height).not.toContain('NaN');
+  });
+
+  it('refreshes the same planner after a successful target-grade change', async () => {
+    await createComponent(buildProject('Student', 25));
+    const refreshItems = vi.fn();
+    component.planner = {refreshItems} as never;
+
+    component.onTargetGradeChange({value: 1} as MatSelectChange);
+
+    expect(projectService.update).toHaveBeenCalledWith(project);
+    expect(project.targetGrade).toBe(1);
+    expect(refreshItems).toHaveBeenCalledWith(false);
   });
 });

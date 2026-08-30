@@ -51,13 +51,13 @@ describe('TaskPlannerCardComponent', () => {
   let component: TaskPlannerCardComponent;
   let fixture: ComponentFixture<TaskPlannerCardComponent>;
   let fileDownloaderStub: {
-    downloadBlobToFile: ReturnType<typeof vi.fn>;
+    downloadBlobToFileWithFeedback: ReturnType<typeof vi.fn>;
     releaseBlob: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     fileDownloaderStub = {
-      downloadBlobToFile: vi.fn(),
+      downloadBlobToFileWithFeedback: vi.fn(),
       releaseBlob: vi.fn(),
     };
 
@@ -120,7 +120,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadIcs();
 
-    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).not.toHaveBeenCalled();
     expect(fileDownloaderStub.releaseBlob).not.toHaveBeenCalled();
   });
 
@@ -139,7 +139,7 @@ describe('TaskPlannerCardComponent', () => {
     const [blobArg] = createObjectURLSpy.mock.calls[0];
     expect((blobArg as Blob).type).toBe('text/calendar;charset=utf-8');
     // Default project.targetGrade is 0 (Pass, abbreviation 'P').
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P.ics',
     );
@@ -213,7 +213,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadIcs();
 
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-C.ics',
     );

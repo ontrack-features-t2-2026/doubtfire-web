@@ -13,4 +13,18 @@
 .demo-mode-banner a,
 .demo-mode-banner button {
   color: inherit;
+  min-height: 44px;
+}
+
+@media (max-width: 600px) {
+  .demo-mode-banner {
+    gap: 0.35rem 0.65rem;
+    justify-content: flex-start;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .demo-mode-banner span {
+    flex: 1 1 calc(100% - 3rem);
+    line-height: 1.3;
+  }
 }

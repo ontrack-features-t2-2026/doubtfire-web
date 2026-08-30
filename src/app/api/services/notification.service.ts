@@ -59,6 +59,7 @@ export class NotificationService extends CachedEntityService<Notification> {
     this.mapping.addKeys(
       'id',
       'notificationType',
+      'event',
       'message',
       'link',
       {
@@ -218,6 +219,33 @@ export class NotificationService extends CachedEntityService<Notification> {
       }),
       takeUntil(this.sessionEnded),
     );
+  }
+
+  /**
+   * Delete every notification the user had seen when they confirmed the bulk
+   * action, without deleting anything that arrived afterwards.
+   *
+   * `throughId` is the highest id in the confirmed snapshot. The API applies
+   * it inside the current user's association, so this is both account-scoped
+   * and safe against a new notification arriving while the dialog is open.
+   */
+  public deleteAll(throughId: number): Observable<number> {
+    const removed = this.cache.currentValues.filter((notification) => notification.id <= throughId);
+    const removedUnread = removed.filter((notification) => !notification.isRead).length;
+
+    return this.apiHttpClient
+      .delete<{success: boolean; deleted_count: number}>(`${API_URL}/notifications`, {
+        params: {through_id: throughId},
+      })
+      .pipe(
+        map((response) => response.deleted_count),
+        tap(() => {
+          removed.map((notification) => notification.key).forEach((key) => this.cache.delete(key));
+          this.adjustUnreadCount(-removedUnread);
+          this.resyncUnreadCount();
+        }),
+        takeUntil(this.sessionEnded),
+      );
   }
 
   /**

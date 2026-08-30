@@ -3,10 +3,9 @@ import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject} from 'rxjs';
-import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {Project, Task, TaskDefinition, TaskStatusEnum} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {FUnitTaskListComponent} from './unit-task-list.component';
-
-const emptyProvider = {};
 
 const flushTaskSelection = async (): Promise<void> => {
   await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -32,11 +31,13 @@ const taskForDefinition = (
   definition: TaskDefinition,
   topWeight: number,
   numNewComments = 0,
+  status: TaskStatusEnum = 'not_started',
 ): Task =>
   ({
     definition,
     topWeight,
     numNewComments,
+    status,
   }) as Task;
 
 const studentProject = () =>
@@ -63,19 +64,30 @@ describe('FUnitTaskListComponent', () => {
   let component: FUnitTaskListComponent;
   let fixture: ComponentFixture<FUnitTaskListComponent>;
   let routeParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routeQueryParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routerNavigate: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
     routeParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routeQueryParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routerNavigate = vi.fn().mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
       declarations: [FUnitTaskListComponent],
       providers: [
-        {provide: Router, useValue: emptyProvider},
+        {
+          provide: Router,
+          useValue: {navigate: routerNavigate, createUrlTree: vi.fn()},
+        },
+        {provide: UserService, useValue: {currentUser: {id: 99}}},
         {
           provide: ActivatedRoute,
-          useValue: {paramMap: routeParamMap$.asObservable()},
+          useValue: {
+            paramMap: routeParamMap$.asObservable(),
+            queryParamMap: routeQueryParamMap$.asObservable(),
+          },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -104,6 +116,22 @@ describe('FUnitTaskListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('releases the task list scrollbar to the phone document while preserving desktop styles', () => {
+    const styles = (
+      FUnitTaskListComponent as unknown as {
+        ɵcmp: {styles: string[]};
+      }
+    ).ɵcmp.styles.join('\n');
+
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-y:\s*visible/,
+    );
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-x:\s*clip/,
+    );
+    expect(styles).toMatch(/\.scrollable[^{]*\{[^}]*overflow-y:\s*scroll/);
   });
 
   it('follows task route changes without recreating the component', async () => {
@@ -479,5 +507,71 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+
+  it('intersects canonical status routing with text search and clears either filter', () => {
+    const completeAlpha = taskDefinition(1, 'A1');
+    completeAlpha.name = 'Alpha complete';
+    const completeBeta = taskDefinition(2, 'B1');
+    completeBeta.name = 'Beta complete';
+    const workingAlpha = taskDefinition(3, 'A2');
+    workingAlpha.name = 'Alpha working';
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [completeAlpha, completeBeta, workingAlpha];
+    component.tasks = [
+      taskForDefinition(completeAlpha, 1, 0, 'complete'),
+      taskForDefinition(completeBeta, 2, 0, 'complete'),
+      taskForDefinition(workingAlpha, 3, 0, 'working_on_it'),
+    ];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'complete'}));
+    component.searchText = 'Alpha';
+    component.applyFilters();
+
+    expect(component.activeStatusFilter).toBe('complete');
+    expect(component.activeStatusFilterLabel).toBe('Complete');
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha]);
+
+    component.clearSearch();
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta]);
+
+    component.setStatusFilter(null);
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta, workingAlpha]);
+    expect(routerNavigate).toHaveBeenLastCalledWith([], {
+      relativeTo: expect.anything(),
+      queryParams: {taskStatus: null, taskView: 'tasks'},
+      queryParamsHandling: 'merge',
+    });
+  });
+
+  it('rejects unknown status query values and preserves a zero-result canonical filter', () => {
+    const task = taskDefinition(1, 'A1');
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [task];
+    component.tasks = [taskForDefinition(task, 1, 0, 'not_started')];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'invented-status'}));
+    expect(component.activeStatusFilter).toBeNull();
+    expect(component.filteredTaskDefinitions).toEqual([task]);
+
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'fail'}));
+    expect(component.activeStatusFilter).toBe('fail');
+    expect(component.filteredTaskDefinitions).toEqual([]);
+  });
+
+  it('stores view preferences under the current user and unit instead of a global key', () => {
+    component.project = studentProject();
+    component.taskDefinitions = [taskDefinition(1, 'A1')];
+
+    component.setSortBy('abbreviation');
+
+    expect(globalThis.localStorage.setItem).toHaveBeenCalledWith(
+      'ontrack.user.99.unitTaskList.20.viewPreferences',
+      expect.any(String),
+    );
   });
 });

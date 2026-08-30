@@ -11,3 +11,37 @@
 ::ng-deep .mat-mdc-option {
   height: 50px;
 }
+
+.task-status-actions {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.task-status-primary-actions {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  button {
+    min-height: 44px;
+    white-space: normal;
+  }
+}
+
+.task-status-actions > [mat-icon-button] {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+@media (max-width: 359.98px) {
+  .task-status-primary-actions button {
+    width: 100%;
+  }
+}

@@ -1,5 +1,4 @@
-import {ChangeDetectionStrategy, Component, Inject} from '@angular/core';
-import {DEMO_RELOAD} from '../demo-controls/demo-controls.component';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {DemoModeStore} from '../demo-mode.store';
 
 @Component({
@@ -10,13 +9,9 @@ import {DemoModeStore} from '../demo-mode.store';
   standalone: false,
 })
 export class DemoModeBannerComponent {
-  constructor(
-    readonly demoMode: DemoModeStore,
-    @Inject(DEMO_RELOAD) private reload: () => void,
-  ) {}
+  constructor(readonly demoMode: DemoModeStore) {}
 
   exitDemo(): void {
-    this.demoMode.reset();
-    this.reload();
+    this.demoMode.setEnabled(false);
   }
 }

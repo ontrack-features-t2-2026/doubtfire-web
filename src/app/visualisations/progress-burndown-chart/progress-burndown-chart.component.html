@@ -21,6 +21,24 @@
     </ngx-charts-line-chart>
   </div>
 
+  @if (summaries.length > 0) {
+    <dl aria-label="Current burndown summary" class="progress-burndown__summary">
+      @for (summary of summaries; track summary.name) {
+        <div [attr.data-series]="summary.name">
+          <dt>
+            <span
+              aria-hidden="true"
+              class="progress-burndown__legend-swatch"
+              [style.background-color]="summary.color"
+            ></span>
+            {{ summary.name }}
+          </dt>
+          <dd>{{ summary.remaining }}% remaining</dd>
+        </div>
+      }
+    </dl>
+  }
+
   @if (temp.length > 0) {
     <div
       aria-label="Burndown chart series visibility"
@@ -56,7 +74,7 @@
         <mat-icon aria-hidden="true">science</mat-icon>
 
         <span>
-          Demo peer median through today: anonymous aggregate sample data, not live cohort data.
+          Synthetic demo-only peer median through today. No individual peer data is shown.
         </span>
       </div>
     } @else {

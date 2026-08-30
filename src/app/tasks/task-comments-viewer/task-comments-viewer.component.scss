@@ -415,6 +415,13 @@ $comment-inner-border-radius: 4px;
     display: inline-block;
   }
 
+  .comment .document-bubble {
+    display: inline-block;
+    margin-left: 5px;
+    max-width: min(28rem, calc(100vw - 5rem));
+    min-width: 0;
+  }
+
   // Audio comments
   .comment .audio-bubble {
     @include base-bubble;
@@ -472,6 +479,11 @@ $comment-inner-border-radius: 4px;
     }
   }
 
+  .comment.comment-by-other-user .document-bubble {
+    margin-left: 0;
+    margin-right: 5px;
+  }
+
   .comment.comment-by-other-user .audio-bubble {
     margin-right: 5px;
     margin-left: 0;
@@ -525,5 +537,37 @@ $comment-inner-border-radius: 4px;
 
   #contextOverlay {
     position: absolute;
+  }
+}
+
+@media (max-width: 639.98px) {
+  :host {
+    display: block;
+    width: 100%;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .comments-panel {
+    height: auto !important;
+    min-height: calc(100dvh - var(--mobile-task-tabs-height));
+    overflow: visible;
+  }
+
+  .comments-body {
+    height: auto !important;
+    min-height: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .comments-scroll-content {
+    max-height: none;
+  }
+
+  .anchor,
+  .conversation-end,
+  .comments-footer {
+    scroll-margin-top: var(--mobile-sticky-offset);
   }
 }
