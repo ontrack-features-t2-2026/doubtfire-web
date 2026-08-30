@@ -1,0 +1,10 @@
+<div class="flex w-full flex-col items-center justify-center gap-2 p-6 text-center text-gray-400">
+  <mat-icon aria-hidden="true" class="scale-125">{{ icon }}</mat-icon>
+  <p class="text-base font-semibold text-gray-600">{{ heading }}</p>
+  <p class="text-sm text-gray-600">{{ message }}</p>
+  @if (actionLabel) {
+    <button class="mt-2" mat-stroked-button type="button" (click)="action.emit()">
+      {{ actionLabel }}
+    </button>
+  }
+</div>

@@ -15,6 +15,7 @@ import {AuthenticationService} from 'src/app/api/services/authentication.service
 import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {EmptyStateComponent} from '../empty-state/empty-state.component';
 import {ConfirmationModalService} from '../modals/confirmation-modal/confirmation-modal.service';
 import {NotificationsPageComponent} from './notifications-page.component';
 
@@ -107,6 +108,7 @@ describe('NotificationsPageComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [NotificationsPageComponent],
       imports: [
+        EmptyStateComponent,
         MatButtonModule,
         MatIconModule,
         MatListModule,
@@ -150,6 +152,23 @@ describe('NotificationsPageComponent', () => {
 
     expect(pageText()).toContain('You have no notifications yet');
     expect(rows()).toHaveLength(0);
+
+    // Discriminating: this fails if the empty view were skipped in favour of
+    // falling through to the list branch, which would render zero rows and no
+    // f-empty-state, but a naive text-only assertion above could still be
+    // fooled by stray markup. The list branch never renders this element.
+    expect(fixture.nativeElement.querySelector('f-empty-state')).not.toBeNull();
+  });
+
+  it('does not render the empty state while notifications are loading or the load failed', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
+
+    list.error(new Error('GET /notifications failed'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
   });
 
   it('says it could not load rather than claiming there is nothing', () => {
