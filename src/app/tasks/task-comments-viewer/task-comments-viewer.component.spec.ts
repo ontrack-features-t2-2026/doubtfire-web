@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {EMPTY} from 'rxjs';
@@ -46,5 +46,23 @@ describe('TaskCommentsViewerComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+});
+
+describe('TaskCommentsViewerComponent uploadFiles', () => {
+  it('does not write placeholder debug logging when a file is uploaded', () => {
+    const component = Object.create(TaskCommentsViewerComponent.prototype) as {
+      alerts: {error: ReturnType<typeof vi.fn>};
+      uploadFiles(event: unknown): void;
+    };
+    component.alerts = {error: vi.fn()};
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    // A rejected file type takes the alerts.error path and does not upload,
+    // which is enough to reach the end of uploadFiles where the log used to be.
+    component.uploadFiles([{type: 'text/plain'}]);
+
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
   });
 });
