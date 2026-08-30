@@ -198,7 +198,7 @@ export class FileUploaderComponent implements OnInit, OnChanges {
       if (upload.model?.length) {
         const name: string = upload.model[0].name.toLowerCase();
         const accepts: string[] = upload.accepts.map((ext: string) => ext.toLowerCase());
-        const valid = accepts.some((ext) => name.endsWith(ext));
+        const valid = accepts.some((ext) => name.endsWith(`.${ext}`));
         if (!valid) {
           upload.model = null;
           upload.display.error = true;
