@@ -247,3 +247,51 @@ button.btn-no-outline {
 #commentComposerFoter {
   border-top: none;
 }
+
+@media (max-width: 639.98px) {
+  .composer-container {
+    box-sizing: border-box;
+    gap: 4px;
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+
+    #textFieldContainer {
+      min-height: 44px;
+      margin-right: 0;
+    }
+  }
+
+  .composer-action-group {
+    flex: 0 0 auto;
+    margin-right: 0;
+  }
+
+  .composer-action-row {
+    gap: 4px;
+  }
+
+  button.btn-no-outline.composer-touch-action {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9999px;
+    background-color: #f8fafc;
+    color: #334155;
+    transform: none;
+  }
+
+  button.btn-no-outline.composer-touch-action:focus-visible {
+    outline: 2px solid #3939ff;
+    outline-offset: 2px;
+  }
+
+  button.btn-no-outline.composer-touch-action .message-inbox-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+  }
+}
