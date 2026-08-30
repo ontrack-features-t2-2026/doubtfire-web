@@ -4,7 +4,8 @@
 }
 
 h1 {
-  color: black;
+  // THM-M01: was hardcoded black.
+  color: var(--ot-color-text, #000);
   margin-top: 0;
 }
 
@@ -16,7 +17,7 @@ a {
 }
 
 p {
-  color: black;
+  color: var(--ot-color-text, #000);
 }
 
 .form-field {
