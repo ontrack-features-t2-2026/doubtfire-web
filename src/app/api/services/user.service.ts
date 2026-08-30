@@ -32,6 +32,7 @@ export class UserService extends CachedEntityService<User> {
       'receivePortfolioNotifications',
       'receiveFeedbackNotifications',
       'displayPeerProgress',
+      'themePreference',
       'hasRunFirstTimeSetup',
       'pronouns',
       'acceptedTiiEula',

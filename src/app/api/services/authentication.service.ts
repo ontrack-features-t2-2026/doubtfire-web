@@ -20,6 +20,7 @@ import {NotificationService} from 'src/app/api/services/notification.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {
   type AuthenticatedSettingsResponseFormat,
   DoubtfireConstants,
@@ -301,8 +302,23 @@ export class AuthenticationService {
     user.authenticationToken = response['auth_token'];
     user.authenticationTokenExpiry = response['auth_token_expiry'];
 
+    // This path also runs on the hourly token refresh, where the user is already
+    // signed in. Capture that before we overwrite currentUser so the server
+    // preference is only applied on a real sign-in, never re-applied on a refresh.
+    const wasAuthenticated = this.isAuthenticated();
+
     // Record the current user
     this.userService.currentUser = user;
+
+    // The account carries the theme choice across machines. On sign-in (or a
+    // startup session restore) the server value wins and is written back to local
+    // storage so the no-flash script agrees on the next load. A missing or invalid
+    // value is ignored and the local choice stands. This reads the server
+    // preference, it never writes one back, and it does not fire on a token refresh
+    // so a mid-session toggle is never clobbered.
+    if (!wasAuthenticated) {
+      AppInjector.get(ThemeService).applyServerPreference(user.themePreference);
+    }
 
     // Feature flags are part of authentication readiness. Consumers use their
     // current values synchronously, so do not load globals, publish authComplete
