@@ -33,7 +33,7 @@ export function readThemePreference(): ThemePreference {
     const raw = localStorage.getItem(THEME_STORAGE_KEY);
     return isThemePreference(raw) ? raw : 'system';
   } catch {
-    return 'system'; // private mode, blocked storage, quota
+    return 'system';
   }
 }
 

@@ -106,3 +106,10 @@ body.split-pane-resizing pdf-viewer {
 .mat-badge-accent .mat-badge-content {
   color: white;
 }
+
+// SPIKE (THM-M01): page frame follows the resolved theme in dark. The Material
+// dark theme (theme.scss) handles component chrome; this covers the raw body.
+:root[data-ot-theme='dark'] body {
+  background-color: var(--ot-color-page);
+  color: var(--ot-color-text);
+}

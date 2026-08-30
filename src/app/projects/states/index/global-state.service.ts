@@ -177,20 +177,21 @@ export class GlobalStateService implements OnDestroy {
 
   public setInboxState() {
     this._isInboxState = true;
-    // set background color to inbox grey
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    // THM-M01: inbox grey, was hardcoded #f5f5f5 inline. Onto the page token so it
+    // follows the resolved theme; the fallback keeps the legacy value pre-boot.
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
     this.resetHeight();
   }
 
   public goHome() {
     this.showHeader();
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
   }
 
   public setNotInboxState() {
     this._isInboxState = false;
-    // set background color to white
-    document.body.style.setProperty('background-color', '#fff');
+    // THM-M01: was hardcoded #fff inline.
+    document.body.style.setProperty('background-color', 'var(--ot-color-surface, #fff)');
     this.resetHeight();
   }
 
