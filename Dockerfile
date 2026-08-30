@@ -27,4 +27,4 @@ RUN npm ci --force --include=optional
 EXPOSE 9876
 
 # Launch - install on launch so that node_modules are updated in volume
-CMD /bin/bash -c 'npm install; npm start'
+CMD ["/bin/bash", "-c", "npm install && exec npm start"]
