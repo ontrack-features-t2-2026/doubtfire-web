@@ -3,6 +3,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {MatTableModule} from '@angular/material/table';
 import {Project} from 'src/app/api/models/project';
+import {Unit} from 'src/app/api/models/unit';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -31,9 +32,12 @@ describe('PortfoliosListComponent empty state', () => {
       declarations: [PortfoliosListComponent],
       imports: [MatTableModule, EmptyStateComponent],
       providers: [
-        {provide: TaskService, useValue: {}},
+        {
+          provide: TaskService,
+          useValue: {statusColors: new Map(), statusLabels: new Map()},
+        },
         {provide: UserService, useValue: {}},
-        {provide: GradeService, useValue: {}},
+        {provide: GradeService, useValue: {gradeValuesFor: () => [], gradeLabel: () => ''}},
         {provide: FileDownloaderService, useValue: {}},
         {provide: UnitService, useValue: {}},
         {provide: AlertService, useValue: {}},
@@ -47,6 +51,7 @@ describe('PortfoliosListComponent empty state', () => {
   it('renders the empty state only while the filtered list has no rows', () => {
     const fixture = TestBed.createComponent(PortfoliosListComponent);
     const component = fixture.componentInstance;
+    component.unit = {hasD2lMapping: () => false} as unknown as Unit;
     component.displayedColumns = ['student', 'name', 'tutor', 'tutorial'];
 
     fixture.detectChanges();
