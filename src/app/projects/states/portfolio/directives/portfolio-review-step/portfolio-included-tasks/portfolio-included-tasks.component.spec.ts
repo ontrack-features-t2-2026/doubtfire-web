@@ -7,8 +7,8 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {Unit} from 'src/app/api/models/unit';
-import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {PortfolioIncludedTasksComponent} from './portfolio-included-tasks.component';
 
 describe('PortfolioIncludedTasksComponent', () => {

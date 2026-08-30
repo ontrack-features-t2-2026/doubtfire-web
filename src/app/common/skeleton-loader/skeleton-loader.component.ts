@@ -1,5 +1,5 @@
-import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
 import {NgxSkeletonLoaderModule} from 'ngx-skeleton-loader';
+import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
 
 export type SkeletonShape = 'row' | 'card';
 
