@@ -10,17 +10,18 @@
 All 43 original PNG issues are traced below. Every selected implementation batch has code and focused
 test evidence, but this is not an unconditional release sign-off:
 
-- the merged web tree passes typecheck, full lint, a 44-file/362-test cross-batch union, and a
-  development bundle build;
-- the production optimiser is still blocked by runner memory (host exit 134; project Node 22
-  container exit 137) and must be rerun on a memory-sufficient release runner;
+- the merged web tree passes typecheck, full lint, a 44-file/362-test cross-batch union, and both
+  development and production bundle builds;
+- the final production optimiser rerun passed in the project Node 22 image in 86.695 seconds after
+  rerunnable containers were stopped and Node received a 6 GiB heap inside Docker's 7.75 GiB VM;
+  the earlier host exit 134 and container exit 137 remain recorded as superseded resource failures;
 - the final isolated Rails gate passes 157 runs / 6,010 assertions with no failures, errors or skips;
 - guarded all-features preparation and its exact fixture verifier pass, and the authenticated merged
   browser journey now has hashed evidence for Tasks, demo, PPI, notifications, profile and groups;
 - no external email was delivered. The configured worker targets a local Mailpit catcher with no
   relay and a `.local` sender. One `example.test` message was accepted by Mailpit only;
-- true 200% zoom, real-device audio/keyboard/resume, installed-PWA eviction, a production PDF/TeX
-  worker journey and the production-optimised build remain explicit environment/device gates.
+- true 200% zoom, real-device audio/keyboard/resume, installed-PWA eviction, and a production PDF/TeX
+  worker journey remain explicit environment/device gates.
 
 Status meanings:
 
@@ -140,7 +141,7 @@ Verified in code/tests:
 Still requiring production/device proof or governance:
 
 - two-account browser verification for draft/notification/profile separation;
-- production queue/worker/TeX observability and the production-optimised web build;
+- production queue/worker/TeX observability;
 - an approved external SMTP provider/sender before the one authorised real delivery test;
 - Engagement Passport taxonomy, retention, consent, dispute/audit and external-evidence policy.
 
@@ -160,14 +161,12 @@ zoom.
 
 ## Release blockers and next owner
 
-1. **Release/CI owner:** run `ng build --configuration production` on supported Node 22 with enough
-   memory. The current exit 134/137 optimiser boundary is not a release pass.
-2. **Device QA owner:** run the remaining true zoom, microphone/speaker, soft-keyboard,
+1. **Device QA owner:** run the remaining true zoom, microphone/speaker, soft-keyboard,
    background/resume, Android Back, PDF/TeX and slow/failed upload scenarios on supported devices.
-3. **Mail/platform owner:** configure a controlled external relay and authorised sender; only then
+2. **Mail/platform owner:** configure a controlled external relay and authorised sender; only then
    perform at most one non-sensitive external test to one user-authorised address and record the
    provider/message id plus user arrival confirmation.
-4. **Unit/product owner:** configure real Group Work data where expected and decide Engagement
+3. **Unit/product owner:** configure real Group Work data where expected and decide Engagement
    Passport governance before feature expansion.
 
 No major unfinished item above is hidden behind an endless spinner, fabricated fixture, fake after

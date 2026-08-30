@@ -31,8 +31,10 @@ Supporting evidence:
 - Cross-batch web union: 44 files / 362 tests pass in the project's Node 22 container.
 - Post-browser contained-fix set: 4 files / 23 tests pass; final typecheck and full lint pass.
 - Development bundle: pass in 31.621 seconds.
-- Production-optimised bundle: blocked by runner resources (host exit 134; Node 22 container OOM
-  exit 137), with no compiler diagnostic. The killed local container was restored.
+- Production-optimised bundle: pass in the project Node 22 image after rerunnable containers were
+  stopped and Node received a 6 GiB heap inside Docker's 7.75 GiB VM; 86.695 seconds, 11.03 MB
+  initial bundle. Earlier host exit 134 and container exit 137 attempts are retained as superseded
+  resource diagnostics.
 - API changed-file Ruby 3 syntax: 47 files pass.
 - Final isolated API gate: 157 runs / 6,010 assertions, 0 failures, 0 errors, 0 skips.
 - Deploy demo launcher shell syntax: pass.
@@ -52,7 +54,8 @@ Supporting evidence:
 
 ## Deliberately not claimed
 
-- No production build pass is claimed.
+- The production build passes, with its emitted component-budget, CommonJS and selector warnings
+  preserved for normal release review rather than hidden.
 - No external email delivery is claimed. Batch 12's only delivery evidence is a reserved
   `example.test` message accepted by the local Mailpit catcher; the configured environment has no
   outbound relay.
@@ -63,6 +66,6 @@ Supporting evidence:
 
 ## Handover
 
-Use the status matrix and browser/API result ledgers as the final SIT764 evidence appendix. Rerun the
-production build on a memory-sufficient Node 22 release runner and keep the device/external-service
-boundaries explicit rather than converting them into inferred passes.
+Use the status matrix and browser/API result ledgers as the final SIT764 evidence appendix. Keep the
+remaining device/external-service boundaries explicit rather than converting them into inferred
+passes.
