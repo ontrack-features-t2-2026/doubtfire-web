@@ -52,6 +52,31 @@ describe('TaskCommentsViewerComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  // The reply banner used to call scrollToComment(comment.originalComment.id) even after
+  // staff deleted the original, so originalComment was undefined and the template threw
+  // reading .id. And querySelector returns null when the target is not on screen, so
+  // .scrollIntoView() threw there too. Both paths must now no-op instead.
+  it('does not throw when the original comment has been removed', () => {
+    expect(() => component.scrollToComment(undefined)).not.toThrow();
+  });
+
+  it('does not throw when the target comment is not on the page', () => {
+    expect(() => component.scrollToComment(999999)).not.toThrow();
+  });
+
+  it('scrolls the target comment into view when it is present', () => {
+    const anchor = document.createElement('div');
+    anchor.id = 'comment-42';
+    let scrolled = false;
+    anchor.scrollIntoView = () => {
+      scrolled = true;
+    };
+    document.body.appendChild(anchor);
+    component.scrollToComment(42);
+    document.body.removeChild(anchor);
+    expect(scrolled).toBe(true);
+  });
 });
 
 describe('TaskCommentsViewerComponent bubble actions', () => {
