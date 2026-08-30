@@ -84,22 +84,32 @@ export class GroupSetManagerComponent implements OnInit {
     this.editingGroupName = true;
   }
 
-  stopEditinGroupName() {
+  stopEditingGroupName() {
     this.selectedGroup.name = this.originalGroupName;
     this.editingGroupName = false;
   }
 
   updateGroup() {
     this.editingGroupName = false;
+    // Capture the group being saved and its baseline now: the response is
+    // async and the user may select or edit another group before it arrives.
+    const group = this.selectedGroup;
+    const savedName = group.name;
+    const previousName = this.originalGroupName;
+    // Treat the submitted name as the new selection baseline immediately. A
+    // user can select another group before the request completes, and
+    // newGroupSelected() must not undo the name that is already being saved.
+    // The captured previousName remains available for an error rollback.
+    this.originalGroupName = savedName;
     this.groupService
       .update(
         {
           unitId: this.unit.id,
-          groupSetId: this.selectedGroup.groupSet.id,
-          id: this.selectedGroup.id,
+          groupSetId: group.groupSet.id,
+          id: group.id,
         },
         {
-          entity: this.selectedGroup,
+          entity: group,
         },
       )
       .subscribe({
@@ -107,8 +117,8 @@ export class GroupSetManagerComponent implements OnInit {
           this.alertService.success('Successfully updated group', 3000);
         },
         error: (error) => {
-          this.selectedGroup.name = this.originalGroupName;
-          this.alertService.error(`Failed to update gorup: ${error}`, 6000);
+          group.name = previousName;
+          this.alertService.error(`Failed to update group: ${error}`, 6000);
         },
       });
   }
