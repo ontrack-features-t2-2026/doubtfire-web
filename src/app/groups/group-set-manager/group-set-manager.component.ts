@@ -84,31 +84,40 @@ export class GroupSetManagerComponent implements OnInit {
     this.editingGroupName = true;
   }
 
-  stopEditinGroupName() {
+  stopEditingGroupName() {
     this.selectedGroup.name = this.originalGroupName;
     this.editingGroupName = false;
   }
 
   updateGroup() {
     this.editingGroupName = false;
+    // Capture the group being saved: the request is async and the user may select
+    // another group before it resolves, so the callbacks must not touch whatever is
+    // selected by then.
+    const group = this.selectedGroup;
     this.groupService
       .update(
         {
           unitId: this.unit.id,
-          groupSetId: this.selectedGroup.groupSet.id,
-          id: this.selectedGroup.id,
+          groupSetId: group.groupSet.id,
+          id: group.id,
         },
         {
-          entity: this.selectedGroup,
+          entity: group,
         },
       )
       .subscribe({
         next: () => {
+          if (this.selectedGroup === group) {
+            this.originalGroupName = group.name;
+          }
           this.alertService.success('Successfully updated group', 3000);
         },
         error: (error) => {
-          this.selectedGroup.name = this.originalGroupName;
-          this.alertService.error(`Failed to update gorup: ${error}`, 6000);
+          if (this.selectedGroup === group) {
+            group.name = this.originalGroupName;
+          }
+          this.alertService.error(`Failed to update group: ${error}`, 6000);
         },
       });
   }
