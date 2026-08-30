@@ -112,7 +112,7 @@ export class FUsersComponent implements OnInit, AfterViewInit, OnDestroy {
       this.alerts.error(error_string);
     }
 
-    this.userService.query();
+    this.userService.fetchAll().subscribe({error: (error) => this.alerts.error(error)});
   }
 
   public showUserModal(user?: User) {
