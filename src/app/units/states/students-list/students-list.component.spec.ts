@@ -1,8 +1,15 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
-import {MatPaginator} from '@angular/material/paginator';
+import {FormsModule} from '@angular/forms';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatPaginator, MatPaginatorModule} from '@angular/material/paginator';
+import {MatSortModule} from '@angular/material/sort';
 import {MatTableModule} from '@angular/material/table';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
@@ -111,7 +118,18 @@ describe('StudentsListComponent empty state', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [StudentsListComponent],
-      imports: [MatTableModule, EmptyStateComponent],
+      imports: [
+        FormsModule,
+        MatAutocompleteModule,
+        MatButtonToggleModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatPaginatorModule,
+        MatSortModule,
+        MatTableModule,
+        NoopAnimationsModule,
+        EmptyStateComponent,
+      ],
       providers: [
         {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
         {provide: Router, useValue: {}},
