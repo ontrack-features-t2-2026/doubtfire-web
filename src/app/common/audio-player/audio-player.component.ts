@@ -138,6 +138,12 @@ export class AudioPlayerComponent implements OnDestroy {
     this.playingChange.emit(false);
   }
 
+  public pause() {
+    this.audio.pause();
+    this.isPlaying = false;
+    this.playingChange.emit(false);
+  }
+
   public pausePlay() {
     this.execWithAudio(
       true,
@@ -145,7 +151,7 @@ export class AudioPlayerComponent implements OnDestroy {
         if (this.audio.paused) {
           this.play();
         } else {
-          this.stop();
+          this.pause();
         }
       }).bind(this),
     );

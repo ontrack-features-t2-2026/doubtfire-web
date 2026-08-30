@@ -126,7 +126,7 @@ export class UnitStaffEditorComponent implements OnInit {
 
   selectMentor(unitRole: UnitRole, event: MatSelectChange) {
     const previousValue = unitRole.mentorId;
-    unitRole.mentorId = event.value;
+    unitRole.mentorId = event.value ?? null;
     unitRole.roleId = unitRole.role === 'Tutor' ? 2 : 3;
 
     this.unitRoleService.update(unitRole).subscribe({
