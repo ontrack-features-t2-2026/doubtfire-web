@@ -296,7 +296,13 @@
     ></tr>
 
     <tr *matNoDataRow class="mat-row w-full">
-      <td class="mat-cell w-full p-3 text-center" colspan="4">No students found</td>
+      <td class="mat-cell w-full p-3" [attr.colspan]="displayedColumns.length">
+        <f-empty-state
+          heading="No students found"
+          icon="search_off"
+          message="No students match the current filters."
+        ></f-empty-state>
+      </td>
     </tr>
   </table>
 
