@@ -210,6 +210,44 @@ describe('ThemeService', () => {
     expect(marker()).toBe('light');
   });
 
+  it('applyServerPreference lets the server value win and writes it to local storage', () => {
+    // The account is authoritative on sign-in, so a stored local choice is
+    // overridden and the new value is persisted for the pre-boot script.
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    const svc = inject();
+    expect(svc.preference()).toBe('light');
+
+    svc.applyServerPreference('dark');
+    expect(svc.preference()).toBe('dark');
+    expect(marker()).toBe('dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('applyServerPreference ignores an unrecognised value and leaves the stored choice', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    const svc = inject();
+    for (const bad of [undefined, null, 'midnight', 'System', '', 42]) {
+      svc.applyServerPreference(bad);
+      expect(svc.preference(), `input ${JSON.stringify(bad)}`).toBe('dark');
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    }
+  });
+
+  it('an OS appearance change never writes to storage, so it cannot reach the server', () => {
+    // The only user-driven write is setPreference. The System listener repaints
+    // and stops, so an OS flip twice a day cannot turn into a persisted write.
+    const mql = stubMatchMedia(false);
+    localStorage.setItem(THEME_STORAGE_KEY, 'system');
+    const svc = inject();
+    const setItem = vi.spyOn(window.localStorage, 'setItem');
+
+    mql.matches = true;
+    mql.dispatch();
+
+    expect(svc.resolved()).toBe('dark');
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
   // The no-flash script (THM-F04) duplicates this literal because it runs before
   // any module loads. Pin the value here; THM-F04's drift test asserts the two
   // are byte-identical.

@@ -71,11 +71,39 @@ export class ThemeService {
    * Record a new preference. The type gate means an invalid value cannot be
    * stored through the service at all. A storage failure leaves the in-memory
    * preference applied and does not throw.
+   *
+   * This is the only user-driven write. If a path is ever added that pushes the
+   * preference back to the server, it belongs here and nowhere else. The OS
+   * change listener (onSystemChange) must never write anywhere: an appearance
+   * flip while 'system' is selected is the operating system's decision, not the
+   * user's, so it repaints and stops there.
    */
   setPreference(pref: ThemePreference): void {
     if (!isThemePreference(pref)) {
       return;
     }
+    this.commitPreference(pref);
+  }
+
+  /**
+   * Apply the preference the server holds for the signed-in user. On sign-in the
+   * server is authoritative, so a recognised value wins over whatever is stored
+   * locally and is written straight back to local storage. That keeps the pre-boot
+   * no-flash script (THM-F04), which only reads local storage, in agreement on the
+   * next load. An unrecognised value (a signed-out or minimal user, or an older
+   * server that does not send the field) is ignored through the same gate as any
+   * other input and the local value stands. This is a read of the server, never a
+   * write to it.
+   */
+  applyServerPreference(pref: unknown): void {
+    if (!isThemePreference(pref)) {
+      return;
+    }
+    this.commitPreference(pref);
+  }
+
+  /** Store a validated preference, persist it, and repaint. Local storage only. */
+  private commitPreference(pref: ThemePreference): void {
     this._preference.set(pref);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, pref);
