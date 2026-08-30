@@ -96,12 +96,16 @@ export class TutorialsComponent implements OnInit, OnDestroy {
    *
    * @returns string
    */
-  shortTime(meetingTime: string): string {
+  shortTime(meetingTime?: string): string {
+    if (!meetingTime) {
+      return '';
+    }
     const [hours, minutes] = meetingTime.split(':');
-    const formattedHours = hours.padStart(2, '0');
-    const formattedMinutes = minutes.padStart(2, '0');
+    if (minutes === undefined) {
+      return meetingTime;
+    }
 
-    return `${formattedHours}:${formattedMinutes}`;
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   }
 
   private sortCompare(
