@@ -5,23 +5,34 @@
 
 :root[data-ot-theme='dark'] {
   // --- 7. Semantic ---
-  --ot-color-page: #131316;
-  --ot-color-surface: #201f23;
-  --ot-color-surface-raised: #2a292d;
-  --ot-color-text: #e5e1e6;
-  --ot-color-text-muted: #adaaaf;
-  --ot-color-border: #78767a;
-  --ot-color-divider: #353438;
-  --ot-color-focus: #c0c1ff;
-  --ot-color-link: #c0c1ff;
-  --ot-color-primary: #c0c1ff;
-  --ot-color-on-primary: #131316;
+  // SPIKE (dark palette rework). The first pass had warm greys sitting too close
+  // together (muddy) and two competing accents. Reworked to one cohesive cool
+  // slate ramp with clearly stepped surfaces, softened whites (not #fff), and a
+  // single desaturated brand indigo used as the only accent. theme.scss builds the
+  // matching Material palette so chips/buttons/chrome use the same #818cf8.
+  --ot-color-page: #0f1216;
+  --ot-color-surface: #171b21;
+  --ot-color-surface-raised: #1f2530;
+  --ot-color-text: #e6e8ec;
+  --ot-color-text-muted: #99a2b0;
+  --ot-color-border: #434a58;
+  --ot-color-divider: #242a34;
+  // A mid indigo, not the earlier pale #818cf8: light enough to sit well on the
+  // slate, dark enough that WHITE text and icons read on it. That keeps the
+  // accent conventional (solid indigo, white label) and makes chips, buttons and
+  // the fab icon all agree instead of some going dark-on-accent.
+  // #6366f1 measured 4.47:1 against white — just under AA for normal text. Nudged
+  // to #5457e5 (white = 5.4:1) so filled buttons/chips keep white labels and pass.
+  --ot-color-focus: #5457e5;
+  --ot-color-link: #818cf8;
+  --ot-color-primary: #5457e5;
+  --ot-color-on-primary: #ffffff;
   --ot-color-success: #5bb75b;
   --ot-color-warning: #eb8f06;
   --ot-color-error: #ef6445;
   --ot-color-info: #0792ff;
-  --ot-color-inverse-surface: #e5e1e6;
-  --ot-color-inverse-text: #201f23;
+  --ot-color-inverse-surface: #e6e8ec;
+  --ot-color-inverse-text: #171b21;
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
   --ot-status-ready-for-feedback: #003f70;

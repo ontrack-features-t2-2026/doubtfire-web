@@ -229,6 +229,7 @@ import {HttpErrorInterceptor} from './common/services/http-error.interceptor';
 import {StatusIconComponent} from './common/status-icon/status-icon.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {ThemeToggleComponent} from './common/theme/theme-toggle.component';
 import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
 import {UserIconComponent} from './common/user-icon/user-icon.component';
@@ -805,6 +806,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    ThemeToggleComponent,
     FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,
