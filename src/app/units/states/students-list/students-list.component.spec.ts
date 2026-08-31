@@ -11,7 +11,7 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatTableModule} from '@angular/material/table';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BehaviorSubject, of} from 'rxjs';
+import {BehaviorSubject, of, throwError} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Unit} from 'src/app/api/models/unit';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -152,7 +152,13 @@ describe('StudentsListComponent empty state', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeTruthy();
+    const emptyState = fixture.nativeElement.querySelector('f-empty-state') as HTMLElement;
+    const table = fixture.nativeElement.querySelector('table') as HTMLTableElement;
+    const tableScrollContainer = table.parentElement as HTMLDivElement;
+
+    expect(emptyState).toBeTruthy();
+    expect(emptyState.closest('table')).toBeNull();
+    expect(tableScrollContainer.hidden).toBe(true);
 
     component.dataSource.data = [
       {
@@ -165,5 +171,29 @@ describe('StudentsListComponent empty state', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('f-empty-state')).toBeFalsy();
+    expect(tableScrollContainer.hidden).toBe(false);
+  });
+
+  it('shows a retryable error instead of claiming that a failed load is empty', () => {
+    const projectService = TestBed.inject(ProjectService);
+    const loadStudents = vi
+      .spyOn(projectService, 'loadStudents')
+      .mockReturnValueOnce(throwError(() => new Error('network unavailable')))
+      .mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    fixture.componentInstance.unit$ = of(unitStub(1, []));
+
+    fixture.detectChanges();
+
+    const errorState = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
+    expect(errorState.textContent).toContain('We could not load students.');
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeFalsy();
+
+    (errorState.querySelector('button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(loadStudents).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeTruthy();
   });
 });

@@ -73,7 +73,22 @@
     </div>
   }
 
-  <div class="overflow-x-auto" [hidden]="loadingStudents">
+  @if (!loadingStudents && studentsLoadFailed && dataSource.filteredData.length === 0) {
+    <div class="flex flex-col items-center gap-3 py-8 text-center" role="alert">
+      <p>We could not load students.</p>
+      <button mat-stroked-button type="button" (click)="loadStudents()">Try again</button>
+    </div>
+  }
+
+  @if (!loadingStudents && !studentsLoadFailed && dataSource.filteredData.length === 0) {
+    <f-empty-state
+      heading="No students found"
+      icon="search_off"
+      message="No students were found using the filters specified."
+    ></f-empty-state>
+  }
+
+  <div class="overflow-x-auto" [hidden]="loadingStudents || dataSource.filteredData.length === 0">
     <table
       class="min-w-full"
       mat-table
@@ -185,16 +200,6 @@
         mat-row
         (click)="viewStudent(project)"
       ></tr>
-
-      <tr *matNoDataRow class="mat-row">
-        <td class="mat-cell p-2.5" [attr.colspan]="displayedColumns.length">
-          <f-empty-state
-            heading="No students found"
-            icon="search_off"
-            message="No students were found using the filters specified."
-          ></f-empty-state>
-        </td>
-      </tr>
     </table>
   </div>
 
