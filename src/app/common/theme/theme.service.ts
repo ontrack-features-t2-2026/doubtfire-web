@@ -1,4 +1,5 @@
 import {DestroyRef, Injectable, computed, inject, signal} from '@angular/core';
+import {Observable, Subscription} from 'rxjs';
 
 /**
  * OnTrack theme foundation (THM-F01). Implements the state model fixed in
@@ -22,6 +23,20 @@ const THEME_PREFERENCES: readonly ThemePreference[] = ['light', 'dark', 'system'
 
 /** Duplicated as a literal in the THM-F04 no-flash script; THM-T01 asserts they match. */
 export const THEME_STORAGE_KEY = 'ontrack.theme.preference';
+export const THEME_UPDATED_AT_STORAGE_KEY = 'ontrack.theme.preference.updatedAt';
+
+export interface AccountThemePreference {
+  preference: unknown;
+  updatedAt: unknown;
+}
+
+type SaveAccountThemePreference = (
+  preference: ThemePreference,
+) => Observable<AccountThemePreference>;
+
+const ACCOUNT_WRITE_DEBOUNCE_MS = 300;
+const ISO_8601_TIMESTAMP =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:Z|[+-](\d{2}):(\d{2}))$/;
 
 export function isThemePreference(v: unknown): v is ThemePreference {
   return typeof v === 'string' && (THEME_PREFERENCES as readonly string[]).includes(v);
@@ -49,6 +64,10 @@ export class ThemeService {
   readonly isDark = computed(() => this._resolved() === 'dark');
 
   private readonly query: MediaQueryList | null = this.mediaQuery();
+  private saveAccountPreference: SaveAccountThemePreference | null = null;
+  private accountWriteTimer: ReturnType<typeof setTimeout> | null = null;
+  private activeAccountWrite: Subscription | null = null;
+  private accountConnectionGeneration = 0;
 
   // Held as a stable reference so the same listener can be removed on destroy.
   // One listener for the whole app; it repaints only while the stored choice is
@@ -63,6 +82,7 @@ export class ThemeService {
     this.query?.addEventListener('change', this.onSystemChange);
     inject(DestroyRef).onDestroy(() => {
       this.query?.removeEventListener('change', this.onSystemChange);
+      this.disconnectAccount();
     });
     this.applyResolved();
   }
@@ -82,35 +102,223 @@ export class ThemeService {
     if (!isThemePreference(pref)) {
       return;
     }
-    this.commitPreference(pref);
+    if (this.readLocalPreference() === pref) {
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    this.commitPreference(pref, updatedAt);
+    this.queueAccountWrite(pref);
   }
 
   /**
-   * Apply the preference the server holds for the signed-in user. On sign-in the
-   * server is authoritative, so a recognised value wins over whatever is stored
-   * locally and is written straight back to local storage. That keeps the pre-boot
-   * no-flash script (THM-F04), which only reads local storage, in agreement on the
-   * next load. An unrecognised value (a signed-out or minimal user, or an older
-   * server that does not send the field) is ignored through the same gate as any
-   * other input and the local value stands. This is a read of the server, never a
-   * write to it.
+   * Reconcile the signed-in account and this device using the phase-two table in
+   * contract section 6.2. Presence is decided before timestamps, then a newer
+   * timestamp wins when both stores hold a real preference (ties go to account).
+   * The save callback keeps this service independent of authentication and API
+   * implementation details while still making it the only owner of theme writes.
    */
-  applyServerPreference(pref: unknown): void {
-    if (!isThemePreference(pref)) {
+  connectAccount(
+    accountPreference: unknown,
+    accountUpdatedAt: unknown,
+    save: SaveAccountThemePreference,
+  ): void {
+    this.disconnectAccount();
+    this.saveAccountPreference = save;
+    const generation = this.accountConnectionGeneration;
+
+    const localPreference = this.readLocalPreference();
+    const accountPreferenceIsValid = isThemePreference(accountPreference);
+
+    // New device and new account: follow system without inventing a choice.
+    if (localPreference === null && !accountPreferenceIsValid) {
       return;
     }
-    this.commitPreference(pref);
+
+    // A new device adopts the account and becomes flash-free next boot.
+    if (localPreference === null && accountPreferenceIsValid) {
+      this.commitPreference(accountPreference, this.normaliseAccountTimestamp(accountUpdatedAt));
+      return;
+    }
+
+    // Day-one migration: a real local choice beats an empty account even when
+    // phase one never wrote a timestamp. Stamp the honest upload time now.
+    if (localPreference !== null && !accountPreferenceIsValid) {
+      this.commitPreference(localPreference, new Date().toISOString());
+      this.persistAccount(localPreference, generation);
+      return;
+    }
+
+    const localUpdatedAt = this.readLocalTimestamp();
+    const accountTimestamp = this.normaliseAccountTimestamp(accountUpdatedAt);
+    const accountUpdatedAtMs = accountTimestamp === null ? null : Date.parse(accountTimestamp);
+
+    // A missing, malformed, or future local timestamp is older. An account
+    // timestamp that is absent is also not sufficient evidence to override the
+    // account value, so the tie/default remains account-side.
+    const localWins =
+      localUpdatedAt !== null && accountUpdatedAtMs !== null && localUpdatedAt > accountUpdatedAtMs;
+
+    if (localWins) {
+      this.persistAccount(localPreference as ThemePreference, generation);
+    } else {
+      this.commitPreference(accountPreference as ThemePreference, accountTimestamp);
+    }
   }
 
-  /** Store a validated preference, persist it, and repaint. Local storage only. */
-  private commitPreference(pref: ThemePreference): void {
+  /** Stop account writes without clearing presentation state from this device. */
+  disconnectAccount(): void {
+    this.accountConnectionGeneration += 1;
+    this.saveAccountPreference = null;
+    if (this.accountWriteTimer !== null) {
+      clearTimeout(this.accountWriteTimer);
+      this.accountWriteTimer = null;
+    }
+    this.activeAccountWrite?.unsubscribe();
+    this.activeAccountWrite = null;
+  }
+
+  /** Store a validated preference, optional timestamp, and repaint. */
+  private commitPreference(pref: ThemePreference, updatedAt?: string | null): void {
     this._preference.set(pref);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, pref);
+      if (updatedAt === null) {
+        localStorage.removeItem(THEME_UPDATED_AT_STORAGE_KEY);
+      } else if (updatedAt !== undefined) {
+        localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, updatedAt);
+      }
     } catch {
       /* storage blocked; in-memory preference still applies */
     }
     this.applyResolved();
+  }
+
+  private queueAccountWrite(pref: ThemePreference): void {
+    if (this.saveAccountPreference === null) {
+      return;
+    }
+    if (this.accountWriteTimer !== null) {
+      clearTimeout(this.accountWriteTimer);
+    }
+    this.activeAccountWrite?.unsubscribe();
+    this.activeAccountWrite = null;
+    const generation = this.accountConnectionGeneration;
+    this.accountWriteTimer = setTimeout(() => {
+      this.accountWriteTimer = null;
+      this.persistAccount(pref, generation);
+    }, ACCOUNT_WRITE_DEBOUNCE_MS);
+  }
+
+  private persistAccount(pref: ThemePreference, generation: number): void {
+    const save = this.saveAccountPreference;
+    if (save === null || generation !== this.accountConnectionGeneration) {
+      return;
+    }
+
+    this.activeAccountWrite?.unsubscribe();
+    this.activeAccountWrite = save(pref).subscribe({
+      next: (account) => {
+        if (
+          generation !== this.accountConnectionGeneration ||
+          this._preference() !== pref ||
+          account.preference !== pref
+        ) {
+          return;
+        }
+        const updatedAt = this.normaliseAccountTimestamp(account.updatedAt);
+        if (updatedAt !== null) {
+          try {
+            localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, updatedAt);
+          } catch {
+            /* storage blocked; the local preference remains applied */
+          }
+        }
+      },
+      error: () => {
+        // Presentation state is deliberately local-first. Offline/server errors
+        // are silent and retried by reconciliation on the next sign-in.
+      },
+    });
+  }
+
+  private readLocalPreference(): ThemePreference | null {
+    try {
+      const raw = localStorage.getItem(THEME_STORAGE_KEY);
+      return isThemePreference(raw) ? raw : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** A malformed or future device timestamp cannot win a conflict. */
+  private readLocalTimestamp(): number | null {
+    try {
+      const raw = localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY);
+      if (raw === null) {
+        return null;
+      }
+      const timestamp = this.parseIsoTimestamp(raw);
+      return timestamp !== null && timestamp <= Date.now() ? timestamp : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private normaliseAccountTimestamp(value: unknown): string | null {
+    if (value instanceof Date && Number.isFinite(value.getTime())) {
+      return value.toISOString();
+    }
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const timestamp = this.parseIsoTimestamp(value);
+    return timestamp === null ? null : new Date(timestamp).toISOString();
+  }
+
+  /** Date.parse accepts locale dates and normalises impossible calendar dates. */
+  private parseIsoTimestamp(value: string): number | null {
+    const match = ISO_8601_TIMESTAMP.exec(value);
+    if (match === null) {
+      return null;
+    }
+
+    const [
+      ,
+      yearRaw,
+      monthRaw,
+      dayRaw,
+      hourRaw,
+      minuteRaw,
+      secondRaw,
+      offsetHourRaw,
+      offsetMinuteRaw,
+    ] = match;
+    const year = Number(yearRaw);
+    const month = Number(monthRaw);
+    const day = Number(dayRaw);
+    const hour = Number(hourRaw);
+    const minute = Number(minuteRaw);
+    const second = Number(secondRaw);
+    const offsetHour = offsetHourRaw === undefined ? 0 : Number(offsetHourRaw);
+    const offsetMinute = offsetMinuteRaw === undefined ? 0 : Number(offsetMinuteRaw);
+    const daysInMonth =
+      month >= 1 && month <= 12 ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 0;
+
+    if (
+      day < 1 ||
+      day > daysInMonth ||
+      hour > 23 ||
+      minute > 59 ||
+      second > 59 ||
+      offsetHour > 23 ||
+      offsetMinute > 59
+    ) {
+      return null;
+    }
+
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? timestamp : null;
   }
 
   /** stored === 'system' ? follow the OS : the stored value. Section 4, one line. */

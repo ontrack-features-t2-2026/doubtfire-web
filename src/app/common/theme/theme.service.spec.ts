@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
-import {THEME_STORAGE_KEY, ThemeService} from './theme.service';
+import {of, throwError} from 'rxjs';
+import {THEME_STORAGE_KEY, THEME_UPDATED_AT_STORAGE_KEY, ThemeService} from './theme.service';
 
 /**
  * A real in-memory Storage, installed fresh per test. This repo's jsdom does not
@@ -210,26 +211,171 @@ describe('ThemeService', () => {
     expect(marker()).toBe('light');
   });
 
-  it('applyServerPreference lets the server value win and writes it to local storage', () => {
-    // The account is authoritative on sign-in, so a stored local choice is
-    // overridden and the new value is persisted for the pre-boot script.
-    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+  it('writes nothing when both local and account preferences are absent', () => {
+    const save = vi.fn();
     const svc = inject();
-    expect(svc.preference()).toBe('light');
 
-    svc.applyServerPreference('dark');
+    svc.connectAccount(null, null, save);
+
+    expect(svc.preference()).toBe('system');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBeNull();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('adopts a present account preference when the local preference is absent', () => {
+    const save = vi.fn();
+    const svc = inject();
+
+    svc.connectAccount('dark', '2026-08-20T01:02:03Z', save);
+
     expect(svc.preference()).toBe('dark');
     expect(marker()).toBe('dark');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-08-20T01:02:03.000Z');
+    expect(save).not.toHaveBeenCalled();
   });
 
-  it('applyServerPreference ignores an unrecognised value and leaves the stored choice', () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+  it('keeps and uploads a present local preference when the account is absent', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-01T00:00:00Z'));
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, 'light');
+      const save = vi.fn(() => of({preference: 'light', updatedAt: '2026-09-01T00:00:00Z'}));
+      const svc = inject();
+
+      svc.connectAccount(null, null, save);
+
+      expect(svc.preference()).toBe('light');
+      expect(save).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenCalledWith('light');
+      expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-09-01T00:00:00.000Z');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('uploads the newer local preference when both stores are present', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, '2026-08-30T12:00:00Z');
+    const save = vi.fn(() => of({preference: 'light', updatedAt: '2026-09-01T02:00:00Z'}));
     const svc = inject();
-    for (const bad of [undefined, null, 'midnight', 'System', '', 42]) {
-      svc.applyServerPreference(bad);
-      expect(svc.preference(), `input ${JSON.stringify(bad)}`).toBe('dark');
+
+    svc.connectAccount('dark', '2026-08-29T12:00:00Z', save);
+
+    expect(save).toHaveBeenCalledWith('light');
+    expect(svc.preference()).toBe('light');
+    expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-09-01T02:00:00.000Z');
+  });
+
+  it('converges a newer local timestamp even when both preference values match', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, '2026-08-30T12:00:00Z');
+    const save = vi.fn(() => of({preference: 'dark', updatedAt: '2026-09-01T02:00:00Z'}));
+    const svc = inject();
+
+    svc.connectAccount('dark', '2026-08-29T12:00:00Z', save);
+
+    expect(save).toHaveBeenCalledWith('dark');
+    expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-09-01T02:00:00.000Z');
+  });
+
+  it('takes the account preference when both timestamps tie', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, '2026-08-30T12:00:00Z');
+    const save = vi.fn();
+    const svc = inject();
+
+    svc.connectAccount('dark', '2026-08-30T12:00:00Z', save);
+
+    expect(save).not.toHaveBeenCalled();
+    expect(svc.preference()).toBe('dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+  });
+
+  it('takes a present account value when the local timestamp is invalid', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-01T00:00:00Z'));
+    try {
+      for (const timestamp of [
+        null,
+        'not-a-date',
+        '08/31/2026', // Date.parse accepts it, but the account contract does not
+        '2026-02-30T12:00:00Z',
+        '2026-09-02T00:00:00Z',
+      ]) {
+        installLocalStorage();
+        localStorage.setItem(THEME_STORAGE_KEY, 'light');
+        if (timestamp !== null) {
+          localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, timestamp);
+        }
+        TestBed.resetTestingModule();
+        const svc = inject();
+
+        svc.connectAccount('dark', '2026-08-30T12:00:00Z', vi.fn());
+
+        expect(svc.preference(), `timestamp ${String(timestamp)}`).toBe('dark');
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('debounces real choices and sends the stored preference, not the resolved theme', () => {
+    vi.useFakeTimers();
+    try {
+      stubMatchMedia(true); // system resolves dark, but the account must receive system
+      const save = vi.fn((preference) => of({preference, updatedAt: '2026-09-01T01:00:00Z'}));
+      const svc = inject();
+      svc.connectAccount('system', '2026-08-30T12:00:00Z', save);
+
+      svc.setPreference('light');
+      svc.setPreference('dark');
+      svc.setPreference('system');
+      vi.advanceTimersByTime(300);
+
+      expect(save).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenCalledWith('system');
+      expect(svc.resolved()).toBe('dark');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the local choice silently when the account write fails', () => {
+    vi.useFakeTimers();
+    try {
+      const save = vi.fn(() => throwError(() => new Error('offline')));
+      const svc = inject();
+      svc.connectAccount('light', '2026-08-30T12:00:00Z', save);
+
+      expect(() => {
+        svc.setPreference('dark');
+        vi.advanceTimersByTime(300);
+      }).not.toThrow();
+      expect(svc.preference()).toBe('dark');
       expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('disconnects without clearing local theme state and cancels a pending write', () => {
+    vi.useFakeTimers();
+    try {
+      const save = vi.fn();
+      const svc = inject();
+      svc.connectAccount('light', '2026-08-30T12:00:00Z', save);
+      svc.setPreference('dark');
+
+      svc.disconnectAccount();
+      vi.advanceTimersByTime(300);
+
+      expect(save).not.toHaveBeenCalled();
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+      expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
     }
   });
 
