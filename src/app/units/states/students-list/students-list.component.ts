@@ -52,6 +52,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   staffFilter: 'all' | 'mine' = 'all';
   filteredSuggestions: string[] = [];
   loadingStudents = true;
+  studentsLoadFailed = false;
   unit: Unit;
 
   private subscriptions: Subscription[] = [];
@@ -73,10 +74,10 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
         if (!unit) {
           this.loadingStudents = false;
+          this.studentsLoadFailed = false;
           return;
         }
 
-        this.loadingStudents = true;
         this.unit = unit;
         this.staffFilter = unit.myRole === 'Tutor' ? 'mine' : 'all';
 
@@ -88,15 +89,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.updateSuggestions();
         this.updateDataSource();
-        this.projectService
-          .loadStudents(this.unit)
-          .pipe(
-            first(),
-            finalize(() => {
-              this.loadingStudents = false;
-            }),
-          )
-          .subscribe();
+        this.loadStudents();
       }),
     );
   }
@@ -114,6 +107,25 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   public onSearchChange(): void {
     this.updateSuggestions();
     this.updateDataSource(true);
+  }
+
+  public loadStudents(): void {
+    this.loadingStudents = true;
+    this.studentsLoadFailed = false;
+
+    this.projectService
+      .loadStudents(this.unit)
+      .pipe(
+        first(),
+        finalize(() => {
+          this.loadingStudents = false;
+        }),
+      )
+      .subscribe({
+        error: () => {
+          this.studentsLoadFailed = true;
+        },
+      });
   }
 
   public setStaffFilter(filter: 'all' | 'mine'): void {
