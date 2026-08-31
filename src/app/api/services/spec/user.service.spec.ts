@@ -94,6 +94,25 @@ describe('UserService', () => {
     req.flush({id: 1, display_peer_progress: false});
   });
 
+  it('updates only the account theme preference and maps its server timestamp', () => {
+    const user = new User();
+    user.id = 1;
+
+    userService.updateThemePreference(user, 'dark').subscribe((updatedUser) => {
+      expect(updatedUser.themePreference).toBe('dark');
+      expect(updatedUser.themePreferenceUpdatedAt).toBe('2026-09-01T01:02:03Z');
+    });
+
+    const req = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({user: {theme_preference: 'dark'}});
+    req.flush({
+      id: 1,
+      theme_preference: 'dark',
+      theme_preference_updated_at: '2026-09-01T01:02:03Z',
+    });
+  });
+
   it('should create a new user', () => {
     const user = new User();
     user.lastName = 'renzella';

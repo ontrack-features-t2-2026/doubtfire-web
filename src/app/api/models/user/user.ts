@@ -20,7 +20,8 @@ export class User extends Entity {
   public receivePortfolioNotifications: boolean;
   public receiveFeedbackNotifications: boolean;
   public displayPeerProgress: boolean;
-  public themePreference: 'light' | 'dark' | 'system';
+  public themePreference: 'light' | 'dark' | 'system' | null;
+  public themePreferenceUpdatedAt: string | null;
   public hasRunFirstTimeSetup: boolean;
   public authenticationToken: string;
   public authenticationTokenExpiry: string;
