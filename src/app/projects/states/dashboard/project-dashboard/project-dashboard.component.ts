@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {CdkDragEnd, CdkDragMove, CdkDragStart} from '@angular/cdk/drag-drop';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
@@ -157,7 +156,6 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     event.source.reset();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   stoppedDragging(event: CdkDragEnd, _div: HTMLDivElement) {
     document.body.classList.remove('split-pane-resizing');
     event.source.element.nativeElement.classList.remove('hovering');

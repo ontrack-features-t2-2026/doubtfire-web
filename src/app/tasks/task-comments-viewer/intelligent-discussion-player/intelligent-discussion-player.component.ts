@@ -131,7 +131,7 @@ export class IntelligentDiscussionPlayerComponent {
 }
 
 // The Dialog Component
-// eslint-disable-next-line max-classes-per-file
+
 @Component({
   selector: 'intelligent-discussion-dialog',
   templateUrl: 'intelligent-discussion-dialog.html',

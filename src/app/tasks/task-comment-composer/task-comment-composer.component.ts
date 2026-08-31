@@ -1115,7 +1115,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 }
 
 // The discussion prompt composer dialog Component
-// eslint-disable-next-line max-classes-per-file
+
 @Component({
   selector: 'discussion-prompt-composer-dialog.html',
   templateUrl: 'discussion-prompt-composer-dialog.html',

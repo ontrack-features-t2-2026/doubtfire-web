@@ -109,7 +109,7 @@ export class D2lUnitDetailsFormComponent implements OnInit {
 /**
  * The about doubtfire modal service - used to create and show the modal
  */
-// eslint-disable-next-line max-classes-per-file
+
 @Injectable()
 export class D2lUnitDetailsModal {
   constructor(public dialog: MatDialog) {}
