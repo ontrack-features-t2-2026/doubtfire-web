@@ -256,8 +256,11 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
     });
   }
 
-  scrollToComment(commentID) {
-    document.querySelector(`#comment-${commentID}`).scrollIntoView();
+  scrollToComment(commentID?: number) {
+    if (!commentID) {
+      return;
+    }
+    document.querySelector(`#comment-${commentID}`)?.scrollIntoView();
   }
 
   openCommentsModal(comment: TaskComment) {
