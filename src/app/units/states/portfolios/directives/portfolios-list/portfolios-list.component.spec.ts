@@ -18,6 +18,8 @@ import {PortfoliosListComponent} from './portfolios-list.component';
 function projectStub(name: string): Project {
   return {
     student: {name, username: name.toLowerCase()},
+    hasPortfolio: true,
+    hasTutor: () => true,
     tutorNames: () => '',
     shortTutorialDescription: () => '',
     taskStats: [],
@@ -50,17 +52,34 @@ describe('PortfoliosListComponent empty state', () => {
 
   it('renders the empty state only while the filtered list has no rows', () => {
     const fixture = TestBed.createComponent(PortfoliosListComponent);
-    const component = fixture.componentInstance;
-    component.unit = {hasD2lMapping: () => false} as unknown as Unit;
-    component.displayedColumns = ['student', 'name', 'tutor', 'tutorial'];
+    const root = fixture.nativeElement as HTMLElement;
+    fixture.componentRef.setInput('unit', {
+      students: [],
+      hasD2lMapping: () => false,
+    } as unknown as Unit);
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeTruthy();
+    expect(root.querySelector('f-empty-state')).toBeNull();
 
-    component.dataSource.data = [projectStub('Cy Cole')];
+    fixture.componentRef.setInput('loading', false);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeFalsy();
+    const emptyState = root.querySelector('f-empty-state') as HTMLElement;
+    const table = root.querySelector('table') as HTMLTableElement;
+    const tableScrollContainer = table.parentElement as HTMLDivElement;
+
+    expect(emptyState).toBeTruthy();
+    expect(emptyState.closest('table')).toBeNull();
+    expect(tableScrollContainer.hidden).toBe(true);
+
+    fixture.componentRef.setInput('unit', {
+      students: [projectStub('Cy Cole')],
+      hasD2lMapping: () => false,
+    } as unknown as Unit);
+    fixture.detectChanges();
+
+    expect(root.querySelector('f-empty-state')).toBeNull();
+    expect(tableScrollContainer.hidden).toBe(false);
   });
 });

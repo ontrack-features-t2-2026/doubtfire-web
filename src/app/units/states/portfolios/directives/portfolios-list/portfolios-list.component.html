@@ -178,133 +178,132 @@
     </div>
   }
 
-  <table
-    class="table-selectable"
-    mat-table
-    matSort
-    matSortActive="student"
-    matSortDirection="asc"
-    matSortDisableClear
-    [dataSource]="dataSource"
-    [hidden]="loading"
-    (matSortChange)="sortTableData($event)"
-  >
-    <ng-container matColumnDef="student" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Student</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.student.studentId || project.student.username }}
-      </td>
-    </ng-container>
+  @if (!loading && dataSource.filteredData.length === 0) {
+    <f-empty-state
+      heading="No students found"
+      icon="search_off"
+      message="No students match the current filters."
+    ></f-empty-state>
+  }
 
-    <ng-container matColumnDef="name" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Name</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.student.name }}
-      </td>
-    </ng-container>
+  <div class="overflow-x-auto" [hidden]="loading || dataSource.filteredData.length === 0">
+    <table
+      class="table-selectable"
+      mat-table
+      matSort
+      matSortActive="student"
+      matSortDirection="asc"
+      matSortDisableClear
+      [dataSource]="dataSource"
+      (matSortChange)="sortTableData($event)"
+    >
+      <ng-container matColumnDef="student" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Student</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.student.studentId || project.student.username }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="tutor" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Tutor</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.tutorNames() }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="name" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Name</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.student.name }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="tutorial" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Tutorial</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.shortTutorialDescription() }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="tutor" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Tutor</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.tutorNames() }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="target" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Target</th>
-      <td *matCellDef="let project" mat-cell>
-        <f-grade-icon [grade]="project.targetGrade" [unit]="unit"></f-grade-icon>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="tutorial" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Tutorial</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.shortTutorialDescription() }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="submitted-as" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Submitted as</th>
-      <td *matCellDef="let project" mat-cell>
-        <f-grade-icon [grade]="project.submittedGrade" [unit]="unit"></f-grade-icon>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="target" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Target</th>
+        <td *matCellDef="let project" mat-cell>
+          <f-grade-icon [grade]="project.targetGrade" [unit]="unit"></f-grade-icon>
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="submission-date" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Submission Date</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.portfolioSubmissionDate | date: 'EEE d MMM y, h:mm a' }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="submitted-as" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Submitted as</th>
+        <td *matCellDef="let project" mat-cell>
+          <f-grade-icon [grade]="project.submittedGrade" [unit]="unit"></f-grade-icon>
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="has-portfolio" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Has Portfolio</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.hasPortfolio ? 'Yes' : 'No' }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="submission-date" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Submission Date</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.portfolioSubmissionDate | date: 'EEE d MMM y, h:mm a' }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="stats" sticky>
-      <th *matHeaderCellDef mat-header-cell>Stats</th>
-      <td *matCellDef="let project" mat-cell>
-        <div class="flex h-[25px] w-[400px] overflow-hidden rounded">
-          @for (bar of project.taskStats; track bar) {
-            <div
-              class="flex h-[25px] items-center justify-center overflow-hidden"
-              matTooltipDelay="100"
-              matTooltipPosition="above"
-              [matTooltip]="statusLabel(bar.key) + ' ' + bar.value + '%'"
-              [ngStyle]="{
-                width: bar.value + '%',
-                background: statusColor(bar.key),
-              }"
-            >
-              @if (bar.key === 'not_started') {
-                <span class="text-xs text-black"> {{ bar.value }}% </span>
-              }
-              @if (bar.key === 'complete') {
-                <span class="text-xs text-white"> {{ bar.value }}% </span>
-              }
-            </div>
-          }
-        </div>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="has-portfolio" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Has Portfolio</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.hasPortfolio ? 'Yes' : 'No' }}
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="grade" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>Grade</th>
-      <td *matCellDef="let project" mat-cell>
-        {{ project.grade }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="stats" sticky>
+        <th *matHeaderCellDef mat-header-cell>Stats</th>
+        <td *matCellDef="let project" mat-cell>
+          <div class="flex h-[25px] w-[400px] overflow-hidden rounded">
+            @for (bar of project.taskStats; track bar) {
+              <div
+                class="flex h-[25px] items-center justify-center overflow-hidden"
+                matTooltipDelay="100"
+                matTooltipPosition="above"
+                [matTooltip]="statusLabel(bar.key) + ' ' + bar.value + '%'"
+                [ngStyle]="{
+                  width: bar.value + '%',
+                  background: statusColor(bar.key),
+                }"
+              >
+                @if (bar.key === 'not_started') {
+                  <span class="text-xs text-black"> {{ bar.value }}% </span>
+                }
+                @if (bar.key === 'complete') {
+                  <span class="text-xs text-white"> {{ bar.value }}% </span>
+                }
+              </div>
+            }
+          </div>
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="actions" sticky>
-      <th *matHeaderCellDef mat-header-cell mat-sort-header>View</th>
-      <td *matCellDef="let project" mat-cell>
-        <button mat-icon-button (click)="openProject($event, project)">
-          <mat-icon>launch</mat-icon>
-        </button>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="grade" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Grade</th>
+        <td *matCellDef="let project" mat-cell>
+          {{ project.grade }}
+        </td>
+      </ng-container>
 
-    <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-    <tr
-      *matRowDef="let project; columns: displayedColumns"
-      mat-row
-      (click)="selectStudent(project)"
-    ></tr>
+      <ng-container matColumnDef="actions" sticky>
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>View</th>
+        <td *matCellDef="let project" mat-cell>
+          <button mat-icon-button (click)="openProject($event, project)">
+            <mat-icon>launch</mat-icon>
+          </button>
+        </td>
+      </ng-container>
 
-    <tr *matNoDataRow class="mat-row w-full">
-      <td class="mat-cell w-full p-3" [attr.colspan]="displayedColumns.length">
-        <f-empty-state
-          heading="No students found"
-          icon="search_off"
-          message="No students match the current filters."
-        ></f-empty-state>
-      </td>
-    </tr>
-  </table>
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr
+        *matRowDef="let project; columns: displayedColumns"
+        mat-row
+        (click)="selectStudent(project)"
+      ></tr>
+    </table>
+  </div>
 
   <mat-paginator
     [disabled]="loading"
