@@ -31,9 +31,12 @@ export class UserService extends CachedEntityService<User> {
       'receiveTaskNotifications',
       'receivePortfolioNotifications',
       'receiveFeedbackNotifications',
+      'displayPeerProgress',
       'hasRunFirstTimeSetup',
       'pronouns',
       'acceptedTiiEula',
+      'institutionalIdentityManaged',
+      'emailEditable',
     );
 
     this._currentUser = this.anonymousUser;

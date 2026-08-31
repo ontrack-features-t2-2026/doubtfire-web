@@ -97,6 +97,7 @@ import {
   TaskCommentComposerComponent,
 } from 'src/app/tasks/task-comment-composer/task-comment-composer.component';
 import {EditProfileComponent} from './account/edit-profile/edit-profile.component';
+import {VerifyAdditionalEmailComponent} from './account/verify-additional-email/verify-additional-email.component';
 import {ActivityTypeListComponent} from './admin/institution-settings/activity-type-list/activity-type-list.component';
 import {CampusListComponent} from './admin/institution-settings/campuses/campus-list/campus-list.component';
 import {InstitutionSettingsComponent} from './admin/institution-settings/institution-settings.component';
@@ -162,6 +163,7 @@ import {TutorNoteService} from './api/services/tutor-note.service';
 import {setAppInjector} from './app-injector';
 import {AppComponent} from './app.component';
 import {routes} from './app.routes';
+import {AdditionalNotificationEmailComponent} from './common/additional-notification-email/additional-notification-email.component';
 import {ArchiveViewerComponent} from './common/archive-viewer/archive-viewer.component';
 import {AudioPlayerComponent} from './common/audio-player/audio-player.component';
 import {AudioCommentRecorderComponent} from './common/audio-recorder/audio/audio-comment-recorder/audio-comment-recorder';
@@ -214,6 +216,7 @@ import {TutorNotesModalComponent} from './common/modals/tutor-notes-modal/tutor-
 import {NotificationSettingsComponent} from './common/notification-settings/notification-settings.component';
 import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
+import {PageContainerComponent} from './common/page-container/page-container.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
 import {HumanizedDatePipe} from './common/pipes/humanized-date.pipe';
@@ -221,6 +224,7 @@ import {IsActiveUnitRole} from './common/pipes/is-active-unit-role.pipe';
 import {LocalizedDatePipe} from './common/pipes/localized-date.pipe';
 import {MarkedPipe} from './common/pipes/marked.pipe';
 import {SafePipe} from './common/pipes/safe.pipe';
+import {ProjectCardComponent} from './common/project-card/project-card.component';
 import {ProjectProgressBarComponent} from './common/project-progress-bar/project-progress-bar.component';
 import {ProjectProgressGaugeComponent} from './common/project-progress/project-progress-gauge.component';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
@@ -235,6 +239,10 @@ import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
 import {UserIconComponent} from './common/user-icon/user-icon.component';
 import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
+import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
+import {DashboardListItemComponent} from './dashboard/list-item/dashboard-list-item.component';
+import {DashboardExpandedListItemComponent} from './dashboard/list-item/expanded-list-item/expanded-list-item.component';
+import {DemoToolsModule} from './demo/demo-tools.module';
 import {TimeoutComponent} from './errors/states/timeout/timeout.component';
 import {UnauthorisedComponent} from './errors/states/unauthorised/unauthorised.component';
 import {UnavailableCardComponent} from './errors/unavailable-card/unavailable-card.component';
@@ -253,6 +261,7 @@ import {ProjectProgressDashboardComponent} from './projects/project-progress-das
 import {AddEngagementDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/add-engagement-dialog/add-engagement-dialog.component';
 import {EngagementDetailDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-detail-dialog/engagement-detail-dialog.component';
 import {EngagementPassportCardComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-passport-card.component';
+import {PeerProgressUnitSummaryComponent} from './projects/states/dashboard/directives/progress-dashboard/peer-progress-unit-summary/peer-progress-unit-summary.component';
 import {ProgressDashboardComponent} from './projects/states/dashboard/directives/progress-dashboard/progress-dashboard.component';
 import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/task-planner-card.component';
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
@@ -260,6 +269,7 @@ import {TaskListItemComponent} from './projects/states/dashboard/directives/stud
 import {DiscussionPromptsViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/discussion-prompts-view/discussion-prompts-view.component';
 import {StaffNotesViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/staff-notes-view/staff-notes-view.component';
 import {TaskAssessmentCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-assessment-card/task-assessment-card.component';
+import {PpiWidgetComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component';
 import {TaskDescriptionCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/task-description-card.component';
 import {TaskDueCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-due-card/task-due-card.component';
 import {TaskIlosCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-ilos-card/task-ilos-card.component';
@@ -317,6 +327,7 @@ import {IntelligentDiscussionRecorderComponent} from './tasks/task-comments-view
 import {PdfImageCommentComponent} from './tasks/task-comments-viewer/pdf-image-comment/pdf-image-comment.component';
 import {ScormCommentComponent} from './tasks/task-comments-viewer/scorm-comment/scorm-comment.component';
 import {ScormExtensionCommentComponent} from './tasks/task-comments-viewer/scorm-extension-comment/scorm-extension-comment.component';
+import {SentAttachmentCardComponent} from './tasks/task-comments-viewer/sent-attachment-card/sent-attachment-card.component';
 import {TaskAssessmentCommentComponent} from './tasks/task-comments-viewer/task-assessment-comment/task-assessment-comment.component';
 import {TaskCommentsViewerComponent} from './tasks/task-comments-viewer/task-comments-viewer.component';
 import {UnitStudentEnrolmentModalComponent} from './units/modals/unit-student-enrolment-modal/unit-student-enrolment-modal.component';
@@ -457,11 +468,15 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
   // Components we declare
   declarations: [
     AppComponent,
+    CrossDashboardComponent,
+    DashboardListItemComponent,
+    DashboardExpandedListItemComponent,
     TaskStatusPieChartComponent,
     AlertComponent,
     AddEngagementDialogComponent,
     EngagementPassportCardComponent,
     EngagementDetailDialogComponent,
+    PeerProgressUnitSummaryComponent,
     ProgressDashboardComponent,
     UnitStudentEnrolmentModalComponent,
     AboutDoubtfireModalContent,
@@ -481,6 +496,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     IntelligentDiscussionRecorderComponent,
     ExtensionCommentComponent,
     PdfImageCommentComponent,
+    SentAttachmentCardComponent,
     CampusListComponent,
     ActivityTypeListComponent,
     OverseerImageListComponent,
@@ -515,6 +531,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskListItemComponent,
     CreatePortfolioTaskListItemComponent,
     TaskDescriptionCardComponent,
+    PpiWidgetComponent,
     StatusIconComponent,
     TaskCommentsViewerComponent,
     UserIconComponent,
@@ -556,10 +573,13 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     SignInComponent,
     EditProfileFormComponent,
     EditProfileComponent,
+    VerifyAdditionalEmailComponent,
+    AdditionalNotificationEmailComponent,
     UserBadgeComponent,
     TaskStatusCardComponent,
     TaskDueCardComponent,
     FooterComponent,
+    PageContainerComponent,
     TaskAssessmentCardComponent,
     TaskSubmissionCardComponent,
     TaskDashboardComponent,
@@ -571,6 +591,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     CreateNewUnitModalContentComponent,
     TiiActionLogComponent,
     FChipComponent,
+    ProjectCardComponent,
     UnitCodeComponent,
     NewTeachingPeriodDialogComponent,
     FileViewerComponent,
@@ -795,6 +816,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,
+    DemoToolsModule,
     RouterModule.forRoot(routes, {
       initialNavigation: 'enabledNonBlocking',
     }),

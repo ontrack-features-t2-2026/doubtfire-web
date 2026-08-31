@@ -3,14 +3,19 @@
   fxLayout="column"
   fxLayoutAlign="center start"
   [ngClass]="{'p-10': modal}"
-  (ngSubmit)="submit()"
+  (ngSubmit)="submit(form)"
 >
   <div class="main-container flex w-full flex-row items-start justify-center">
     <div class="main flex w-full flex-col items-start justify-start">
       <!-- avatar -->
       <div class="mb-[25px] flex w-full flex-row items-center justify-between">
         <div class="flex flex-row items-center justify-between">
-          <a class="ml-[20px]" href="https://gravatar.com/connect/?source=_signup/" target="_blank">
+          <a
+            class="ml-[20px]"
+            href="https://gravatar.com/connect/?source=_signup/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             <user-icon style="margin-right: 25px" [size]="80" [user]="user"></user-icon
           ></a>
 
@@ -21,12 +26,48 @@
         </div>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Username</mat-label>
-          <input matInput name="username" [disabled]="!newUser" [(ngModel)]="user.username" />
-        </mat-form-field>
-      </div>
+      @if (newUser) {
+        <div fxFlexFill fxLayout="row">
+          <mat-form-field appearance="outline" fxFlexFill>
+            <mat-label>Username</mat-label>
+            <input matInput name="username" [(ngModel)]="user.username" />
+          </mat-form-field>
+        </div>
+      } @else {
+        <section aria-labelledby="account-information-title" class="account-information">
+          <div>
+            <h2 id="account-information-title">Account information</h2>
+            <p>
+              These details identify your sign-in account. Student ID cannot be changed from your
+              profile.
+            </p>
+          </div>
+          <dl>
+            <div>
+              <dt>Username</dt>
+              <dd>{{ user.username }}</dd>
+            </div>
+            @if (user.systemRole === 'Student' && !canEditStudentId) {
+              <div>
+                <dt>Student ID</dt>
+                <dd>{{ user.studentId || 'Not supplied' }}</dd>
+              </div>
+            }
+            @if (!canEditEmail) {
+              <div>
+                <dt>Institutional / sign-in email</dt>
+                <dd>{{ user.email }}</dd>
+              </div>
+            }
+          </dl>
+          @if (user.institutionalIdentityManaged) {
+            <p class="account-information__managed">
+              Your institution manages sign-in identity changes. Contact support if these details
+              are incorrect.
+            </p>
+          }
+        </section>
+      }
 
       <div fxFlexFill fxLayout="row">
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
@@ -75,39 +116,45 @@
       </mat-form-field>
 
       @if (user.systemRole === 'Student') {
+        @if (canEditStudentId) {
+          <mat-form-field appearance="outline" fxFlexFill>
+            <mat-label>Student ID</mat-label>
+            <input
+              #studentIdModel="ngModel"
+              matInput
+              name="student_id"
+              required
+              [(ngModel)]="user.studentId"
+            />
+            @if (studentIdModel.hasError('required')) {
+              <mat-error>Student ID is required</mat-error>
+            }
+          </mat-form-field>
+        }
+      }
+
+      @if (canEditEmail) {
         <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Student ID</mat-label>
+          <mat-label>Email</mat-label>
           <input
-            #studentIdModel="ngModel"
+            #emailModel="ngModel"
+            autocomplete="email"
+            email
+            inputmode="email"
             matInput
-            name="student_id"
+            name="email"
             required
-            [(ngModel)]="user.studentId"
+            type="email"
+            [(ngModel)]="user.email"
           />
-          @if (studentIdModel.hasError('required')) {
-            <mat-error>Student ID is required</mat-error>
+          @if (emailModel.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (emailModel.hasError('email')) {
+            <mat-error>Enter a valid email address</mat-error>
           }
         </mat-form-field>
       }
-
-      <mat-form-field appearance="outline" fxFlexFill>
-        <mat-label>Email</mat-label>
-        <input
-          #emailModel="ngModel"
-          email
-          matInput
-          name="email"
-          required
-          type="email"
-          [(ngModel)]="user.email"
-        />
-        @if (emailModel.hasError('required')) {
-          <mat-error>Email is required</mat-error>
-        }
-        @if (emailModel.hasError('email')) {
-          <mat-error>Enter a valid email address</mat-error>
-        }
-      </mat-form-field>
 
       @if (canSeeSystemRole) {
         <mat-form-field appearance="outline" fxFlexFill>
@@ -126,7 +173,32 @@
         </mat-form-field>
       }
 
+      @if (mode === 'edit' && managingOwnProfile) {
+        <f-additional-notification-email [user]="user"></f-additional-notification-email>
+      }
+
       <f-notification-settings [user]="user"></f-notification-settings>
+
+      <section
+        aria-labelledby="peer-progress-preference-title"
+        class="peer-progress-preference"
+        fxFlexFill
+        fxLayout="column"
+      >
+        <h3 id="peer-progress-preference-title">Peer progress</h3>
+        <mat-slide-toggle
+          aria-describedby="peer-progress-preference-description"
+          color="primary"
+          name="displayPeerProgress"
+          [(ngModel)]="user.displayPeerProgress"
+        >
+          Display anonymous peer progress statistics
+        </mat-slide-toggle>
+        <small id="peer-progress-preference-description">
+          This controls whether you see the privacy-protected widget below your submission details.
+          It does not opt your anonymous task status out of authorised cohort aggregation.
+        </small>
+      </section>
 
       <!--
         Push opt-in. Subscribing has to come from a click: the browser only shows
@@ -180,7 +252,7 @@
           </mat-checkbox>
         </section>
       }
-      <div fxFlexFill fxLayout="row" style="padding-top: 12px">
+      <div class="profile-actions" fxFlexFill fxLayout="row">
         <button
           fxFlexAlign="start"
           mat-stroked-button
@@ -199,7 +271,7 @@
             type="submit"
             [disabled]="form.invalid || saving"
           >
-            Confirm Account
+            {{ saving ? 'Saving…' : 'Confirm account' }}
           </button>
         }
         @if (mode === 'edit') {
@@ -207,13 +279,19 @@
             color="primary"
             fxFlexAlign="end"
             mat-flat-button
-            type="button"
-            [disabled]="form.invalid || saving"
-            (click)="submit()"
+            type="submit"
+            [disabled]="form.invalid || form.pristine || saving"
           >
-            Save Profile
+            {{ saving ? 'Saving…' : form.dirty ? 'Save profile' : 'Profile saved' }}
           </button>
         }
+      </div>
+      <div class="profile-save-status">
+        @if (form.invalid && form.dirty) {
+          <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
+        }
+        <p aria-live="polite" class="profile-save-status__success">{{ saveMessage }}</p>
+        <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
       </div>
     </div>
   </div>

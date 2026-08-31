@@ -47,7 +47,10 @@ export class PortfolioReviewStepComponent implements OnInit {
   }
 
   public get hasLearningSummaryReport(): boolean {
-    return (this.project?.portfolioFiles ?? []).some((file) => file.idx === 0);
+    return Boolean(
+      this.project?.usesDraftLearningSummary ||
+      (this.project?.portfolioFiles ?? []).some((file) => file.idx === 0),
+    );
   }
 
   public get hasTasksSelected(): boolean {
@@ -122,9 +125,10 @@ export class PortfolioReviewStepComponent implements OnInit {
 
   public downloadPortfolio(): void {
     const username = this.project?.student?.username ?? 'student';
-    this.fileDownloaderService.downloadFile(
+    this.fileDownloaderService.downloadFileWithFeedback(
       this.project.portfolioUrl(true),
       `${username}-portfolio.pdf`,
+      {requestKey: `portfolio-${this.project?.id ?? 'current'}`},
     );
   }
 

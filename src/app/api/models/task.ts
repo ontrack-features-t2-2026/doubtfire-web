@@ -2,7 +2,7 @@ import {Entity, EntityCache, RequestOptions} from 'ngx-entity-service';
 import {formatDate} from '@angular/common';
 import {HttpClient} from '@angular/common/http';
 import {LOCALE_ID} from '@angular/core';
-import {Observable, firstValueFrom, map} from 'rxjs';
+import {Observable, finalize, firstValueFrom, map} from 'rxjs';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
@@ -45,6 +45,31 @@ export const FeedbackModerationAction = {
 export type FeedbackModerationActionType =
   (typeof FeedbackModerationAction)[keyof typeof FeedbackModerationAction];
 
+export type SubmissionProcessingState =
+  | 'not_submitted'
+  | 'queued'
+  | 'processing'
+  | 'ready'
+  | 'failed'
+  | 'timed_out';
+
+export interface SubmissionProcessingResponse {
+  has_pdf?: boolean;
+  pdf_ready?: boolean;
+  submission_files_ready?: boolean;
+  processing_pdf?: boolean;
+  processing_state?: SubmissionProcessingState;
+  processing_started_at?: string | null;
+  processing_finished_at?: string | null;
+  processing_error_code?: string | null;
+  processing_attempts?: number;
+  retryable?: boolean;
+  poll_after_seconds?: number | null;
+  submission_date?: string | null;
+  task_status?: TaskStatusEnum;
+  claimed_by_unit_role_id?: number | null;
+}
+
 export class Task extends Entity {
   id: number;
 
@@ -68,9 +93,17 @@ export class Task extends Entity {
   definition: TaskDefinition;
   tutorialId: number;
 
-  //TODO: map task submission details
   hasPdf: boolean = false;
   processingPdf: boolean = false;
+  submissionPdfReady: boolean = false;
+  submissionFilesReady: boolean = false;
+  submissionProcessingState: SubmissionProcessingState = 'not_submitted';
+  submissionProcessingStartedAt: Date | null = null;
+  submissionProcessingFinishedAt: Date | null = null;
+  submissionProcessingErrorCode: string | null = null;
+  submissionProcessingAttempts = 0;
+  submissionRetryable = false;
+  submissionPollAfterSeconds: number | null = null;
   claimedByUnitRoleId: number | null;
 
   loadingSubmissionDetails: boolean = false;
@@ -695,6 +728,24 @@ export class Task extends Entity {
     return TaskStatus.SUBMITTED_STATUSES.includes(this.status);
   }
 
+  /**
+   * Submission actions must follow evidence history, not only the task's current
+   * status. A tutor can return a submitted task to Redo/Resubmit, and the
+   * submission timestamp/artifacts remain authoritative in that state.
+   */
+  public hasSubmissionHistory(): boolean {
+    return !!(
+      this.submissionDate ||
+      this.hasPdf ||
+      this.processingPdf ||
+      this.submissionPdfReady ||
+      this.submissionFilesReady ||
+      this.submissionProcessingState !== 'not_submitted' ||
+      this.inSubmittedState() ||
+      TaskStatus.MARKED_STATUSES.includes(this.status)
+    );
+  }
+
   public inAwaitingFeedbackState(): boolean {
     return this.status === 'ready_for_feedback';
   }
@@ -736,20 +787,65 @@ export class Task extends Entity {
         }/submission_details`,
       )
       .pipe(
-        map((response: object) => {
+        map((response: SubmissionProcessingResponse) => this.applySubmissionDetails(response)),
+        finalize(() => {
           this.loadingSubmissionDetails = false;
-          this.hasPdf = response['has_pdf'];
-          this.processingPdf = response['processing_pdf'];
-          this.submissionDate = MappingFunctions.mapDate(response, 'submission_date', this);
-          if (response['task_status'] && TaskStatus.STATUS_KEYS.includes(response['task_status'])) {
-            this.status = response['task_status'];
-          }
-          if ('claimed_by_unit_role_id' in response) {
-            this.claimedByUnitRoleId = response['claimed_by_unit_role_id'] as number | null;
-          }
-          return this;
         }),
       );
+  }
+
+  public retrySubmissionProcessing(): Observable<Task> {
+    const http: HttpClient = AppInjector.get(HttpClient);
+    this.loadingSubmissionDetails = true;
+    return http.post<SubmissionProcessingResponse>(`${this.submissionUrl()}/retry`, {}).pipe(
+      map((response) => this.applySubmissionDetails(response)),
+      finalize(() => {
+        this.loadingSubmissionDetails = false;
+      }),
+    );
+  }
+
+  public get submissionProcessingActive(): boolean {
+    return (
+      this.submissionProcessingState === 'queued' || this.submissionProcessingState === 'processing'
+    );
+  }
+
+  private applySubmissionDetails(response: SubmissionProcessingResponse): Task {
+    const legacyProcessing = response.processing_pdf === true;
+    const legacyHasPdf = response.has_pdf === true;
+    const state =
+      response.processing_state ??
+      (legacyProcessing ? 'processing' : legacyHasPdf ? 'ready' : 'not_submitted');
+
+    this.submissionProcessingState = state;
+    this.hasPdf = legacyHasPdf;
+    this.processingPdf = state === 'queued' || state === 'processing';
+    this.submissionPdfReady = response.pdf_ready ?? legacyHasPdf;
+    this.submissionFilesReady = response.submission_files_ready ?? legacyHasPdf;
+    this.submissionProcessingStartedAt = this.parseApiDate(response.processing_started_at);
+    this.submissionProcessingFinishedAt = this.parseApiDate(response.processing_finished_at);
+    this.submissionProcessingErrorCode = response.processing_error_code ?? null;
+    this.submissionProcessingAttempts = response.processing_attempts ?? 0;
+    this.submissionRetryable = response.retryable === true;
+    this.submissionPollAfterSeconds = response.poll_after_seconds ?? null;
+    this.submissionDate = MappingFunctions.mapDate(response, 'submission_date', this);
+
+    if (response.task_status && TaskStatus.STATUS_KEYS.includes(response.task_status)) {
+      this.status = response.task_status;
+    }
+    if ('claimed_by_unit_role_id' in response) {
+      this.claimedByUnitRoleId = response.claimed_by_unit_role_id ?? null;
+    }
+    return this;
+  }
+
+  private parseApiDate(value: string | null | undefined): Date | null {
+    if (!value) {
+      return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   private mapUnitTaskPrerequisites(prerequisites: TaskPrerequisite[]): TaskPrerequisite[] {
@@ -905,7 +1001,11 @@ export class Task extends Entity {
     );
   }
 
-  public processTaskStatusChange(expectedStatus: TaskStatusEnum, alerts: AlertService) {
+  public processTaskStatusChange(
+    expectedStatus: TaskStatusEnum,
+    alerts: AlertService,
+    submissionCompleted: boolean = false,
+  ) {
     if (this.inTimeExceeded() && !this.isPastDeadline()) {
       alerts.message(
         'You have submitted after the deadline for feedback. Your task will not be reviewed by a tutor. It is now your responsibility to ensure this task meets the required standard.',
@@ -920,7 +1020,7 @@ export class Task extends Entity {
     }
     this.getSubmissionDetails().subscribe();
     const taskService: TaskService = AppInjector.get(TaskService);
-    taskService.notifyStatusChange(this);
+    taskService.notifyTransitionComplete(this, submissionCompleted);
   }
 
   public async markAsDiscussed(reasonText?: string) {
@@ -994,6 +1094,7 @@ export class Task extends Entity {
     status: TaskStatusEnum,
     markAsDiscussed?: boolean,
     triggerRecursiveFix?: boolean,
+    submissionCompleted: boolean = false,
   ) {
     const oldStatus = this.status;
     const oldGrade = this.grade;
@@ -1043,7 +1144,7 @@ export class Task extends Entity {
               this.project.taskCache.delete(this.definition.abbreviation);
               this.project.taskCache.add(this);
             }
-            this.processTaskStatusChange(status, alerts);
+            this.processTaskStatusChange(status, alerts, submissionCompleted);
             taskService.notifyStatusChange(this);
           },
           error: (error) => {
@@ -1093,7 +1194,12 @@ export class Task extends Entity {
     } else if (requiresFileUpload && !this.isReadyForUpload) {
       alerts.error('Complete Knowledge Check first to submit files', 6000);
     } else {
-      await this.updateTaskStatus(status);
+      await this.updateTaskStatus(
+        status,
+        undefined,
+        undefined,
+        TaskStatus.SUBMITTABLE_STATUSES.includes(status),
+      );
     }
   }
 

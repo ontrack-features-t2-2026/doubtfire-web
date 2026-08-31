@@ -1,7 +1,49 @@
-@if (loading$ | async) {
-  <div class="app-splash-screen">
-    <div class="app-splash-inner">
-      <ng-lottie width="70vw" [options]="options"></ng-lottie>
+@if (startupState$ | async; as state) {
+  @if (state.status === 'loading' && state.phase === 'authentication') {
+    <div
+      aria-label="OnTrack is starting"
+      aria-live="polite"
+      class="app-splash-screen"
+      data-testid="startup-auth-loading"
+      role="status"
+    >
+      <div class="app-splash-inner">
+        <ng-lottie width="70vw" [options]="options"></ng-lottie>
+        <p>Checking your session…</p>
+      </div>
     </div>
-  </div>
+  } @else if (state.status === 'loading') {
+    <section
+      aria-live="polite"
+      class="startup-progress"
+      data-testid="startup-data-loading"
+      role="status"
+    >
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <span>{{ state.message }}</span>
+    </section>
+  } @else if (state.status === 'error' || state.status === 'offline') {
+    <section
+      aria-labelledby="startup-recovery-title"
+      class="startup-recovery"
+      data-testid="startup-recovery"
+      role="alert"
+    >
+      <mat-icon aria-hidden="true">
+        {{ state.status === 'offline' ? 'wifi_off' : 'sync_problem' }}
+      </mat-icon>
+      <div>
+        <h1 id="startup-recovery-title">
+          {{ state.status === 'offline' ? 'You’re offline' : 'OnTrack couldn’t finish loading' }}
+        </h1>
+        <p>{{ state.message }}</p>
+        <div class="startup-recovery-actions">
+          <button color="primary" mat-flat-button type="button" (click)="retry()">Try again</button>
+          @if (state.phase === 'authentication') {
+            <button mat-button type="button" (click)="continueToSignIn()">Go to sign in</button>
+          }
+        </div>
+      </div>
+    </section>
+  }
 }

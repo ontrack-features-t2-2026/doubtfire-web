@@ -1,4 +1,4 @@
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {
@@ -7,6 +7,7 @@ import {
   Observable,
   Subject,
   Subscription,
+  TimeoutError,
   catchError,
   map,
   of,
@@ -14,17 +15,24 @@ import {
   takeUntil,
   tap,
   throwError,
+  timeout,
 } from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
+import {NotificationFeedbackRouteIntentService} from 'src/app/api/services/notification-feedback-route-intent.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {FeedbackDraftStore} from 'src/app/common/services/feedback-draft-store.service';
 import {
   type AuthenticatedSettingsResponseFormat,
   DoubtfireConstants,
 } from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {DemoScenarioRegistryService} from 'src/app/demo/demo-scenario-registry.service';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
+import {buildAuthCallbackFragment} from 'src/app/security/auth-callback';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 /**
  * The format for the data returned from the auth api.
@@ -35,6 +43,17 @@ interface AuthResponse {
   auth_token_expiry: string;
   lti_token?: string;
 }
+
+export type RefreshTokenFailureReason =
+  | 'not-requested'
+  | 'expired'
+  | 'offline'
+  | 'timeout'
+  | 'unavailable';
+
+export const REFRESH_TOKEN_TIMEOUT_MS = 12_000;
+
+class RefreshTokenRejectedError extends Error {}
 
 @Injectable()
 export class AuthenticationService {
@@ -84,13 +103,18 @@ export class AuthenticationService {
     private alertService: AlertService,
     private angularRouter: Router,
     private doubtfireConstants: DoubtfireConstants,
+    private demoMode: DemoModeStore,
+    private demoScenarioRegistry: DemoScenarioRegistryService,
+    private authReturnUrl: AuthReturnUrlService,
+    private feedbackDraftStore: FeedbackDraftStore,
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
-    localStorage.removeItem(this.USERNAME_KEY);
+    this.browserStorage?.removeItem(this.USERNAME_KEY);
   }
 
   private actionAuthFailed() {
+    this.authReturnUrl.rememberCurrentUrl();
     this.signOut(false);
   }
 
@@ -101,49 +125,92 @@ export class AuthenticationService {
    * @param loginResultCallback - Callback function to indicate success or failure of login.
    */
   public attemptLoginUsingRefreshToken(
-    loginResultCallback: (result: boolean) => void,
+    loginResultCallback: (result: boolean, failureReason?: RefreshTokenFailureReason) => void,
     firstTime: boolean = true,
   ): void {
     // Check we have indication of secure cookie in local storage
     const remember: boolean = this.rememberMe;
 
     if (!remember) {
-      loginResultCallback(false);
+      loginResultCallback(false, 'not-requested');
       return;
     }
 
     const authenticationGeneration = this.authenticationGeneration;
 
-    // Attempt to get an access token using the refresh token cookie
-    this.httpClient.post(this.AUTH_URL + '/access-token', {}).subscribe({
-      next: (response: AuthResponse | null) => {
-        if (authenticationGeneration !== this.authenticationGeneration) {
-          return;
-        }
+    // The timeout wraps both the token exchange and protected settings
+    // hydration. A response from /access-token alone is not a usable session.
+    this.httpClient
+      .post<AuthResponse | null>(this.AUTH_URL + '/access-token', {})
+      .pipe(
+        switchMap((response) => {
+          if (authenticationGeneration !== this.authenticationGeneration) {
+            return EMPTY;
+          }
+          if (!response?.auth_token) {
+            return throwError(() => new RefreshTokenRejectedError());
+          }
+          return this.setupUserFromResponse(response, firstTime, authenticationGeneration);
+        }),
+        timeout({first: REFRESH_TOKEN_TIMEOUT_MS}),
+      )
+      .subscribe({
+        next: () => loginResultCallback(true),
+        error: (error: unknown) => {
+          if (authenticationGeneration !== this.authenticationGeneration) {
+            return;
+          }
 
-        if (response && response.auth_token) {
-          this.setupUserFromResponse(response, firstTime, authenticationGeneration).subscribe({
-            next: () => loginResultCallback(true),
-            error: () => {
-              this.actionAuthFailed();
-              loginResultCallback(false);
-            },
-          });
-        } else {
-          this.actionAuthFailed();
-          loginResultCallback(false);
-        }
-      },
-      error: (_error) => {
-        if (authenticationGeneration !== this.authenticationGeneration) {
-          return;
-        }
+          const failureReason =
+            error instanceof RefreshTokenRejectedError
+              ? 'expired'
+              : this.refreshTokenFailureReason(error);
+          if (failureReason === 'expired') {
+            // A definitive rejection clears the obsolete session. Network and
+            // server availability failures remain retryable and do not discard a
+            // valid refresh cookie that the browser may still hold.
+            this.actionAuthFailed();
+          } else if (firstTime) {
+            // The token exchange may have populated currentUser before protected
+            // settings timed out. Cold-start recovery must return to a genuinely
+            // signed-out in-memory state without deleting the still-valid refresh
+            // cookie, so Retry performs the complete hydration again.
+            this.clearPartialRestoredSession(authenticationGeneration);
+          }
+          loginResultCallback(false, failureReason);
+        },
+      });
+  }
 
-        // Will occur on 404 when the refresh token cookie is not present
-        this.actionAuthFailed();
-        loginResultCallback(false);
-      },
-    });
+  private refreshTokenFailureReason(error: unknown): RefreshTokenFailureReason {
+    if (error instanceof TimeoutError) {
+      return 'timeout';
+    }
+
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) {
+        return typeof navigator !== 'undefined' && navigator.onLine === false
+          ? 'offline'
+          : 'unavailable';
+      }
+      if ([401, 403, 404, 419].includes(error.status)) {
+        return 'expired';
+      }
+    }
+
+    return 'unavailable';
+  }
+
+  private clearPartialRestoredSession(authenticationGeneration: number): void {
+    if (authenticationGeneration !== this.authenticationGeneration) {
+      return;
+    }
+
+    this.authenticatedSettingsRequestId += 1;
+    this.authenticatedSettingsCancellation$.next();
+    this.doubtfireConstants.resetAuthenticatedSettings();
+    this.userService.currentUser = this.userService.anonymousUser;
+    this.userService.cache.clear();
   }
 
   /**
@@ -159,11 +226,22 @@ export class AuthenticationService {
   }
 
   public get rememberMe(): boolean {
-    return localStorage.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
+    return this.browserStorage?.getItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN) !== 'false';
   }
 
   public set rememberMe(remember: boolean) {
-    localStorage.setItem(this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN, remember ? 'true' : 'false');
+    this.browserStorage?.setItem(
+      this.REMEMBER_DOUBTFIRE_CREDENTIALS_TOKEN,
+      remember ? 'true' : 'false',
+    );
+  }
+
+  private get browserStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -291,6 +369,7 @@ export class AuthenticationService {
     // current values synchronously, so do not load globals, publish authComplete
     // or complete signIn until this authenticated request has settled.
     return this.loadAuthenticatedSettings(user.id, authenticationGeneration).pipe(
+      switchMap(() => this.demoScenarioRegistry.loadForAuthenticatedUser(user.id)),
       tap(() => {
         if (firstTime) {
           // Load everything!
@@ -355,11 +434,14 @@ export class AuthenticationService {
   public signInWithLti(userCredentials: {ltik: string; lti_token: string}): Observable<void> {
     return this.httpClient.post(`${this.AUTH_URL}/lti`, userCredentials).pipe(
       map((response: AuthResponse) => {
-        const username = encodeURIComponent(response.user['username']);
-        const authToken = encodeURIComponent(response.auth_token);
-        const ltik = encodeURIComponent(userCredentials.ltik);
+        const fragment = buildAuthCallbackFragment({
+          username: response.user['username'],
+          authToken: response.auth_token,
+          ltik: userCredentials.ltik,
+          isLtiLogin: true,
+        });
         setTimeout(() => {
-          window.location.href = `/sign_in?username=${username}&authToken=${authToken}&ltik=${ltik}&isLtiLogin=true`;
+          window.location.href = `/sign_in#${fragment}`;
         });
       }),
       catchError((error) => {
@@ -368,7 +450,66 @@ export class AuthenticationService {
     );
   }
 
+  // Removes this user's unsent comment drafts from browser storage, along with
+  // any left over from before drafts were scoped to a user, which belong to
+  // nobody and would otherwise sit there for good.
+  //
+  // Keys are collected first and deleted afterwards. Calling removeItem inside a
+  // forward loop over localStorage.key(i) shifts the indices along and skips
+  // every second match.
+  private clearCommentDrafts(userId?: number): void {
+    if (userId) {
+      this.feedbackDraftStore.clearUser(userId);
+    }
+    const draftPrefix = 'task_comment_draft_';
+    const userPrefix = userId ? `${draftPrefix}uid${userId}_` : null;
+
+    try {
+      const doomed: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(draftPrefix)) {
+          continue;
+        }
+        // This user's drafts, and the old unscoped keys which have a task id
+        // straight after the prefix rather than a user id.
+        if ((userPrefix && key.startsWith(userPrefix)) || !this.isUserScopedDraftKey(key)) {
+          doomed.push(key);
+        }
+      }
+      doomed.forEach((key) => localStorage.removeItem(key));
+    } catch (e) {
+      console.error('Error clearing comment drafts:', e);
+    }
+
+    try {
+      if (userId) {
+        sessionStorage.removeItem(`task_comments_submitted_${userId}`);
+      }
+      sessionStorage.removeItem('task_comments_submitted');
+    } catch (e) {
+      console.error('Error clearing submitted comment tasks:', e);
+    }
+  }
+
+  // A scoped key is task_comment_draft_uid<userId>_<rest>. Anything else under
+  // the prefix was written before drafts were scoped to a user, belongs to
+  // nobody, and nothing will ever read it again. A legacy key starts with a task
+  // or project id, or the literal 'unknown', so it can never begin with uid
+  // followed by digits.
+  private isUserScopedDraftKey(key: string): boolean {
+    const rest = key.substring('task_comment_draft_'.length);
+    return /^uid\d+_/.test(rest);
+  }
+
   public signOut(ssoSignOut = true): void {
+    if (ssoSignOut) {
+      this.authReturnUrl.clear();
+    }
+
+    this.demoMode.reset();
+    this.demoScenarioRegistry.clear();
+
     // Invalidate authentication work before the asynchronous push and token
     // teardown. This prevents a late /settings response from restoring values
     // after sign out or completing an obsolete sign-in observable.
@@ -383,6 +524,12 @@ export class AuthenticationService {
       this.authComplete$.complete();
       this.authComplete$ = new AsyncSubject<boolean>();
 
+      // Unsent comment drafts live in browser storage and sign out routes rather
+      // than reloading, so nothing else drops them. Clear them before the current
+      // user is replaced, otherwise the prefix is built from the anonymous user
+      // and nothing matches.
+      this.clearCommentDrafts(this.userService.currentUser?.id);
+
       // Change the current user to the anonymous user
       this.userService.currentUser = this.userService.anonymousUser;
 
@@ -396,6 +543,7 @@ export class AuthenticationService {
       // rather than reloading, so nothing else drops them and the next person on
       // a shared machine would see this user's messages.
       AppInjector.get(NotificationService).reset();
+      AppInjector.get(NotificationFeedbackRouteIntentService).clear();
 
       // Trigger the UI changes
       globalStateService.hideHeader();
@@ -446,6 +594,7 @@ export class AuthenticationService {
 
   public timeoutAuthentication(): void {
     if (window.location.pathname !== '/timeout') {
+      this.authReturnUrl.rememberCurrentUrl();
       this.alertService.error('Authentication timed out', 6000);
       setTimeout(() => this.angularRouter.navigateByUrl('/timeout'), 500);
     }

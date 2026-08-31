@@ -1,5 +1,8 @@
 @if (loading) {
-  <div class="flex-start flex size-full items-center justify-center text-gray-400 italic">
+  <div
+    class="flex-start flex size-full items-center justify-center text-gray-400 italic"
+    role="status"
+  >
     Loading members...
   </div>
 } @else if (!selectedGroup || selectedGroup.members.length === 0) {
@@ -8,7 +11,33 @@
     <p class="p-2.5">There are no members in this group</p>
   </div>
 } @else {
-  <table mat-table [dataSource]="dataSource">
+  @if (project) {
+    <ul aria-label="Group members" class="student-member-cards">
+      @for (member of selectedGroup.members; track member.id) {
+        <li class="student-member-card">
+          <div class="student-member-card__identity">
+            <mat-icon aria-hidden="true">person</mat-icon>
+            <span>{{ member.student.name }}</span>
+            @if (project.id === member.id) {
+              <strong>(You)</strong>
+            }
+          </div>
+          @if (canRemoveMembers && project.id === member.id) {
+            <button mat-raised-button type="button" (click)="removeMember(member)">
+              Leave group
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <table
+    class="members-table"
+    mat-table
+    [class.members-table--student]="project"
+    [dataSource]="dataSource"
+  >
     <ng-container matColumnDef="student_id">
       <th *matHeaderCellDef mat-header-cell>{{ unitRole ? 'Student ID' : '' }}</th>
       <td *matCellDef="let member" mat-cell>

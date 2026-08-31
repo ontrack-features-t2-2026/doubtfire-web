@@ -2,7 +2,19 @@ import {MediaObserver} from 'ng-flex-layout';
 import {EntityCache} from 'ngx-entity-service';
 import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
-import {BehaviorSubject, Observable, Subject, find} from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  Subscription,
+  TimeoutError,
+  catchError,
+  forkJoin,
+  switchMap,
+  tap,
+  throwError,
+  timeout,
+} from 'rxjs';
 import {
   CampusService,
   LearningOutcomeService,
@@ -15,9 +27,13 @@ import {
   UnitService,
   UserService,
 } from 'src/app/api/models/doubtfire-model';
-import {AuthenticationService} from 'src/app/api/services/authentication.service';
+import {
+  AuthenticationService,
+  RefreshTokenFailureReason,
+} from 'src/app/api/services/authentication.service';
 import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 /**
  * The different types of views that can be shown. Used by the header to determine details to show.
@@ -35,6 +51,31 @@ export enum ViewType {
 export class DoubtfireViewState {
   public entity: Project | Unit | UnitRole;
   public viewType: ViewType;
+}
+
+export type StartupPhase = 'authentication' | 'foundations' | 'units-and-projects' | 'ready';
+export type StartupStatus = 'loading' | 'ready' | 'error' | 'offline' | 'signed-out';
+
+export interface StartupState {
+  status: StartupStatus;
+  phase: StartupPhase;
+  message: string;
+  attempt: number;
+  startedAt: number;
+  elapsedMs?: number;
+  failedResource?: string;
+}
+
+export const STARTUP_TIMEOUT_MS = 12_000;
+
+class StartupRequestError extends Error {
+  constructor(
+    public readonly resource: string,
+    public readonly originalError: unknown,
+  ) {
+    super(`Failed loading ${resource}`);
+    this.name = 'StartupRequestError';
+  }
 }
 
 @Injectable({
@@ -99,7 +140,24 @@ export class GlobalStateService implements OnDestroy {
    */
   public isLoadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
+  /**
+   * A finite, user-visible bootstrap state. isLoadingSubject remains for older
+   * consumers that only need ready/not-ready, while this state distinguishes
+   * active work from a recoverable terminal failure.
+   */
+  public startupStateSubject: BehaviorSubject<StartupState> = new BehaviorSubject<StartupState>({
+    status: 'loading',
+    phase: 'authentication',
+    message: 'Checking your session…',
+    attempt: 0,
+    startedAt: Date.now(),
+  });
+
   public showHideHeader: Subject<boolean> = new Subject<boolean>();
+
+  private startupAttempt = 0;
+  private globalsSubscription?: Subscription;
+  private readonly resetHeightListener = () => this.resetHeight();
 
   constructor(
     private unitRoleService: UnitRoleService,
@@ -114,40 +172,77 @@ export class GlobalStateService implements OnDestroy {
     private router: Router,
     private alerts: AlertService,
     private mediaObserver: MediaObserver,
+    private authReturnUrl: AuthReturnUrlService,
   ) {
     this.loadedUnitRoles = this.unitRoleService.cache;
     this.loadedUnits = this.unitService.cache;
     this.currentUserProjects = this.projectService.cache;
 
-    // Use timeout to ensure everything is loaded before we try to login
-    setTimeout(() => {
-      // Try to login using the refresh token
-      this.authenticationService.attemptLoginUsingRefreshToken((result: boolean) => {
-        if (result) {
-          if (
-            this.userService.currentUser.hasRunFirstTimeSetup === false &&
-            window.location.pathname !== '/welcome'
-          ) {
-            this.router.navigateByUrl('/welcome');
-          }
-        } else {
-          // Loading is finshed...
-          this.isLoadingSubject.next(false);
-
-          // and if we are not going to the sign in page, then redirect to it
-          if (window.location.pathname !== '/sign_in') {
-            this.router.navigateByUrl('/sign_in');
-          }
-        }
-      });
-    }, 100);
+    this.authenticateFromRefreshToken();
 
     // this is a hack to workaround horrific IOS "feature"
     // https://stackoverflow.com/questions/37112218/css3-100vh-not-constant-in-mobile-browser
 
-    window.addEventListener('orientationchange', this.resetHeight.bind(this));
-    window.addEventListener('resize', this.resetHeight.bind(this));
+    window.addEventListener('orientationchange', this.resetHeightListener);
+    window.addEventListener('resize', this.resetHeightListener);
     this.resetHeight();
+  }
+
+  private authenticateFromRefreshToken(): void {
+    const startedAt = Date.now();
+    this.startupAttempt += 1;
+    this.isLoadingSubject.next(true);
+    this.publishStartupState({
+      status: 'loading',
+      phase: 'authentication',
+      message: 'Checking your session…',
+      attempt: this.startupAttempt,
+      startedAt,
+    });
+
+    this.authenticationService.attemptLoginUsingRefreshToken(
+      (result: boolean, failureReason?: RefreshTokenFailureReason) => {
+        if (result) {
+          this.recordStartupDiagnostic('authentication', 'ready', startedAt);
+          if (
+            this.userService.currentUser.hasRunFirstTimeSetup === false &&
+            window.location.pathname !== '/welcome'
+          ) {
+            void this.router.navigateByUrl('/welcome');
+          }
+          return;
+        }
+
+        if (
+          failureReason === 'offline' ||
+          failureReason === 'timeout' ||
+          failureReason === 'unavailable'
+        ) {
+          this.publishStartupFailure('authentication', startedAt, failureReason);
+          return;
+        }
+
+        this.completeSignedOutStartup(startedAt);
+      },
+    );
+  }
+
+  private completeSignedOutStartup(startedAt: number): void {
+    this.isLoadingSubject.next(false);
+    this.publishStartupState({
+      status: 'signed-out',
+      phase: 'authentication',
+      message: '',
+      attempt: this.startupAttempt,
+      startedAt,
+      elapsedMs: Date.now() - startedAt,
+    });
+    this.recordStartupDiagnostic('authentication', 'signed-out', startedAt);
+
+    if (window.location.pathname !== '/sign_in') {
+      this.authReturnUrl.rememberCurrentUrl();
+      void this.router.navigateByUrl('/sign_in');
+    }
   }
 
   private resetHeight() {
@@ -226,103 +321,195 @@ export class GlobalStateService implements OnDestroy {
     this.userService.cache.clear();
     this.clearUnitsAndProjects();
     this.isLoadingSubject.next(false);
+    this.publishStartupState({
+      status: 'signed-out',
+      phase: 'authentication',
+      message: '',
+      attempt: this.startupAttempt,
+      startedAt: Date.now(),
+    });
     this.authenticationService.signOut();
   }
 
   public ngOnDestroy(): void {
+    this.globalsSubscription?.unsubscribe();
+    window.removeEventListener('orientationchange', this.resetHeightListener);
+    window.removeEventListener('resize', this.resetHeightListener);
     this.isLoadingSubject.complete();
+    this.startupStateSubject.complete();
     this.showHideHeader.complete();
     this.currentViewAndEntitySubject$.complete();
   }
 
   public loadGlobals(): void {
-    let loaded = 0;
-    // Indicate we are loading data...
+    this.globalsSubscription?.unsubscribe();
+    const startedAt = Date.now();
+    this.startupAttempt += 1;
     this.isLoadingSubject.next(true);
-
-    // Loading observer watches for loading of campuses, and teaching periods before loading unit roles, and projects
-    const loadingObserver = new Observable((subscriber) => {
-      // Loading campuses
-      this.campusService.query().subscribe({
-        next: (_response) => {
-          subscriber.next(++loaded);
-        },
-        error: (_response) => {
-          this.alerts.error('Unable to access service. Failed loading campuses.', 6000);
-        },
-      });
-
-      if (this.userService.currentUser.isStaff) {
-        this.learningOutcomeService
-          .query({}, {endpointFormat: LearningOutcomeService.globalEndpoint})
-          .subscribe({
-            next: (_response) => {
-              subscriber.next(null);
-            },
-            error: (_response) => {
-              this.alerts.error('Unable to access service. Failed loading GLOs.', 6000);
-            },
-          });
-
-        this.feedbackTemplateService
-          .query({}, {endpointFormat: FeedbackTemplateService.globalEndpoint})
-          .subscribe({
-            next: (_response) => {
-              subscriber.next(null);
-            },
-            error: (_response) => {
-              this.alerts.error(
-                'Unable to access service. Failed loading GLO feedback templates.',
-                6000,
-              );
-            },
-          });
-      }
-
-      // Loading teaching periods
-      this.teachingPeriodService.query().subscribe({
-        next: (_response) => {
-          subscriber.next(++loaded);
-        },
-        error: (_response) => {
-          this.alerts.error('Unable to access service. Failed loading teaching periods.', 6000);
-        },
-      });
+    this.publishStartupState({
+      status: 'loading',
+      phase: 'foundations',
+      message: 'Loading OnTrack…',
+      attempt: this.startupAttempt,
+      startedAt,
     });
 
-    // Watch for load of campuses and teaching periods, then trigger loading of unit roles and projects
-    loadingObserver.pipe(find((loaded) => loaded === 2)).subscribe({
-      next: () => {
-        // trigger loading of units and projects - this will end the loading when complete
-        this.loadUnitsAndProjects();
-      },
-    });
+    this.loadOptionalStaffGlobals();
+
+    const foundations$ = forkJoin([
+      this.requiredStartupRequest('campuses', this.campusService.query()),
+      this.requiredStartupRequest('teaching periods', this.teachingPeriodService.query()),
+    ]);
+
+    this.globalsSubscription = foundations$
+      .pipe(
+        tap(() => {
+          this.publishStartupState({
+            status: 'loading',
+            phase: 'units-and-projects',
+            message: 'Loading your units…',
+            attempt: this.startupAttempt,
+            startedAt,
+          });
+        }),
+        switchMap(() =>
+          forkJoin([
+            this.requiredStartupRequest('unit roles', this.unitRoleService.query()),
+            this.requiredStartupRequest(
+              'projects',
+              this.projectService.query(undefined, {
+                params: {
+                  include_inactive: false,
+                  include_task_definitions: true,
+                },
+              }),
+            ),
+          ]),
+        ),
+        timeout({first: STARTUP_TIMEOUT_MS}),
+      )
+      .subscribe({
+        next: () => this.completeGlobalLoad(startedAt),
+        error: (error: unknown) => this.failGlobalLoad(startedAt, error),
+      });
   }
 
-  /**
-   * Query the API for the units taught and studied by the current user.
-   */
-  private loadUnitsAndProjects() {
-    this.unitRoleService.query().subscribe({
-      next: (_unitRoles: UnitRole[]) => {
-        // unit roles are now in the cache
+  public retryStartup(): void {
+    if (this.startupStateSubject.value.phase === 'authentication') {
+      this.authenticateFromRefreshToken();
+    } else if (this.authenticationService.isAuthenticated()) {
+      this.loadGlobals();
+    } else {
+      this.authenticateFromRefreshToken();
+    }
+  }
 
-        this.projectService.query(undefined, {params: {include_in_active: false}}).subscribe({
-          next: (_projects: Project[]) => {
-            // projects updated in cache
+  public continueToSignIn(): void {
+    const startedAt = Date.now();
+    this.completeSignedOutStartup(startedAt);
+  }
 
-            setTimeout(() => {
-              this.isLoadingSubject.next(false);
-            }, 800);
-          },
-          error: (_response) => {
-            this.alerts.error('Unable to access the units you study.', 6000);
-          },
-        });
-      },
-      error: (_response) => {
-        this.alerts.error('Unable to access your units.', 6000);
-      },
+  private requiredStartupRequest<T>(resource: string, request: Observable<T>): Observable<T> {
+    return request.pipe(
+      catchError((error: unknown) => throwError(() => new StartupRequestError(resource, error))),
+    );
+  }
+
+  private loadOptionalStaffGlobals(): void {
+    if (!this.userService.currentUser.isStaff) {
+      return;
+    }
+
+    this.learningOutcomeService
+      .query({}, {endpointFormat: LearningOutcomeService.globalEndpoint})
+      .subscribe({
+        error: () => {
+          this.alerts.error('Unable to access service. Failed loading GLOs.', 6000);
+        },
+      });
+
+    this.feedbackTemplateService
+      .query({}, {endpointFormat: FeedbackTemplateService.globalEndpoint})
+      .subscribe({
+        error: () => {
+          this.alerts.error(
+            'Unable to access service. Failed loading GLO feedback templates.',
+            6000,
+          );
+        },
+      });
+  }
+
+  private completeGlobalLoad(startedAt: number): void {
+    const elapsedMs = Date.now() - startedAt;
+    this.publishStartupState({
+      status: 'ready',
+      phase: 'ready',
+      message: '',
+      attempt: this.startupAttempt,
+      startedAt,
+      elapsedMs,
+    });
+    this.isLoadingSubject.next(false);
+    this.recordStartupDiagnostic('globals', 'ready', startedAt);
+  }
+
+  private failGlobalLoad(startedAt: number, error: unknown): void {
+    const failedResource =
+      error instanceof StartupRequestError ? error.resource : 'startup services';
+    this.publishStartupFailure('units-and-projects', startedAt, undefined, failedResource, error);
+  }
+
+  private publishStartupFailure(
+    phase: StartupPhase,
+    startedAt: number,
+    failureReason?: RefreshTokenFailureReason,
+    failedResource?: string,
+    error?: unknown,
+  ): void {
+    const offline = failureReason === 'offline' || this.isOffline;
+    const timedOut = failureReason === 'timeout' || error instanceof TimeoutError;
+    const status: StartupStatus = offline ? 'offline' : 'error';
+    const message = offline
+      ? 'You appear to be offline. Check your connection and try again.'
+      : timedOut
+        ? 'OnTrack is taking longer than expected. Try again when your connection is stable.'
+        : failedResource
+          ? `OnTrack could not load ${failedResource}. Please try again.`
+          : 'OnTrack could not finish starting. Please try again.';
+
+    this.publishStartupState({
+      status,
+      phase,
+      message,
+      attempt: this.startupAttempt,
+      startedAt,
+      elapsedMs: Date.now() - startedAt,
+      failedResource,
+    });
+    this.recordStartupDiagnostic(phase, status, startedAt, failedResource);
+  }
+
+  private get isOffline(): boolean {
+    return typeof navigator !== 'undefined' && navigator.onLine === false;
+  }
+
+  private publishStartupState(state: StartupState): void {
+    this.startupStateSubject.next(state);
+  }
+
+  private recordStartupDiagnostic(
+    phase: string,
+    outcome: string,
+    startedAt: number,
+    resource?: string,
+  ): void {
+    console.info('[OnTrack bootstrap]', {
+      phase,
+      outcome,
+      resource,
+      attempt: this.startupAttempt,
+      elapsedMs: Date.now() - startedAt,
     });
   }
 

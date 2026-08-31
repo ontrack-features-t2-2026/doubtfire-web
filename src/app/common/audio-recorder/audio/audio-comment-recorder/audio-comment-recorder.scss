@@ -23,4 +23,17 @@
   height: 22px;
   margin-left: 16px;
   margin-right: 46px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#audio-recorder-visualiser.audio-visualiser:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.audio-recorder-error {
+  margin: 4px 8px;
+  color: #991b1b;
+  font-size: 12px;
 }

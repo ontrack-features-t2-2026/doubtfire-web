@@ -38,9 +38,16 @@
   // The toolbar is a plain flex row with no wrapping, so anything in it that
   // can grow pushes the rest towards the edge. This one never does.
   //
-  // The header drops this component entirely below xs, where there is no room
-  // for it at all. See the comment beside it in header.component.html.
+  // The QR action now lives in the profile menu, leaving this fixed-width
+  // notification entry reachable at every toolbar size.
   flex: 0 0 auto;
+}
+
+@media (max-width: 599px) {
+  .notification-bell-button {
+    height: 44px;
+    width: 44px;
+  }
 }
 
 // A ring in the toolbar's own colour, so the badge cuts itself out from the
@@ -96,6 +103,20 @@
   gap: 2px;
   min-width: 0;
   text-align: left;
+}
+
+.notification-meta {
+  align-items: baseline;
+  color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 4px;
+  line-height: 1.3;
+}
+
+.notification-kind {
+  font-weight: 600;
 }
 
 .notification-glyph {

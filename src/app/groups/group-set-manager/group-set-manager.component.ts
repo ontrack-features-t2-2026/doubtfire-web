@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+} from '@angular/core';
 import {FormControl} from '@angular/forms';
 import {Observable, map, startWith} from 'rxjs';
 import {Group, GroupSet, Project, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
@@ -12,7 +19,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class GroupSetManagerComponent implements OnInit {
+export class GroupSetManagerComponent implements OnInit, OnChanges {
   @Input() project: Project;
   @Input() unit: Unit;
   @Input() selectedGroupSet: GroupSet;
@@ -37,6 +44,13 @@ export class GroupSetManagerComponent implements OnInit {
       startWith(''),
       map((value) => this._filter(value)),
     );
+    this.selectCurrentProjectGroup();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['project'] || changes['selectedGroupSet']) {
+      this.selectCurrentProjectGroup();
+    }
   }
 
   get groupSelectHandler() {
@@ -91,15 +105,11 @@ export class GroupSetManagerComponent implements OnInit {
 
   updateGroup() {
     this.editingGroupName = false;
-    // Capture the group being saved and its baseline now: the response is
-    // async and the user may select or edit another group before it arrives.
+    // Capture the group and both names now. The user may select another group
+    // before the request resolves, so callbacks must never mutate selectedGroup.
     const group = this.selectedGroup;
     const savedName = group.name;
     const previousName = this.originalGroupName;
-    // Treat the submitted name as the new selection baseline immediately. A
-    // user can select another group before the request completes, and
-    // newGroupSelected() must not undo the name that is already being saved.
-    // The captured previousName remains available for an error rollback.
     this.originalGroupName = savedName;
     this.groupService
       .update(
@@ -121,5 +131,12 @@ export class GroupSetManagerComponent implements OnInit {
           this.alertService.error(`Failed to update group: ${error}`, 6000);
         },
       });
+  }
+
+  private selectCurrentProjectGroup(): void {
+    const currentGroup = this.project?.groupForGroupSet(this.selectedGroupSet);
+    if (currentGroup && currentGroup.id !== this.selectedGroup?.id) {
+      this.newGroupSelected(currentGroup);
+    }
   }
 }

@@ -1,0 +1,69 @@
+{
+  "measured_at": "2026-08-31T06:24:00+10:00",
+  "origin": "http://127.0.0.1:4400/sign_in",
+  "note": "The 127.0.0.1 origin bypassed a stale localhost service-worker cache and loaded the rebuilt development bundle.",
+  "phone": [
+    {
+      "width": 320,
+      "height": 844,
+      "document_scroll_width": 320,
+      "document_scroll_height": 844,
+      "body_overflow_y": "visible",
+      "shell_overflow_y": "visible",
+      "card_x": 16,
+      "card_width": 288,
+      "card_bottom": 596.6171875,
+      "logo_src": "/assets/images/logo.svg",
+      "logo_alt": "OnTrack logo"
+    },
+    {
+      "width": 360,
+      "height": 844,
+      "document_scroll_width": 360,
+      "document_scroll_height": 844,
+      "body_overflow_y": "visible",
+      "shell_overflow_y": "visible",
+      "card_x": 16,
+      "card_width": 328,
+      "card_bottom": 596.6171875,
+      "logo_src": "/assets/images/logo.svg",
+      "logo_alt": "OnTrack logo"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "document_scroll_width": 390,
+      "document_scroll_height": 844,
+      "body_overflow_y": "visible",
+      "shell_overflow_y": "visible",
+      "card_x": 16,
+      "card_width": 358,
+      "card_bottom": 596.6171875,
+      "logo_src": "/assets/images/logo.svg",
+      "logo_alt": "OnTrack logo"
+    },
+    {
+      "width": 412,
+      "height": 844,
+      "document_scroll_width": 412,
+      "document_scroll_height": 844,
+      "body_overflow_y": "visible",
+      "shell_overflow_y": "visible",
+      "card_x": 16,
+      "card_width": 380,
+      "card_bottom": 596.6171875,
+      "logo_src": "/assets/images/logo.svg",
+      "logo_alt": "OnTrack logo"
+    }
+  ],
+  "desktop": {
+    "width": 1440,
+    "height": 900,
+    "document_scroll_width": 1440,
+    "document_scroll_height": 900,
+    "desktop_sidebar_display": "flex",
+    "desktop_sidebar_height": 900,
+    "desktop_logo_src": "../../../assets/images/logo-white.svg",
+    "mobile_wordmark_display": "none"
+  }
+}

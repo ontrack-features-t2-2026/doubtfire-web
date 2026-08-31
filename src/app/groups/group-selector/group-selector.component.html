@@ -1,17 +1,18 @@
 <mat-card appearance="outlined">
   <mat-card-header>
     <div class="flex w-full flex-col">
-      <div class="flex w-full flex-row justify-between">
-        <div class="flex items-center gap-1">
+      <div class="group-selector-header-row">
+        <div class="group-selector-heading-controls">
           <mat-card-title>
             Groups for
-            @if (!showGroupSetSelector && selectedGroup) {
+            @if (!showGroupSetSelector && selectedGroupSet) {
               "{{ selectedGroupSet?.name }}"
             }
           </mat-card-title>
 
           @if (showGroupSetSelector) {
             <mat-form-field appearance="outline" class="mt-[22px]">
+              <mat-label>Group set</mat-label>
               <mat-select [(ngModel)]="selectedGroupSet" (ngModelChange)="selectGroupSet($event)">
                 @for (gs of unit.groupSets; track gs.id) {
                   <mat-option [value]="gs">{{ gs.name }}</mat-option>
@@ -21,16 +22,18 @@
           }
         </div>
         @if (unitRole || selectedGroupSet?.allowStudentsToCreateGroups) {
-          <div class="flex items-center gap-1">
+          <div class="group-create-controls">
             <mat-form-field appearance="outline" class="mt-[22px]">
-              <input
-                matInput
-                placeholder="Group Name"
-                [(ngModel)]="newGroupName"
-                (ngModelChange)="onGroupNameChange()"
-              />
+              <mat-label>Group name</mat-label>
+              <input matInput [(ngModel)]="newGroupName" (ngModelChange)="onGroupNameChange()" />
             </mat-form-field>
-            <button color="primary" mat-raised-button (click)="addGroup(newGroupName)">
+            <button
+              color="primary"
+              mat-raised-button
+              type="button"
+              [disabled]="!newGroupName?.trim()"
+              (click)="addGroup(newGroupName)"
+            >
               Create
             </button>
           </div>
@@ -56,7 +59,68 @@
       <p class="p-2.5">There are no groups in this set</p>
     </div>
   } @else {
-    <table class="" mat-table [dataSource]="dataSource">
+    @if (project) {
+      <ul aria-label="Available groups" class="student-group-cards">
+        @for (group of dataSource.data; track group.id) {
+          <li>
+            <article
+              class="student-group-card"
+              [attr.aria-label]="'Group ' + group.name"
+              [class.student-group-card--joined]="isPartOfGroup(project, group)"
+            >
+              <div class="student-group-card__heading">
+                <h3>{{ group.name || 'Unnamed group' }}</h3>
+                @if (group.locked || selectedGroupSet.locked) {
+                  <mat-icon aria-label="Group is locked">lock</mat-icon>
+                }
+              </div>
+
+              <dl class="student-group-card__details">
+                <div>
+                  <dt>Tutorial</dt>
+                  <dd>{{ groupTutorialLabel(group) }}</dd>
+                </div>
+                <div>
+                  <dt>Capacity</dt>
+                  <dd>{{ groupCapacityLabel(group) }}</dd>
+                </div>
+              </dl>
+
+              <div class="student-group-card__actions">
+                @if (isPartOfGroup(project, group)) {
+                  <strong class="student-group-card__joined">Joined</strong>
+                  <button mat-button type="button" (click)="selectGroup(group)">
+                    View members
+                  </button>
+                } @else if (canStudentJoin(group)) {
+                  <button
+                    color="primary"
+                    mat-raised-button
+                    type="button"
+                    (click)="joinGroup(group)"
+                  >
+                    Join group
+                  </button>
+                } @else if (!group.hasSpace()) {
+                  <span>Group is full</span>
+                } @else if (group.locked || selectedGroupSet.locked) {
+                  <span>Group is locked</span>
+                } @else {
+                  <span>Membership is managed by the unit team</span>
+                }
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+    }
+
+    <table
+      class="groups-table"
+      mat-table
+      [class.groups-table--student]="project"
+      [dataSource]="dataSource"
+    >
       <ng-container matColumnDef="name" [formGroup]="formData">
         <th *matHeaderCellDef mat-header-cell>Name</th>
         <td *matCellDef="let group" mat-cell>
@@ -184,7 +248,11 @@
       <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
       <tr *matRowDef="let row; columns: displayedColumns" mat-row (click)="selectGroup(row)"></tr>
     </table>
-    <mat-paginator class="mat-elevation-z0" [pageSizeOptions]="[10, 15, 20, 25]"></mat-paginator>
+    <mat-paginator
+      class="groups-paginator mat-elevation-z0"
+      [class.groups-paginator--student]="project"
+      [pageSizeOptions]="[10, 15, 20, 25]"
+    ></mat-paginator>
   }
 
   @if (

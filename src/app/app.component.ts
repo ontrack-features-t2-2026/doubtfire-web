@@ -3,6 +3,7 @@ import {NavigationEnd, Router} from '@angular/router';
 import {Subscription, filter} from 'rxjs';
 import {PushNotificationClickService} from 'src/app/api/services/push-notification-click.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
 
 @Component({
   selector: 'app-root',
@@ -18,9 +19,11 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private pushNotificationClicks: PushNotificationClickService,
     private pushNotifications: PushNotificationService,
+    private appLifecycle: AppLifecycleService,
   ) {}
 
   ngOnInit(): void {
+    this.appLifecycle.start();
     this.pushNotificationClicks.start();
     this.pushNotifications.start();
     this.setBodyBackground(this.router.url);
@@ -30,6 +33,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.appLifecycle.stop();
     this.pushNotificationClicks.stop();
     this.pushNotifications.stop();
     this.routerSub?.unsubscribe();

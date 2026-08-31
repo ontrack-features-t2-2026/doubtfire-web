@@ -19,11 +19,14 @@ export class User extends Entity {
   public receiveTaskNotifications: boolean;
   public receivePortfolioNotifications: boolean;
   public receiveFeedbackNotifications: boolean;
+  public displayPeerProgress: boolean;
   public hasRunFirstTimeSetup: boolean;
   public authenticationToken: string;
   public authenticationTokenExpiry: string;
   public pronouns: string | null;
   public acceptedTiiEula: boolean;
+  public institutionalIdentityManaged: boolean;
+  public emailEditable: boolean;
 
   // LTI Token
   public ltik: string;

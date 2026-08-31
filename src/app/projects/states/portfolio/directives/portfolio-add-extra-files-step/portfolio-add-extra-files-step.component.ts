@@ -55,7 +55,6 @@ export class PortfolioAddExtraFilesStepComponent implements OnInit {
     };
   }
   onTypeChange(event: MatSelectChange) {
-    console.log('on type change', event);
     this.uploadFileType = {
       file0: {
         name: 'Other',
@@ -77,7 +76,7 @@ export class PortfolioAddExtraFilesStepComponent implements OnInit {
   deleteFileFromPortfolio(file: {idx: number; kind: string; name: string}) {
     this.project.deleteFileFromPortfolio(file).subscribe({
       next: () => {
-        this.alertService.success('Succesfully delete file', 3000);
+        this.alertService.success('Successfully deleted file', 3000);
       },
       error: (error) => {
         this.alertService.error(`Failed to delete file: ${error}`, 6000);

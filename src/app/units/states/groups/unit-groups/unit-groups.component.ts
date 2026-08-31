@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {Observable, Subscription, of} from 'rxjs';
+import {Observable, Subscription, distinctUntilChanged, of} from 'rxjs';
 import {GroupSet, Unit, UnitRole, UserService} from 'src/app/api/models/doubtfire-model';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 
@@ -30,15 +30,18 @@ export class UnitGroupsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
-    this.unitSub = this.unit$?.subscribe((unit) => {
-      if (!unit) {
-        return;
-      }
+    this.unitSub = this.unit$
+      ?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id))
+      .subscribe((unit) => {
+        if (!unit) {
+          return;
+        }
 
-      this.unit = unit;
-      this.unitRole = this.findUnitRole(unit.id);
-      this.selectedGroupSet = this.selectedGroupSet ?? unit.groupSets?.[0];
-    });
+        this.unit = unit;
+        this.unitRole = this.findUnitRole(unit.id);
+        this.selectedGroupSet =
+          this.selectedGroupSet?.unit?.id === unit.id ? this.selectedGroupSet : unit.groupSets?.[0];
+      });
   }
 
   ngOnDestroy(): void {

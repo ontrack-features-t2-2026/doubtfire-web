@@ -17,6 +17,7 @@ import {
   Input,
   OnDestroy,
   OnInit,
+  TemplateRef,
   ViewChild,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -24,6 +25,7 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskPrerequisite} from 'src/app/api/models/task-prerequisite';
+import {TaskStatus} from 'src/app/api/models/task-status';
 import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -58,6 +60,13 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('gantt') ganttComponent: NgxGanttComponent;
 
+  /**
+   * The markup for a single gantt bar. ngx-gantt stamps this out itself once it has
+   * measured the chart, so holding the reference here is what lets the bar be rendered
+   * and driven on its own, away from that measurement.
+   */
+  @ViewChild('bar') barTemplate: TemplateRef<{item: TaskGanttItem}>;
+
   public viewType: GanttViewType = GanttViewType.day;
   public viewOptions: GanttViewOptions;
 
@@ -71,15 +80,15 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public animateBackground: boolean = false;
   public showDatesColumn: boolean = false;
-  public hideTasksAboveTargetGrade: boolean = false;
+  public showTasksAboveTargetGrade: boolean = false;
   public overlayLines: boolean = false;
 
   public get unit() {
     return this.project?.unit;
   }
 
-  private get hideTasksAboveTargetGradeStorageKey(): string {
-    return `ontrack.taskPlanner.${this.project?.id ?? 'unknown'}.hideTasksAboveTargetGrade`;
+  private get showTasksAboveTargetGradeStorageKey(): string {
+    return `ontrack.taskPlanner.${this.project?.id ?? 'unknown'}.showTasksAboveTargetGrade`;
   }
 
   constructor(
@@ -166,15 +175,73 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Open the prerequisites modal from the keyboard. The bar carries role="button" and
+   * tabindex="0" so it can be reached by tab, and a span gets no activation behaviour of
+   * its own, so Enter and Space have to be wired up by hand. Space is prevented from
+   * scrolling the planner underneath. The key is already matched by the (keydown.enter)
+   * and (keydown.space) bindings, which is why this takes a plain Event.
+   */
+  onBarKeydown(event: Event, item: TaskGanttItem) {
+    event.preventDefault();
+    this.barClick(item);
+  }
+
   barClick(item: TaskGanttItem) {
     const td = item.taskDefinition;
     const prereqs = this.taskPrerequisites.filter((p) => p.prerequisiteId === td.id);
     this.taskPlannerPrerequisitesModal.show(this.project, td, prereqs);
   }
 
-  setHideTasksAboveTargetGrade(value: boolean) {
-    this.hideTasksAboveTargetGrade = value;
-    localStorage.setItem(this.hideTasksAboveTargetGradeStorageKey, JSON.stringify(value));
+  public statusLabel(item: TaskGanttItem): string {
+    return TaskStatus.STATUS_LABELS.get(item.task.status) ?? 'Not Started';
+  }
+
+  public prerequisitesFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.taskDefinitionId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.prerequisite ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.prerequisiteId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public dependentsFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.prerequisiteId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.taskDefinition ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.taskDefinitionId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public connectionSummary(item: TaskGanttItem): string {
+    const prerequisiteCount = this.prerequisitesFor(item).length;
+    const dependentCount = this.dependentsFor(item).length;
+
+    if (!prerequisiteCount && !dependentCount) {
+      return 'No prerequisite or dependent tasks';
+    }
+
+    const prerequisiteLabel = `${prerequisiteCount} prerequisite${prerequisiteCount === 1 ? '' : 's'}`;
+    const dependentLabel = `${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`;
+    return `${prerequisiteLabel}; ${dependentLabel}`;
+  }
+
+  setShowTasksAboveTargetGrade(value: boolean) {
+    this.showTasksAboveTargetGrade = value;
+    this.preferenceStorage?.setItem(
+      this.showTasksAboveTargetGradeStorageKey,
+      JSON.stringify(value),
+    );
     this.refreshItems(false);
   }
 
@@ -570,7 +637,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadHideTasksAboveTargetGradePreference();
+    this.loadShowTasksAboveTargetGradePreference();
 
     this.viewOptions = {
       precisionUnit: 'day',
@@ -613,12 +680,12 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private loadHideTasksAboveTargetGradePreference(): void {
-    const rawPreference = localStorage.getItem(this.hideTasksAboveTargetGradeStorageKey);
+  private loadShowTasksAboveTargetGradePreference(): void {
+    const rawPreference = this.preferenceStorage?.getItem(this.showTasksAboveTargetGradeStorageKey);
     try {
-      this.hideTasksAboveTargetGrade = rawPreference ? JSON.parse(rawPreference) === true : false;
+      this.showTasksAboveTargetGrade = rawPreference ? JSON.parse(rawPreference) === true : false;
     } catch {
-      this.hideTasksAboveTargetGrade = false;
+      this.showTasksAboveTargetGrade = false;
     }
   }
 
@@ -701,6 +768,11 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshItems(scroll: boolean = true) {
+    const requestedTaskDefinitionId = scroll
+      ? this.route.snapshot.queryParamMap.get('taskDef')
+      : null;
+    this.revealRequestedTaskDefinition(requestedTaskDefinitionId);
+
     this.taskPrerequisites = this.allTaskPrerequisites.filter((pre) =>
       this.taskDefs().find((td) => td.id === pre.taskDefinitionId),
     );
@@ -813,9 +885,8 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.ganttComponent.scrollToToday();
     }
 
-    const taskDef = this.route.snapshot.queryParamMap.get('taskDef');
-    if (taskDef && scroll) {
-      const taskItem = this.items.find((item) => item.id === taskDef);
+    if (requestedTaskDefinitionId) {
+      const taskItem = this.items.find((item) => item.id === requestedTaskDefinitionId);
       if (taskItem) {
         this.ganttComponent.scrollToDate(taskItem.start);
         taskItem.highlighted = true;
@@ -849,7 +920,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     return this.project.unit.taskDefinitions
       .filter(
-        (taskDef) => !this.hideTasksAboveTargetGrade || taskDef.targetGrade <= this.targetGrade,
+        (taskDef) => this.showTasksAboveTargetGrade || taskDef.targetGrade <= this.targetGrade,
       )
       .sort((a, b) => {
         const taskA = this.project.findTaskForDefinition(a.id);
@@ -860,5 +931,32 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         return new Date(dateA).getTime() - new Date(dateB).getTime();
       });
+  }
+
+  private revealRequestedTaskDefinition(taskDefinitionId: string | null): void {
+    const requestedTaskDefinition = taskDefinitionId
+      ? this.project.unit.taskDefinitions.find(
+          (taskDefinition) => taskDefinition.id.toString() === taskDefinitionId,
+        )
+      : null;
+
+    if (
+      requestedTaskDefinition?.targetGrade > this.targetGrade &&
+      !this.showTasksAboveTargetGrade
+    ) {
+      this.showTasksAboveTargetGrade = true;
+      this.preferenceStorage?.setItem(
+        this.showTasksAboveTargetGradeStorageKey,
+        JSON.stringify(true),
+      );
+    }
+  }
+
+  private get preferenceStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 }

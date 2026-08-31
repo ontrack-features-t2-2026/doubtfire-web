@@ -14,6 +14,10 @@ export const environment = {
   // See docs/service-worker.md.
   enableServiceWorker: true,
 
+  // Makes the local-only demo controls available. The mode itself still starts
+  // off and is stored only for the current browser tab.
+  enableDemoTools: true,
+
   sentryDsn: '',
   sentryRelease: '',
   sentryDist: '',

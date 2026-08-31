@@ -80,9 +80,9 @@ describe('NotificationSettingsComponent', () => {
   it('shows help text for each notification category', () => {
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Receive notifications for task-related events.');
-    expect(text).toContain('Receive notifications for feedback-related events.');
-    expect(text).toContain('Receive notifications for portfolio-related events.');
+    expect(text).toContain('Due dates, changed dates, and task status updates.');
+    expect(text).toContain('New comments, feedback, and review outcomes.');
+    expect(text).toContain('Portfolio processing and assessment updates.');
   });
 
   it('associates each checkbox with its help text', () => {

@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+.task-dialog-content {
+  display: flex;
+  max-height: calc(100dvh - 10rem);
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+.task-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem 1rem;
+
+  button {
+    min-height: 44px;
+    white-space: normal;
+  }
+}
+
+.task-dialog-error {
+  margin: 0;
+  border-left: 4px solid #b42318;
+  background: #fef3f2;
+  padding: 0.75rem;
+  color: #7a271a;
+}
+
+@media (max-width: 479.98px) {
+  .task-dialog-content {
+    max-height: calc(100dvh - 11.5rem);
+    padding-inline: 1rem;
+  }
+
+  .task-dialog-actions {
+    padding-inline: 1rem;
+
+    button {
+      width: 100%;
+    }
+  }
+}

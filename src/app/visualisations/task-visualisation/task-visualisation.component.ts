@@ -6,7 +6,15 @@ import {
   OnInit,
   SimpleChanges,
 } from '@angular/core';
-import {Project, TaskStatus} from 'src/app/api/models/doubtfire-model';
+import {Project, TaskStatus, TaskStatusEnum} from 'src/app/api/models/doubtfire-model';
+
+interface TaskStatusSummary {
+  status: TaskStatusEnum;
+  name: string;
+  value: number;
+  color: string;
+  textColor: string;
+}
 
 @Component({
   selector: 'f-task-visualisation',
@@ -19,19 +27,17 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
   @Input() project: Project;
   @Input() grade: number;
 
-  data: {name: string; value: number}[] = [];
-  colors: {name: string; value: string}[];
-  view: number[] = [700, 400];
-
-  // options
-  textColor: string = '#F5F5F5';
+  data: TaskStatusSummary[] = [];
 
   ngOnInit(): void {
     this.updateData();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ('grade' in changes && changes.grade.currentValue !== undefined) {
+    const projectChanged = 'project' in changes && !changes.project.firstChange;
+    const gradeChanged = 'grade' in changes && changes.grade.currentValue !== undefined;
+
+    if (projectChanged || gradeChanged) {
       this.updateData();
     }
   }
@@ -46,42 +52,38 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
         }
       });
 
-      const sortOrder = [
-        'Complete',
-        'Discuss',
-        'Awaiting Feedback',
-        'Working On It',
-        'Not Started',
-      ];
-
-      this.data = Array.from(taskCounts)
-        .map(([status, count]) => {
-          return {
-            name: TaskStatus.STATUS_LABELS.get(status),
-            value: count,
-          };
-        })
-        .filter((task) => task.value > 0 || sortOrder.includes(task.name))
-        .sort((a, b) => {
-          let aIndex = sortOrder.indexOf(a.name);
-          let bIndex = sortOrder.indexOf(b.name);
-
-          aIndex = aIndex === -1 ? sortOrder.length : aIndex;
-          bIndex = bIndex === -1 ? sortOrder.length : bIndex;
-
-          return aIndex - bIndex;
-        });
-
-      this.colors = Array.from(TaskStatus.STATUS_COLORS).map(([status, color]) => {
-        return {name: TaskStatus.STATUS_LABELS.get(status), value: color};
-      });
-
-      // console.log('Data:', this.data);
-      // console.log('Colors:', this.colors);
+      this.data = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status) => {
+        const count = taskCounts.get(status) ?? 0;
+        const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
+        return {
+          status,
+          name: TaskStatus.STATUS_LABELS.get(status) ?? status,
+          value: count,
+          color,
+          textColor: this.contrastingTextColor(color),
+        };
+      }).filter(({status}) => TaskStatus.isStatus(status));
     }
   }
 
-  onSelect(event) {
-    console.log(event);
+  private contrastingTextColor(color: string): string {
+    const hex = color.replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) {
+      return '#ffffff';
+    }
+
+    const channels = [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
+    const [red, green, blue] = channels.map((channel) =>
+      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+    );
+    // #111827 was too light to be the dark option here. Against ready_for_feedback
+    // (#0079D8) it reached 3.99:1 and white only 4.44:1, so the card that always renders
+    // sat under the 4.5:1 AA floor for normal text. Black clears the floor on every
+    // status colour, and the divisor now matches the colour it is measuring.
+    const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const darkContrast = (luminance + 0.05) / 0.05;
+
+    return whiteContrast >= darkContrast ? '#ffffff' : '#000000';
   }
 }
