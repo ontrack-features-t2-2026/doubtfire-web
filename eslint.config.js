@@ -35,7 +35,10 @@ module.exports = tseslint.config(
   },
   {
     linterOptions: {
-      reportUnusedDisableDirectives: false,
+      // Surface eslint-disable directives that no longer suppress anything, so
+      // stale suppressions get pruned instead of accumulating unaudited. `npm
+      // run lint` treats warnings as failures, so a dead directive is caught in CI.
+      reportUnusedDisableDirectives: 'warn',
     },
   },
   {
