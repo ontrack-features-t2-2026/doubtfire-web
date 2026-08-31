@@ -84,7 +84,7 @@ export class GroupSetManagerComponent implements OnInit {
     this.editingGroupName = true;
   }
 
-  stopEditinGroupName() {
+  stopEditingGroupName() {
     this.selectedGroup.name = this.originalGroupName;
     this.editingGroupName = false;
   }
@@ -104,11 +104,12 @@ export class GroupSetManagerComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          this.originalGroupName = this.selectedGroup.name;
           this.alertService.success('Successfully updated group', 3000);
         },
         error: (error) => {
           this.selectedGroup.name = this.originalGroupName;
-          this.alertService.error(`Failed to update gorup: ${error}`, 6000);
+          this.alertService.error(`Failed to update group: ${error}`, 6000);
         },
       });
   }
