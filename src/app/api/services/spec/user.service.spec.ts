@@ -174,39 +174,42 @@ describe('UserService', () => {
     u.receiveFeedbackNotifications = false;
     u.receiveTaskNotifications = false;
 
-    userService.update(u).subscribe(
-      (result) => {
-        expect(result.firstName).toBe(u.firstName);
-      },
-      (error) => {
-        throw error;
-      },
-    );
-
-    let req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
-      expect(request.url).toEqual('http://localhost:3000/api/users/1');
-      expect(request.method).toBe('PUT');
-      return true;
-    });
-    req.flush(u);
-
-    u.firstName = 'andrew';
+    // The API answers a PUT with the saved user as snake_case JSON. Flush a
+    // literal in that shape whose values differ from the local `u`, so the
+    // assertions only pass if the snake_case -> camelCase mapping ran. Flushing
+    // `u` back, as this test used to, could not tell a working mapping from a
+    // broken one because both sides already held the same camelCase values.
     userService.update(u).subscribe({
       next: (result) => {
         expect(result.firstName).toBe('andrew');
+        expect(result.lastName).toBe('cain');
+        expect(result.nickname).toBe('andy');
+        expect(result.receiveTaskNotifications).toBe(true);
       },
       error: (error) => {
         throw error;
       },
     });
 
-    req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
+    const req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
       expect(request.url).toEqual('http://localhost:3000/api/users/1');
       expect(request.method).toBe('PUT');
       return true;
     });
-
-    req.flush(u);
+    req.flush({
+      id: 1,
+      first_name: 'andrew',
+      last_name: 'cain',
+      nickname: 'andy',
+      email: 'jake@jake.jake',
+      student_id: '1',
+      username: 'test',
+      opt_in_to_research: true,
+      has_run_first_time_setup: false,
+      receive_portfolio_notifications: false,
+      receive_feedback_notifications: false,
+      receive_task_notifications: true,
+    });
   });
 
   it('should cache the result of a get request', () => {
