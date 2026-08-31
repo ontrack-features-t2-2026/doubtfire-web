@@ -453,18 +453,6 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  openTaskDefs() {
-    // Automatically "open" the task definition select element if in task def mode
-    const selectEl = document.querySelector<HTMLSelectElement>(
-      'select[ng-model="filters.taskDefinitionIdSelected"]',
-    );
-    if (!selectEl) {
-      return;
-    }
-    selectEl.size = 10;
-    selectEl.focus();
-  }
-
   unitRoleIdChanged(attemptRefreshData: boolean = true): void {
     this.applyFilters();
 
