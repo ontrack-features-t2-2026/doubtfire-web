@@ -27,8 +27,8 @@ function installLocalStorage(): void {
   Object.defineProperty(window, 'localStorage', {value: store, configurable: true, writable: true});
 }
 
-/** Minimal MediaQueryList stub. add/removeEventListener are spies so the
- * once-and-removed-on-destroy contract (section 11 item 11) is checkable, and
+/** Minimal MediaQueryList stub. Modern and legacy listener APIs share the same
+ * callback set so this stub remains compatible with Angular CDK consumers, and
  * dispatch() simulates a live OS appearance change. */
 function stubMatchMedia(matches: boolean) {
   const listeners: Set<() => void> = new Set();
@@ -37,6 +37,8 @@ function stubMatchMedia(matches: boolean) {
     media: '(prefers-color-scheme: dark)',
     addEventListener: vi.fn((_: string, cb: () => void) => listeners.add(cb)),
     removeEventListener: vi.fn((_: string, cb: () => void) => listeners.delete(cb)),
+    addListener: vi.fn((cb: () => void) => listeners.add(cb)),
+    removeListener: vi.fn((cb: () => void) => listeners.delete(cb)),
     dispatch: () => listeners.forEach((cb) => cb()),
   };
   (window as unknown as {matchMedia: unknown}).matchMedia = () => mql;
