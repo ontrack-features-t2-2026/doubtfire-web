@@ -317,6 +317,7 @@ export class AuthenticationService {
     // the existing connection and therefore cannot clobber a mid-session choice.
     if (previousAuthenticatedUserId !== user.id) {
       this.themeService.connectAccount(
+        user.id,
         user.themePreference,
         user.themePreferenceUpdatedAt,
         (preference) =>
