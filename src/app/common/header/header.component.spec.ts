@@ -9,8 +9,8 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Router} from '@angular/router';
-import {Observable, defer, of} from 'rxjs';
-import {AuthenticationService, Unit} from 'src/app/api/models/doubtfire-model';
+import {Observable, Subject, defer, of} from 'rxjs';
+import {AuthenticationService, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -243,6 +243,85 @@ describe('HeaderComponent', () => {
 
       menuAction.click();
       expect(showMyQrSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('filteredUnitRoles', () => {
+    let unitRolesSubject: Subject<UnitRole[]>;
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      unitRolesSubject = new Subject<UnitRole[]>();
+
+      await TestBed.configureTestingModule({
+        declarations: [HeaderComponent],
+        providers: [
+          {provide: CalendarModalService, useValue: emptyProvider},
+          {provide: AboutDoubtfireModal, useValue: emptyProvider},
+          {provide: IsActiveUnitRole, useValue: {transform: (roles: UnitRole[]) => roles}},
+          {provide: CheckForUpdateService, useValue: emptyProvider},
+          {
+            provide: GlobalStateService,
+            useValue: {
+              showHideHeader: of(true),
+              unitRolesSubject,
+              projectsSubject: of(null),
+              currentViewAndEntitySubject$: of(undefined),
+            },
+          },
+          {provide: UserService, useValue: emptyProvider},
+          {provide: AuthenticationService, useValue: emptyProvider},
+          {provide: MediaObserver, useValue: {isActive: vi.fn().mockReturnValue(false)}},
+          {
+            provide: DoubtfireConstants,
+            useValue: {
+              ExternalName: of('Doubtfire'),
+              LogoSettings: of({hasLogo: false, logoLinkUrl: '', logoUrl: null}),
+            },
+          },
+          {
+            provide: NotificationService,
+            useValue: {unreadCount$: of(0), refreshUnreadCount: vi.fn(() => of(0))},
+          },
+          {provide: SidekiqJobService, useValue: {sidekiqJobsSubject: of([])}},
+          {provide: SidekiqJobsModalService, useValue: emptyProvider},
+          {provide: QrModalService, useValue: emptyProvider},
+          {provide: Router, useValue: emptyProvider},
+          {provide: TutorNotesModalService, useValue: emptyProvider},
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      })
+        .overrideComponent(HeaderComponent, {set: {template: ''}})
+        .compileComponents();
+
+      fixture = TestBed.createComponent(HeaderComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('keeps a role whose unit is unique, drops a duplicate unit role, and always keeps Tutor roles', () => {
+      const roles = [
+        {unit: {id: 1}, role: 'Student'} as UnitRole,
+        {unit: {id: 2}, role: 'Student'} as UnitRole,
+        {unit: {id: 2}, role: 'Student'} as UnitRole,
+        {unit: {id: 3}, role: 'Tutor'} as UnitRole,
+        {unit: {id: 3}, role: 'Tutor'} as UnitRole,
+      ];
+
+      unitRolesSubject.next(roles);
+
+      expect(component.filteredUnitRoles).toEqual([roles[0], roles[3], roles[4]]);
+    });
+
+    it('treats unit roles with no unit the same way the old per-role filter did', () => {
+      const roles = [
+        {unit: undefined, role: 'Student'} as UnitRole,
+        {unit: undefined, role: 'Student'} as UnitRole,
+      ];
+
+      unitRolesSubject.next(roles);
+
+      expect(component.filteredUnitRoles).toEqual([]);
     });
   });
 });

@@ -113,9 +113,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
           } // might be signing out, or the data has been cleared
           this.unitRoles = unitRoles;
 
+          const countByUnit = new Map<number, number>();
+          unitRoles.forEach((r) =>
+            countByUnit.set(r.unit?.id, (countByUnit.get(r.unit?.id) ?? 0) + 1),
+          );
+
           this.filteredUnitRoles = this.isActiveUnitRole
             .transform(this.unitRoles)
-            .filter((role) => this.isUniqueRole(role));
+            .filter((role) => countByUnit.get(role.unit?.id) === 1 || role.role === 'Tutor');
         },
         error: (err) => {
           console.log(`Error fetching unit roles: ${err}`);
@@ -219,11 +224,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
-
-  isUniqueRole = (unit) => {
-    const units = this.unitRoles.filter((role: UnitRole) => role.unit?.id === unit.unit?.id);
-    return units.length == 1 || unit.role == 'Tutor';
-  };
 
   updateSelectedProject(project: Project): void {
     this.currentProject = project;
