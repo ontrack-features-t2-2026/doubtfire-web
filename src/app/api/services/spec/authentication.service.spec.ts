@@ -304,6 +304,7 @@ describe('AuthenticationService', () => {
     httpMock.expectOne((r) => r.url === AUTH_URL && r.method === 'POST').flush(response);
     expect(themeService.connectAccount).toHaveBeenCalledOnce();
     expect(themeService.connectAccount).toHaveBeenCalledWith(
+      1,
       'dark',
       '2026-08-31T12:00:00Z',
       expect.any(Function),
@@ -332,7 +333,9 @@ describe('AuthenticationService', () => {
     const secondSettings = httpMock.expectOne(`${API_URL}/settings`);
 
     expect(themeService.connectAccount).toHaveBeenCalledTimes(2);
-    const saveSecondAccount = themeService.connectAccount.mock.calls[1][2];
+    expect(themeService.connectAccount.mock.calls[0][0]).toBe(1);
+    expect(themeService.connectAccount.mock.calls[1][0]).toBe(2);
+    const saveSecondAccount = themeService.connectAccount.mock.calls[1][3];
     saveSecondAccount('dark').subscribe();
     expect(userService.updateThemePreference).toHaveBeenCalledWith(
       expect.objectContaining({id: 2}),

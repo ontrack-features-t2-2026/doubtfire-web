@@ -24,6 +24,7 @@ const THEME_PREFERENCES: readonly ThemePreference[] = ['light', 'dark', 'system'
 /** Duplicated as a literal in the THM-F04 no-flash script; THM-T01 asserts they match. */
 export const THEME_STORAGE_KEY = 'ontrack.theme.preference';
 export const THEME_UPDATED_AT_STORAGE_KEY = 'ontrack.theme.preference.updatedAt';
+export const THEME_ACCOUNT_ID_STORAGE_KEY = 'ontrack.theme.preference.accountId';
 
 export interface AccountThemePreference {
   preference: unknown;
@@ -68,6 +69,7 @@ export class ThemeService {
   private accountWriteTimer: ReturnType<typeof setTimeout> | null = null;
   private activeAccountWrite: Subscription | null = null;
   private accountConnectionGeneration = 0;
+  private activeAccountId: string | null = null;
 
   // Held as a stable reference so the same listener can be removed on destroy.
   // One listener for the whole app; it repaints only while the stored choice is
@@ -102,12 +104,17 @@ export class ThemeService {
     if (!isThemePreference(pref)) {
       return;
     }
-    if (this.readLocalPreference() === pref) {
+    const localAccountId = this.readLocalAccountId();
+    const ownershipMatches =
+      this.activeAccountId === null
+        ? localAccountId === null
+        : localAccountId === this.activeAccountId;
+    if (this.readLocalPreference() === pref && ownershipMatches) {
       return;
     }
 
     const updatedAt = new Date().toISOString();
-    this.commitPreference(pref, updatedAt);
+    this.commitPreference(pref, updatedAt, this.activeAccountId);
     this.queueAccountWrite(pref);
   }
 
@@ -119,16 +126,39 @@ export class ThemeService {
    * implementation details while still making it the only owner of theme writes.
    */
   connectAccount(
+    accountId: number,
     accountPreference: unknown,
     accountUpdatedAt: unknown,
     save: SaveAccountThemePreference,
   ): void {
     this.disconnectAccount();
+    const accountStorageId = this.normaliseAccountId(accountId);
+    if (accountStorageId === null) {
+      return;
+    }
+
+    this.activeAccountId = accountStorageId;
     this.saveAccountPreference = save;
     const generation = this.accountConnectionGeneration;
 
     const localPreference = this.readLocalPreference();
+    const localAccountId = this.readLocalAccountId();
     const accountPreferenceIsValid = isThemePreference(accountPreference);
+    const belongsToAnotherAccount = localAccountId !== null && localAccountId !== accountStorageId;
+
+    // The theme itself is deliberately retained at sign-out for first paint,
+    // but its sync provenance is account-scoped. A retained choice from account
+    // A may remain on screen while B signs in; it must never be uploaded to B.
+    if (belongsToAnotherAccount) {
+      if (accountPreferenceIsValid) {
+        this.commitPreference(
+          accountPreference,
+          this.normaliseAccountTimestamp(accountUpdatedAt),
+          accountStorageId,
+        );
+      }
+      return;
+    }
 
     // New device and new account: follow system without inventing a choice.
     if (localPreference === null && !accountPreferenceIsValid) {
@@ -137,14 +167,18 @@ export class ThemeService {
 
     // A new device adopts the account and becomes flash-free next boot.
     if (localPreference === null && accountPreferenceIsValid) {
-      this.commitPreference(accountPreference, this.normaliseAccountTimestamp(accountUpdatedAt));
+      this.commitPreference(
+        accountPreference,
+        this.normaliseAccountTimestamp(accountUpdatedAt),
+        accountStorageId,
+      );
       return;
     }
 
     // Day-one migration: a real local choice beats an empty account even when
     // phase one never wrote a timestamp. Stamp the honest upload time now.
     if (localPreference !== null && !accountPreferenceIsValid) {
-      this.commitPreference(localPreference, new Date().toISOString());
+      this.commitPreference(localPreference, new Date().toISOString(), accountStorageId);
       this.persistAccount(localPreference, generation);
       return;
     }
@@ -160,15 +194,21 @@ export class ThemeService {
       localUpdatedAt !== null && accountUpdatedAtMs !== null && localUpdatedAt > accountUpdatedAtMs;
 
     if (localWins) {
+      this.writeLocalAccountId(accountStorageId);
       this.persistAccount(localPreference as ThemePreference, generation);
     } else {
-      this.commitPreference(accountPreference as ThemePreference, accountTimestamp);
+      this.commitPreference(
+        accountPreference as ThemePreference,
+        accountTimestamp,
+        accountStorageId,
+      );
     }
   }
 
   /** Stop account writes without clearing presentation state from this device. */
   disconnectAccount(): void {
     this.accountConnectionGeneration += 1;
+    this.activeAccountId = null;
     this.saveAccountPreference = null;
     if (this.accountWriteTimer !== null) {
       clearTimeout(this.accountWriteTimer);
@@ -179,7 +219,11 @@ export class ThemeService {
   }
 
   /** Store a validated preference, optional timestamp, and repaint. */
-  private commitPreference(pref: ThemePreference, updatedAt?: string | null): void {
+  private commitPreference(
+    pref: ThemePreference,
+    updatedAt?: string | null,
+    accountId?: string | null,
+  ): void {
     this._preference.set(pref);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, pref);
@@ -187,6 +231,11 @@ export class ThemeService {
         localStorage.removeItem(THEME_UPDATED_AT_STORAGE_KEY);
       } else if (updatedAt !== undefined) {
         localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, updatedAt);
+      }
+      if (accountId === null) {
+        localStorage.removeItem(THEME_ACCOUNT_ID_STORAGE_KEY);
+      } else if (accountId !== undefined) {
+        localStorage.setItem(THEME_ACCOUNT_ID_STORAGE_KEY, accountId);
       }
     } catch {
       /* storage blocked; in-memory preference still applies */
@@ -230,6 +279,9 @@ export class ThemeService {
         if (updatedAt !== null) {
           try {
             localStorage.setItem(THEME_UPDATED_AT_STORAGE_KEY, updatedAt);
+            if (this.activeAccountId !== null) {
+              localStorage.setItem(THEME_ACCOUNT_ID_STORAGE_KEY, this.activeAccountId);
+            }
           } catch {
             /* storage blocked; the local preference remains applied */
           }
@@ -249,6 +301,27 @@ export class ThemeService {
     } catch {
       return null;
     }
+  }
+
+  private readLocalAccountId(): string | null {
+    try {
+      const raw = localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY);
+      return raw !== null && raw.length > 0 ? raw : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeLocalAccountId(accountId: string): void {
+    try {
+      localStorage.setItem(THEME_ACCOUNT_ID_STORAGE_KEY, accountId);
+    } catch {
+      /* storage blocked; the in-memory preference remains applied */
+    }
+  }
+
+  private normaliseAccountId(accountId: number): string | null {
+    return Number.isSafeInteger(accountId) && accountId > 0 ? String(accountId) : null;
   }
 
   /** A malformed or future device timestamp cannot win a conflict. */

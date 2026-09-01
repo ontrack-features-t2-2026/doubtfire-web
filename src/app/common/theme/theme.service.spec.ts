@@ -1,7 +1,12 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
 import {of, throwError} from 'rxjs';
-import {THEME_STORAGE_KEY, THEME_UPDATED_AT_STORAGE_KEY, ThemeService} from './theme.service';
+import {
+  THEME_ACCOUNT_ID_STORAGE_KEY,
+  THEME_STORAGE_KEY,
+  THEME_UPDATED_AT_STORAGE_KEY,
+  ThemeService,
+} from './theme.service';
 
 /**
  * A real in-memory Storage, installed fresh per test. This repo's jsdom does not
@@ -217,11 +222,12 @@ describe('ThemeService', () => {
     const save = vi.fn();
     const svc = inject();
 
-    svc.connectAccount(null, null, save);
+    svc.connectAccount(1, null, null, save);
 
     expect(svc.preference()).toBe('system');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
     expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBeNull();
     expect(save).not.toHaveBeenCalled();
   });
 
@@ -229,12 +235,13 @@ describe('ThemeService', () => {
     const save = vi.fn();
     const svc = inject();
 
-    svc.connectAccount('dark', '2026-08-20T01:02:03Z', save);
+    svc.connectAccount(1, 'dark', '2026-08-20T01:02:03Z', save);
 
     expect(svc.preference()).toBe('dark');
     expect(marker()).toBe('dark');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
     expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-08-20T01:02:03.000Z');
+    expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('1');
     expect(save).not.toHaveBeenCalled();
   });
 
@@ -246,12 +253,13 @@ describe('ThemeService', () => {
       const save = vi.fn(() => of({preference: 'light', updatedAt: '2026-09-01T00:00:00Z'}));
       const svc = inject();
 
-      svc.connectAccount(null, null, save);
+      svc.connectAccount(1, null, null, save);
 
       expect(svc.preference()).toBe('light');
       expect(save).toHaveBeenCalledOnce();
       expect(save).toHaveBeenCalledWith('light');
       expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-09-01T00:00:00.000Z');
+      expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('1');
     } finally {
       vi.useRealTimers();
     }
@@ -263,7 +271,7 @@ describe('ThemeService', () => {
     const save = vi.fn(() => of({preference: 'light', updatedAt: '2026-09-01T02:00:00Z'}));
     const svc = inject();
 
-    svc.connectAccount('dark', '2026-08-29T12:00:00Z', save);
+    svc.connectAccount(1, 'dark', '2026-08-29T12:00:00Z', save);
 
     expect(save).toHaveBeenCalledWith('light');
     expect(svc.preference()).toBe('light');
@@ -276,7 +284,7 @@ describe('ThemeService', () => {
     const save = vi.fn(() => of({preference: 'dark', updatedAt: '2026-09-01T02:00:00Z'}));
     const svc = inject();
 
-    svc.connectAccount('dark', '2026-08-29T12:00:00Z', save);
+    svc.connectAccount(1, 'dark', '2026-08-29T12:00:00Z', save);
 
     expect(save).toHaveBeenCalledWith('dark');
     expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-09-01T02:00:00.000Z');
@@ -288,7 +296,7 @@ describe('ThemeService', () => {
     const save = vi.fn();
     const svc = inject();
 
-    svc.connectAccount('dark', '2026-08-30T12:00:00Z', save);
+    svc.connectAccount(1, 'dark', '2026-08-30T12:00:00Z', save);
 
     expect(save).not.toHaveBeenCalled();
     expect(svc.preference()).toBe('dark');
@@ -314,7 +322,7 @@ describe('ThemeService', () => {
         TestBed.resetTestingModule();
         const svc = inject();
 
-        svc.connectAccount('dark', '2026-08-30T12:00:00Z', vi.fn());
+        svc.connectAccount(1, 'dark', '2026-08-30T12:00:00Z', vi.fn());
 
         expect(svc.preference(), `timestamp ${String(timestamp)}`).toBe('dark');
       }
@@ -329,7 +337,7 @@ describe('ThemeService', () => {
       stubMatchMedia(true); // system resolves dark, but the account must receive system
       const save = vi.fn((preference) => of({preference, updatedAt: '2026-09-01T01:00:00Z'}));
       const svc = inject();
-      svc.connectAccount('system', '2026-08-30T12:00:00Z', save);
+      svc.connectAccount(1, 'system', '2026-08-30T12:00:00Z', save);
 
       svc.setPreference('light');
       svc.setPreference('dark');
@@ -349,7 +357,7 @@ describe('ThemeService', () => {
     try {
       const save = vi.fn(() => throwError(() => new Error('offline')));
       const svc = inject();
-      svc.connectAccount('light', '2026-08-30T12:00:00Z', save);
+      svc.connectAccount(1, 'light', '2026-08-30T12:00:00Z', save);
 
       expect(() => {
         svc.setPreference('dark');
@@ -367,7 +375,7 @@ describe('ThemeService', () => {
     try {
       const save = vi.fn();
       const svc = inject();
-      svc.connectAccount('light', '2026-08-30T12:00:00Z', save);
+      svc.connectAccount(1, 'light', '2026-08-30T12:00:00Z', save);
       svc.setPreference('dark');
 
       svc.disconnectAccount();
@@ -376,6 +384,54 @@ describe('ThemeService', () => {
       expect(save).not.toHaveBeenCalled();
       expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
       expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).not.toBeNull();
+      expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('1');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('takes the incoming account preference instead of uploading another account choice', () => {
+    const saveFirstAccount = vi.fn();
+    const saveSecondAccount = vi.fn();
+    const svc = inject();
+
+    svc.connectAccount(1, 'light', '2026-09-01T00:00:00Z', saveFirstAccount);
+    svc.disconnectAccount();
+    svc.connectAccount(2, 'dark', '2026-08-01T00:00:00Z', saveSecondAccount);
+
+    expect(saveFirstAccount).not.toHaveBeenCalled();
+    expect(saveSecondAccount).not.toHaveBeenCalled();
+    expect(svc.preference()).toBe('dark');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    expect(localStorage.getItem(THEME_UPDATED_AT_STORAGE_KEY)).toBe('2026-08-01T00:00:00.000Z');
+    expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('2');
+  });
+
+  it('keeps another account theme for first paint without inventing a choice for an empty account', () => {
+    vi.useFakeTimers();
+    try {
+      const saveFirstAccount = vi.fn();
+      const saveSecondAccount = vi.fn((preference) =>
+        of({preference, updatedAt: '2026-09-01T01:00:00Z'}),
+      );
+      const svc = inject();
+
+      svc.connectAccount(1, 'light', '2026-08-30T12:00:00Z', saveFirstAccount);
+      svc.disconnectAccount();
+      svc.connectAccount(2, null, null, saveSecondAccount);
+
+      expect(svc.preference()).toBe('light');
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
+      expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('1');
+      expect(saveSecondAccount).not.toHaveBeenCalled();
+
+      // Even choosing the same visible value is a real choice by account 2: it
+      // claims the retained presentation state and may now be synced.
+      svc.setPreference('light');
+      vi.advanceTimersByTime(300);
+      expect(saveSecondAccount).toHaveBeenCalledOnce();
+      expect(saveSecondAccount).toHaveBeenCalledWith('light');
+      expect(localStorage.getItem(THEME_ACCOUNT_ID_STORAGE_KEY)).toBe('2');
     } finally {
       vi.useRealTimers();
     }
