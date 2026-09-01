@@ -113,7 +113,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           } // might be signing out, or the data has been cleared
           this.unitRoles = unitRoles;
 
-          const countByUnit = new Map<number, number>();
+          const countByUnit: Map<number, number> = new Map();
           unitRoles.forEach((r) =>
             countByUnit.set(r.unit?.id, (countByUnit.get(r.unit?.id) ?? 0) + 1),
           );
