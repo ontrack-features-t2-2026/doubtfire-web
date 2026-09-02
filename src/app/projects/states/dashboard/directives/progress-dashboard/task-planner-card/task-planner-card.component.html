@@ -17,12 +17,31 @@
       }
     </mat-card-subtitle>
   </mat-card-header>
-  <mat-card-content>
+  <mat-card-content class="task-planner-controls flex flex-col items-start gap-4">
     <button mat-stroked-button [routerLink]="['/projects', project.id, 'plan']">
       <mat-icon aria-label="Launch icon" style="width: 20px; height: 20px; font-size: 20px">
         launch
       </mat-icon>
       View Task Planner
+    </button>
+    <mat-form-field appearance="outline" class="w-full max-w-xs">
+      <mat-label>Grade to include</mat-label>
+      <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
+        @for (grade of gradeValues; track grade) {
+          <mat-option [value]="grade">{{ gradeLabel(grade) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button
+      class="download-ics-link"
+      mat-stroked-button
+      [disabled]="!hasDownloadableTasks"
+      (click)="downloadIcs()"
+    >
+      <mat-icon aria-label="Download icon" style="width: 20px; height: 20px; font-size: 20px">
+        download
+      </mat-icon>
+      Download .ics
     </button>
   </mat-card-content>
 </mat-card>

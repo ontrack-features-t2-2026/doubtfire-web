@@ -13,6 +13,7 @@ vendor/
 tmp.scss
 .tscache
 a.env
+.env
 dist/
 .angulardoc.json
 .nx

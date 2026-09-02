@@ -96,15 +96,33 @@ export class TutorialsComponent implements OnInit, OnDestroy {
    *
    * @returns string
    */
-  shortTime(meetingTime?: string): string {
+  shortTime(meetingTime: string): string {
     if (!meetingTime) {
-      return '';
+      return 'Not set';
     }
+
     const [hours, minutes] = meetingTime.split(':');
     if (minutes === undefined) {
       return meetingTime;
     }
-    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    const formattedHours = hours.padStart(2, '0');
+    const formattedMinutes = minutes.padStart(2, '0');
+
+    return `${formattedHours}:${formattedMinutes}`;
+  }
+
+  tutorialStreamLabel(tutorial: Tutorial): string {
+    return this.unit?.tutorialStreamsCache?.size > 0
+      ? tutorial.tutorialStream?.name || 'All streams'
+      : 'Not applicable';
+  }
+
+  tutorialCampusLabel(tutorial: Tutorial): string {
+    return tutorial.campus?.name || 'All campuses';
+  }
+
+  tutorialValue(value: string | null | undefined): string {
+    return value?.trim() || 'Not set';
   }
 
   private sortCompare(

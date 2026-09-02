@@ -1,11 +1,11 @@
-<div class="w-full px-12" id="home">
+<f-page-container id="home">
   @if (projects?.length === 0 && unitRoles?.length === 0) {
     <div class="text-center">
       <h1 class="mat-headline-5">You are not enrolled in any {{ externalName.value }} units.</h1>
       <p class="mat-lead">Contact your unit convenor or tutor to enrol you in a subject.</p>
     </div>
   }
-  <div [hidden]="!unitRoles?.length">
+  <div [hidden]="unitRoles?.length === 0">
     <h2>Units you teach</h2>
     <div style="height: 185px" [hidden]="!loadingUnitRoles">
       <mat-spinner color="accent" diameter="40"></mat-spinner>
@@ -123,19 +123,34 @@
             }
           </div>
         }
-        <a routerLink="/view-all-projects">
-          <button
-            aria-label="view all projects"
-            color="primary"
-            extended
-            mat-fab
-            matTooltip="View previous units"
-            matTooltipPosition="above"
-          >
-            <mat-icon style="color: white">history</mat-icon> View all
-          </button>
-        </a>
+        <!-- Cross-unit dashboard feature -->
+        <div class="flex h-60 flex-col items-start justify-around">
+          <a routerLink="/dashboard">
+            <button
+              aria-label="view cross-unit dashboard"
+              color="primary"
+              extended
+              mat-fab
+              matTooltip="View current units"
+              matTooltipPosition="above"
+            >
+              <mat-icon style="color: white">dashboard</mat-icon> View all
+            </button>
+          </a>
+          <a routerLink="/view-all-projects">
+            <button
+              aria-label="view previous projects"
+              color="primary"
+              extended
+              mat-fab
+              matTooltip="View previous units"
+              matTooltipPosition="above"
+            >
+              <mat-icon style="color: white">history</mat-icon> View previous
+            </button>
+          </a>
+        </div>
       </div>
     </div>
   </div>
-</div>
+</f-page-container>

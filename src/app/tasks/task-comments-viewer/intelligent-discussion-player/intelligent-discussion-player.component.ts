@@ -14,6 +14,7 @@ import {AudioPlayerComponent} from 'src/app/common/audio-player/audio-player.com
 import {MicrophoneTesterComponent} from 'src/app/common/audio-recorder/audio/microphone-tester/microphone-tester.component';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
 import {IntelligentDiscussionPlayerService} from './intelligent-discussion-player.service';
 import {IntelligentDiscussionRecorderComponent} from './intelligent-discussion-recorder/intelligent-discussion-recorder.component';
 
@@ -130,7 +131,7 @@ export class IntelligentDiscussionPlayerComponent {
 }
 
 // The Dialog Component
-// eslint-disable-next-line max-classes-per-file
+
 @Component({
   selector: 'intelligent-discussion-dialog',
   templateUrl: 'intelligent-discussion-dialog.html',
@@ -156,6 +157,8 @@ export class IntelligentDiscussionDialog implements OnDestroy {
   private countdownTimer: ReturnType<typeof setInterval>;
   guide = {text: 'Click start to begin'};
   private promptBlobUrl: string;
+  private readonly unregisterMedia: () => void;
+  private readonly lifecycleSubscription: Subscription;
 
   @ViewChild('testRecorder', {static: true}) testRecorder: MicrophoneTesterComponent;
   @ViewChild('discussionRecorder', {static: true})
@@ -166,18 +169,26 @@ export class IntelligentDiscussionDialog implements OnDestroy {
     private discussionService: IntelligentDiscussionPlayerService,
     private fileDownloader: FileDownloaderService,
     private alerts: AlertService,
+    private appLifecycle: AppLifecycleService,
     @Inject(MAT_DIALOG_DATA)
     public data: {
       dc: DiscussionComment;
       task: Task;
       audioRef: HTMLAudioElement;
     },
-  ) {}
+  ) {
+    this.unregisterMedia = this.appLifecycle.registerMedia(this.data.audioRef);
+    this.lifecycleSubscription = this.appLifecycle.mediaPauseSubject.subscribe(() => {
+      this.promptPlaying = false;
+    });
+  }
 
   ngOnDestroy(): void {
     this.counter?.unsubscribe();
     this.clearCountdown();
     this.data.audioRef.pause();
+    this.unregisterMedia();
+    this.lifecycleSubscription.unsubscribe();
     this.releasePromptBlob();
   }
 
@@ -332,8 +343,11 @@ export class IntelligentDiscussionDialog implements OnDestroy {
         this.data.audioRef.onended = () => {
           this.promptPlaying = false;
           const audio = new Audio();
+          const unregisterSignal = this.appLifecycle.registerMedia(audio);
           audio.src = '/assets/sounds/discussion-start-signal.wav';
           audio.load();
+          audio.onended = unregisterSignal;
+          audio.onpause = unregisterSignal;
           audio.play();
           this.guide.text = 'Start responding';
           this.responseRecording = true;

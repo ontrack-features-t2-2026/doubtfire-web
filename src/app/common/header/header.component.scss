@@ -11,6 +11,7 @@
   }
 
   font-family: 'Grotesk';
+  overflow: hidden;
 
   .mat-icon {
     color: black;
@@ -18,17 +19,37 @@
   }
 }
 
-// The unread count beside "Notifications" in the account menu, which is the only
-// way to the notifications on a phone. A pill rather than a matBadge: inside a
-// mat-menu-item a badge is positioned against the item's own box and ends up
-// over the label.
-.notification-menu-count {
-  background: #d93025;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  margin-left: 8px;
-  padding: 3px 7px;
+.header-spacer {
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  .mat-toolbar {
+    gap: 0;
+    padding-inline: 8px;
+
+    unit-dropdown {
+      flex: 0 0 auto;
+      min-width: 0;
+    }
+
+    task-dropdown {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+
+  notification-bell {
+    flex: 0 0 44px;
+    width: 44px;
+  }
+
+  .account-menu-trigger {
+    flex: 0 0 44px;
+    height: 44px;
+    min-width: 44px;
+    padding-inline: 6px;
+  }
 }

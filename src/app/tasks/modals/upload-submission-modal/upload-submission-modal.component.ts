@@ -57,6 +57,7 @@ export type UploadSubmissionModalResult =
 @Component({
   selector: 'f-upload-submission-modal',
   templateUrl: './upload-submission-modal.component.html',
+  styleUrls: ['./upload-submission-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -109,7 +110,6 @@ export class UploadSubmissionModalComponent implements OnInit {
       : this.data.reuploadEvidence
         ? 'reupload_evidence'
         : this.task.status;
-
     this.resetUploadState();
   }
 
@@ -218,9 +218,27 @@ export class UploadSubmissionModalComponent implements OnInit {
   }
 
   public cancel = (): void => {
-    this.uploadSubmitLocked = false;
     this.dialogRef.close({dismissed: true});
   };
+
+  public canClose(): boolean {
+    if (this.isUploading) {
+      return false;
+    }
+    if (!this.isDirty) {
+      return true;
+    }
+
+    return window.confirm('Discard the files and details selected for this submission?');
+  }
+
+  public get isDirty(): boolean {
+    // The dialog may be dismissed freely until a local file has actually been
+    // selected. This avoids warning on an untouched dialog (or after merely
+    // inspecting submission options) while protecting the only state that the
+    // browser cannot reconstruct after close.
+    return this.fileUploader?.hasSelectedFiles() === true;
+  }
 
   public onReadyChange(isReady: boolean): void {
     this.isUploaderReady = isReady;
@@ -229,6 +247,13 @@ export class UploadSubmissionModalComponent implements OnInit {
   public onUploaderReady(startUpload: () => void): void {
     this.startUpload = startUpload;
   }
+
+  public onUploadCancelled = (): void => {
+    this.uploadSubmitLocked = false;
+    this.uploadStarted = false;
+    this.uploadResponse = null;
+    this.currentStage = 'details';
+  };
 
   public onBeforeUpload = (): void => {
     Object.keys(this.payload).forEach((key) => delete this.payload[key]);
@@ -257,6 +282,10 @@ export class UploadSubmissionModalComponent implements OnInit {
   public onUploadSuccess = (response: unknown): void => {
     if (this.isValidUploadResponse(response)) {
       this.uploadResponse = response;
+      this.task.processingPdf = true;
+      this.task.hasPdf = false;
+      this.task.submissionProcessingState = 'queued';
+      this.task.submissionRetryable = false;
 
       if (this.data.isTestSubmission) {
         this.projectService.loadProject(response.project_id, this.task.unit).subscribe({
@@ -285,21 +314,18 @@ export class UploadSubmissionModalComponent implements OnInit {
     }
 
     const response = this.uploadResponse;
-    this.dialogRef.close({value: this.task});
 
-    window.setTimeout(() => {
-      if (this.data.isTestSubmission) {
-        return;
-      }
-
+    if (!this.data.isTestSubmission) {
       const expectedStatus =
         this.submissionType === 'need_help' || this.submissionType === 'ready_for_feedback'
           ? this.submissionType
           : response.status;
 
       this.task.updateFromJson(response, this.taskService.mapping);
-      this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService);
-    }, 1500);
+      this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService, true);
+    }
+
+    this.dialogRef.close({value: this.task});
   };
 
   public uploadButtonClicked(): void {

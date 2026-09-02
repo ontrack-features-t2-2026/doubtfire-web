@@ -17,6 +17,7 @@ import {MappingFunctions} from './mapping-fn';
 @Injectable()
 export class TaskService extends CachedEntityService<Task> {
   public readonly taskStatusUpdated$: EventEmitter<Task> = new EventEmitter();
+  public readonly taskSubmissionCompleted$: EventEmitter<Task> = new EventEmitter();
 
   protected readonly endpointFormat = '/projects/:projectId:/task_def_id/:taskDefId:';
 
@@ -241,6 +242,13 @@ export class TaskService extends CachedEntityService<Task> {
 
   public notifyStatusChange(task: Task): void {
     this.taskStatusUpdated$.emit(task);
+  }
+
+  public notifyTransitionComplete(task: Task, submissionCompleted: boolean): void {
+    this.notifyStatusChange(task);
+    if (submissionCompleted) {
+      this.taskSubmissionCompleted$.emit(task);
+    }
   }
 
   public readonly statusColors: Map<string, string> = TaskStatus.STATUS_COLORS;

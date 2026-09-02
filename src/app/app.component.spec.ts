@@ -5,6 +5,7 @@ import {Router} from '@angular/router';
 import {Subject} from 'rxjs';
 import {PushNotificationClickService} from 'src/app/api/services/push-notification-click.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
 import {AppComponent} from './app.component';
 
 describe('AppComponent push lifecycle', () => {
@@ -25,15 +26,27 @@ describe('AppComponent push lifecycle', () => {
       start: vi.fn(),
       stop: vi.fn(),
     } as unknown as PushNotificationService;
+    const appLifecycle = {
+      start: vi.fn(),
+      stop: vi.fn(),
+    } as unknown as AppLifecycleService;
 
-    const component = new AppComponent(router, renderer, clickRouting, pushNotifications);
+    const component = new AppComponent(
+      router,
+      renderer,
+      clickRouting,
+      pushNotifications,
+      appLifecycle,
+    );
     component.ngOnInit();
 
+    expect(appLifecycle.start).toHaveBeenCalledOnce();
     expect(clickRouting.start).toHaveBeenCalledOnce();
     expect(pushNotifications.start).toHaveBeenCalledOnce();
 
     component.ngOnDestroy();
 
+    expect(appLifecycle.stop).toHaveBeenCalledOnce();
     expect(clickRouting.stop).toHaveBeenCalledOnce();
     expect(pushNotifications.stop).toHaveBeenCalledOnce();
   });

@@ -232,7 +232,6 @@ export class InboxComponent implements OnInit, OnDestroy {
     event.source.reset();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   stoppedDragging(event: CdkDragEnd, _div: HTMLDivElement) {
     document.body.classList.remove('split-pane-resizing');
     event.source.element.nativeElement.classList.remove('hovering');

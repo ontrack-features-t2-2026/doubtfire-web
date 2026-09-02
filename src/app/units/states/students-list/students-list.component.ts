@@ -11,7 +11,7 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatSort, Sort} from '@angular/material/sort';
 import {MatTableDataSource} from '@angular/material/table';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable, Subscription, finalize, first, of} from 'rxjs';
+import {Observable, Subscription, distinctUntilChanged, finalize, first, of} from 'rxjs';
 import {
   Project,
   ProjectService,
@@ -55,6 +55,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   unit: Unit;
 
   private subscriptions: Subscription[] = [];
+  private studentCacheSub?: Subscription;
   public sortState: Sort = {active: 'name', direction: 'asc'};
 
   constructor(
@@ -69,21 +70,21 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
     this.subscriptions.push(
-      this.unit$?.pipe(first()).subscribe((unit) => {
+      this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
         if (!unit) {
           this.loadingStudents = false;
           return;
         }
 
+        this.loadingStudents = true;
         this.unit = unit;
         this.staffFilter = unit.myRole === 'Tutor' ? 'mine' : 'all';
 
-        this.subscriptions.push(
-          this.unit.studentCache.values.subscribe(() => {
-            this.updateSuggestions();
-            this.updateDataSource();
-          }),
-        );
+        this.studentCacheSub?.unsubscribe();
+        this.studentCacheSub = this.unit.studentCache.values.subscribe(() => {
+          this.updateSuggestions();
+          this.updateDataSource();
+        });
 
         this.updateSuggestions();
         this.updateDataSource();
@@ -106,6 +107,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.studentCacheSub?.unsubscribe();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
   }
 

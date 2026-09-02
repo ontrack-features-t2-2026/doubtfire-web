@@ -31,19 +31,35 @@
             </div>
           </div>
         }
-        <mat-card
-          class="mb-2.5 p-3 pb-7"
-          [id]="'note-' + note.id"
-          (mouseout)="hoveredNoteId = null"
-          (mouseover)="hoveredNoteId = note.id"
-        >
+        <mat-card class="note-card mb-2.5 p-3 pb-7" [id]="'note-' + note.id">
           <div class="absolute right-3 bottom-3 flex items-center gap-3">
-            <div class="flex items-center" [hidden]="hoveredNoteId !== note.id">
+            <div class="note-actions flex items-center">
               @if (note.authorIsMe) {
-                <mat-icon type="button" (click)="editNote(note)">edit</mat-icon>
+                <button
+                  aria-label="Edit this note"
+                  class="note-action"
+                  type="button"
+                  (click)="editNote(note)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
               }
-              <mat-icon type="button" (click)="replyToNote(note)">reply</mat-icon>
-              <mat-icon type="button" (click)="deleteNote(note)">delete</mat-icon>
+              <button
+                aria-label="Reply to this note"
+                class="note-action"
+                type="button"
+                (click)="replyToNote(note)"
+              >
+                <mat-icon>reply</mat-icon>
+              </button>
+              <button
+                aria-label="Delete this note"
+                class="note-action"
+                type="button"
+                (click)="deleteNote(note)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
             </div>
             @if (!note.readByUnitRole) {
               @if (note.noteIsForMe) {

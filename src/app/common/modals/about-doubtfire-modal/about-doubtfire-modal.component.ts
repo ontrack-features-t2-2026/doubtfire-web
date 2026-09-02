@@ -35,7 +35,7 @@ export class AboutDoubtfireModalContent {
 /**
  * The about doubtfire modal service - used to create and show the modal
  */
-// eslint-disable-next-line max-classes-per-file
+
 @Injectable()
 export class AboutDoubtfireModal {
   private loaded: boolean;

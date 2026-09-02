@@ -10,7 +10,14 @@ import {
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
-import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {
+  Project,
+  Task,
+  TaskDefinition,
+  TaskStatus,
+  TaskStatusEnum,
+} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {TaskDefinitionNamePipe} from 'src/app/common/filters/task-definition-name.pipe';
 
 type TaskListSortOption = 'default' | 'abbreviation' | 'targetDate' | 'startDate' | 'dueDate';
@@ -21,7 +28,7 @@ interface TaskListViewPreferences {
   sortBy: TaskListSortOption;
   sortDirection: TaskListSortDirection;
   hideCompleted: boolean;
-  hideAboveTargetGrade: boolean;
+  showAboveTargetGrade: boolean;
 }
 
 interface TaskListSortOptionView {
@@ -34,7 +41,7 @@ const DEFAULT_VIEW_PREFERENCES: TaskListViewPreferences = {
   sortBy: 'default',
   sortDirection: 'asc',
   hideCompleted: false,
-  hideAboveTargetGrade: false,
+  showAboveTargetGrade: false,
 };
 
 const START_APPROACHING_DAYS = 7;
@@ -48,9 +55,11 @@ const START_APPROACHING_DAYS = 7;
 })
 export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   private readonly destroy$: Subject<void> = new Subject();
+  private routeTaskAbbreviation: string | null = null;
 
   @Input() mode: 'project' | 'all-tasks';
   @Input() project: Project;
+  @Input() targetGrade: number;
   @Input() taskDefinitions: readonly TaskDefinition[];
   @Input() tasks: readonly Task[];
   @Input() isCollapsed = false;
@@ -69,6 +78,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
 
   filteredTaskDefinitions: TaskDefinition[]; // list of tasks which match the taskSearch term
   searchText: string = ''; // task search term from user input
+  activeStatusFilter: TaskStatusEnum | null = null;
   taskDefinitionNamePipe = new TaskDefinitionNamePipe();
   viewPreferences: TaskListViewPreferences = {...DEFAULT_VIEW_PREFERENCES};
   sortOptions: TaskListSortOptionView[] = [
@@ -78,6 +88,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     {value: 'dueDate', label: 'Due date', icon: 'event_repeat'},
     {value: 'abbreviation', label: 'Abbreviation', icon: 'sort_by_alpha'},
   ];
+  readonly statusOptions = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status) => ({
+    status,
+    label: TaskStatus.STATUS_LABELS.get(status) ?? status,
+  }));
 
   protected get gradeNames(): Record<number, string> {
     const unit = this.project?.unit ?? this.taskDefinitions?.[0]?.unit;
@@ -89,6 +103,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   constructor(
     private angularRouter: Router,
     private route: ActivatedRoute,
+    private userService: UserService,
   ) {}
 
   applyFilters() {
@@ -100,8 +115,61 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     );
 
     this.filteredTaskDefinitions = matchingTaskDefinitions
+      .filter((taskDef) => this.matchesStatusFilter(taskDef))
       .filter((taskDef) => this.shouldShowTaskDefinition(taskDef))
       .sort((a, b) => this.compareTaskDefinitions(a, b));
+
+    this.deselectHiddenTaskDefinition();
+  }
+
+  public clearSearch(): void {
+    if (!this.searchText) {
+      return;
+    }
+
+    this.searchText = '';
+    this.applyFilters();
+  }
+
+  public setStatusFilter(value: string | TaskStatusEnum | null): void {
+    const status = TaskStatus.isStatus(value) ? value : null;
+    if (status === this.activeStatusFilter) {
+      return;
+    }
+
+    this.activeStatusFilter = status;
+    this.applyFilters();
+    void this.angularRouter.navigate([], {
+      relativeTo: this.route,
+      queryParams: {taskStatus: status, taskView: 'tasks'},
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  public get activeStatusFilterLabel(): string | null {
+    return this.activeStatusFilter
+      ? (TaskStatus.STATUS_LABELS.get(this.activeStatusFilter) ?? this.activeStatusFilter)
+      : null;
+  }
+
+  // The search term only narrows what the list shows, so typing must not close the
+  // open task. Drop the selection when the task itself has gone or a view filter
+  // hides it.
+  private deselectHiddenTaskDefinition(): void {
+    if (!this.selectedTaskDef) {
+      return;
+    }
+
+    const selectedTaskDefinition = this.taskDefinitions?.find(
+      (taskDef) => taskDef.id === this.selectedTaskDef.id,
+    );
+
+    if (selectedTaskDefinition && this.shouldShowTaskDefinition(selectedTaskDefinition)) {
+      return;
+    }
+
+    this.selectedTaskDefinition$?.next(null);
+    this.replaceSelectionUrl(null);
   }
 
   public setSortBy(sortBy: TaskListSortOption): void {
@@ -130,10 +198,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  public toggleHideAboveTargetGrade(value: boolean): void {
+  public toggleShowAboveTargetGrade(value: boolean): void {
     this.viewPreferences = {
       ...this.viewPreferences,
-      hideAboveTargetGrade: value,
+      showAboveTargetGrade: value,
     };
     this.persistViewPreferences();
     this.applyFilters();
@@ -173,7 +241,22 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     return (
       (this.viewPreferences.sortBy !== 'default' ? 1 : 0) +
       (this.viewPreferences.hideCompleted ? 1 : 0) +
-      (this.viewPreferences.hideAboveTargetGrade ? 1 : 0)
+      (this.hidingTasksAboveTargetGrade ? 1 : 0)
+    );
+  }
+
+  // The list hides tasks beyond the target grade unless the student opts in, so the
+  // badge has to count the hiding, not the opt-in that switches it off.
+  public get hidingTasksAboveTargetGrade(): boolean {
+    return !this.viewPreferences.showAboveTargetGrade && this.effectiveTargetGrade !== null;
+  }
+
+  public get hasNonDefaultViewPreferences(): boolean {
+    return (
+      this.viewPreferences.sortBy !== DEFAULT_VIEW_PREFERENCES.sortBy ||
+      this.viewPreferences.sortDirection !== DEFAULT_VIEW_PREFERENCES.sortDirection ||
+      this.viewPreferences.hideCompleted !== DEFAULT_VIEW_PREFERENCES.hideCompleted ||
+      this.viewPreferences.showAboveTargetGrade !== DEFAULT_VIEW_PREFERENCES.showAboveTargetGrade
     );
   }
 
@@ -182,15 +265,14 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       this.loadViewPreferences();
     }
 
-    if ('project' in changes || 'taskDefinitions' in changes || 'tasks' in changes) {
+    if (
+      'project' in changes ||
+      'targetGrade' in changes ||
+      'taskDefinitions' in changes ||
+      'tasks' in changes
+    ) {
       this.applyFilters();
-
-      if (
-        this.selectedTaskDef &&
-        !this.filteredTaskDefinitions?.some((taskDef) => taskDef.id === this.selectedTaskDef.id)
-      ) {
-        this.selectedTaskDefinition$.next(null);
-      }
+      this.applyRouteTaskSelection();
     }
   }
 
@@ -208,6 +290,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
 
   public taskListItem(taskDef: TaskDefinition): Task {
     return this.taskForTaskDef(taskDef);
+  }
+
+  public taskStatusLabel(task: Task): string {
+    return TaskStatus.STATUS_LABELS.get(task?.status) ?? 'Status unavailable';
   }
 
   public taskStartApproaching(task: Task): boolean {
@@ -279,25 +365,55 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     // a dashboard the user is already looking at runs into. A notification
     // linking to a task is exactly that.
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      const param = params.get('taskAbbreviation');
-
-      queueMicrotask(() => {
-        // Read inside the microtask, not outside. taskDefinitions arrives as an
-        // input and the value here has to be whatever is current when the
-        // comparison actually happens.
-        const current = this.selectedTaskDefinition$.value;
-
-        const nextTaskDefinition = param
-          ? (this.taskDefinitions?.find(
-              (taskDefinition) => taskDefinition.abbreviation === param,
-            ) ?? null)
-          : null;
-
-        if (nextTaskDefinition !== current) {
-          this.selectedTaskDefinition$.next(nextTaskDefinition);
-        }
-      });
+      this.routeTaskAbbreviation = params.get('taskAbbreviation');
+      queueMicrotask(() => this.applyRouteTaskSelection());
     });
+
+    this.route.queryParamMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const status = params.get('taskStatus');
+      const nextFilter = TaskStatus.isStatus(status) ? status : null;
+      if (nextFilter !== this.activeStatusFilter) {
+        this.activeStatusFilter = nextFilter;
+        this.applyFilters();
+      }
+    });
+  }
+
+  // Applies whatever the route currently names, using the task definitions that
+  // exist at the moment it runs. Called from the paramMap subscription and again
+  // from ngOnChanges, because the unit resolves progressively and taskDefinitions
+  // is usually still empty when the parameter first arrives. Without the second
+  // call a hard refresh on a deep link lands on nothing.
+  private applyRouteTaskSelection(): void {
+    const current = this.selectedTaskDefinition$.value;
+
+    const nextTaskDefinition = this.routeTaskAbbreviation
+      ? (this.taskDefinitions?.find(
+          (taskDefinition) => taskDefinition.abbreviation === this.routeTaskAbbreviation,
+        ) ?? null)
+      : null;
+
+    // An empty list means the unit has not finished resolving, not that the task
+    // is missing. Leave the selection alone and wait for ngOnChanges to call back
+    // once the definitions arrive. A loaded list that does not contain the
+    // abbreviation is a different thing and still clears the selection below.
+    if (this.routeTaskAbbreviation && !this.taskDefinitions?.length) {
+      return;
+    }
+
+    if (nextTaskDefinition && this.isTaskDefinitionAboveTargetGrade(nextTaskDefinition)) {
+      this.viewPreferences = {...this.viewPreferences, showAboveTargetGrade: true};
+      this.persistViewPreferences();
+      this.applyFilters();
+    }
+
+    // The comparison is what stops a click looping. Selecting a task navigates,
+    // that navigation makes paramMap emit, and the emission comes straight back
+    // in here. It also collapses the duplicate write from the second rendered
+    // instance of this component in the parent template.
+    if (nextTaskDefinition !== current) {
+      this.selectedTaskDefinition$.next(nextTaskDefinition);
+    }
   }
 
   ngOnDestroy(): void {
@@ -341,6 +457,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     if (this.selectionUrlBase) {
       return this.angularRouter.createUrlTree(
         taskDef ? [...this.selectionUrlBase, taskDef.abbreviation] : this.selectionUrlBase,
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -348,6 +465,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     if (this.route.parent?.snapshot.data.unit && unitId) {
       return this.angularRouter.createUrlTree(
         taskDef ? ['/units', unitId, 'tasks', taskDef.abbreviation] : ['/units', unitId, 'tasks'],
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -357,6 +475,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
         taskDef
           ? ['/projects', projectId, 'dashboard', taskDef.abbreviation]
           : ['/projects', projectId, 'dashboard'],
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -375,11 +494,34 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     return !(
-      this.viewPreferences.hideAboveTargetGrade &&
-      this.project?.targetGrade !== undefined &&
-      this.project?.targetGrade !== null &&
-      taskDef.targetGrade > this.project.targetGrade
+      !this.viewPreferences.showAboveTargetGrade &&
+      this.isTaskDefinitionAboveTargetGrade(taskDef) &&
+      !this.hasNewComments(task)
     );
+  }
+
+  private matchesStatusFilter(taskDef: TaskDefinition): boolean {
+    if (!this.activeStatusFilter) {
+      return true;
+    }
+
+    return this.taskForTaskDef(taskDef)?.status === this.activeStatusFilter;
+  }
+
+  private isTaskDefinitionAboveTargetGrade(taskDef: TaskDefinition): boolean {
+    const targetGrade = this.effectiveTargetGrade;
+
+    return targetGrade !== null && taskDef.targetGrade > targetGrade;
+  }
+
+  private get effectiveTargetGrade(): number | null {
+    const targetGrade = this.targetGrade ?? this.project?.targetGrade;
+
+    if (!this.project || targetGrade === undefined || targetGrade === null) {
+      return null;
+    }
+
+    return targetGrade;
   }
 
   private hasNewComments(task: Task): boolean {
@@ -455,7 +597,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   private loadViewPreferences(): void {
-    const rawPreferences = localStorage.getItem(this.viewPreferencesStorageKey);
+    const rawPreferences = this.viewPreferencesStorage?.getItem(this.viewPreferencesStorageKey);
 
     if (!rawPreferences) {
       this.viewPreferences = {...DEFAULT_VIEW_PREFERENCES};
@@ -471,7 +613,9 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
           ? parsedPreferences.sortDirection
           : migratedSort.sortDirection,
         hideCompleted: !!parsedPreferences.hideCompleted,
-        hideAboveTargetGrade: !!parsedPreferences.hideAboveTargetGrade,
+        // The legacy preference was named `hideAboveTargetGrade` and defaulted to false,
+        // which made higher-grade tasks visible. Treat legacy records as the new default.
+        showAboveTargetGrade: parsedPreferences.showAboveTargetGrade === true,
       };
     } catch {
       this.viewPreferences = {...DEFAULT_VIEW_PREFERENCES};
@@ -479,7 +623,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   private persistViewPreferences(): void {
-    localStorage.setItem(this.viewPreferencesStorageKey, JSON.stringify(this.viewPreferences));
+    this.viewPreferencesStorage?.setItem(
+      this.viewPreferencesStorageKey,
+      JSON.stringify(this.viewPreferences),
+    );
   }
 
   private isSortOption(value: unknown): value is TaskListSortOption {
@@ -521,6 +668,15 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
 
   private get viewPreferencesStorageKey(): string {
     const unitId = this.project?.unit?.id ?? this.taskDefinitions?.[0]?.unit?.id ?? 'unknown';
-    return `ontrack.unitTaskList.${unitId}.viewPreferences`;
+    const userId = this.userService.currentUser?.id ?? 'unknown';
+    return `ontrack.user.${userId}.unitTaskList.${unitId}.viewPreferences`;
+  }
+
+  private get viewPreferencesStorage(): Storage | null {
+    try {
+      return globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
   }
 }

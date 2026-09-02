@@ -1,10 +1,15 @@
 // MN-C03 targeted route-boundary tests.
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {Router} from '@angular/router';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
+import {AuthenticationService} from '../authentication.service';
+import {NotificationFeedbackRouteIntentService} from '../notification-feedback-route-intent.service';
 import {NOTIFICATION_ROUTE_FALLBACK, NotificationRouteService} from '../notification-route.service';
 
 describe('NotificationRouteService', () => {
   let router: {url: string; navigateByUrl: ReturnType<typeof vi.fn>};
+  let authentication: {isAuthenticated: ReturnType<typeof vi.fn>};
+  let authReturnUrl: {remember: ReturnType<typeof vi.fn>};
   let service: NotificationRouteService;
 
   beforeEach(() => {
@@ -12,7 +17,13 @@ describe('NotificationRouteService', () => {
       url: '/home',
       navigateByUrl: vi.fn().mockResolvedValue(true),
     };
-    service = new NotificationRouteService(router as unknown as Router);
+    authentication = {isAuthenticated: vi.fn().mockReturnValue(true)};
+    authReturnUrl = {remember: vi.fn()};
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+    );
   });
 
   it('accepts each approved notification route family', () => {
@@ -21,6 +32,7 @@ describe('NotificationRouteService', () => {
       '/projects/1/dashboard',
       '/projects/23/groups',
       '/projects/23/dashboard/1.1P',
+      '/projects/23/dashboard/1.1P/feedback',
       '/projects/23/dashboard/T1.1',
       '/projects/23/dashboard/HD1.2',
       '/projects/23/dashboard/10.1H',
@@ -51,6 +63,7 @@ describe('NotificationRouteService', () => {
       '/projects/1//dashboard',
       '/projects/1/dashboard/',
       '/projects/1/dashboard/1.1P/extra',
+      '/projects/1/dashboard/1.1P/feedback/extra',
       '/projects/1/dashboard/line\nbreak',
       `/projects/1/dashboard/${'A1'.repeat(20)}`,
     ];
@@ -142,6 +155,25 @@ describe('NotificationRouteService', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith(NOTIFICATION_ROUTE_FALLBACK);
   });
 
+  it('saves an allow-listed target before sending an anonymous client to sign in', async () => {
+    authentication.isAuthenticated.mockReturnValue(false);
+    const target = '/projects/23/dashboard/1.1P/feedback';
+
+    await service.navigate(target);
+
+    expect(authReturnUrl.remember).toHaveBeenCalledWith(target);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/sign_in');
+  });
+
+  it('never saves an unvalidated notification destination', async () => {
+    authentication.isAuthenticated.mockReturnValue(false);
+
+    await service.navigate('https://evil.example/steal');
+
+    expect(authReturnUrl.remember).toHaveBeenCalledWith(NOTIFICATION_ROUTE_FALLBACK);
+    expect(authReturnUrl.remember).not.toHaveBeenCalledWith('https://evil.example/steal');
+  });
+
   it('does not navigate twice when a closed-app launch already opened the target', async () => {
     router.url = '/projects/23/dashboard/1.1P?from=service-worker#top';
 
@@ -156,5 +188,66 @@ describe('NotificationRouteService', () => {
     await service.navigate(undefined);
 
     expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('carries a validated feedback intent until the project resolves the task definition', async () => {
+    const intents = new NotificationFeedbackRouteIntentService();
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+      intents,
+    );
+
+    await service.navigate('/projects/23/dashboard/1.1P/feedback');
+
+    expect(intents.consume({projectId: 23, taskAbbreviation: '1.1P'})).not.toBeNull();
+  });
+
+  it('emits a new intent without navigating when that feedback route is already open', async () => {
+    const intents = new NotificationFeedbackRouteIntentService();
+    const received = vi.fn();
+    intents.requests$.subscribe(received);
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+      intents,
+    );
+    router.url = '/projects/23/dashboard/1.1P/feedback';
+
+    await service.navigate('/projects/23/dashboard/1.1P/feedback');
+
+    expect(received).toHaveBeenCalledOnce();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('never creates a feedback intent from an unsafe or non-feedback destination', async () => {
+    const intents = new NotificationFeedbackRouteIntentService();
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+      intents,
+    );
+
+    await service.navigate('https://example.test/projects/23/dashboard/1.1P/feedback');
+
+    expect(intents.consume({projectId: 23, taskAbbreviation: '1.1P'})).toBeNull();
+  });
+
+  it('cancels the intent when Angular refuses the navigation', async () => {
+    const intents = new NotificationFeedbackRouteIntentService();
+    router.navigateByUrl.mockResolvedValue(false);
+    service = new NotificationRouteService(
+      router as unknown as Router,
+      authentication as unknown as AuthenticationService,
+      authReturnUrl as unknown as AuthReturnUrlService,
+      intents,
+    );
+
+    await service.navigate('/projects/23/dashboard/1.1P/feedback');
+
+    expect(intents.consume({projectId: 23, taskAbbreviation: '1.1P'})).toBeNull();
   });
 });

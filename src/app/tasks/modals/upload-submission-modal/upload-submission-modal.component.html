@@ -1,6 +1,6 @@
-<div class="flex items-center justify-between">
+<div class="submission-dialog-header">
   <h2 mat-dialog-title>Submit {{ task.definition.abbreviation }} {{ task.definition.name }}</h2>
-  <mat-form-field appearance="outline" class="my-2.5 mt-[22px] mr-[24px] w-full lg:max-w-sm">
+  <mat-form-field appearance="outline" class="submission-type-field">
     <mat-label>Submission type</mat-label>
     <mat-select
       [disabled]="uploadStarted || isUploading"
@@ -64,6 +64,7 @@
           #fileUploader
           [files]="fileRequirements"
           [onBeforeUpload]="onBeforeUpload"
+          [onCancelUpload]="onUploadCancelled"
           [onClickFailureCancel]="cancel"
           [onComplete]="onUploadComplete"
           [onSuccess]="onUploadSuccess"
@@ -155,9 +156,9 @@
 </mat-dialog-content>
 
 @if (!uploadStarted) {
-  <mat-dialog-actions align="end">
-    <button class="mr-auto" color="warn" mat-button type="button" (click)="cancel()">
-      Cancel Submission
+  <mat-dialog-actions align="end" class="submission-dialog-actions">
+    <button class="cancel-action" color="warn" mat-button type="button" (click)="cancel()">
+      Cancel submission
     </button>
 
     @if (isGroupStage) {

@@ -1,0 +1,39 @@
+.feedback-review-content {
+  max-height: calc(100dvh - 10rem);
+  overflow: auto;
+}
+
+.feedback-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem 1rem;
+
+  button {
+    min-height: 44px;
+    white-space: normal;
+  }
+}
+
+.feedback-review-error {
+  border-left: 4px solid #b42318;
+  background: #fef3f2;
+  padding: 0.75rem;
+  color: #7a271a;
+}
+
+@media (max-width: 479.98px) {
+  .feedback-review-content {
+    max-height: calc(100dvh - 12rem);
+    padding-inline: 1rem;
+  }
+
+  .feedback-review-actions {
+    padding-inline: 1rem;
+
+    button {
+      width: 100%;
+    }
+  }
+}

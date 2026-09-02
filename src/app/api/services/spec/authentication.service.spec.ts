@@ -9,8 +9,12 @@ import {User, UserService} from 'src/app/api/models/doubtfire-model';
 import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {DemoScenarioRegistryService} from 'src/app/demo/demo-scenario-registry.service';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
-import {AuthenticationService} from '../authentication.service';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
+import {AuthenticationService, REFRESH_TOKEN_TIMEOUT_MS} from '../authentication.service';
+import {NotificationFeedbackRouteIntentService} from '../notification-feedback-route-intent.service';
 import {NotificationService} from '../notification.service';
 import {PushNotificationService} from '../push-notification.service';
 
@@ -35,6 +39,12 @@ describe('AuthenticationService', () => {
 
   let pushService: {unsubscribeQuietly: ReturnType<typeof vi.fn>};
   let notificationService: {reset: ReturnType<typeof vi.fn>};
+  let notificationFeedbackIntents: {clear: ReturnType<typeof vi.fn>};
+  let demoMode: {reset: ReturnType<typeof vi.fn>};
+  let demoScenarioRegistry: {
+    loadForAuthenticatedUser: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
   let globalState: {
     clearUnitsAndProjects: ReturnType<typeof vi.fn>;
     hideHeader: ReturnType<typeof vi.fn>;
@@ -50,6 +60,10 @@ describe('AuthenticationService', () => {
     };
   };
   let router: {navigateByUrl: ReturnType<typeof vi.fn>};
+  let authReturnUrl: {
+    rememberCurrentUrl: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
   let constants: {
     API_URL: string;
     SignoutURL: string | undefined;
@@ -80,6 +94,9 @@ describe('AuthenticationService', () => {
       if (token === NotificationService) {
         return notificationService;
       }
+      if (token === NotificationFeedbackRouteIntentService) {
+        return notificationFeedbackIntents;
+      }
       throw new Error(`unexpected AppInjector token: ${String(token)}`);
     },
   } as unknown as Injector;
@@ -87,6 +104,12 @@ describe('AuthenticationService', () => {
   beforeEach(() => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
     notificationService = {reset: vi.fn()};
+    notificationFeedbackIntents = {clear: vi.fn()};
+    demoMode = {reset: vi.fn()};
+    demoScenarioRegistry = {
+      loadForAuthenticatedUser: vi.fn().mockReturnValue(of(void 0)),
+      clear: vi.fn(),
+    };
     globalState = {
       clearUnitsAndProjects: vi.fn(),
       hideHeader: vi.fn(),
@@ -107,6 +130,7 @@ describe('AuthenticationService', () => {
       },
     };
     router = {navigateByUrl: vi.fn()};
+    authReturnUrl = {rememberCurrentUrl: vi.fn(), clear: vi.fn()};
     constants = {
       API_URL,
       SignoutURL: undefined,
@@ -125,6 +149,9 @@ describe('AuthenticationService', () => {
         {provide: Router, useValue: router},
         {provide: AlertService, useValue: {error: vi.fn()}},
         {provide: DoubtfireConstants, useValue: constants},
+        {provide: DemoModeStore, useValue: demoMode},
+        {provide: DemoScenarioRegistryService, useValue: demoScenarioRegistry},
+        {provide: AuthReturnUrlService, useValue: authReturnUrl},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -189,6 +216,9 @@ describe('AuthenticationService', () => {
     // gone but NotificationService is a root singleton, so its cache and unread
     // count would otherwise survive into the next person's session.
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
+    expect(notificationFeedbackIntents.clear).toHaveBeenCalledTimes(1);
+    expect(demoMode.reset).toHaveBeenCalledTimes(1);
+    expect(authReturnUrl.clear).toHaveBeenCalledTimes(1);
   });
 
   // unsubscribeQuietly is the "never throw" variant, and sign out is also wired
@@ -218,6 +248,21 @@ describe('AuthenticationService', () => {
     expect(constants.resetAuthenticatedSettings).toHaveBeenCalledTimes(1);
     httpMock.expectNone((r) => r.url === AUTH_URL && r.method === 'DELETE');
     expect(userService.currentUser).toBe(userService.anonymousUser);
+  });
+
+  it('remembers the current protected route before showing authentication timeout', () => {
+    vi.useFakeTimers();
+    try {
+      service.timeoutAuthentication();
+
+      expect(authReturnUrl.rememberCurrentUrl).toHaveBeenCalledOnce();
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(500);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/timeout');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not complete sign in until authenticated settings are applied', () => {
@@ -266,6 +311,55 @@ describe('AuthenticationService', () => {
     expect(loginResult).toHaveBeenCalledWith(true);
   });
 
+  it('keeps a refresh cookie retryable when the auth service is unavailable', () => {
+    const loginResult = vi.fn();
+
+    service.attemptLoginUsingRefreshToken(loginResult);
+    httpMock
+      .expectOne(`${AUTH_URL}/access-token`)
+      .flush({error: 'unavailable'}, {status: 503, statusText: 'Service Unavailable'});
+
+    expect(loginResult).toHaveBeenCalledWith(false, 'unavailable');
+    expect(userService.currentUser).toBe(userService.anonymousUser);
+    expect(userService.cache.clear).toHaveBeenCalled();
+    expect(pushService.unsubscribeQuietly).not.toHaveBeenCalled();
+  });
+
+  it('times out the complete refresh hydration, including protected settings', async () => {
+    vi.useFakeTimers();
+    const loginResult = vi.fn();
+    try {
+      service.attemptLoginUsingRefreshToken(loginResult);
+      httpMock.expectOne(`${AUTH_URL}/access-token`).flush(authResponse(1, 'refreshed-token'));
+      const settingsRequest = httpMock.expectOne(`${API_URL}/settings`);
+
+      await vi.advanceTimersByTimeAsync(REFRESH_TOKEN_TIMEOUT_MS + 1);
+
+      expect(loginResult).toHaveBeenCalledWith(false, 'timeout');
+      expect(settingsRequest.cancelled).toBe(true);
+      expect(userService.currentUser).toBe(userService.anonymousUser);
+      expect(pushService.unsubscribeQuietly).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears a definitively expired refresh session', () => {
+    const loginResult = vi.fn();
+
+    service.attemptLoginUsingRefreshToken(loginResult);
+    httpMock
+      .expectOne(`${AUTH_URL}/access-token`)
+      .flush({error: 'expired'}, {status: 404, statusText: 'Not Found'});
+
+    expect(loginResult).toHaveBeenCalledWith(false, 'expired');
+    expect(pushService.unsubscribeQuietly).toHaveBeenCalledOnce();
+    httpMock
+      .expectOne((request) => request.url === AUTH_URL && request.method === 'DELETE')
+      .flush(null);
+    expect(userService.currentUser).toBe(userService.anonymousUser);
+  });
+
   it('fails settings closed without rejecting valid credentials', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const afterAuth = vi.fn();
@@ -311,6 +405,7 @@ describe('AuthenticationService', () => {
 
     service.signOut(false);
 
+    expect(authReturnUrl.clear).not.toHaveBeenCalled();
     expect(settingsRequest.cancelled).toBe(true);
     expect(constants.resetAuthenticatedSettings).toHaveBeenCalledTimes(1);
     expect(constants.applyAuthenticatedSettings).not.toHaveBeenCalled();

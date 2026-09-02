@@ -3,7 +3,7 @@
     <mat-card-title>Review Portfolio</mat-card-title>
   </mat-card-header>
 
-  <mat-card-content class="p-3 px-12">
+  <mat-card-content class="portfolio-review-content">
     @if (!hasLearningSummaryReport || !hasTasksSelected) {
       <mat-card appearance="outlined" class="p-1">
         <mat-card-header class="bg-red-500 text-white">
@@ -71,9 +71,9 @@
 
         <ol class="list-inside list-decimal space-y-1 pb-2">
           @for (file of extraFiles; track file) {
-            <li class="flex items-center gap-1">
-              <mat-icon>{{ getIcon(file.kind) }}</mat-icon>
-              {{ file.name }}
+            <li class="portfolio-review-file">
+              <mat-icon aria-hidden="true">{{ getIcon(file.kind) }}</mat-icon>
+              <span>{{ file.name }}</span>
             </li>
           }
         </ol>
@@ -142,7 +142,7 @@
             compile it again before the submission deadline.
           </p>
         </mat-card-content>
-        <mat-card-actions class="flex gap-2 py-3">
+        <mat-card-actions class="portfolio-download-actions">
           <button class="text-white" color="warn" mat-raised-button (click)="deletePortfolio()">
             Delete Portfolio
           </button>
@@ -154,7 +154,7 @@
     }
   </mat-card-content>
 
-  <mat-card-footer class="flex w-full justify-start p-3">
+  <mat-card-footer class="portfolio-review-footer">
     <button mat-raised-button (click)="goBack()">Back</button>
   </mat-card-footer>
 </mat-card>

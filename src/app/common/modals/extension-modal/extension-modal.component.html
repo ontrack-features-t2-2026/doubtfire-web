@@ -1,15 +1,16 @@
-<h3 mat-dialog-title>Extension request</h3>
-<div mat-dialog-content [formGroup]="extensionData">
+<h2 mat-dialog-title>Request extension</h2>
+<div class="task-dialog-content" mat-dialog-content [formGroup]="extensionData">
   <p class="w-full">
     Please explain why you require an extension for this task, the teaching team will assess the
     request shortly.
   </p>
 
-  <mat-form-field appearance="outline" style="width: 100%">
+  <mat-form-field appearance="outline" class="w-full">
     <mat-label>Reason</mat-label>
     <textarea
       matInput
       placeholder="Reason"
+      rows="4"
       type="text"
       [errorStateMatcher]="matcher"
       [formControl]="extensionData.controls.extensionReason"
@@ -28,7 +29,7 @@
     }
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" class="w-full">
     <mat-label>Choose a date</mat-label>
     <input
       matInput
@@ -41,20 +42,22 @@
     <mat-datepicker-toggle matSuffix [for]="extensionDatePicker"></mat-datepicker-toggle>
     <mat-datepicker #extensionDatePicker></mat-datepicker>
   </mat-form-field>
+
+  @if (errorMessage) {
+    <p class="task-dialog-error" role="alert">{{ errorMessage }}</p>
+  }
 </div>
 
-<div mat-dialog-actions style="float: right">
-  <button color="warn" mat-dialog-close mat-stroked-button>Cancel</button>
+<div class="task-dialog-actions" mat-dialog-actions>
+  <button mat-stroked-button type="button" (click)="requestClose()">Cancel</button>
   <button
     color="primary"
-    mat-button
-    mat-dialog-close
     mat-stroked-button
-    style="margin-right: 10px"
-    [disabled]="!extensionData.valid"
+    type="button"
+    [disabled]="!extensionData.valid || submitting"
     (click)="submitApplication()"
   >
-    Request extension to
+    {{ submitting ? 'Sending…' : 'Request extension to' }}
     {{
       extensionDate.toLocaleDateString(currentLocale, {
         month: 'long',

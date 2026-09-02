@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow, @typescript-eslint/no-shadow */
 import {HotkeysService} from '@ngneat/hotkeys';
 import {
   ChangeDetectionStrategy,
@@ -13,7 +12,7 @@ import {
 } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs';
+import {Observable, Subscription} from 'rxjs';
 import {
   Project,
   Task,
@@ -48,6 +47,8 @@ import {BatchFeedbackWorkflowDialogComponent} from './batch-feedback-workflow-di
 })
 export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('searchDialog') searchDialog: TemplateRef<object>;
+
+  private taskRequestSub?: Subscription;
 
   @Input() task: Task;
   @Input() project: Project;
@@ -154,22 +155,21 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       this.syncSelectedTaskFromTaskKey();
     }
 
-    if (!this.isTaskDefMode || !this.filters) {
-      return;
-    }
-
     const unitChanged =
       !!changes.unit &&
       !changes.unit.isFirstChange() &&
       changes.unit.currentValue?.id &&
       changes.unit.previousValue?.id !== changes.unit.currentValue?.id;
 
-    if (unitChanged) {
-      this.refreshData();
+    // This used to sit behind an isTaskDefMode guard, so the inbox kept the previous
+    // unit's students, tutors and tasks on screen after a unit switch.
+    if (unitChanged && this.unit && this.unitRole) {
+      this.initialiseForUnit();
     }
   }
 
   ngOnDestroy(): void {
+    this.taskRequestSub?.unsubscribe();
     this.hotkeys.removeShortcuts('control.shift.arrowdown');
     this.hotkeys.removeShortcuts('control.shift.arrowup');
   }
@@ -200,6 +200,15 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     if (navigator.maxTouchPoints > 1) {
       this.allowHover = false;
     }
+
+    this.initialiseForUnit();
+  }
+
+  // The filter defaults, the student and tutor lists and the task query are all built
+  // from the routed unit, so they have to be rebuilt when it changes. The router reuses
+  // this component across a unit switch, so ngOnInit does not run a second time.
+  private initialiseForUnit(): void {
+    this.fetchedAllTasks = false;
 
     // Does the current user have any tutorials?
     this.userHasTutorials =
@@ -560,8 +569,12 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     const fetchMyStudentsOnly = this.filters.tutorialIdSelected === 'mine';
 
     this.loading = true;
+    // A unit or filter change can start a second query before the previous one
+    // returns. Cancel the older query so it cannot land late and put stale tasks
+    // back on screen after the component has moved to the new unit.
+    this.taskRequestSub?.unsubscribe();
     // Tasks for feedback or tasks for task, depending on the data source
-    this.taskData
+    this.taskRequestSub = this.taskData
       .source(this.unit, this.filters?.taskDefinitionIdSelected, fetchMyStudentsOnly)
       .subscribe({
         next: (response) => {
@@ -585,6 +598,60 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
           this.loading = false;
         },
       });
+  }
+
+  /**
+   * The task whose row actions are being held open by keyboard focus, if any. Focus is
+   * tracked separately from task.hover so that neither path can close the other: tabbing
+   * away used to run the same handler as mouseout and would fade the options button out
+   * from under a pointer that was still sitting on the row.
+   */
+  focusedTaskId: number | null = null;
+
+  /**
+   * Reveal the row actions because the pointer is over the row. Touch devices opt out
+   * of hover entirely via allowHover, which is why this is not simply `true`.
+   */
+  showTaskActionsForPointer(task: Task) {
+    task.hover = this.allowHover;
+  }
+
+  /**
+   * Hide the row actions again once the pointer leaves. This is the original mouseout
+   * behaviour and it deliberately touches nothing the keyboard owns.
+   */
+  hideTaskActions(task: Task) {
+    task.hover = task.optionsOpened;
+  }
+
+  /**
+   * Reveal the row actions because the submission options button took keyboard focus.
+   * Unlike the pointer path this always applies, since a keyboard is usable on a touch
+   * device even when hover is not.
+   */
+  showTaskActionsForFocus(task: Task) {
+    this.focusedTaskId = task.id;
+  }
+
+  /**
+   * Release the keyboard's hold on the row. Another row may already have claimed focus
+   * by the time this runs, so only the row that took it can give it back.
+   */
+  hideTaskActionsForFocus(task: Task) {
+    if (this.focusedTaskId === task.id) {
+      this.focusedTaskId = null;
+    }
+  }
+
+  /**
+   * Whether the row is showing its submission options in place of the pin indicator. Any
+   * one of the three reasons is enough: the pointer is on the row, the keyboard is on the
+   * options button, or the overflow menu it opened is still up. The menu case has to be
+   * here as well as in the pointer path, because opening the menu from the keyboard moves
+   * focus into the menu and so blurs the button that opened it.
+   */
+  rowActionsShown(task: Task): boolean {
+    return task.hover || task.optionsOpened || this.focusedTaskId === task.id;
   }
 
   setSelectedTask(task: Task) {

@@ -14,6 +14,7 @@ import {NotificationService} from '../notification.service';
 const LIST_URL = `${API_URL}/notifications/`;
 const COUNT_URL = `${API_URL}/notifications/unread_count`;
 const READ_ALL_URL = `${API_URL}/notifications/read_all`;
+const DELETE_ALL_URL = `${API_URL}/notifications`;
 
 /**
  * What NotificationEntity actually puts on the wire. Snake case, and read_at is
@@ -23,6 +24,7 @@ function unreadJson(id = 1) {
   return {
     id,
     notification_type: 'task',
+    event: 'task_due_soon',
     message: 'Jane commented on Task 1.1P',
     link: '/#/projects/1/task/2',
     read_at: null,
@@ -118,6 +120,7 @@ describe('NotificationService', () => {
       expect(result[0]).toMatchObject({
         id: 1,
         notificationType: 'task',
+        event: 'task_due_soon',
         message: 'Jane commented on Task 1.1P',
         link: '/#/projects/1/task/2',
       });
@@ -406,6 +409,46 @@ describe('NotificationService', () => {
       expect(service.cache.currentValues[0].id).toBe(1);
 
       flushResync(0);
+    });
+  });
+
+  describe('deleteAll', () => {
+    it('deletes only through the confirmed id and evicts that snapshot', () => {
+      seedUnreadCount(3);
+      primeCache(unreadJson(3), readJson(4), unreadJson(5));
+
+      let deletedCount: number;
+      service.deleteAll(4).subscribe((count) => (deletedCount = count));
+
+      const request = httpMock.expectOne((candidate: HttpRequest<object>): boolean => {
+        expect(candidate.url).toBe(DELETE_ALL_URL);
+        expect(candidate.method).toBe('DELETE');
+        expect(candidate.params.get('through_id')).toBe('4');
+        return true;
+      });
+      request.flush({success: true, deleted_count: 2});
+
+      expect(deletedCount).toBe(2);
+      expect(service.cache.currentValues.map((row) => row.id)).toEqual([5]);
+      expect(currentUnreadCount()).toBe(2);
+
+      flushResync(2);
+    });
+
+    it('does not evict or change the count when the request fails', () => {
+      seedUnreadCount(2);
+      primeCache(unreadJson(1), unreadJson(2));
+
+      service.deleteAll(2).subscribe({error: () => undefined});
+      httpMock
+        .expectOne(
+          (request: HttpRequest<object>) =>
+            request.url === DELETE_ALL_URL && request.params.get('through_id') === '2',
+        )
+        .flush({error: 'failed'}, {status: 500, statusText: 'Server Error'});
+
+      expect(service.cache.currentValues.map((row) => row.id)).toEqual([1, 2]);
+      expect(currentUnreadCount()).toBe(2);
     });
   });
 
