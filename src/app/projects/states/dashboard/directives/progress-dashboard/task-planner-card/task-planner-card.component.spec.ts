@@ -4,9 +4,11 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSelectModule} from '@angular/material/select';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
@@ -15,6 +17,7 @@ import {Unit} from 'src/app/api/models/unit';
 import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {DownloadFilterSelection} from './download-filter-dialog/download-filter-dialog.component';
 import {TaskPlannerCardComponent} from './task-planner-card.component';
 
 function buildProjectWithTasks(
@@ -59,12 +62,14 @@ describe('TaskPlannerCardComponent', () => {
     downloadBlobToFile: ReturnType<typeof vi.fn>;
     releaseBlob: ReturnType<typeof vi.fn>;
   };
+  let matDialogStub: {open: ReturnType<typeof vi.fn>};
 
   beforeEach(async () => {
     fileDownloaderStub = {
       downloadBlobToFile: vi.fn(),
       releaseBlob: vi.fn(),
     };
+    matDialogStub = {open: vi.fn()};
 
     await TestBed.configureTestingModule({
       declarations: [TaskPlannerCardComponent],
@@ -76,7 +81,11 @@ describe('TaskPlannerCardComponent', () => {
         FormsModule,
         NoopAnimationsModule,
       ],
-      providers: [{provide: FileDownloaderService, useValue: fileDownloaderStub}, GradeService],
+      providers: [
+        {provide: FileDownloaderService, useValue: fileDownloaderStub},
+        {provide: MatDialog, useValue: matDialogStub},
+        GradeService,
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -124,6 +133,9 @@ describe('TaskPlannerCardComponent', () => {
   it('downloads a blob named after the unit code and the selected grade abbreviation', () => {
     component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)}]);
     fixture.detectChanges();
+    // Pinned false so this test's filename expectation is decoupled from the excludeCompleted
+    // default (true) - this test is about the grade/unit code portion of the filename only.
+    component.excludeCompleted = false;
 
     const createObjectURLSpy = vi
       .spyOn(window.URL, 'createObjectURL')
@@ -186,16 +198,19 @@ describe('TaskPlannerCardComponent', () => {
     expect(ics).not.toContain('UID:E-2');
   });
 
-  it('hasDownloadableTasks reflects the selected grade, not just whether any task exists', () => {
+  it('hasDownloadableTasks reflects whether any tasks are loaded, regardless of the filter selection', () => {
+    // The filter selection now lives in the dialog, opened after this gate. A selection that
+    // would yield zero results (e.g. grade 0 with a grade-2 task) is guarded inside the dialog
+    // instead, so this gate must stay true as long as the project has any tasks at all.
     component.project = buildProjectWithTasks([
       {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 2},
     ]);
     fixture.detectChanges();
 
     component.selectedDownloadGrade = 0;
-    expect(component.hasDownloadableTasks).toBe(false);
+    expect(component.hasDownloadableTasks).toBe(true);
 
-    component.selectedDownloadGrade = 2;
+    component.excludeCompleted = true;
     expect(component.hasDownloadableTasks).toBe(true);
   });
 
@@ -205,6 +220,9 @@ describe('TaskPlannerCardComponent', () => {
     ]);
     fixture.detectChanges();
     component.selectedDownloadGrade = 1; // Credit, abbreviation 'C'.
+    // Pinned false so this test's filename expectation is decoupled from the excludeCompleted
+    // default (true) - this test is about the grade override portion of the filename only.
+    component.excludeCompleted = false;
 
     vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
@@ -231,17 +249,43 @@ describe('TaskPlannerCardComponent', () => {
     expect(ics).toContain('UID:E-2');
   });
 
-  it('includes both completed and outstanding tasks when excludeCompleted is off (default)', () => {
+  it('includes both completed and outstanding tasks when excludeCompleted is unticked', () => {
+    // CAL-F09 flipped the default to true (see the excludeCompleted field). This test now
+    // covers the unticked path explicitly rather than relying on it being the default.
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.excludeCompleted = false;
+
+    const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
+    expect(ics).toContain('UID:E-1');
+    expect(ics).toContain('UID:E-2');
+  });
+
+  it('defaults excludeCompleted to true, so an untouched download excludes completed tasks and carries the -outstanding suffix', () => {
+    // Discriminating for the CAL-F09 default flip: if excludeCompleted silently reverted to
+    // false, the boolean check below would fail, the completed task's UID would leak into the
+    // ICS output, and the filename would lose its -outstanding suffix.
     component.project = buildProjectWithTasks([
       {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
       {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
     ]);
     fixture.detectChanges();
 
-    expect(component.excludeCompleted).toBe(false);
+    expect(component.excludeCompleted).toBe(true);
+
     const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
-    expect(ics).toContain('UID:E-1');
+    expect(ics).not.toContain('UID:E-1');
     expect(ics).toContain('UID:E-2');
+
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    component.downloadIcs();
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-P-outstanding.ics',
+    );
   });
 
   it('composes the completed filter with the grade filter', () => {
@@ -260,16 +304,118 @@ describe('TaskPlannerCardComponent', () => {
     expect(tasks.map((task) => task.definition.id)).toEqual([3]);
   });
 
-  it('hasDownloadableTasks becomes false when excluding completed tasks leaves nothing', () => {
+  it('this grade and above with HD selected yields only targetGrade 3 tasks', () => {
     component.project = buildProjectWithTasks([
-      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2},
+      {dueDate: new Date(2026, 8, 22, 23, 59, 59, 999), targetGrade: 3},
+    ]);
+    fixture.detectChanges();
+    component.selectedDownloadGrade = 3;
+    component.downloadDirection = 'andAbove';
+
+    const tasks = component['tasksForSelectedGrade']();
+    expect(tasks.map((task) => task.definition.id)).toEqual([3]);
+  });
+
+  it('this grade and above with Distinction selected yields targetGrade 2 and 3 only, excluding a Pass task', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2},
+      {dueDate: new Date(2026, 8, 22, 23, 59, 59, 999), targetGrade: 3},
+    ]);
+    fixture.detectChanges();
+    component.selectedDownloadGrade = 2;
+    component.downloadDirection = 'andAbove';
+
+    const tasks = component['tasksForSelectedGrade']();
+    expect(tasks.map((task) => task.definition.id)).toEqual([2, 3]);
+    expect(tasks.map((task) => task.definition.id)).not.toContain(1);
+  });
+
+  it('composes this grade and above with exclude-completed', () => {
+    // Task 1: grade 0, complete. Task 2: grade 2, outstanding. Task 3: grade 3, complete.
+    // Task 4: grade 3, outstanding. With direction andAbove, selectedDownloadGrade 2 and
+    // excludeCompleted true, only Task 2 and Task 4 should remain.
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0, status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2, status: 'working_on_it'},
+      {dueDate: new Date(2026, 8, 22, 23, 59, 59, 999), targetGrade: 3, status: 'complete'},
+      {dueDate: new Date(2026, 8, 23, 23, 59, 59, 999), targetGrade: 3, status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.selectedDownloadGrade = 2;
+    component.downloadDirection = 'andAbove';
+    component.excludeCompleted = true;
+
+    const tasks = component['tasksForDownload']();
+    expect(tasks.map((task) => task.definition.id)).toEqual([2, 4]);
+  });
+
+  it('inserts -and-above into the filename for the and-above direction, leaving up-to filenames unchanged', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 2},
+    ]);
+    fixture.detectChanges();
+    component.selectedDownloadGrade = 2;
+    // Pinned false so the filenames below isolate the direction suffix from the
+    // excludeCompleted default (true), which appends its own suffix.
+    component.excludeCompleted = false;
+
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+
+    component.downloadDirection = 'upTo';
+    component.downloadIcs();
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-D.ics',
+    );
+
+    fileDownloaderStub.downloadBlobToFile.mockClear();
+    component.downloadDirection = 'andAbove';
+    component.downloadIcs();
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-D-and-above.ics',
+    );
+  });
+
+  it('applies the values returned by the download dialog and downloads accordingly', () => {
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 3},
     ]);
     fixture.detectChanges();
 
-    expect(component.hasDownloadableTasks).toBe(true);
+    const selection: DownloadFilterSelection = {
+      grade: 3,
+      direction: 'andAbove',
+      excludeCompleted: false,
+    };
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(selection)});
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
-    component.excludeCompleted = true;
-    expect(component.hasDownloadableTasks).toBe(false);
+    component.openDownloadDialog();
+
+    expect(matDialogStub.open).toHaveBeenCalledOnce();
+    expect(component.selectedDownloadGrade).toBe(3);
+    expect(component.downloadDirection).toBe('andAbove');
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-HD-and-above.ics',
+    );
+  });
+
+  it('does not download when the dialog is cancelled', () => {
+    // If afterClosed's result were ignored (or a cancel treated as a selection), this would
+    // still call the file downloader.
+    component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)}]);
+    fixture.detectChanges();
+
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(undefined)});
+
+    component.openDownloadDialog();
+
+    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
   });
 
   it('appends -outstanding to the filename when excludeCompleted is on', () => {
