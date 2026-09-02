@@ -133,6 +133,9 @@ describe('TaskPlannerCardComponent', () => {
   it('downloads a blob named after the unit code and the selected grade abbreviation', () => {
     component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)}]);
     fixture.detectChanges();
+    // Pinned false so this test's filename expectation is decoupled from the excludeCompleted
+    // default (true) - this test is about the grade/unit code portion of the filename only.
+    component.excludeCompleted = false;
 
     const createObjectURLSpy = vi
       .spyOn(window.URL, 'createObjectURL')
@@ -217,6 +220,9 @@ describe('TaskPlannerCardComponent', () => {
     ]);
     fixture.detectChanges();
     component.selectedDownloadGrade = 1; // Credit, abbreviation 'C'.
+    // Pinned false so this test's filename expectation is decoupled from the excludeCompleted
+    // default (true) - this test is about the grade override portion of the filename only.
+    component.excludeCompleted = false;
 
     vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
@@ -243,17 +249,43 @@ describe('TaskPlannerCardComponent', () => {
     expect(ics).toContain('UID:E-2');
   });
 
-  it('includes both completed and outstanding tasks when excludeCompleted is off (default)', () => {
+  it('includes both completed and outstanding tasks when excludeCompleted is unticked', () => {
+    // CAL-F09 flipped the default to true (see the excludeCompleted field). This test now
+    // covers the unticked path explicitly rather than relying on it being the default.
+    component.project = buildProjectWithTasks([
+      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
+      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
+    ]);
+    fixture.detectChanges();
+    component.excludeCompleted = false;
+
+    const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
+    expect(ics).toContain('UID:E-1');
+    expect(ics).toContain('UID:E-2');
+  });
+
+  it('defaults excludeCompleted to true, so an untouched download excludes completed tasks and carries the -outstanding suffix', () => {
+    // Discriminating for the CAL-F09 default flip: if excludeCompleted silently reverted to
+    // false, the boolean check below would fail, the completed task's UID would leak into the
+    // ICS output, and the filename would lose its -outstanding suffix.
     component.project = buildProjectWithTasks([
       {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), status: 'complete'},
       {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), status: 'working_on_it'},
     ]);
     fixture.detectChanges();
 
-    expect(component.excludeCompleted).toBe(false);
+    expect(component.excludeCompleted).toBe(true);
+
     const ics = buildIcsCalendar(component['tasksForDownload'](), new Date('2026-08-24T00:00:00Z'));
-    expect(ics).toContain('UID:E-1');
+    expect(ics).not.toContain('UID:E-1');
     expect(ics).toContain('UID:E-2');
+
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    component.downloadIcs();
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-P-outstanding.ics',
+    );
   });
 
   it('composes the completed filter with the grade filter', () => {
@@ -326,6 +358,9 @@ describe('TaskPlannerCardComponent', () => {
     ]);
     fixture.detectChanges();
     component.selectedDownloadGrade = 2;
+    // Pinned false so the filenames below isolate the direction suffix from the
+    // excludeCompleted default (true), which appends its own suffix.
+    component.excludeCompleted = false;
 
     vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
