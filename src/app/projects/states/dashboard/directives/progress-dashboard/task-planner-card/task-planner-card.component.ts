@@ -40,9 +40,11 @@ export class TaskPlannerCardComponent implements OnInit {
   public downloadDirection: DownloadDirection = 'upTo';
 
   /**
-   * Local to the download only, not persisted, same as selectedDownloadGrade above.
+   * Local to the download only, not persisted, same as selectedDownloadGrade above. Defaults to
+   * true: someone downloading a calendar of due dates almost always wants the work still ahead
+   * of them, not tasks they already finished. The checkbox stays available to see the full set.
    */
-  public excludeCompleted = false;
+  public excludeCompleted = true;
 
   constructor(
     @Inject(FileDownloaderService) private fileDownloader: FileDownloaderService,
