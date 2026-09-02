@@ -10,9 +10,14 @@
     </mat-select>
   </mat-form-field>
 
-  <mat-button-toggle-group class="mb-2 w-full" [(ngModel)]="direction">
-    <mat-button-toggle class="w-1/2" value="upTo">Up to this grade</mat-button-toggle>
-    <mat-button-toggle class="w-1/2" value="andAbove">This grade and above</mat-button-toggle>
+  <mat-button-toggle-group
+    aria-label="Grade range"
+    class="mb-2 w-full"
+    vertical
+    [(ngModel)]="direction"
+  >
+    <mat-button-toggle class="w-full" value="upTo">Up to this grade</mat-button-toggle>
+    <mat-button-toggle class="w-full" value="andAbove">This grade and above</mat-button-toggle>
   </mat-button-toggle-group>
 
   <p class="mb-3 text-sm text-gray-600">{{ directionLabel }}</p>
