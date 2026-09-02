@@ -23,6 +23,10 @@ export class PeerProgressUnitSummaryComponent {
     return this.view.data?.submittedPercentage ?? null;
   }
 
+  get cohortLabel(): string {
+    return this.view.data?.cohortLabel ?? 'Anonymous cohort progress';
+  }
+
   get canShowCohortPercentage(): boolean {
     return (
       (this.view.state === 'success' || this.view.state === 'no-data') &&

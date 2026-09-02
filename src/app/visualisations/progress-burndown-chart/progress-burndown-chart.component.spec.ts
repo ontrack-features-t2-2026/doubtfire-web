@@ -170,6 +170,25 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
     const peerSeries = component.data.find((series) => series.name === 'Peer median (demo)');
 
     expect(peerSeries?.series.map((point) => point.value)).toEqual([75, 25]);
+    expect(component.summaries).toEqual([
+      {name: 'Projected', remaining: 10, color: '#3939ff'},
+      {name: 'To Submit', remaining: 20, color: '#0079d8'},
+      {name: 'To Complete', remaining: 30, color: '#45a049'},
+    ]);
+  });
+
+  it('derives every displayed summary from the same chart series', () => {
+    const getCohortMedian = vi.fn();
+    const {component, project} = makeHarness(getCohortMedian, false);
+
+    initialise(component);
+
+    for (const summary of component.summaries) {
+      const source = component.temp.find((series) => series.name === summary.name);
+      expect(summary.remaining).toBe(source?.series.at(-1)?.value);
+      expect(new Set(source?.series.map((point) => point.value)).size).toBeGreaterThan(1);
+    }
+    expect(project.refreshBurndownChartData).toHaveBeenCalledOnce();
   });
 
   it('withholds the median when the response is suppressed', () => {

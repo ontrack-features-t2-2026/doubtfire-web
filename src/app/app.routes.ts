@@ -1,5 +1,6 @@
 import {Routes, UrlMatcher} from '@angular/router';
 import {EditProfileComponent} from './account/edit-profile/edit-profile.component';
+import {VerifyAdditionalEmailComponent} from './account/verify-additional-email/verify-additional-email.component';
 import {InstitutionSettingsComponent} from './admin/institution-settings/institution-settings.component';
 import {FUnitsComponent} from './admin/states/units/units.component';
 import {FUsersComponent} from './admin/states/users/users.component';
@@ -66,6 +67,7 @@ export const routes: Routes = [
   {path: 'timeout', component: TimeoutComponent},
   {path: 'success-close', component: SuccessCloseComponent},
   {path: 'edit_profile', component: EditProfileComponent},
+  {path: 'verify_additional_email', component: VerifyAdditionalEmailComponent},
   {path: 'notifications', component: NotificationsPageComponent},
   {
     path: 'demo-controls',

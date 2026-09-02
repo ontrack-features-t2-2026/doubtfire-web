@@ -21,6 +21,7 @@ function buildTask(overrides: {
   dueDate?: Date;
   hasTaskSheet?: boolean;
   hasTaskResources?: boolean;
+  taskSheetFilename?: string;
 }): Task {
   const unit = new Unit();
   unit.code = overrides.unitCode ?? 'COS10001';
@@ -35,11 +36,15 @@ function buildTask(overrides: {
   definition.startDate = new Date(2026, 8, 1);
   definition.targetGrade = 0;
   definition.hasTaskSheet = overrides.hasTaskSheet ?? true;
+  definition.taskSheetFilename = overrides.taskSheetFilename;
   definition.hasTaskResources = overrides.hasTaskResources ?? false;
 
   const task = new Task(unit);
   task.definition = definition;
   task.dueDate = overrides.dueDate;
+  task.project = new Project(unit);
+  task.project.targetGrade = 0;
+  vi.spyOn(task, 'localDeadlineDate').mockReturnValue(overrides.dueDate);
 
   return task;
 }
@@ -47,15 +52,13 @@ function buildTask(overrides: {
 describe('TaskDescriptionCardComponent', () => {
   let component: TaskDescriptionCardComponent;
   let fixture: ComponentFixture<TaskDescriptionCardComponent>;
+  const downloadFile = vi.fn();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [TaskDescriptionCardComponent, MarkedPipe],
       imports: [NoopAnimationsModule, MatButtonModule, MatIconModule],
-      providers: [
-        GradeService,
-        {provide: FileDownloaderService, useValue: {downloadFile: () => undefined}},
-      ],
+      providers: [GradeService, {provide: FileDownloaderService, useValue: {downloadFile}}],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -71,6 +74,27 @@ describe('TaskDescriptionCardComponent', () => {
     // either). vi.restoreAllMocks() restores the original window.open and clears the
     // spy's history after every test, not just the ones that create it directly.
     vi.restoreAllMocks();
+    downloadFile.mockReset();
+  });
+
+  it('uses the API-authoritative task-sheet filename with a rolling-safe fallback', () => {
+    const task = buildTask({
+      unitCode: 'COS10001',
+      abbreviation: '1.1P',
+      taskSheetFilename: 'COS10001-1.1P-TaskSheet.pdf',
+    });
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    vi.spyOn(task.definition, 'getTaskPDFUrl').mockReturnValue('/task-sheet');
+
+    component.downloadTaskSheet();
+
+    expect(downloadFile).toHaveBeenCalledWith('/task-sheet', 'COS10001-1.1P-TaskSheet.pdf');
+
+    task.definition.taskSheetFilename = undefined;
+    component.downloadTaskSheet();
+    expect(downloadFile).toHaveBeenLastCalledWith('/task-sheet', 'COS10001-1.1P-TaskSheet.pdf');
   });
 
   it('renders the Add to Google Calendar button when the task has a due date, with a correct href, target and rel', () => {
@@ -291,5 +315,53 @@ describe('TaskDescriptionCardComponent', () => {
     component.handleCalendarLinkKeydown(keyboardEvent);
 
     expect(windowOpenSpy).not.toHaveBeenCalled();
+  });
+});
+
+function bareCard(): TaskDescriptionCardComponent {
+  return Object.create(TaskDescriptionCardComponent.prototype) as TaskDescriptionCardComponent;
+}
+
+describe('TaskDescriptionCardComponent feedback deadline', () => {
+  const deadline = new Date('2026-09-01T00:00:00Z');
+
+  it('reads the task deadline when a task is present', () => {
+    const component = bareCard();
+    component.task = {localDeadlineDate: () => deadline} as unknown as Task;
+
+    expect(component.feedbackDate()).toBe(deadline);
+  });
+
+  it('falls back to the task-definition deadline when there is no task', () => {
+    const component = bareCard();
+    component.task = undefined;
+    component.taskDef = {localDeadlineDate: () => deadline} as unknown as TaskDefinition;
+
+    expect(component.feedbackDate()).toBe(deadline);
+  });
+
+  it('returns no deadline when neither model has one', () => {
+    const component = bareCard();
+    component.task = undefined;
+    component.taskDef = undefined;
+
+    expect(component.feedbackDate()).toBeUndefined();
+  });
+
+  it('emphasises only task deadlines within fourteen days', () => {
+    const near = bareCard();
+    near.task = {daysUntilDeadlineDate: () => 10} as unknown as Task;
+    expect(near.shouldShowDeadline()).toBe(true);
+
+    const far = bareCard();
+    far.task = {daysUntilDeadlineDate: () => 21} as unknown as Task;
+    expect(far.shouldShowDeadline()).toBe(false);
+  });
+
+  it('does not emphasise a deadline when there is no task', () => {
+    const component = bareCard();
+    component.task = undefined;
+
+    expect(component.shouldShowDeadline()).toBeFalsy();
   });
 });

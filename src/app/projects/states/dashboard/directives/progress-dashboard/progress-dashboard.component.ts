@@ -143,14 +143,14 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
 
     this.peerProgressView = resolvePeerProgressUnitSummaryState(true, null, null);
 
-    // PPI-F02 demonstration only.
-    // A live authorised unit-level API remains future work.
+    // Demo-only unit summaries consume the guarded Batch 09 contract. A live
+    // authorised unit-level API remains future work.
     this.peerProgressService
-      .getDemoUnitSummary(
+      .getScenarioUnitSummary(
+        this.project.id,
         this.project.unit.id,
         this.project.targetGrade,
         studentPercentage,
-        'normal',
       )
       .pipe(take(1))
       .subscribe({

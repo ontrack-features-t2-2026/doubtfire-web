@@ -1,6 +1,6 @@
-<div class="flex w-full gap-3">
+<div class="group-work-layout">
   <f-group-selector
-    class="w-full"
+    class="group-work-layout__selector"
     [onSelect]="groupSelectHandler"
     [project]="project"
     [selectedGroup]="selectedGroup"
@@ -11,15 +11,21 @@
   </f-group-selector>
 
   @if (selectedGroup) {
-    <mat-card appearance="outlined" class="flex w-full flex-col self-stretch">
-      <mat-card-header class="flex items-center justify-between">
-        <mat-card-title class="flex items-center"
-          >Members of
+    <mat-card appearance="outlined" class="group-work-layout__members">
+      <mat-card-header class="group-members-header">
+        <mat-card-title class="group-members-title"
+          ><span>Members of</span>
           @if (!editingGroupName) {
-            {{ selectedGroup?.name }}
+            <strong>{{ selectedGroup?.name }}</strong>
             @if (unitRole || selectedGroup.groupSet?.allowStudentsToManageGroups) {
-              <button class="p-1" mat-icon-button (click)="startEditingGroupName()">
-                <mat-icon>edit</mat-icon>
+              <button
+                class="p-1"
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Rename group ' + selectedGroup.name"
+                (click)="startEditingGroupName()"
+              >
+                <mat-icon aria-hidden="true">edit</mat-icon>
               </button>
             }
           } @else {
@@ -30,14 +36,14 @@
               <button class="p-1" mat-icon-button (click)="updateGroup()">
                 <mat-icon>save</mat-icon>
               </button>
-              <button class="p-1" mat-icon-button (click)="stopEditinGroupName()">
+              <button class="p-1" mat-icon-button (click)="stopEditingGroupName()">
                 <mat-icon>close</mat-icon>
               </button>
             }
           }
         </mat-card-title>
         @if (selectedGroup.locked) {
-          <mat-icon>lock</mat-icon>
+          <mat-icon aria-label="Group is locked">lock</mat-icon>
         }
       </mat-card-header>
 

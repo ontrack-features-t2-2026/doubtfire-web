@@ -25,6 +25,8 @@ export class User extends Entity {
   public authenticationTokenExpiry: string;
   public pronouns: string | null;
   public acceptedTiiEula: boolean;
+  public institutionalIdentityManaged: boolean;
+  public emailEditable: boolean;
 
   // LTI Token
   public ltik: string;

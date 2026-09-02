@@ -50,16 +50,36 @@ export const NORMAL_STATE: PeerProgressIndicator = {
 
 export const ROUNDED_90_STATE: PeerProgressIndicator = {
   ...NORMAL_STATE,
-  statusDistribution: DEMO_STATUS_DISTRIBUTION.map((entry) =>
-    entry.status === 'fail' ? {...entry, percentage: 0} : {...entry},
-  ),
+  submittedPercentage: 50,
+  completedPercentage: 20,
+  statusDistribution: DEMO_STATUS_DISTRIBUTION.map((entry) => {
+    switch (entry.status) {
+      case 'ready_for_feedback':
+        return {...entry, percentage: 10};
+      case 'complete':
+        return {...entry, percentage: 20};
+      case 'fail':
+        return {...entry, percentage: 0};
+      default:
+        return {...entry};
+    }
+  }),
 };
 
 export const ROUNDED_110_STATE: PeerProgressIndicator = {
   ...NORMAL_STATE,
-  statusDistribution: DEMO_STATUS_DISTRIBUTION.map((entry) =>
-    entry.status === 'fail' ? {...entry, percentage: 20} : {...entry},
-  ),
+  submittedPercentage: 80,
+  completedPercentage: 30,
+  statusDistribution: DEMO_STATUS_DISTRIBUTION.map((entry) => {
+    switch (entry.status) {
+      case 'not_started':
+        return {...entry, percentage: 10};
+      case 'complete':
+        return {...entry, percentage: 30};
+      default:
+        return {...entry};
+    }
+  }),
 };
 
 export const ZERO_PERCENT_STATE: PeerProgressIndicator = {
@@ -135,8 +155,8 @@ export const DISABLED_STATE: PeerProgressIndicator = {
 
 export const DETAIL_PROTECTED_STATE: PeerProgressIndicator = {
   ...NORMAL_STATE,
-  submittedPercentage: 60,
-  completedPercentage: 10,
+  submittedPercentage: 70,
+  completedPercentage: 30,
   distributionAvailable: false,
   statusDistribution: [],
   distributionUnavailableReason: 'privacy_protection',

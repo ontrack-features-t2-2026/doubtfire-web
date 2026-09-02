@@ -47,36 +47,37 @@
     }
   </mat-card-content>
 
-  <mat-card-actions class="w-full justify-between">
-    <div class="space-x-1">
-      <button
-        mat-stroked-button
-        [disabled]="
-          isReadyForFeedback() ||
-          (task?.blockedByPrerequisiteTasks() && !isTutor) ||
-          isSubmittedForPortfolio()
-        "
-        (click)="uploadSubmission()"
-      >
-        Upload Submission
-      </button>
+  <mat-card-actions class="task-status-actions">
+    <div class="task-status-primary-actions">
+      @if (showUploadSubmission) {
+        <button
+          mat-stroked-button
+          [disabled]="(task?.blockedByPrerequisiteTasks() && !isTutor) || isSubmittedForPortfolio()"
+          (click)="uploadSubmission()"
+        >
+          Upload submission
+        </button>
+      }
 
       @if (task?.canApplyForExtension()) {
         <button mat-stroked-button (click)="applyForExtension()">Request extension</button>
       }
-      @if (task?.inSubmittedState() && task?.requiresFileUpload()) {
-        <button mat-stroked-button (click)="updateFilesInSubmission()">Upload new files</button>
+      @if (showUploadNewFiles) {
+        <button
+          mat-stroked-button
+          [disabled]="submissionActionPending"
+          (click)="updateFilesInSubmission()"
+        >
+          Upload new files
+        </button>
       }
     </div>
 
-    <div>
-      <button aria-label="More task options" mat-icon-button [matMenuTriggerFor]="menu">
-        <mat-icon>more_vert</mat-icon>
-      </button>
-      <div fxFlex></div>
-      <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="openFeedbackAppealModal()">Request Feedback Review</button>
-      </mat-menu>
-    </div>
+    <button aria-label="More task options" mat-icon-button [matMenuTriggerFor]="menu">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="openFeedbackAppealModal()">Request feedback review</button>
+    </mat-menu>
   </mat-card-actions>
 </mat-card>

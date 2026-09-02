@@ -178,7 +178,8 @@
                     @if (!!comment.replyToId) {
                       <a
                         class="original-comment"
-                        (click)="scrollToComment(comment.originalComment.id)"
+                        [class.disabled]="!comment.originalComment"
+                        (click)="scrollToComment(comment.originalComment?.id)"
                       >
                         <p class="reply-text">
                           <mat-icon inline>reply</mat-icon>
@@ -264,6 +265,14 @@
                           ></pdf-image-comment>
                         </div>
                       }
+
+                      @case ('document') {
+                        <sent-attachment-card
+                          action="download"
+                          [comment]="comment"
+                          (activate)="downloadCommentAttachment(comment)"
+                        ></sent-attachment-card>
+                      }
                     }
                   </div>
                   @if (comment.isBubbleComment) {
@@ -294,10 +303,12 @@
         </span>
       </div>
     }
+    <div #conversationEnd aria-hidden="true" class="conversation-end"></div>
   </div>
   <!--/comment-list-->
-  <div class="comments-footer" id="commentComposerFoter">
+  <div #commentsFooter class="comments-footer" id="commentComposerFoter">
     <task-comment-composer
+      #commentComposer
       [sharedData]="sharedCommentComposerData"
       [task]="task"
     ></task-comment-composer>

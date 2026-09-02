@@ -1,5 +1,5 @@
-<mat-card>
-  <mat-card-content>
+<mat-card class="file-uploader-card">
+  <mat-card-content class="file-uploader-content">
     @if (!showUploader) {
       <button class="w-full" color="primary" mat-raised-button (click)="showUploader = true">
         <mat-icon>upload</mat-icon>
@@ -65,11 +65,16 @@
             </div>
 
             @if (!singleDropZone && upload.model?.length > 0) {
-              <div class="flex items-center gap-3">
-                <mat-icon>{{ upload.display.icon }}</mat-icon>
-                {{ upload.model[0].name }}
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
-                  <mat-icon>close</mat-icon>
+              <div class="selected-upload">
+                <mat-icon aria-hidden="true">{{ upload.display.icon }}</mat-icon>
+                <span class="selected-upload__name">{{ upload.model[0].name }}</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
+                  <mat-icon aria-hidden="true">close</mat-icon>
                 </button>
               </div>
             }
@@ -82,19 +87,24 @@
           <h5>Upload Summary</h5>
 
           @for (upload of uploadZones; track upload) {
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1">
-                <mat-icon>{{ upload.display.icon }}</mat-icon>
+            <div class="upload-summary-row">
+              <div class="upload-summary-row__label">
+                <mat-icon aria-hidden="true">{{ upload.display.icon }}</mat-icon>
                 <strong>{{ upload.display.name }}</strong>
               </div>
 
               @if (upload.model?.length > 0) {
-                <em>{{ upload.model[0].name }}</em>
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
-                  <mat-icon>close</mat-icon>
+                <em class="selected-upload__name">{{ upload.model[0].name }}</em>
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
+                  <mat-icon aria-hidden="true">close</mat-icon>
                 </button>
               } @else {
-                <em>File Pending</em>
+                <em class="selected-upload__name">File pending</em>
               }
             </div>
           }
@@ -105,14 +115,21 @@
     @if (showUploader && !isUploading) {
       <div>
         @if (showUploadButton && readyToUpload() && uploadingInfo === null) {
-          <button color="primary" mat-raised-button (click)="initiateUploadInternal()">
+          <button
+            color="primary"
+            mat-raised-button
+            type="button"
+            (click)="initiateUploadInternal()"
+          >
             <mat-icon>upload</mat-icon>
             Start Upload
           </button>
         }
 
         @if (asButton) {
-          <button color="warn" mat-button (click)="resetUploader()">Cancel Upload</button>
+          <button color="warn" mat-button type="button" (click)="resetUploader()">
+            Cancel Upload
+          </button>
         }
       </div>
     }
@@ -133,6 +150,9 @@
             [value]="$safeNavigationMigration(uploadingInfo?.progress)"
           >
           </mat-progress-bar>
+          <button color="warn" mat-stroked-button type="button" (click)="cancelUpload()">
+            Cancel upload
+          </button>
         </div>
       }
 

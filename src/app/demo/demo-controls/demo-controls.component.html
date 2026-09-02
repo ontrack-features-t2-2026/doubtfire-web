@@ -1,273 +1,124 @@
 <main aria-labelledby="demo-controls-title" class="demo-controls">
-  <mat-card appearance="outlined">
-    <mat-card-header>
-      <mat-icon aria-hidden="true" mat-card-avatar>science</mat-icon>
-      <mat-card-title id="demo-controls-title">Demo controls</mat-card-title>
-      <mat-card-subtitle>Local development only</mat-card-subtitle>
-    </mat-card-header>
+  @if (scenario$ | async; as scenario) {
+    <mat-card appearance="outlined" data-testid="demo-controls">
+      <mat-card-header>
+        <mat-icon aria-hidden="true" mat-card-avatar>science</mat-icon>
+        <mat-card-title id="demo-controls-title">Demo walkthrough</mat-card-title>
+        <mat-card-subtitle>Synthetic records in an isolated local runtime</mat-card-subtitle>
+      </mat-card-header>
 
-    <mat-card-content>
-      <p>
-        Demo mode combines the feature surfaces used for walkthroughs. It does not replace live CPD
-        task data or recommendation scores with fabricated values.
-      </p>
+      <mat-card-content>
+        <p>
+          This walkthrough uses deterministic synthetic records. It never changes live student data,
+          and turning it off returns every normal API response unchanged.
+        </p>
 
-      <mat-slide-toggle
-        aria-describedby="demo-mode-description"
-        color="primary"
-        [checked]="demoMode.enabled"
-        (change)="setDemoMode($event)"
-      >
-        Demo mode {{ demoMode.enabled ? 'on' : 'off' }}
-      </mat-slide-toggle>
-
-      <p id="demo-mode-description">
-        Changing this setting reloads OnTrack so project and notification caches cannot mix quiet
-        and demonstration data.
-      </p>
-
-      <h2>What the switch does</h2>
-      <dl>
-        <dt>Off — quiet baseline</dt>
-        <dd>
-          Keeps one baseline unit (DEMO20007 when available) and hides the demo notification and
-          peer-comparison surfaces.
-        </dd>
-        <dt>On — complete walkthrough</dt>
-        <dd>
-          Shows the complete cross-unit scenario, a privacy-safe lifecycle spread (60% submitted and
-          10% complete), and all seven curated local notifications.
-        </dd>
-      </dl>
-
-      <h2>Affected surfaces</h2>
-      <ul>
-        @for (surface of affectedSurfaces; track surface) {
-          <li>{{ surface }}</li>
-        }
-      </ul>
-
-      <section aria-labelledby="ppi-preview-title" class="ppi-preview">
-        <div class="ppi-preview__heading">
-          <mat-icon aria-hidden="true">groups</mat-icon>
+        <section aria-labelledby="demo-switch-title" class="demo-switch">
           <div>
-            <h2 id="ppi-preview-title">Peer Progress Indicator visual preview</h2>
-            <p>
-              Sample only — fabricated anonymous percentages. Switching previews never calls the API
-              or changes a profile.
+            <h2 id="demo-switch-title">Walkthrough presentation</h2>
+            <p id="demo-mode-description">
+              {{
+                demoMode.enabled
+                  ? 'OnTrack may highlight the fixture hooks listed below.'
+                  : 'OnTrack shows this account’s normal server data without demo overrides.'
+              }}
             </p>
           </div>
-        </div>
+          <mat-slide-toggle
+            aria-describedby="demo-mode-description"
+            color="primary"
+            data-testid="demo-walkthrough-toggle"
+            [checked]="demoMode.enabled"
+            (change)="setDemoMode($event)"
+          >
+            Demo {{ demoMode.enabled ? 'on' : 'off' }}
+          </mat-slide-toggle>
+        </section>
 
-        <div aria-label="Choose a peer progress preview state" class="ppi-preview__choices">
-          @for (option of ppiPreviewOptions; track option.kind) {
-            <button
+        <nav aria-label="Demo walkthrough destinations" class="walkthrough-links">
+          @for (link of scenario.walkthrough_links; track link.key) {
+            <a
               mat-stroked-button
-              type="button"
-              [attr.aria-pressed]="ppiPreviewKind === option.kind"
-              [class.ppi-preview__choice--active]="ppiPreviewKind === option.kind"
-              (click)="setPpiPreview(option.kind)"
+              [attr.data-testid]="'demo-link-' + link.key"
+              [queryParams]="
+                link.route.includes('?') ? {walkthrough: link.route.split('=')[1]} : null
+              "
+              [routerLink]="link.route.split('?')[0]"
             >
-              {{ option.label }}
-            </button>
+              {{ link.label }}
+            </a>
           }
-        </div>
+        </nav>
 
-        <article
-          aria-labelledby="ppi-preview-card-title"
-          aria-live="polite"
-          class="ppi-preview-card"
-        >
-          <header class="ppi-preview-card__header">
-            <div class="ppi-preview-card__identity">
-              <span aria-hidden="true" class="ppi-preview-card__avatar">
-                <mat-icon aria-hidden="true">groups</mat-icon>
-              </span>
-              <span>
-                <strong id="ppi-preview-card-title">Peer Progress Indicator</strong>
-                <small>Anonymous peers at your target grade</small>
-              </span>
+        <section aria-labelledby="lifecycle-title" class="fixture-section">
+          <div class="fixture-section__heading">
+            <div>
+              <h2 id="lifecycle-title">Task lifecycle fixture</h2>
+              <p>
+                {{ scenario.task_lifecycle.total_tasks }} tasks in
+                {{ scenario.primary_unit_key }}
+              </p>
             </div>
-
-            @if (!ppiPreview.isSuppressed) {
-              <button
-                aria-controls="ppi-preview-advanced-panel"
-                aria-label="Advanced peer status breakdown"
-                class="ppi-preview-card__toggle"
-                role="switch"
-                type="button"
-                [attr.aria-checked]="ppiPreviewAdvanced"
-                [attr.aria-expanded]="ppiPreviewAdvanced"
-                (click)="setPpiPreviewAdvanced(!ppiPreviewAdvanced)"
-              >
-                <span aria-hidden="true" class="ppi-preview-card__toggle-track">
-                  <span class="ppi-preview-card__toggle-thumb"></span>
-                </span>
-                <span>Advanced</span>
-              </button>
-            }
-          </header>
-
-          @if (ppiPreview.isSuppressed) {
-            <div class="ppi-preview-card__safe-state">
-              <mat-icon aria-hidden="true">privacy_tip</mat-icon>
-              <span>
-                <strong>Progress is hidden to protect privacy</strong>
-                {{ ppiPreview.unavailableMessage }}
-              </span>
-            </div>
-          } @else {
-            <div class="ppi-preview-card__summary">
-              <span
-                aria-label="Peer completion progress at your target grade"
-                class="ppi-preview-card__value"
-              >
-                <strong>{{ formatPpiPercentage(ppiPreviewPercentage) }}%</strong>
-                <span>of peers have completed this task</span>
-              </span>
-              <span class="ppi-preview-card__visual">
-                <span
-                  class="ppi-preview-card__track"
-                  role="progressbar"
-                  [attr.aria-label]="
-                    formatPpiPercentage(ppiPreviewPercentage) +
-                    '% of peers at your target grade have completed this task'
-                  "
-                  [attr.aria-valuemax]="100"
-                  [attr.aria-valuemin]="0"
-                  [attr.aria-valuenow]="ppiPreviewPercentage"
-                >
-                  <span [style.width]="ppiPreviewWidth"></span>
-                </span>
-                <small aria-hidden="true" class="ppi-preview-card__scale">
-                  <span>{{ formatPpiPercentage(ppiPreviewPercentage) }}%</span>
-                  <span>Peer cohort</span>
-                </small>
-              </span>
-            </div>
-
-            @if (ppiPreviewAdvanced) {
-              <section class="ppi-preview-card__advanced" id="ppi-preview-advanced-panel">
-                <div class="ppi-preview-card__metrics">
-                  <span class="is-complete"
-                    >Completed <strong>{{ ppiPreview.completedPercentage }}%</strong></span
-                  >
-                  <span class="is-submitted"
-                    >Submitted <strong>{{ ppiPreview.submittedPercentage }}%</strong></span
-                  >
-                </div>
-
-                <span class="ppi-preview-card__advanced-heading">
-                  <strong>Task status breakdown</strong>
-                  <small>Independently privacy-rounded; values may not total 100%</small>
-                </span>
-
-                @if (!ppiPreview.distributionAvailable) {
-                  <div class="ppi-preview-card__safe-state">
-                    <mat-icon aria-hidden="true">privacy_tip</mat-icon>
-                    <span>
-                      <strong>Detailed breakdown protected</strong>
-                      The overall percentage is safe to show, but detailed statuses are hidden to
-                      prevent individual progress being inferred.
-                    </span>
-                  </div>
-                } @else if (ppiPreviewUsesStackedDistribution) {
-                  <div aria-label="Sample peer task status distribution" class="ppi-preview-bar">
-                    @for (segment of ppiPreviewSegments; track segment.status) {
-                      <span
-                        [attr.title]="
-                          segment.label + ': ' + formatPpiPercentage(segment.percentage) + '%'
-                        "
-                        [style.background-color]="segment.color"
-                        [style.flex-grow]="segment.percentage"
-                      ></span>
-                    }
-                  </div>
-                  <ul class="ppi-preview-legend">
-                    @for (segment of ppiPreviewSegments; track segment.status) {
-                      <li>
-                        <span [style.background-color]="segment.color"></span>
-                        <span class="ppi-preview-legend__name">{{ segment.label }}</span>
-                        <strong>{{ formatPpiPercentage(segment.percentage) }}%</strong>
-                      </li>
-                    }
-                  </ul>
-                } @else {
-                  <div class="ppi-preview-independent">
-                    <p id="ppi-preview-independent-note" role="note">
-                      These privacy-rounded statuses total
-                      {{ formatPpiPercentage(ppiPreviewDistributionTotal) }}%. Each bar uses its own
-                      0&ndash;100% scale, so values are not stretched to fill 100%.
-                    </p>
-                    <ul aria-label="Independently scaled sample peer task status percentages">
-                      @for (segment of ppiPreviewSegments; track segment.status) {
-                        <li [attr.data-status]="segment.status">
-                          <span>
-                            <span
-                              aria-hidden="true"
-                              [style.background-color]="segment.color"
-                            ></span>
-                            {{ segment.label }}
-                          </span>
-                          <span
-                            aria-describedby="ppi-preview-independent-note"
-                            class="ppi-preview-independent__track"
-                            role="progressbar"
-                            [attr.aria-label]="segment.label + ' sample peer status percentage'"
-                            [attr.aria-valuemax]="100"
-                            [attr.aria-valuemin]="0"
-                            [attr.aria-valuenow]="segment.percentage"
-                          >
-                            <span
-                              aria-hidden="true"
-                              class="ppi-preview-independent__fill"
-                              [style.background-color]="segment.color"
-                              [style.width.%]="segment.percentage"
-                            ></span>
-                          </span>
-                          <strong>{{ formatPpiPercentage(segment.percentage) }}%</strong>
-                        </li>
-                      }
-                    </ul>
-                  </div>
-                }
-              </section>
-            }
-          }
-        </article>
-
-        <p class="ppi-preview__safety" role="note">
-          These preview states are local visual fixtures. Production always uses the authenticated,
-          privacy-filtered API response.
-        </p>
-      </section>
-
-      <section aria-labelledby="push-preview-title" class="push-preview">
-        <div class="push-preview__heading">
-          <mat-icon aria-hidden="true">notifications_active</mat-icon>
-          <div>
-            <h2 id="push-preview-title">Push notification visual preview</h2>
-            <p>Preview only — no browser permission or push subscription is changed.</p>
+            <dl class="fixture-metrics">
+              <div>
+                <dt>Submitted</dt>
+                <dd>{{ scenario.task_lifecycle.submitted_percentage }}%</dd>
+              </div>
+              <div>
+                <dt>Complete</dt>
+                <dd>{{ scenario.task_lifecycle.completed_percentage }}%</dd>
+              </div>
+            </dl>
           </div>
-        </div>
+          <ul class="status-grid">
+            @for (status of scenario.task_lifecycle.statuses; track status.status) {
+              <li [attr.data-status]="status.status">
+                <strong>{{ status.percentage }}%</strong>
+                <span>{{ statusLabel(status.status) }}</span>
+                <small>{{ status.task_abbreviations.join(', ') }}</small>
+              </li>
+            }
+          </ul>
+        </section>
 
-        <div aria-label="Example push notification" class="push-preview__notification" role="img">
-          <strong>{{ pushPreview.appName }}</strong>
-          <span>{{ pushPreview.title }}</span>
-          <span>{{ pushPreview.message }}</span>
-          <small>Would open: {{ pushPreview.destination }}</small>
-        </div>
+        <section aria-labelledby="ppi-hooks-title" class="fixture-section">
+          <h2 id="ppi-hooks-title">Peer progress hooks</h2>
+          <ul class="hook-list">
+            @for (unit of scenario.units; track unit.key) {
+              <li [attr.data-state]="unit.ppi.state">
+                <span
+                  ><strong>{{ unit.code }}</strong> {{ unit.name }}</span
+                >
+                @if (unit.ppi.state === 'available') {
+                  <span>
+                    {{ unit.ppi.submitted_percentage }}% submitted ·
+                    {{ unit.ppi.completed_percentage }}% complete
+                  </span>
+                } @else {
+                  <span>Unavailable — insufficient cohort</span>
+                }
+              </li>
+            }
+          </ul>
+        </section>
 
-        <p class="push-preview__safety" role="note">
-          This preview never calls Notification permission APIs, Angular SwPush, or
-          <code>/push_subscriptions</code>.
+        <f-ppi-preview></f-ppi-preview>
+
+        <section aria-labelledby="adapter-hooks-title" class="fixture-section">
+          <h2 id="adapter-hooks-title">Reusable fixture adapters</h2>
+          <p>
+            {{ scenario.notification_hooks.length }} varied notification events and group
+            {{ scenario.group_hook.name }} ({{ scenario.group_hook.member_count }}/{{
+              scenario.group_hook.capacity
+            }}) are ready for their feature walkthroughs.
+          </p>
+        </section>
+
+        <p class="contract-note">
+          Contract {{ scenario.scenario_id }} · schema {{ scenario.schema_version }}. Runtime IDs
+          stay in memory and are never copied into normal entity caches.
         </p>
-
-        <a mat-stroked-button routerLink="/edit_profile">
-          <mat-icon aria-hidden="true">manage_accounts</mat-icon>
-          Open My Profile for real notifications
-        </a>
-      </section>
-    </mat-card-content>
-  </mat-card>
+      </mat-card-content>
+    </mat-card>
+  }
 </main>

@@ -2,8 +2,14 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {HttpClient} from '@angular/common/http';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {Router} from '@angular/router';
-import {of} from 'rxjs';
+import {BehaviorSubject, of} from 'rxjs';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -37,6 +43,14 @@ describe('SignInComponent', () => {
     };
 
     await TestBed.configureTestingModule({
+      imports: [
+        FormsModule,
+        MatButtonModule,
+        MatCheckboxModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatProgressSpinnerModule,
+      ],
       declarations: [SignInComponent],
       providers: [
         {
@@ -58,9 +72,7 @@ describe('SignInComponent', () => {
         {provide: AuthReturnUrlService, useValue: authReturnUrl},
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    })
-      .overrideComponent(SignInComponent, {set: {template: ''}})
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SignInComponent);
     component = fixture.componentInstance;
@@ -68,6 +80,28 @@ describe('SignInComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('uses the approved coloured logo and centred signed-out branding', () => {
+    component.isLoading = false;
+    component.externalName = new BehaviorSubject('OnTrack');
+    component.formData = {
+      username: '',
+      password: '',
+      remember: true,
+      autoLogin: false,
+    };
+    component.showCredentials = true;
+    fixture.detectChanges();
+
+    const logo = fixture.nativeElement.querySelector('.wordmark img') as HTMLImageElement;
+    const wordmark = fixture.nativeElement.querySelector('.wordmark') as HTMLElement;
+    const heading = fixture.nativeElement.querySelector('.welcome-heading') as HTMLElement;
+
+    expect(logo.getAttribute('src')).toBe('/assets/images/logo.svg');
+    expect(logo.getAttribute('alt')).toBe('OnTrack logo');
+    expect(wordmark.classList).toContain('justify-center');
+    expect(heading.classList).toContain('text-center');
   });
 
   it('returns a database login to the protected notification destination', () => {

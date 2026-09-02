@@ -9,7 +9,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Router} from '@angular/router';
-import {Observable, defer, of} from 'rxjs';
+import {of} from 'rxjs';
 import {AuthenticationService, Unit} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
@@ -32,42 +32,7 @@ describe('HeaderComponent', () => {
   let component: HeaderComponent;
   let fixture: ComponentFixture<HeaderComponent>;
 
-  let refreshSubscribed: boolean;
-
-  let authenticationService: {
-    isAuthenticated: ReturnType<typeof vi.fn>;
-  };
-
-  let mediaObserver: {
-    isActive: ReturnType<typeof vi.fn>;
-  };
-
-  let notificationService: {
-    unreadCount$: Observable<number>;
-    refreshUnreadCount: ReturnType<typeof vi.fn>;
-  };
-
   beforeEach(async () => {
-    refreshSubscribed = false;
-
-    authenticationService = {
-      isAuthenticated: vi.fn().mockReturnValue(true),
-    };
-
-    mediaObserver = {
-      isActive: vi.fn().mockImplementation((alias: string) => alias === 'xs'),
-    };
-
-    notificationService = {
-      unreadCount$: of(0),
-      refreshUnreadCount: vi.fn(() =>
-        defer(() => {
-          refreshSubscribed = true;
-          return of(0);
-        }),
-      ),
-    };
-
     await TestBed.configureTestingModule({
       declarations: [HeaderComponent],
       providers: [
@@ -77,10 +42,9 @@ describe('HeaderComponent', () => {
         {provide: CheckForUpdateService, useValue: emptyProvider},
         {provide: GlobalStateService, useValue: emptyProvider},
         {provide: UserService, useValue: emptyProvider},
-        {provide: AuthenticationService, useValue: authenticationService},
-        {provide: MediaObserver, useValue: mediaObserver},
+        {provide: AuthenticationService, useValue: emptyProvider},
+        {provide: MediaObserver, useValue: emptyProvider},
         {provide: DoubtfireConstants, useValue: emptyProvider},
-        {provide: NotificationService, useValue: notificationService},
         {provide: SidekiqJobService, useValue: emptyProvider},
         {provide: SidekiqJobsModalService, useValue: emptyProvider},
         {provide: QrModalService, useValue: emptyProvider},
@@ -100,29 +64,6 @@ describe('HeaderComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
-
-  it('refreshes the unread count when the mobile account menu opens', () => {
-    component.refreshMobileUnreadCount();
-
-    expect(notificationService.refreshUnreadCount).toHaveBeenCalledTimes(1);
-    expect(refreshSubscribed).toBe(true);
-  });
-
-  it('does not refresh the mobile count on larger screens', () => {
-    mediaObserver.isActive.mockReturnValue(false);
-
-    component.refreshMobileUnreadCount();
-
-    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
-  });
-
-  it('does not refresh the mobile count after sign out', () => {
-    authenticationService.isAuthenticated.mockReturnValue(false);
-
-    component.refreshMobileUnreadCount();
-
-    expect(notificationService.refreshUnreadCount).not.toHaveBeenCalled();
   });
 
   describe('calendar entry point', () => {
@@ -219,7 +160,8 @@ describe('HeaderComponent', () => {
       expect(calendarModalServiceStub.show).toHaveBeenCalledOnce();
     });
 
-    it('keeps the QR action in the account menu when the narrow toolbar action is hidden', async () => {
+    it('keeps QR access in the account menu and removes it from the toolbar', async () => {
+      mediaObserverStub.isActive.mockImplementation((alias: string) => alias === 'xs');
       fixture.detectChanges();
       await fixture.whenStable();
       component.currentUnit = {id: 1} as Unit;
@@ -231,7 +173,7 @@ describe('HeaderComponent', () => {
       const accountMenuTrigger: HTMLButtonElement =
         fixture.nativeElement.querySelector('.account-menu-trigger');
 
-      expect(toolbarAction).not.toBeNull();
+      expect(toolbarAction).toBeNull();
       expect(accountMenuTrigger).not.toBeNull();
 
       accountMenuTrigger.click();
@@ -243,6 +185,47 @@ describe('HeaderComponent', () => {
 
       menuAction.click();
       expect(showMyQrSpy).toHaveBeenCalledOnce();
+    });
+
+    it('renders the notification bell directly in the phone toolbar', () => {
+      mediaObserverStub.isActive.mockImplementation((alias: string) => alias === 'xs');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+    });
+  });
+
+  describe('uniqueUnitRoles', () => {
+    // Treat every role as active so the test targets the dedup logic only.
+    beforeEach(() => {
+      component['isActiveUnitRole'] = {transform: (roles: unknown[]) => roles} as never;
+    });
+
+    const roleFor = (unitId: number, role = 'Student') => ({unit: {id: unitId}, role}) as never;
+
+    it('keeps a role when its unit appears once', () => {
+      const roles = [roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('drops both non-tutor roles when a unit appears more than once', () => {
+      const roles = [roleFor(1), roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles).map((r: {unit: {id: number}}) => r.unit.id);
+
+      expect(result).toEqual([2]);
+    });
+
+    it('always keeps a tutor role even when the unit is duplicated', () => {
+      const roles = [roleFor(1, 'Tutor'), roleFor(1)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as {role: string}).role).toBe('Tutor');
     });
   });
 });

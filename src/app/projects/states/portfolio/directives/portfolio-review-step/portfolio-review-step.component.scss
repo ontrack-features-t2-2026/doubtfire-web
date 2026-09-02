@@ -1,0 +1,57 @@
+.portfolio-review-content {
+  min-width: 0;
+  padding: 0.75rem 3rem;
+}
+
+.portfolio-review-file {
+  align-items: center;
+  display: grid;
+  gap: 0.375rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+}
+
+.portfolio-review-file span {
+  overflow-wrap: anywhere;
+}
+
+.portfolio-download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-block: 0.75rem;
+}
+
+.portfolio-review-footer {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+@media (max-width: 639.98px) {
+  :host,
+  mat-card {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .portfolio-review-content {
+    padding-inline: 1rem;
+  }
+
+  .portfolio-download-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .portfolio-download-actions button {
+    min-height: 44px;
+    white-space: normal;
+  }
+
+  .portfolio-review-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}

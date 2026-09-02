@@ -1,5 +1,5 @@
 import {HotkeysService} from '@ngneat/hotkeys';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
@@ -75,6 +75,22 @@ describe('StaffTaskListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('does not navigate before the task queue has loaded', () => {
+    component.filteredTasks = null;
+
+    expect(() => component.previousTask()).not.toThrow();
+  });
+
+  it('does not select a task when there is no current selection', () => {
+    vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
+    const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    component.filteredTasks = [{}, {}] as unknown as Task[];
+
+    component.previousTask();
+
+    expect(setSelected).not.toHaveBeenCalled();
   });
 
   // The screen the header dropdown can actually leave stale. This ran only in task

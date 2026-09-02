@@ -9,6 +9,7 @@ import {
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
+import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
@@ -25,6 +26,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
 
   webcal: Webcal | null;
   working: boolean = true;
+  loadError: boolean = false;
   copying: boolean = false;
   selectedCalendarProviderIndex: number = 0;
   projects: Project[] = [];
@@ -40,43 +42,93 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     private constants: DoubtfireConstants,
     private alerts: AlertService,
     private projectService: ProjectService,
+    private fileDownloader: FileDownloaderService,
     @Inject(MAT_DIALOG_DATA) public data: object,
     private confirmationModal: ConfirmationModalService,
   ) {}
 
   ngOnInit() {
-    // Retrieve current webcal.
-    this.working = true;
-    this.webcalService.get({}).subscribe((webcal) => {
-      this.loadWebcal(webcal);
-      this.working = false;
-    });
+    this.loadWebCalendar();
 
     // Allow selection of units with active projects.
-    this.projectService
-      .query(undefined, {params: {include_in_active: false}})
-      .subscribe((projects) => {
+    this.projectService.query(undefined, {params: {include_in_active: false}}).subscribe({
+      next: (projects) => {
         this.projects = projects.filter((p) => p.unit.teachingPeriod?.active ?? true);
-      });
+      },
+      error: () => {
+        this.projects = [];
+        this.alerts.error('Unable to load the units available for your web calendar.');
+      },
+    });
   }
 
   ngAfterViewInit() {
     // Disallow the value of the slide toggle being changed by the user. Instead, its value is bound to the presence of
     // `this.webcal`.
-    this.webcalToggle.defaults.disableToggleValue = true;
+    if (this.webcalToggle) {
+      this.webcalToggle.defaults.disableToggleValue = true;
+    }
+  }
+
+  loadWebCalendar(): void {
+    this.working = true;
+    this.loadError = false;
+    this.webcalService.get({}).subscribe({
+      next: (webcal) => {
+        this.loadWebcal(webcal);
+        this.working = false;
+      },
+      error: () => {
+        this.webcal = null;
+        this.working = false;
+        this.loadError = true;
+      },
+    });
   }
 
   /**
    * Retrieves the URL of the webcal relative to current API URL.
    */
   get webcalUrl(): string | null {
-    return this.webcal?.getUrl(this.constants.API_URL).toString();
+    return this.webcal?.guid ? this.webcal.getUrl(this.constants.API_URL).toString() : null;
+  }
+
+  get webcalDownloadUrl(): string | null {
+    if (!this.webcal?.guid) {
+      return null;
+    }
+
+    return new URL(`${this.constants.API_URL}/webcal/${this.webcal.guid}`).toString();
+  }
+
+  downloadCalendar(): void {
+    const url = this.webcalDownloadUrl;
+    if (!url) {
+      return;
+    }
+
+    this.fileDownloader.downloadFileWithFeedback(url, 'OnTrack-calendar.ics', {
+      requestKey: 'web-calendar-ics',
+    });
+  }
+
+  /**
+   * The subscription URL exactly as it is shown to the user, with the `.ics`
+   * suffix, so the copied string matches what is on screen.
+   */
+  get webcalSubscriptionUrl(): string | null {
+    const url = this.webcalUrl;
+    return url ? `${url}.ics` : null;
   }
 
   /**
    * Invoked when the user toggles the webcal.
    */
   onWebcalToggle() {
+    if (!this.webcal) {
+      return;
+    }
+
     if (this.webcal.enabled) {
       this.confirmationModal.show(
         'Disable web calendar',
@@ -100,11 +152,16 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Displays a notification that the webcal URL has been copied.
-   * `cdkCopyToClipboard` is expected do the actual copying.
-   * Changes mat-icon temporarily for a second after copying.
+   * Invoked by cdkCopyToClipboard once it has attempted the copy. Only
+   * confirm on a real success, so a refused clipboard write does not claim
+   * the URL was copied. Changes mat-icon temporarily for a second after.
    */
-  onCopyWebcalUrl() {
+  onCopyResult(success: boolean) {
+    if (!success) {
+      this.alerts.error('Could not copy the URL, select it and copy it manually', 4000);
+      return;
+    }
+
     this.alerts.success('Web calendar URL copied to the clipboard', 2000);
     this.copying = true;
 

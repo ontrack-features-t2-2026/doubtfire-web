@@ -1,10 +1,5 @@
 <f-page-container id="home">
-  <div class="text-center" [hidden]="!notEnrolled">
-    <h1>You are not enrolled in {{ externalName.value }}.</h1>
-    <p class="mat-lead">Contact your unit convenor or tutor to enrol you in a subject.</p>
-  </div>
-
-  @if (!notEnrolled && projects?.length === 0 && unitRoles?.length === 0) {
+  @if (projects?.length === 0 && unitRoles?.length === 0) {
     <div class="text-center">
       <h1 class="mat-headline-5">You are not enrolled in any {{ externalName.value }} units.</h1>
       <p class="mat-lead">Contact your unit convenor or tutor to enrol you in a subject.</p>
@@ -85,8 +80,8 @@
       </a>
     </div>
   </div>
-  <div [hidden]="notEnrolled">
-    @if (unitRoles.length && projects?.length) {
+  <div>
+    @if (unitRoles?.length && projects?.length) {
       <mat-divider class="my-5"></mat-divider>
     }
     <div class="my-2.5" [hidden]="projects?.length === 0">

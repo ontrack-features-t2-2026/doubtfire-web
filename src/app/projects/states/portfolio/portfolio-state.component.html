@@ -1,7 +1,34 @@
 @if (project) {
   <div class="w-full" id="portfolio-state">
+    <nav aria-label="Portfolio steps" class="portfolio-mobile-stepper">
+      <button
+        aria-label="Previous portfolio step"
+        mat-icon-button
+        type="button"
+        [disabled]="!canAdvanceActiveTab(-1)"
+        (click)="advanceActiveTab(-1)"
+      >
+        <mat-icon aria-hidden="true">chevron_left</mat-icon>
+      </button>
+
+      <div aria-live="polite" class="portfolio-mobile-stepper__current">
+        <span>Step {{ selectedTabIndex + 1 }} of {{ orderedTabs.length }}</span>
+        <strong>{{ activeTab.title }}</strong>
+      </div>
+
+      <button
+        aria-label="Next portfolio step"
+        mat-icon-button
+        type="button"
+        [disabled]="!canAdvanceActiveTab(1)"
+        (click)="advanceActiveTab(1)"
+      >
+        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+      </button>
+    </nav>
+
     <mat-tab-group
-      class="mb-3"
+      class="portfolio-desktop-stepper mb-3"
       [dynamicHeight]="true"
       [selectedIndex]="selectedTabIndex"
       (selectedIndexChange)="onSelectedTabIndexChange($event)"
@@ -13,37 +40,40 @@
         ></mat-tab>
       }
     </mat-tab-group>
-    @if (activeTab === tabs.welcomeStep) {
-      <f-portfolio-welcome-step
-        [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
-      ></f-portfolio-welcome-step>
-    }
-    @if (activeTab === tabs.gradeStep) {
-      <f-portfolio-grade-select-step
-        [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
-        [project]="project"
-        [unit]="project.unit"
-      ></f-portfolio-grade-select-step>
-    }
-    @if (activeTab === tabs.summaryStep) {
-      <f-portfolio-learning-summary-report-step
-        [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
-        [project]="project"
-        [unit]="project.unit"
-      ></f-portfolio-learning-summary-report-step>
-    }
-    @if (activeTab === tabs.otherFilesStep) {
-      <f-portfolio-add-extra-files-step
-        [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
-        [project]="project"
-      ></f-portfolio-add-extra-files-step>
-    }
-    @if (activeTab === tabs.reviewStep) {
-      <f-portfolio-review-step
-        [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
-        [project]="project"
-        [unit]="project.unit"
-      ></f-portfolio-review-step>
-    }
+
+    <section class="portfolio-step-content" [attr.aria-label]="activeTab.title">
+      @if (activeTab === tabs.welcomeStep) {
+        <f-portfolio-welcome-step
+          [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
+        ></f-portfolio-welcome-step>
+      }
+      @if (activeTab === tabs.gradeStep) {
+        <f-portfolio-grade-select-step
+          [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
+          [project]="project"
+          [unit]="project.unit"
+        ></f-portfolio-grade-select-step>
+      }
+      @if (activeTab === tabs.summaryStep) {
+        <f-portfolio-learning-summary-report-step
+          [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
+          [project]="project"
+          [unit]="project.unit"
+        ></f-portfolio-learning-summary-report-step>
+      }
+      @if (activeTab === tabs.otherFilesStep) {
+        <f-portfolio-add-extra-files-step
+          [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
+          [project]="project"
+        ></f-portfolio-add-extra-files-step>
+      }
+      @if (activeTab === tabs.reviewStep) {
+        <f-portfolio-review-step
+          [onAdvanceActiveTab]="advanceActiveTab.bind(this)"
+          [project]="project"
+          [unit]="project.unit"
+        ></f-portfolio-review-step>
+      }
+    </section>
   </div>
 }

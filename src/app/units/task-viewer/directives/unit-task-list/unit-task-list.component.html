@@ -88,29 +88,47 @@
   }"
 >
   @if (!isCollapsed) {
-    <div class="omnisearch rounded-t-2xl md:rounded-2xl">
-      <div class="flex items-center justify-between">
-        <div class="flex min-w-0 flex-1 items-center">
-          <button
-            aria-label="Search Icon"
-            class="flex flex-none items-center"
-            disabled
-            mat-icon-button
+    <div class="task-list-controls rounded-t-2xl md:rounded-2xl">
+      <div class="task-list-controls-row">
+        <label class="task-search-control min-w-0 flex-1">
+          <span class="task-control-label">Search tasks</span>
+          <span class="task-search-field">
+            <mat-icon aria-hidden="true">search</mat-icon>
+            <input
+              aria-label="Search tasks"
+              autocomplete="off"
+              class="search min-w-0 flex-1 text-gray-900 placeholder:text-gray-500"
+              placeholder="Code or title"
+              spellcheck="false"
+              type="search"
+              [(ngModel)]="searchText"
+              (ngModelChange)="applyFilters()"
+            />
+            @if (searchText) {
+              <button aria-label="Clear task search" type="button" (click)="clearSearch()">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </span>
+        </label>
+
+        <label class="task-status-control">
+          <span class="task-control-label">Task status</span>
+          <select
+            aria-label="Filter tasks by status"
+            [value]="activeStatusFilter ?? ''"
+            (change)="setStatusFilter($any($event.target).value)"
           >
-            <mat-icon class="flex items-center" disabled>search</mat-icon>
-          </button>
-          <input
-            autocomplete="off"
-            class="search w-full text-gray-900 placeholder:text-gray-600 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
-            placeholder="Search Tasks"
-            spellcheck="false"
-            type="text"
-            [(ngModel)]="searchText"
-            (ngModelChange)="applyFilters()"
-          />
-        </div>
+            <option value="">All statuses</option>
+            @for (option of statusOptions; track option.status) {
+              <option [value]="option.status">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+
         <button
           aria-label="Task list filters"
+          class="task-view-options"
           mat-icon-button
           matTooltip="Task list filters"
           [matMenuTriggerFor]="taskListFiltersMenu"
@@ -188,6 +206,19 @@
           </div>
         </mat-menu>
       </div>
+
+      @if (activeStatusFilterLabel) {
+        <div class="task-status-filter-summary" role="status">
+          <span>Showing {{ activeStatusFilterLabel }} tasks</span>
+          <button
+            type="button"
+            [attr.aria-label]="'Clear ' + activeStatusFilterLabel + ' task status filter'"
+            (click)="setStatusFilter(null)"
+          >
+            Clear filter
+          </button>
+        </div>
+      }
     </div>
   }
 
@@ -195,12 +226,11 @@
     <mat-nav-list #taskDefinitions>
       @for (taskDef of filteredTaskDefinitions; track taskDef) {
         <mat-list-item
-          class="flex w-full cursor-pointer items-center border-b border-gray-200 p-1"
+          class="task-list-row flex w-full cursor-pointer items-center border-b border-gray-200 p-1"
           [disableRipple]="true"
           [ngClass]="{
             'bg-blue-50 hover:bg-blue-50': isSelectedTaskDefinition(taskDef),
             'hover:bg-gray-50': !isSelectedTaskDefinition(taskDef),
-            'h-16.25': !isCollapsed,
             'h-21': isCollapsed,
           }"
           (click)="setSelectedTaskDefinition(taskDef)"
@@ -224,58 +254,48 @@
                 }
               </div>
             } @else {
-              <div class="flex w-full items-center justify-between gap-2">
-                <div class="flex min-w-0 flex-1 items-center gap-3">
-                  <div class="flex min-w-0 items-center gap-3 truncate text-ellipsis">
-                    <div class="flex flex-col justify-start truncate text-ellipsis">
-                      <div class="truncate text-ellipsis">{{ taskDef.name }}</div>
+              <div class="task-row-content">
+                <div class="task-row-copy">
+                  <div class="task-row-heading">
+                    <strong>{{ taskDef.abbreviation }}</strong>
+                    <span>{{ taskDef.name }}</span>
+                  </div>
 
-                      <div class="flex min-w-0 items-center gap-0.5">
-                        @if (taskDef.isGroupTask()) {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">groups</mat-icon>
-                        } @else {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">person</mat-icon>
-                        }
-
-                        <div class="mr-1 truncate text-[14px] leading-tight text-gray-500">
-                          {{ taskDef.abbreviation }}
-                          -
-                          {{ gradeNames[taskDef.targetGrade] }} Task
-                        </div>
-                        @if (taskListItem(taskDef); as task) {
-                          @if (taskStartApproaching(task)) {
-                            <span
-                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-sky-500"
-                            >
-                              <mat-icon class="size-4! text-[16px]!"> event_upcoming </mat-icon>
-                              {{ taskStartLabel(task) }}
-                            </span>
-                          } @else if (taskOngoing(task)) {
-                            <span
-                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-sky-500"
-                            >
-                              <mat-icon class="size-4! text-[16px]!"> event_upcoming </mat-icon>
-                              Start now
-                            </span>
-                          } @else if (!task.isBeforeStartDate() && !task.inSubmittedState()) {
-                            <span
-                              class="flex shrink-0 items-center gap-px text-[12px] font-bold"
-                              [ngClass]="{
-                                'text-[#da532c]': task.daysUntilDueDate() <= 0,
-                                'font-normal text-[#fab143]':
-                                  task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
-                                'font-normal text-gray-500': task.daysUntilDueDate() > 11,
-                              }"
-                            >
-                              <mat-icon class="!h-[16px] !w-[16px] !text-[16px]">
-                                hourglass_bottom
-                              </mat-icon>
-                              {{ task.timeToDue() }}
-                            </span>
-                          }
-                        }
-                      </div>
+                  @if (taskListItem(taskDef); as task) {
+                    <div class="task-row-keyline">
+                      <span class="task-row-status">{{ taskStatusLabel(task) }}</span>
+                      @if (taskStartApproaching(task)) {
+                        <span class="task-row-urgency text-sky-600">
+                          <mat-icon>event_upcoming</mat-icon>
+                          {{ taskStartLabel(task) }}
+                        </span>
+                      } @else if (taskOngoing(task)) {
+                        <span class="task-row-urgency text-sky-600">
+                          <mat-icon>event_upcoming</mat-icon>
+                          Start now
+                        </span>
+                      } @else if (!task.isBeforeStartDate() && !task.inSubmittedState()) {
+                        <span
+                          class="task-row-urgency"
+                          [ngClass]="{
+                            'font-bold text-[#b42318]': task.daysUntilDueDate() <= 0,
+                            'text-[#8a4b00]':
+                              task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
+                            'text-gray-600': task.daysUntilDueDate() > 11,
+                          }"
+                        >
+                          <mat-icon>hourglass_bottom</mat-icon>
+                          {{ task.timeToDue() }}
+                        </span>
+                      }
                     </div>
+                  }
+
+                  <div class="task-row-secondary">
+                    <mat-icon aria-hidden="true">
+                      {{ taskDef.isGroupTask() ? 'groups' : 'person' }}
+                    </mat-icon>
+                    <span>{{ gradeNames[taskDef.targetGrade] }} task</span>
                   </div>
                 </div>
                 @if (taskListItem(taskDef); as task) {
@@ -288,7 +308,26 @@
           }
         </mat-list-item>
       } @empty {
-        <div class="text-muted text-center">No tasks to display</div>
+        <div class="task-list-empty" role="status">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          @if (activeStatusFilterLabel || searchText) {
+            <strong>No matching tasks</strong>
+            <span>
+              Try a different search or clear the
+              {{ activeStatusFilterLabel ? activeStatusFilterLabel + ' status filter' : 'search' }}.
+            </span>
+            <div class="task-list-empty-actions">
+              @if (searchText) {
+                <button type="button" (click)="clearSearch()">Clear search</button>
+              }
+              @if (activeStatusFilterLabel) {
+                <button type="button" (click)="setStatusFilter(null)">Clear status filter</button>
+              }
+            </div>
+          } @else {
+            <strong>No tasks to display</strong>
+          }
+        </div>
       }
 
       @if (mode === 'project' && project) {

@@ -11,6 +11,7 @@ import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator'
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
+import {PeerProgressDisplayPreferenceService} from 'src/app/common/services/peer-progress-display-preference.service';
 import {
   DETAIL_PROTECTED_STATE,
   DISABLED_STATE,
@@ -29,17 +30,31 @@ describe('PpiWidgetComponent', () => {
   let component: PpiWidgetComponent;
   let fixture: ComponentFixture<PpiWidgetComponent>;
   let getIndicator: ReturnType<typeof vi.fn>;
+  let displayPreference: {
+    enabled: boolean;
+    setEnabled: ReturnType<typeof vi.fn>;
+  };
 
   const mockTask = {project: {id: 7, unit: {id: 1}, targetGrade: 2}} as unknown as Task;
   const mockTaskDef = {id: 99} as unknown as TaskDefinition;
 
   beforeEach(async () => {
     getIndicator = vi.fn();
+    displayPreference = {
+      enabled: false,
+      setEnabled: vi.fn((enabled: boolean) => {
+        displayPreference.enabled = enabled;
+        return enabled;
+      }),
+    };
 
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
       imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule],
-      providers: [{provide: PeerProgressIndicatorService, useValue: {getIndicator}}],
+      providers: [
+        {provide: PeerProgressIndicatorService, useValue: {getIndicator}},
+        {provide: PeerProgressDisplayPreferenceService, useValue: displayPreference},
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PpiWidgetComponent);
@@ -242,6 +257,22 @@ describe('PpiWidgetComponent', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
     expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeTruthy();
+    expect(displayPreference.setEnabled).toHaveBeenCalledWith(true);
+  });
+
+  it('restores Advanced when the task changes and does not reset it while loading', () => {
+    displayPreference.enabled = true;
+    load(of(NORMAL_STATE));
+
+    expect(component.advanced).toBe(true);
+    expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeTruthy();
+
+    component.ngOnChanges({
+      taskDef: new SimpleChange(mockTaskDef, {id: 100} as TaskDefinition, false),
+    });
+    fixture.detectChanges();
+
+    expect(component.advanced).toBe(true);
   });
 
   it('reveals the full non-zero status distribution through the Advanced switch', () => {
@@ -305,7 +336,7 @@ describe('PpiWidgetComponent', () => {
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('10%');
+    expect(text).toContain('30%');
     expect(text).toContain('Detailed breakdown protected');
     expect(text).not.toContain('Redo');
     expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeNull();

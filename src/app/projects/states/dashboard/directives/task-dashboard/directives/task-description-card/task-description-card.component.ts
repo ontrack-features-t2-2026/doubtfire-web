@@ -103,7 +103,7 @@ export class TaskDescriptionCardComponent {
   public downloadTaskSheet() {
     this.fileDownloader.downloadFile(
       this.taskDef.getTaskPDFUrl(true),
-      `${this.unit.code}-${this.taskDef.abbreviation}-TaskSheet.pdf`,
+      this.taskDef.effectiveTaskSheetFilename,
     );
   }
 

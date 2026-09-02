@@ -52,35 +52,17 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
         }
       });
 
-      const sortOrder: TaskStatusEnum[] = [
-        'complete',
-        'discuss',
-        'ready_for_feedback',
-        'working_on_it',
-        'not_started',
-      ];
-
-      this.data = Array.from(taskCounts)
-        .map(([status, count]) => {
-          const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
-          return {
-            status,
-            name: TaskStatus.STATUS_LABELS.get(status) ?? status,
-            value: count,
-            color,
-            textColor: this.contrastingTextColor(color),
-          };
-        })
-        .filter((task) => task.value > 0 || sortOrder.includes(task.status))
-        .sort((a, b) => {
-          let aIndex = sortOrder.indexOf(a.status);
-          let bIndex = sortOrder.indexOf(b.status);
-
-          aIndex = aIndex === -1 ? sortOrder.length : aIndex;
-          bIndex = bIndex === -1 ? sortOrder.length : bIndex;
-
-          return aIndex - bIndex;
-        });
+      this.data = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status) => {
+        const count = taskCounts.get(status) ?? 0;
+        const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
+        return {
+          status,
+          name: TaskStatus.STATUS_LABELS.get(status) ?? status,
+          value: count,
+          color,
+          textColor: this.contrastingTextColor(color),
+        };
+      }).filter(({status}) => TaskStatus.isStatus(status));
     }
   }
 

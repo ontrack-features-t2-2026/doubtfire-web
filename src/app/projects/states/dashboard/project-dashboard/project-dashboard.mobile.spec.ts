@@ -6,10 +6,12 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject, of, tap} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
+import {NotificationFeedbackRouteIntentService} from 'src/app/api/services/notification-feedback-route-intent.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {ConversationLandingService} from 'src/app/tasks/task-comments-viewer/conversation-landing.service';
 import {GlobalStateService} from '../../index/global-state.service';
 import {ProjectDashboardComponent} from './project-dashboard.component';
 
@@ -22,6 +24,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
   let routeTaskAbbreviation: string | null;
   let routeMobilePane: string | null;
   let routeParams$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let routeQueryParams$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let routerNavigate: ReturnType<typeof vi.fn>;
 
   const taskDefinition = {
@@ -55,6 +58,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     routeTaskAbbreviation = null;
     routeMobilePane = null;
     routeParams$ = new BehaviorSubject(convertToParamMap({}));
+    routeQueryParams$ = new BehaviorSubject(convertToParamMap({}));
     routerNavigate = vi.fn().mockResolvedValue(true);
     task.numNewComments = 1;
     phoneState$ = new BehaviorSubject<BreakpointState>({
@@ -94,6 +98,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
           provide: ActivatedRoute,
           useFactory: () => ({
             paramMap: routeParams$.asObservable(),
+            queryParamMap: routeQueryParams$.asObservable(),
             snapshot: {
               get paramMap() {
                 return convertToParamMap({
@@ -151,15 +156,39 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(query('.comments-sidebar')).toBeNull();
   });
 
+  it('converts a validated notification route intent into the Batch 02 landing hook', () => {
+    routeTaskAbbreviation = taskDefinition.abbreviation;
+    routeMobilePane = 'feedback';
+    const routeIntents = TestBed.inject(NotificationFeedbackRouteIntentService);
+    const landing = TestBed.inject(ConversationLandingService);
+    const requestLatest = vi.spyOn(landing, 'requestLatestMessages');
+
+    routeIntents.request({
+      projectId: project.id,
+      taskAbbreviation: taskDefinition.abbreviation,
+    });
+    createComponent();
+    renderSelectedTask();
+
+    expect(requestLatest).toHaveBeenCalledWith({
+      projectId: project.id,
+      taskDefinitionId: taskDefinition.id,
+    });
+  });
+
   it('keeps project navigation visible while the phone task list is open', () => {
     createComponent();
 
+    const shell = query<HTMLElement>('.project-dashboard-shell');
+    const navigation = query<HTMLElement>('nav[aria-label="Project dashboard navigation"]');
     const overviewButton = query<HTMLButtonElement>('button[aria-label="Show project overview"]');
     const taskListButton = query<HTMLButtonElement>('button[aria-label="Show task list"]');
     const detailsButton = query<HTMLButtonElement>('button[aria-label="Show task details"]');
     const feedbackButton = query<HTMLButtonElement>('button[aria-label="Show feedback"]');
 
-    expect(query('nav[aria-label="Project dashboard navigation"]')).not.toBeNull();
+    expect(navigation).not.toBeNull();
+    expect(navigation?.parentElement).toBe(shell);
+    expect(shell?.classList).not.toContain('overflow-hidden');
     expect(overviewButton?.getAttribute('aria-pressed')).toBe('false');
     expect(taskListButton?.getAttribute('aria-pressed')).toBe('true');
     expect(taskListButton?.classList).toContain('mobile-task-tab--active');
@@ -211,7 +240,14 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     createComponent();
     renderSelectedTask();
 
+    const shell = query<HTMLElement>('.project-dashboard-shell');
+    const heading = query<HTMLElement>('.mobile-task-heading');
+    const navigation = query<HTMLElement>('nav[aria-label="Project dashboard navigation"]');
+
     expect(component.mobilePane).toBe('task');
+    expect(heading?.parentElement).toBe(shell);
+    expect(navigation?.parentElement).toBe(shell);
+    expect(heading?.nextElementSibling).toBe(navigation);
     expect(query('.mobile-task-pane f-task-dashboard')).not.toBeNull();
     expect(query('.mobile-task-pane task-comments-viewer')).toBeNull();
   });
@@ -279,7 +315,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(component.mobilePane).toBe('overview');
     expect(routerNavigate).toHaveBeenLastCalledWith(
       ['/projects', project.id, 'dashboard', taskDefinition.abbreviation],
-      {replaceUrl: true},
+      {replaceUrl: true, queryParamsHandling: 'preserve'},
     );
 
     routeMobilePane = null;
@@ -296,6 +332,35 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(component.mobilePane).toBe('feedback');
     expect(query('.mobile-task-pane task-comments-viewer')).not.toBeNull();
     expect(query('.mobile-overview-pane')).toBeNull();
+  });
+
+  it('opens the Tasks pane for a canonical Overview status query and ignores unknown values', () => {
+    createComponent();
+    renderSelectedTask();
+    query<HTMLButtonElement>('button[aria-label="Show project overview"]')?.click();
+    fixture.detectChanges();
+
+    expect(component.mobilePane).toBe('overview');
+    expect(component.selectedTaskDefinition$.value).toBe(taskDefinition);
+
+    routeQueryParams$.next(
+      convertToParamMap({taskStatus: 'ready_for_feedback', taskView: 'tasks'}),
+    );
+    fixture.detectChanges();
+
+    expect(component.activeTaskStatusFilter).toBe('ready_for_feedback');
+    expect(component.mobilePane).toBe('task');
+    expect(component.selectedTaskDefinition$.value).toBeNull();
+    expect(query('.project-task-list-panel')?.classList).not.toContain(
+      'project-task-list-panel--phone-hidden',
+    );
+
+    routeQueryParams$.next(convertToParamMap({taskView: 'tasks'}));
+    expect(component.activeTaskStatusFilter).toBeNull();
+    expect(component.mobilePane).toBe('task');
+
+    routeQueryParams$.next(convertToParamMap({}));
+    expect(component.mobilePane).toBe('overview');
   });
 
   it('returns to the full-width task list from the selected phone workspace', () => {
@@ -332,5 +397,15 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(query('.desktop-task-dashboard f-task-dashboard')).not.toBeNull();
     expect(query('.comments-sidebar task-comments-viewer')).not.toBeNull();
     expect(query<HTMLElement>('.project-task-list-panel')?.style.width).toBe('400px');
+
+    const styles = (
+      ProjectDashboardComponent as unknown as {
+        ɵcmp: {styles: string[]};
+      }
+    ).ɵcmp.styles.join('\n');
+    expect(styles).toMatch(/\.project-dashboard-shell[^{]*\{[^}]*overflow:\s*hidden/);
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.project-dashboard-shell[^{]*\{[^}]*overflow:\s*visible/,
+    );
   });
 });

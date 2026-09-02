@@ -67,7 +67,7 @@ export class GroupSelectorComponent
   }
 
   ngOnInit(): void {
-    if (this.unit.groupSets.length > 0) {
+    if (!this.selectedGroupSet && this.unit.groupSets.length > 0) {
       this.selectedGroupSet = this.unit.groupSets[0];
     }
   }
@@ -81,7 +81,7 @@ export class GroupSelectorComponent
     this.dataSource = new MatTableDataSource();
     this.dataSource.paginator = this.paginator;
 
-    if (this.unit.groupSets.length > 0) {
+    if (!this.selectedGroupSet && this.unit.groupSets.length > 0) {
       this.selectedGroupSet = this.unit.groupSets[0];
     }
 
@@ -178,6 +178,31 @@ export class GroupSelectorComponent
 
   isPartOfGroup(project: Project, group: Group) {
     return group && project?.inGroup(group);
+  }
+
+  public groupTutorialLabel(group: Group): string {
+    return group?.tutorial?.abbreviation || 'Not assigned';
+  }
+
+  public groupCapacityLabel(group: Group): string {
+    const configuredCapacity = group?.groupSet?.capacity;
+    if (configuredCapacity === null || configuredCapacity === undefined) {
+      return `${group?.memberCount ?? 0} members, no set limit`;
+    }
+
+    const capacity = Math.max(0, configuredCapacity + (group?.capacityAdjustment ?? 0));
+    return `${group?.memberCount ?? 0} of ${capacity} places`;
+  }
+
+  public canStudentJoin(group: Group): boolean {
+    return Boolean(
+      this.project &&
+      !this.isPartOfGroup(this.project, group) &&
+      this.selectedGroupSet?.allowStudentsToManageGroups &&
+      !group.locked &&
+      !this.selectedGroupSet.locked &&
+      group.hasSpace(),
+    );
   }
 
   joinGroup(group: Group) {

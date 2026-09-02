@@ -1,3 +1,4 @@
+import {HttpErrorResponse} from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +8,7 @@ import {
   OnInit,
   Optional,
 } from '@angular/core';
+import {NgForm} from '@angular/forms';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
@@ -52,6 +54,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   public externalName = this.constants.ExternalName;
   public initialFirstName: string;
   public formPronouns = {pronouns: ''};
+  public saving = false;
+  public saveMessage = '';
+  public saveError = '';
   public get customPronouns(): boolean {
     return this.formPronouns.pronouns === '__customPronouns';
   }
@@ -176,6 +181,18 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.mode === 'new';
   }
 
+  public get managingOwnProfile(): boolean {
+    return this.user?.id === this.userService.currentUser?.id;
+  }
+
+  public get canEditEmail(): boolean {
+    return this.newUser || this.user.emailEditable === true;
+  }
+
+  public get canEditStudentId(): boolean {
+    return this.newUser || (!this.user.institutionalIdentityManaged && !this.managingOwnProfile);
+  }
+
   public get canEditSystemRole(): boolean {
     return !(this.user.id === this.userService.currentUser.id);
   }
@@ -191,15 +208,25 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.constants.IsTiiEnabled.value;
   }
 
-  public submit(): void {
+  public submit(form?: NgForm): void {
+    if (this.saving || form?.invalid) {
+      return;
+    }
+
+    this.saving = true;
+    this.saveMessage = '';
+    this.saveError = '';
     this.user.pronouns = this.customPronouns ? this.user.pronouns : this.formPronouns.pronouns;
     this.user.hasRunFirstTimeSetup = true;
 
     if (this.newUser) {
       this.userService.create(this.user).subscribe({
         next: (updatedUser) => {
+          this.saving = false;
           this.user = updatedUser;
           this.initialFirstName = this.user.firstName;
+          form?.form.markAsPristine();
+          this.saveMessage = 'User created.';
 
           this._snackBar.open('User created', 'dismiss', {
             duration: 1500,
@@ -207,16 +234,19 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
             verticalPosition: 'top',
           });
         },
-        error: (error) => console.log(error),
+        error: (error: HttpErrorResponse) => this.handleSaveError(error),
       });
     } else {
       this.userService.update(this.user).subscribe({
         next: (updatedUser) => {
+          this.saving = false;
           if (this.mode === 'create') {
             this.router.navigateByUrl('/home');
           } else {
             this.user = updatedUser;
             this.initialFirstName = this.user.firstName;
+            form?.form.markAsPristine();
+            this.saveMessage = 'Profile saved.';
 
             // TODO: refactor into new alertService
             // this is a new snackbar alert test
@@ -227,8 +257,16 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
             });
           }
         },
-        error: (error) => console.log(error),
+        error: (error: HttpErrorResponse) => this.handleSaveError(error),
       });
     }
+  }
+
+  private handleSaveError(error: HttpErrorResponse): void {
+    this.saving = false;
+    this.saveError =
+      typeof error.error?.error === 'string'
+        ? error.error.error
+        : 'Profile could not be saved. Check your connection and try again.';
   }
 }
