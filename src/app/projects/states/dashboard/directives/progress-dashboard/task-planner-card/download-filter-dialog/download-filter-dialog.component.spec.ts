@@ -86,6 +86,16 @@ describe('DownloadFilterDialogComponent', () => {
     expect(fixture.nativeElement.querySelector('mat-checkbox')).not.toBeNull();
   });
 
+  it('stacks the direction choices at full width for narrow screens', () => {
+    const group: HTMLElement = fixture.nativeElement.querySelector('mat-button-toggle-group');
+    const toggles: HTMLElement[] = Array.from(group.querySelectorAll('mat-button-toggle'));
+
+    expect(group.classList.contains('mat-button-toggle-vertical')).toBe(true);
+    expect(group.getAttribute('aria-label')).toBe('Grade range');
+    expect(toggles).toHaveLength(2);
+    toggles.forEach((toggle) => expect(toggle.classList.contains('w-full')).toBe(true));
+  });
+
   it('seeds its selection from the initial values in dialog data', () => {
     expect(component.grade).toBe(2);
     expect(component.direction).toBe('upTo');
