@@ -498,6 +498,7 @@ The bare `:root` first means the app is correct in light mode even if the script
 | Default when absent | `system`                                                                     |
 | Format              | A bare string. **Not** JSON, not an object, not a serialised class           |
 | Scope               | `localStorage`, per browser profile and origin. Section 6.2 adds the account |
+| Sync provenance     | `ontrack.theme.preference.accountId`, never read on the first-paint path     |
 
 The key follows the convention already in the tree, which now has two independent uses of it:
 
@@ -577,6 +578,10 @@ OS appearance.
   preference. A **second** key on purpose, so the key section 11 reads stays a bare allowlisted
   enum and the boot script never parses a date.
 - The API carries the equivalent beside its field.
+- The device records the numeric account id beside the sync timestamp. This provenance marker is
+  not part of first paint. A missing marker is the legacy phase-one state and may migrate once;
+  a marker for another account makes the retained theme presentation-only until the incoming
+  account is reconciled or that person makes a real choice.
 - Newer wins. On a tie the account value wins, so two devices cannot ping-pong.
 - The winner is written to **both** sides in the same pass, so one round trip converges them.
 
@@ -636,8 +641,10 @@ Two further constraints, both review gates.
 
 - **Sign-out does not clear the key.** It is presentation state, not session state. The next
   person on a shared machine sees the previous theme until their own preference arrives, then it
-  repaints. Clearing it would reintroduce a flash for the common single-user case to fix the rare
-  shared-machine one.
+  repaints. The ownership marker prevents that retained choice or timestamp from being uploaded
+  to the next person's account; if their account is empty, it remains presentation-only until
+  they make a real choice. Clearing the theme would reintroduce a flash for the common single-user
+  case to fix the rare shared-machine one.
 - **Writes are debounced and only fire on a real change.** Cycling the toggle three times sends
   one request.
 
@@ -1211,10 +1218,13 @@ Account sync — THM-B01, phase two only
 27. The account is sent the **stored** preference, never the resolved one — set `system` on a
     dark OS and assert the request body carries `system`.
 28. Signing out does not remove `ontrack.theme.preference`.
+29. Shared browser: after account A signs out, account A's retained preference and timestamp can
+    neither overwrite account B's present preference nor populate an empty account B. The theme
+    remains available for first paint, and a real choice by B transfers local sync ownership.
 
 Visual regression
 
-29. One screenshot pair per theme covering the section 13 state matrix and the full 15-status
+30. One screenshot pair per theme covering the section 13 state matrix and the full 15-status
     set, diffed on every PR that touches the token layer. This is what catches a token someone
     "adjusted" that no unit test happens to assert.
 
