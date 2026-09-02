@@ -251,6 +251,7 @@ import {AddEngagementDialogComponent} from './projects/states/dashboard/directiv
 import {EngagementDetailDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-detail-dialog/engagement-detail-dialog.component';
 import {EngagementPassportCardComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-passport-card.component';
 import {ProgressDashboardComponent} from './projects/states/dashboard/directives/progress-dashboard/progress-dashboard.component';
+import {DownloadFilterDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/download-filter-dialog/download-filter-dialog.component';
 import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/task-planner-card.component';
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
 import {TaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/task-list-item/task-list-item.component';
@@ -628,6 +629,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskPlannerComponent,
     DownloadStaffNotesComponent,
     TaskPlannerCardComponent,
+    DownloadFilterDialogComponent,
     TaskPlannerPrerequisitesModalComponent,
     TaskOverseerReportComponent,
     SubmissionFilesModalComponent,
