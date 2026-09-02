@@ -48,6 +48,7 @@ export type DashboardTask = {
   abbreviation: string;
   color: string;
   comments: number;
+  hasFeedback: boolean;
   status: TaskStatusEnum;
   targetGrade: number;
   targetGradeLabel: string;

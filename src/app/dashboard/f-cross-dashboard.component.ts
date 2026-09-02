@@ -720,6 +720,7 @@ export class CrossDashboardComponent implements OnInit {
         abbreviation: def.abbreviation,
         color: TaskStatus.STATUS_COLORS.get(task.status),
         comments: task.numNewComments ?? 0,
+        hasFeedback: task.hasFeedback ?? false,
         status: task.status,
         targetGrade: def.targetGrade,
         targetGradeLabel: def.targetGradeText,
