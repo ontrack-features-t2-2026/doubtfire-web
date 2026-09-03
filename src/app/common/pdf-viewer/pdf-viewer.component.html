@@ -15,6 +15,7 @@
     <div id="pdfActions" [hidden]="!loaded || useNativePdfViewer">
       <form #loginForm="ngForm">
         <mat-form-field appearance="outline" class="pdf-form-field" floatLabel="auto" ngSubmit>
+          <mat-label>Search PDF</mat-label>
           <mat-icon matPrefix>search</mat-icon>
           <input
             matInput
@@ -26,7 +27,7 @@
           />
 
           <button
-            aria-label="Zoom in PDF button"
+            aria-label="Zoom out"
             mat-icon-button
             matSuffix
             type="button"
@@ -35,7 +36,7 @@
             <mat-icon>zoom_out</mat-icon>
           </button>
           <button
-            aria-label="Zoom in PDF button"
+            aria-label="Zoom in"
             mat-icon-button
             matSuffix
             type="button"
@@ -51,7 +52,7 @@
   @if (pdfBlobUrl) {
     @if (useNativePdfViewer) {
       @if (pdfBlobUrl) {
-        <object type="application/pdf" [data]="pdfBlobUrl | safe">PDF Preview</object>
+        <object type="application/pdf" [data]="pdfBlobUrl | safe" title="Submission PDF">PDF Preview</object>
       }
     } @else {
       <pdf-viewer
@@ -66,6 +67,6 @@
       ></pdf-viewer>
     }
   } @else {
-    <mat-spinner color="accent" diameter="100" strokeWidth="2"></mat-spinner>
+    <mat-spinner color="accent" diameter="100" strokeWidth="2" aria-label="Loading PDF"></mat-spinner>
   }
 </div>
