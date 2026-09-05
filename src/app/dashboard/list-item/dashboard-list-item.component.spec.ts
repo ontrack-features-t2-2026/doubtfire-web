@@ -97,6 +97,7 @@ describe('DashboardListItemComponent', () => {
       abbreviation: '1.1P',
       color: '#123456',
       comments: 0,
+      hasFeedback: false,
       status: 'fix_and_resubmit',
       targetGrade: 0,
       targetGradeLabel: 'Pass',
@@ -136,6 +137,24 @@ describe('DashboardListItemComponent', () => {
     expect(titleLink.classList).toContain('focus-visible:outline-2');
   });
 
+  it('shows the staff feedback indicator only when feedback is present', () => {
+    expect(fixture.nativeElement.textContent).not.toContain('Staff feedback');
+
+    fixture.componentRef.setInput('task', {
+      ...component.task,
+      hasFeedback: true,
+    });
+    fixture.detectChanges();
+
+    const feedbackBadge = fixture.nativeElement.querySelector('.bg-green-100') as HTMLElement;
+    const feedbackIcon = feedbackBadge.querySelector('mat-icon') as HTMLElement;
+
+    expect(feedbackBadge).not.toBeNull();
+    expect(feedbackBadge.textContent).toContain('Staff feedback');
+    expect(feedbackIcon.textContent.trim()).toBe('feedback');
+    expect(feedbackIcon.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('renders warning text and an icon alongside the separate status colour', () => {
     fixture.componentRef.setInput('task', {
       taskDefinitionId: 10,
@@ -145,6 +164,7 @@ describe('DashboardListItemComponent', () => {
       abbreviation: '1.1P',
       color: '#123456',
       comments: 0,
+      hasFeedback: false,
       status: 'not_started',
       targetGrade: 0,
       targetGradeLabel: 'Pass',

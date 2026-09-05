@@ -60,6 +60,7 @@ export class Task extends Entity {
   includeInPortfolio: boolean = true;
   similarityFlag: boolean = false;
   numNewComments: number = 0;
+  hasFeedback?: boolean;
   hasExtensions: boolean;
 
   moderationType: 'random_sample' | 'escalation' | 'first_feedback';

@@ -75,6 +75,7 @@ export class TaskService extends CachedEntityService<Task> {
       'includeInPortfolio',
       'similarityFlag',
       'numNewComments',
+      'hasFeedback',
       'trigger',
       'hasExtensions',
       'pinned',

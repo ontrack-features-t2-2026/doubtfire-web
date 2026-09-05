@@ -213,6 +213,20 @@ describe('CrossDashboardComponent', () => {
     expect(component.activeUnits[0].tasks[1].showDueWarning).toBe(false);
   });
 
+  it('maps feedback metadata and safely defaults missing metadata to false', () => {
+    const noMetadataTask = makeTask('No feedback metadata', '1.1P', 'working_on_it', makeDate(10));
+    const feedbackTask = makeTask('Task with feedback', '1.2P', 'fix_and_resubmit', makeDate(11));
+
+    feedbackTask.hasFeedback = true;
+
+    projectsSubject.next([makeProject(1, 'COS10001', true, [noMetadataTask, feedbackTask])]);
+
+    const mappedTasks = component.activeUnits[0].tasks;
+
+    expect(mappedTasks.find((task) => task.abbreviation === '1.1P')?.hasFeedback).toBe(false);
+    expect(mappedTasks.find((task) => task.abbreviation === '1.2P')?.hasFeedback).toBe(true);
+  });
+
   it('loads and displays previous units in Previous units mode', () => {
     projectServiceQuery.mockReturnValue(
       of([makeProject(1, 'COS10001', true), makeProject(2, 'COS30046', false)]),
