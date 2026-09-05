@@ -24,28 +24,52 @@
       <div fxFlexFill fxLayout="row">
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Username</mat-label>
-          <input matInput name="username" [disabled]="!newUser" [(ngModel)]="user.username" />
+          <input
+            autocomplete="username"
+            matInput
+            name="username"
+            [disabled]="!newUser"
+            [(ngModel)]="user.username"
+          />
         </mat-form-field>
       </div>
 
       <div fxFlexFill fxLayout="row">
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
           <mat-label>First Name</mat-label>
-          <input class="outline-none" matInput name="first" required [(ngModel)]="user.firstName" />
+          <input
+            autocomplete="given-name"
+            class="outline-none"
+            matInput
+            name="first"
+            required
+            [(ngModel)]="user.firstName"
+          />
         </mat-form-field>
 
         <div fxFlex></div>
 
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="end">
           <mat-label>Second Name</mat-label>
-          <input matInput name="last" required [(ngModel)]="user.lastName" />
+          <input
+            autocomplete="family-name"
+            matInput
+            name="last"
+            required
+            [(ngModel)]="user.lastName"
+          />
         </mat-form-field>
       </div>
 
       <div fxFlexFill fxLayout="row">
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Preferred Name</mat-label>
-          <input matInput name="preferred_name" [(ngModel)]="user.nickname" />
+          <input
+            autocomplete="nickname"
+            matInput
+            name="preferred_name"
+            [(ngModel)]="user.nickname"
+          />
         </mat-form-field>
       </div>
 
@@ -70,7 +94,14 @@
 
       <mat-form-field appearance="outline" fxFlexFill>
         <mat-label>Email</mat-label>
-        <input matInput name="email" required type="email" [(ngModel)]="user.email" />
+        <input
+          autocomplete="email"
+          matInput
+          name="email"
+          required
+          type="email"
+          [(ngModel)]="user.email"
+        />
       </mat-form-field>
 
       @if (canSeeSystemRole) {

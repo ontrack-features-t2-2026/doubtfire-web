@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {Directive, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -191,5 +191,69 @@ describe('EditProfileFormComponent', () => {
     createComponent();
 
     expect(component.pushBlockerInstructions).toEqual(['step one', 'step two']);
+  });
+});
+
+// A11Y-FORM06: WCAG 1.3.5 Identify Input Purpose (AA).
+// Renders the real profile template and asserts each name/email field declares
+// its autocomplete purpose token. StubNgForm satisfies `#form="ngForm"` and
+// NO_ERRORS_SCHEMA renders the unknown mat-* elements as plain markup so the
+// static autocomplete attribute on each <input> is what we assert on.
+@Directive({selector: 'form', exportAs: 'ngForm', standalone: false})
+class StubNgFormProfile {
+  public invalid = false;
+}
+
+describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+
+  beforeEach(async () => {
+    const user = makeUser({systemRole: 'Student'});
+
+    await TestBed.configureTestingModule({
+      declarations: [EditProfileFormComponent, StubNgFormProfile],
+      providers: [
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: {currentUser: user}},
+        {provide: Router, useValue: {}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: {user, mode: 'edit', modal: false}},
+        {provide: MatSnackBar, useValue: {}},
+        {
+          provide: PushNotificationService,
+          useValue: {
+            subscription$: of(null),
+            blocker: () => 'no-service-worker',
+            permissionDeniedInstructions: () => [],
+          },
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    fixture.detectChanges();
+  });
+
+  const purpose = (name: string): string | null =>
+    fixture.nativeElement.querySelector(`input[name="${name}"]`)?.getAttribute('autocomplete') ??
+    null;
+
+  it('maps every profile identity field to its WCAG 1.3.5 purpose token', () => {
+    expect(purpose('username')).toBe('username');
+    expect(purpose('first')).toBe('given-name');
+    expect(purpose('last')).toBe('family-name');
+    expect(purpose('preferred_name')).toBe('nickname');
+    expect(purpose('email')).toBe('email');
+  });
+
+  // Failure path: the fix must stay scoped. Fields outside the agreed mapping
+  // (student id, custom pronouns) must not be handed a purpose token.
+  it('does not put a purpose token on fields outside the mapped set', () => {
+    expect(purpose('student_id')).toBeNull();
+    expect(purpose('custom_pronouns')).toBeNull();
   });
 });
