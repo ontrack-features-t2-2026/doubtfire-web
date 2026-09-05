@@ -26,22 +26,10 @@
             (ngModelChange)="searchPdf(pdfSearchString)"
           />
 
-          <button
-            aria-label="Zoom out"
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="zoomOut()"
-          >
+          <button aria-label="Zoom out" mat-icon-button matSuffix type="button" (click)="zoomOut()">
             <mat-icon>zoom_out</mat-icon>
           </button>
-          <button
-            aria-label="Zoom in"
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="zoomIn()"
-          >
+          <button aria-label="Zoom in" mat-icon-button matSuffix type="button" (click)="zoomIn()">
             <mat-icon>zoom_in</mat-icon>
           </button>
         </mat-form-field>
@@ -52,7 +40,9 @@
   @if (pdfBlobUrl) {
     @if (useNativePdfViewer) {
       @if (pdfBlobUrl) {
-        <object type="application/pdf" [data]="pdfBlobUrl | safe" title="Submission PDF">PDF Preview</object>
+        <object title="Submission PDF" type="application/pdf" [data]="pdfBlobUrl | safe">
+          PDF Preview
+        </object>
       }
     } @else {
       <pdf-viewer
@@ -67,6 +57,11 @@
       ></pdf-viewer>
     }
   } @else {
-    <mat-spinner color="accent" diameter="100" strokeWidth="2" aria-label="Loading PDF"></mat-spinner>
+    <mat-spinner
+      aria-label="Loading PDF"
+      color="accent"
+      diameter="100"
+      strokeWidth="2"
+    ></mat-spinner>
   }
 </div>

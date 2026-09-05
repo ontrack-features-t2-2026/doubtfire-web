@@ -2,8 +2,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
-import {AlertService} from 'src/app/common/services/alert.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {AlertService} from 'src/app/common/services/alert.service';
 import {SafePipe} from '../pipes/safe.pipe';
 import {fPdfViewerComponent} from './pdf-viewer.component';
 
@@ -41,7 +41,9 @@ describe('fPdfViewerComponent', () => {
 
     expect(zoomOutButton.getAttribute('aria-label')).toBe('Zoom out');
     expect(zoomInButton.getAttribute('aria-label')).toBe('Zoom in');
-    expect(zoomOutButton.getAttribute('aria-label')).not.toBe(zoomInButton.getAttribute('aria-label'));
+    expect(zoomOutButton.getAttribute('aria-label')).not.toBe(
+      zoomInButton.getAttribute('aria-label'),
+    );
   });
 
   it('gives the search field a mat-label and the loading spinner an accessible name, instead of leaving them unnamed', () => {
