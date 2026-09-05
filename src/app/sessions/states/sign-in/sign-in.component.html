@@ -28,10 +28,10 @@
                 <mat-form-field appearance="outline" class="size-full flex-1">
                   <mat-label>Username</mat-label>
                   <input
+                    autocomplete="username"
                     matInput
                     name="username"
                     required
-                    autocomplete="username"
                     [(ngModel)]="formData.username"
                   />
                 </mat-form-field>
@@ -40,11 +40,11 @@
                 <mat-form-field appearance="outline" class="size-full flex-1">
                   <mat-label>Password</mat-label>
                   <input
+                    autocomplete="current-password"
                     matInput
                     name="password"
                     required
                     type="password"
-                    autocomplete="current-password"
                     [(ngModel)]="formData.password"
                   />
                 </mat-form-field>

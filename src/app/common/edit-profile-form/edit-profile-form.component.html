@@ -25,9 +25,9 @@
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Username</mat-label>
           <input
+            autocomplete="username"
             matInput
             name="username"
-            autocomplete="username"
             [disabled]="!newUser"
             [(ngModel)]="user.username"
           />
@@ -38,11 +38,11 @@
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
           <mat-label>First Name</mat-label>
           <input
+            autocomplete="given-name"
             class="outline-none"
             matInput
             name="first"
             required
-            autocomplete="given-name"
             [(ngModel)]="user.firstName"
           />
         </mat-form-field>
@@ -52,10 +52,10 @@
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="end">
           <mat-label>Second Name</mat-label>
           <input
+            autocomplete="family-name"
             matInput
             name="last"
             required
-            autocomplete="family-name"
             [(ngModel)]="user.lastName"
           />
         </mat-form-field>
@@ -65,9 +65,9 @@
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Preferred Name</mat-label>
           <input
+            autocomplete="nickname"
             matInput
             name="preferred_name"
-            autocomplete="nickname"
             [(ngModel)]="user.nickname"
           />
         </mat-form-field>
@@ -95,11 +95,11 @@
       <mat-form-field appearance="outline" fxFlexFill>
         <mat-label>Email</mat-label>
         <input
+          autocomplete="email"
           matInput
           name="email"
           required
           type="email"
-          autocomplete="email"
           [(ngModel)]="user.email"
         />
       </mat-form-field>
