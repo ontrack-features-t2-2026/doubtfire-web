@@ -134,7 +134,9 @@ export class CrossDashboardComponent implements OnInit {
         const requested = params.get('scope');
         const scope: UnitScope =
           requested === 'previous' || requested === 'all' ? requested : 'active';
-        this.applyUnitScope(scope);
+        if (scope !== this.unitScope) {
+          this.applyUnitScope(scope);
+        }
       });
 
       const projectChanges = this.globalStateService.currentUserProjects.values.pipe(

@@ -131,6 +131,15 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
     expect(projectServiceMock.query).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the open phone card when unrelated query parameters change', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/dashboard?scope=all', CrossDashboardComponent);
+    component.expandedMobileProjectId = 42;
+    await harness.navigateByUrl('/dashboard?scope=all&tab=tasks', CrossDashboardComponent);
+    expect(component.expandedMobileProjectId).toBe(42);
+    expect(projectServiceMock.query).toHaveBeenCalledTimes(1);
+  });
+
   it('writes scope changes while preserving unrelated query parameters and the fragment', async () => {
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl(
