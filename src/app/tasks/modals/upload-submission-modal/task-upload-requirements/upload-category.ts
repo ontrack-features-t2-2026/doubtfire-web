@@ -1,83 +1,14 @@
 import {UploadRequirement} from 'src/app/api/models/task-definition';
+import {ACCEPTED_TYPES} from 'src/app/common/file-uploader/file-upload-types';
 
-export interface UploadCategoryInfo {
-  label: string;
-  extensions: string[];
-}
-
-// Mirrors ACCEPTED_TYPES in src/app/common/file-uploader/file-uploader.coffee, which is the
-// actual source of truth used to accept/reject files. The two lists must be kept in sync
-// manually until that legacy uploader and this display component share one source.
-export const UPLOAD_CATEGORY_INFO: Record<string, UploadCategoryInfo> = {
-  document: {
-    label: 'Document',
-    extensions: ['pdf', 'ps'],
-  },
-  csv: {
-    label: 'Spreadsheet',
-    extensions: ['csv', 'xls', 'xlsx'],
-  },
-  code: {
-    label: 'Code',
-    extensions: [
-      'pas',
-      'cpp',
-      'c',
-      'cs',
-      'csv',
-      'h',
-      'hpp',
-      'java',
-      'py',
-      'js',
-      'html',
-      'coffee',
-      'rb',
-      'css',
-      'scss',
-      'yaml',
-      'yml',
-      'xml',
-      'json',
-      'ts',
-      'r',
-      'rmd',
-      'rnw',
-      'rhtml',
-      'rpres',
-      'tex',
-      'vb',
-      'sql',
-      'txt',
-      'md',
-      'jack',
-      'hack',
-      'asm',
-      'hdl',
-      'tst',
-      'out',
-      'cmp',
-      'vm',
-      'sh',
-      'bat',
-      'dat',
-      'ipynb',
-      'pml',
-    ],
-  },
-  image: {
-    label: 'Image',
-    extensions: ['png', 'bmp', 'tiff', 'tif', 'jpeg', 'jpg', 'gif'],
-  },
-  zip: {
-    label: 'Archive',
-    extensions: ['zip', 'tar.gz', 'tar'],
-  },
+const CATEGORY_LABELS: Record<keyof typeof ACCEPTED_TYPES, string> = {
+  document: 'Document',
+  csv: 'Spreadsheet',
+  code: 'Code',
+  image: 'Image',
+  zip: 'Archive',
 };
 
-// Categories with more extensions than this show a truncated preview plus an
-// expandable "view all" control (currently only the 'code' category, at ~39
-// extensions, exceeds this; the other categories all fit within it today).
 export const EXTENSION_PREVIEW_LIMIT = 8;
 
 export interface UploadRequirementSummary {
@@ -92,12 +23,17 @@ export interface UploadRequirementSummary {
 export function summariseUploadRequirement(
   requirement: UploadRequirement,
 ): UploadRequirementSummary {
-  const info = UPLOAD_CATEGORY_INFO[requirement.type];
-  const extensions = (info?.extensions ?? []).map((ext) => ext.toUpperCase());
+  // Match the uploader's archive alias and read the same extension policy.
+  const type = requirement.type === 'archive' ? 'zip' : requirement.type;
+  const knownType = Object.hasOwn(ACCEPTED_TYPES, type);
+  const category = knownType ? ACCEPTED_TYPES[type as keyof typeof ACCEPTED_TYPES] : undefined;
+  const extensions = (category?.extensions ?? []).map((extension) => extension.toUpperCase());
   return {
     key: requirement.key,
     name: requirement.name,
-    categoryLabel: info?.label ?? requirement.type ?? 'File',
+    categoryLabel: knownType
+      ? CATEGORY_LABELS[type as keyof typeof ACCEPTED_TYPES]
+      : type || 'File',
     extensions,
     previewExtensions: extensions.slice(0, EXTENSION_PREVIEW_LIMIT),
     hasMoreExtensions: extensions.length > EXTENSION_PREVIEW_LIMIT,

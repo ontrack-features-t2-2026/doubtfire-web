@@ -1,7 +1,7 @@
 .task-upload-requirements {
   margin-bottom: 1em;
   margin-top: 1em;
-  margin-left: 1em;
+  min-width: 0;
 }
 
 .requirements-list {
@@ -19,7 +19,7 @@
 }
 
 .requirements-missing {
-  color: #666;
+  color: inherit;
   font-style: italic;
 }
 
@@ -27,14 +27,15 @@
   background: none;
   border: none;
   padding: 0;
-  color: #337ab7;
+  color: inherit;
   text-decoration: underline;
   cursor: pointer;
   font-size: inherit;
 
   &:hover,
   &:focus {
-    color: #23527c;
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
   }
 }
 
@@ -47,7 +48,7 @@
   padding: 0;
 
   li {
-    background: #f5f5f5;
+    border: 1px solid currentColor;
     border-radius: 3px;
     padding: 0.1em 0.5em;
   }

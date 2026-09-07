@@ -64,17 +64,17 @@ describe('TaskUploadRequirementsComponent', () => {
       setRequirements([{key: 'file0', name: 'Source code', type: 'code'}]);
 
       const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.extensions-toggle');
-      expect(toggle).withContext('expand control should be present for a long list').not.toBeNull();
+      expect(toggle).not.toBeNull();
       expect(toggle.getAttribute('aria-expanded')).toBe('false');
 
       const list: HTMLUListElement = fixture.nativeElement.querySelector('.extensions-list');
-      expect(list.hidden).toBeTrue();
+      expect(list.hidden).toBe(true);
 
       toggle.click();
       fixture.detectChanges();
 
       expect(toggle.getAttribute('aria-expanded')).toBe('true');
-      expect(list.hidden).toBeFalse();
+      expect(list.hidden).toBe(false);
       expect(list.textContent).toContain('JSON');
       expect(list.textContent).toContain('IPYNB');
     });
@@ -97,13 +97,36 @@ describe('TaskUploadRequirementsComponent', () => {
       expect(text).toContain('not currently available');
     });
 
-    it('always shows a safe, explicit maximum size state since no size policy exists yet', () => {
+    it('does not invent a size limit when the API does not expose one', () => {
       setRequirements([{key: 'file0', name: 'Report', type: 'document'}]);
 
       const text = (fixture.nativeElement as HTMLElement).textContent;
       expect(text).toContain('Maximum size:');
-      expect(text).toContain('Not specified for this task');
+      expect(text).toContain('Not provided by the server');
     });
+  });
+
+  it('uses current uploader extensions including Vue and compressed tar aliases', () => {
+    setRequirements([
+      {key: 'file0', name: 'Source', type: 'code'},
+      {key: 'file1', name: 'Archive', type: 'archive'},
+    ]);
+    expect(component.summaries[0].extensions).toContain('VUE');
+    expect(component.summaries[1].categoryLabel).toBe('Archive');
+    expect(component.summaries[1].extensions).toContain('TGZ');
+  });
+
+  it('uses unique description ids when two instances are rendered', () => {
+    const second = TestBed.createComponent(TaskUploadRequirementsComponent);
+    expect(second.componentInstance.elementId).not.toBe(component.elementId);
+    second.destroy();
+  });
+
+  it('clears expanded state when the requirements change', () => {
+    setRequirements([{key: 'file0', name: 'Source', type: 'code'}]);
+    component.toggleExpanded(component.summaries[0]);
+    setRequirements([{key: 'file0', name: 'New source', type: 'code'}]);
+    expect(component.isExpanded(component.summaries[0])).toBe(false);
   });
 
   describe('invalid/unrecognised requirement type state', () => {
