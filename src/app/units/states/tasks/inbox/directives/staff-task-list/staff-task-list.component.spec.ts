@@ -1,5 +1,5 @@
 import {HotkeysService} from '@ngneat/hotkeys';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
@@ -269,6 +269,78 @@ describe('StaffTaskListComponent', () => {
       component.hideTaskActionsForFocus(task);
 
       expect(component.rowActionsShown(task)).toBe(false);
+    });
+  });
+
+  describe('task navigation', () => {
+    it('does not throw when previousTask is called before tasks have loaded', () => {
+      component.filteredTasks = null;
+
+      expect(() => component.previousTask()).not.toThrow();
+    });
+
+    it('does not select a previous task when no task is selected', () => {
+      const task1 = {id: 1, project: {id: 10}, definition: {id: 100}} as unknown as Task;
+      const task2 = {id: 2, project: {id: 10}, definition: {id: 101}} as unknown as Task;
+      component.filteredTasks = [task1, task2];
+      component.taskData = {
+        source: () => of([]),
+        selectedTask: null,
+        taskKey: null,
+        onSelectedTaskChange: () => {},
+        taskDefMode: false,
+      };
+
+      const setSelectedSpy = vi.spyOn(component, 'setSelectedTask');
+      component.previousTask();
+
+      expect(setSelectedSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not select a previous task when the first task is selected', () => {
+      const task1 = {id: 1, project: {id: 10}, definition: {id: 100}} as unknown as Task;
+      const task2 = {id: 2, project: {id: 10}, definition: {id: 101}} as unknown as Task;
+      component.filteredTasks = [task1, task2];
+      component.taskData = {
+        source: () => of([]),
+        selectedTask: task1,
+        taskKey: null,
+        onSelectedTaskChange: () => {},
+        taskDefMode: false,
+      };
+
+      const setSelectedSpy = vi.spyOn(component, 'setSelectedTask');
+      component.previousTask();
+
+      expect(setSelectedSpy).not.toHaveBeenCalled();
+    });
+
+    it('selects the previous task when a subsequent task is selected', () => {
+      const task1 = {
+        id: 1,
+        project: {id: 10},
+        definition: {id: 100},
+        taskKeyToIdString: () => 'task-1',
+      } as unknown as Task;
+      const task2 = {
+        id: 2,
+        project: {id: 10},
+        definition: {id: 101},
+        taskKeyToIdString: () => 'task-2',
+      } as unknown as Task;
+      component.filteredTasks = [task1, task2];
+      component.taskData = {
+        source: () => of([]),
+        selectedTask: task2,
+        taskKey: null,
+        onSelectedTaskChange: () => {},
+        taskDefMode: false,
+      };
+
+      const setSelectedSpy = vi.spyOn(component, 'setSelectedTask');
+      component.previousTask();
+
+      expect(setSelectedSpy).toHaveBeenCalledWith(task1);
     });
   });
 });
