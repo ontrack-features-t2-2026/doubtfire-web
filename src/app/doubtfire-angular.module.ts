@@ -1,5 +1,3 @@
-// Lottie animation module
-// import {LottieModule, LottieCacheModule} from 'ngx-lottie';
 import {PickerModule} from '@ctrl/ngx-emoji-mart';
 import {EmojiModule} from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import {CodeEditorModule} from '@ngstack/code-editor';
@@ -24,8 +22,6 @@ import {LottieComponent, provideLottieOptions} from 'ngx-lottie';
 import {MonacoEditorModule} from 'ngx-monaco-editor-v2-alternative';
 import {NgxSkeletonLoaderModule} from 'ngx-skeleton-loader';
 import {environment} from 'src/environments/environment';
-// import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
-// import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 import {ClipboardModule} from '@angular/cdk/clipboard';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {ScrollingModule} from '@angular/cdk/scrolling';
