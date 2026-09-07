@@ -182,16 +182,17 @@
             <div class="mt-3 rounded border border-gray-300 bg-white px-4 py-2">
               <div class="flex items-center">
                 <div class="flex min-w-0 flex-1 items-center">
-                  <div
-                    class="flex cursor-pointer items-center gap-1 break-all text-blue-700 hover:text-blue-900"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                  <a
+                    class="flex items-center gap-1 break-all text-blue-700 hover:text-blue-900"
+                    [attr.aria-label]="'Subscribe to web calendar: ' + webcalUrl + '.ics'"
+                    [href]="webcalUrl + '.ics'"
                   >
-                    <mat-icon>link</mat-icon>{{ webcalUrl }}.ics
-                  </div>
+                    <mat-icon aria-hidden="true">link</mat-icon>{{ webcalUrl }}.ics
+                  </a>
                 </div>
                 <div class="flex shrink-0 items-center">
                   <button
+                    aria-label="Copy web calendar URL"
                     mat-icon-button
                     matTooltip="Copy URL"
                     matTooltipPosition="above"
@@ -201,6 +202,7 @@
                     <mat-icon>{{ copying ? 'done' : 'content_copy' }}</mat-icon>
                   </button>
                   <button
+                    aria-label="Regenerate web calendar URL"
                     mat-icon-button
                     matTooltip="Regenerate URL"
                     matTooltipPosition="above"
