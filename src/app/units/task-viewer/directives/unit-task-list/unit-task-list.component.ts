@@ -67,8 +67,6 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   @Input() selectedTaskDefinition$: BehaviorSubject<TaskDefinition>;
   selectedTaskDef: TaskDefinition;
 
-  // @Output() selectedTask: EventEmitter<Task> = new EventEmitter<Task>();
-
   filteredTaskDefinitions: TaskDefinition[]; // list of tasks which match the taskSearch term
   searchText: string = ''; // task search term from user input
   taskDefinitionNamePipe = new TaskDefinitionNamePipe();
@@ -294,20 +292,6 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       this.selectedTaskDef = taskDef;
     });
 
-    // // TODO: Remove the service
-    // this.taskViewerService.selectedTaskDef.subscribe((taskDef) => {
-    //   this.selectedTaskDef = taskDef;
-    // });
-
-    // this.taskViewerService.taskSelected.subscribe((taskSelected) => {
-    //   this.taskSelected = taskSelected;
-    // });
-
-    // // Select the first task definition by default
-    // if (this.taskDefinitions.length > 0) {
-    //   this.setSelectedTaskDefinition(this.taskDefinitions[0]);
-    // }
-
     // Follow the selected task in the url, rather than reading it once.
     //
     // Angular reuses this component when only a route parameter changes, so
@@ -372,15 +356,6 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       this.selectedTaskDefinition$.next(taskDef);
       this.replaceSelectionUrl(taskDef);
     }
-
-    // this.selectedTaskDefinition.emit(taskDef);
-    // const selectedTask = this.taskForTaskDef(taskDef);
-    // if (selectedTask) {
-    //   this.selectedTask$.next(selectedTask);
-    // }
-
-    //TODO: remove
-    // this.taskViewerService.setSelectedTaskDef(taskDef);
   }
 
   public isSelectedTaskDefinition(taskDef: TaskDefinition): boolean {

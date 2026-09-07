@@ -233,26 +233,12 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         return false;
       }
       const diff = this.normalizeDateUTC(item.end) - this.normalizeDateUTC(ganttItem.end);
-      // const color = typeof ganttLink.color === 'string' ? ganttLink.color : ganttLink.color.default;
 
       if (diff > 0) {
         isAfterDependentStartDate = true;
       }
 
       continue;
-
-      // if (color === '#0079D8') {
-      //   // Ready for feedback
-      //   if (diff > 0) {
-      //     isAfterDependentStartDate = true;
-      //   }
-      // } else if (color === '#31b0d5' || color === '#5BB75B') {
-      //   // Discuss or Complete
-      //   if (diff >= -7 * 24 * 60 * 60) {
-      //     // We need to ensure this task is submitted a week earlier than its dependent so get it in a Discuss state
-      //     isAfterDependentStartDate = true;
-      //   }
-      // }
     }
 
     return isAfterDependentStartDate;
@@ -524,23 +510,11 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     link.click();
   }
 
-  // normalizeDateUTC = (ts: number) => {
-  //   const d = new GanttDate(ts * 1000);
-  //   // const utc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
-  //   return Math.floor(d.getUnixTime());
-  // };
-
   normalizeDateUTC = (ts: number) => {
     const d = new GanttDate(ts * 1000);
     // d.setHours(0, 0, 0, 0);
     return Math.floor(d.startOfDay().getTime() / 1000);
   };
-
-  // normalizeDateUTC = (ts: number) => {
-  //   const d = new Date(ts * 1000);
-  //   d.setHours(0, 0, 0, 0);
-  //   return Math.floor(d.getTime() / 1000);
-  // };
 
   toDateString(timestamp: number | Date) {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp * 1000);
@@ -793,22 +767,6 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
           }),
       };
 
-      // if (
-      //   item.links.length &&
-      //   (this.isCloseToFeedbackDeadline(item) || this.isPastFeedbackDeadline(item))
-      // ) {
-      //   const task = this.project.findTaskForDefinition(td.id);
-
-      //   item.start = this.normalizeDateUTC(task.startDate.getTime() / 1000);
-      //   item.end = this.normalizeDateUTC(task.localDueDate().getTime() / 1000);
-
-      //   // If the task defaults are still invalid, reset them to the task definition default
-      //   if (this.isCloseToFeedbackDeadline(item) || this.isPastFeedbackDeadline(item)) {
-      //     item.start = this.normalizeDateUTC(td.startDate.getTime() / 1000);
-      //     item.end = this.normalizeDateUTC(td.localDueDate().getTime() / 1000);
-      //   }
-      // }
-
       const originalItem = {...item};
       item.originalLinks = [...(originalItem.links as GanttLink[])];
 
@@ -826,10 +784,6 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       };
 
       _baselineItems.push(baselineItem);
-
-      // if (this.unsavedChanges(item)) {
-      //   this.saveTargetDate(item);
-      // }
     }
 
     this.items = [..._items];
