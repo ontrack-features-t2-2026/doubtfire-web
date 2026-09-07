@@ -311,6 +311,7 @@ import {SignInComponent} from './sessions/states/sign-in/sign-in.component';
 import {FeedbackAppealModalComponent} from './tasks/modals/feedback-appeal-modal/feedback-appeal-modal.component';
 import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 import {SubmissionTypeModalComponent} from './tasks/modals/submission-type-modal/submission-type-modal.component';
+import {TaskUploadRequirementsComponent} from './tasks/modals/upload-submission-modal/task-upload-requirements/task-upload-requirements.component';
 import {UploadSubmissionModalComponent} from './tasks/modals/upload-submission-modal/upload-submission-modal.component';
 import {ProjectTasksListComponent} from './tasks/project-tasks-list/project-tasks-list.component';
 import {DiscussionPromptComposerComponent} from './tasks/task-comment-composer/discussion-prompt-composer/discussion-prompt-composer.component';
@@ -676,6 +677,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     GroupSelectorComponent,
     GroupSetManagerComponent,
     FileUploaderComponent,
+    TaskUploadRequirementsComponent,
     PortfolioWelcomeStepComponent,
     PortfolioLearningSummaryReportStepComponent,
     PortfolioAddExtraFilesStepComponent,

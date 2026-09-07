@@ -1,6 +1,9 @@
-<div class="flex items-center justify-between">
+<div class="flex flex-col items-start justify-between sm:flex-row sm:items-center">
   <h2 mat-dialog-title>Submit {{ task.definition.abbreviation }} {{ task.definition.name }}</h2>
-  <mat-form-field appearance="outline" class="my-2.5 mt-[22px] mr-[24px] w-full lg:max-w-sm">
+  <mat-form-field
+    appearance="outline"
+    class="my-2.5 w-full px-6 sm:mt-[22px] sm:mr-[24px] sm:px-0 lg:max-w-sm"
+  >
     <mat-label>Submission type</mat-label>
     <mat-select
       [disabled]="uploadStarted || isUploading"
@@ -60,8 +63,15 @@
           </div>
         }
 
+        <f-task-upload-requirements
+          #uploadRequirements
+          [hidden]="uploadStarted || isUploading"
+          [requirements]="task.definition.uploadRequirements"
+        ></f-task-upload-requirements>
+
         <f-file-uploader
           #fileUploader
+          [describedBy]="uploadStarted || isUploading ? null : uploadRequirements.elementId"
           [files]="fileRequirements"
           [onBeforeUpload]="onBeforeUpload"
           [onClickFailureCancel]="cancel"
