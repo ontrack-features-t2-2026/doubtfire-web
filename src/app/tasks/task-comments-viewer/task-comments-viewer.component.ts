@@ -241,8 +241,6 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
         this.alerts.error('I cannot upload that file - only images, audio, and PDFs.', 4000);
       }
     });
-    console.log('implement - check map comments');
-    // this.task.comments = this.ts.mapComments(this.task.comments);
   }
 
   // # Upload image files as comments to a given task
