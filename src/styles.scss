@@ -68,7 +68,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
   &.selectable {
     .mat-mdc-row:hover .mat-mdc-cell {
-      background-color: rgb(243, 243, 243);
+      background-color: var(--ot-color-hover);
     }
     .mat-mdc-row .mat-mdc-cell {
       cursor: pointer;
@@ -78,7 +78,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
 .table-selectable {
   .mat-mdc-row:hover .mat-mdc-cell {
-    background-color: rgb(243, 243, 243);
+    background-color: var(--ot-color-hover);
   }
   .mat-mdc-row .mat-mdc-cell {
     cursor: pointer;
