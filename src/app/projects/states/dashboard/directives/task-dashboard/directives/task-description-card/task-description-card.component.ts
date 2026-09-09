@@ -133,10 +133,17 @@ export class TaskDescriptionCardComponent {
   }
 
   public feedbackDate(): Date {
-    if (this.task) {
-      return this.task.localDeadlineDate();
+    // A task with no resolvable deadline (no project, or a definition with no due
+    // date) makes localDeadlineDate throw rather than return nothing. The template
+    // guards this line with @if (feedbackDate()), so keep it absent instead.
+    try {
+      if (this.task) {
+        return this.task.localDeadlineDate();
+      }
+      return this.taskDef?.localDeadlineDate();
+    } catch {
+      return undefined;
     }
-    return this.taskDef?.localDeadlineDate();
   }
 
   public shouldShowDeadline(): boolean {

@@ -5,6 +5,7 @@ import {MatTable, MatTableDataSource} from '@angular/material/table';
 import {finalize} from 'rxjs';
 import {ActivityType, ActivityTypeService} from 'src/app/api/models/doubtfire-model';
 import {EntityFormComponent} from 'src/app/common/entity-form/entity-form.component';
+import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 
 @Component({
@@ -33,6 +34,7 @@ export class ActivityTypeListComponent
   constructor(
     private activityTypeService: ActivityTypeService,
     private alertService: AlertService,
+    private confirmationModal: ConfirmationModalService,
   ) {
     super(
       {
@@ -84,14 +86,22 @@ export class ActivityTypeListComponent
   }
 
   deleteActivity(activity: ActivityType) {
-    this.delete(activity, this.activityTypes, this.activityTypeService).subscribe({
-      next: () => {
-        this.alertService.success(`${activity.name} has been deleted.`, 2000);
+    this.confirmationModal.show(
+      `Delete activity type ${activity.name}`,
+      'This activity type is used by tutorial streams across every unit. Deleting it cannot be undone.',
+      () => {
+        this.delete(activity, this.activityTypes, this.activityTypeService).subscribe({
+          next: () => {
+            this.alertService.success(`${activity.name} has been deleted.`, 2000);
+          },
+          error: (response) => {
+            this.alertService.error(response.error?.error || 'Unable to delete activity type.');
+          },
+        });
       },
-      error: (response) => {
-        this.alertService.error(response.error?.error || 'Unable to delete activity type.');
-      },
-    });
+      undefined,
+      'Delete',
+    );
   }
 
   // Sorting function to sort data when sort
