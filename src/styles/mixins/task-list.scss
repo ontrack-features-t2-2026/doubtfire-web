@@ -177,11 +177,16 @@
             width: 12px;
           }
           &.grade-badge {
-            background-color: #000000;
+            // Invert against the list surface so the badge stays visible in
+            // both themes (dark chip/light text in light, light chip/dark text
+            // in dark), instead of a black circle that vanishes on the dark list.
+            background-color: var(--ot-color-inverse-surface);
+            color: var(--ot-color-inverse-text);
             font-size: 9px;
           }
           &.quality-badge {
-            background-color: #000000;
+            background-color: var(--ot-color-inverse-surface);
+            color: var(--ot-color-inverse-text);
             font-size: 9px;
           }
           &.soon-badge {

@@ -1,5 +1,3 @@
-@use 'styles/mixins/task-status-colors-generator' as *;
-
 .footer {
   min-height: 85px;
   background-color: var(--ot-color-page);
@@ -128,7 +126,9 @@
 }
 
 @mixin status-icon($status) {
-  --status-chip-bg: #{task-status-color($status)};
+  // Drive the chip colour from the runtime status token so the footer chips and
+  // their hover state flip with the theme instead of using the light-only map.
+  --status-chip-bg: var(--ot-status-#{$status});
   background-color: transparent;
   color: var(--status-chip-bg);
 }
