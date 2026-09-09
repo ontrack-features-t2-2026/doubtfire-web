@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { Project } from './project';
-import { Unit } from './unit';
+import {describe, expect, it, vi} from 'vitest';
+import {Project} from './project';
+import {Unit} from './unit';
 
 describe('Unit.findStudent', () => {
   it('returns the same project instance as studentCache.get', () => {
