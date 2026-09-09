@@ -74,6 +74,15 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * The subscription URL exactly as it is shown to the user, with the `.ics`
+   * suffix, so the copied string matches what is on screen.
+   */
+  get webcalSubscriptionUrl(): string | null {
+    const url = this.webcalUrl;
+    return url ? `${url}.ics` : null;
+  }
+
+  /**
    * Invoked when the user toggles the webcal.
    */
   onWebcalToggle() {
@@ -100,11 +109,16 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Displays a notification that the webcal URL has been copied.
-   * `cdkCopyToClipboard` is expected do the actual copying.
-   * Changes mat-icon temporarily for a second after copying.
+   * Invoked by cdkCopyToClipboard once it has attempted the copy. Only
+   * confirm on a real success, so a refused clipboard write does not claim
+   * the URL was copied. Changes mat-icon temporarily for a second after.
    */
-  onCopyWebcalUrl() {
+  onCopyResult(success: boolean) {
+    if (!success) {
+      this.alerts.error('Could not copy the URL, select it and copy it manually', 4000);
+      return;
+    }
+
     this.alerts.success('Web calendar URL copied to the clipboard', 2000);
     this.copying = true;
 
