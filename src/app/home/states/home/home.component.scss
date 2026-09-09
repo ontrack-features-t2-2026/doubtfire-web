@@ -17,7 +17,7 @@
 
     ::ng-deep .mat-mdc-progress-spinner circle,
     .mat-mdc-progress-spinner circle {
-      stroke: gray;
+      stroke: var(--ot-color-text-muted);
     }
   }
 }
@@ -51,11 +51,11 @@
   }
 
   mat-chip-option.f-chip {
-    background-color: $primary-color;
-    color: white;
+    background-color: var(--ot-color-primary);
+    color: var(--ot-color-on-primary);
     opacity: 1;
     border-style: none;
-    --mat-chip-disabled-label-text-color: white;
+    --mat-chip-disabled-label-text-color: var(--ot-color-on-primary);
   }
 }
 
@@ -66,7 +66,7 @@
   height: auto;
 
   .mat-mdc-list-item-icon {
-    color: rgb(0, 0, 0);
+    color: var(--ot-color-text);
     margin-right: 6px;
   }
 }

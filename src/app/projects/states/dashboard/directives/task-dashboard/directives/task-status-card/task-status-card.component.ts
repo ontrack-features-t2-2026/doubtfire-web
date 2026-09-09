@@ -59,10 +59,11 @@ export class TaskStatusCardComponent implements OnChanges, AfterViewInit, OnDest
     if (changes.task) {
       this.task = changes.task.currentValue;
       this.reapplyTriggers();
-      this.taskStatusColor = this.taskService.statusColors.get(this.task.statusClass());
+      this.taskStatusColor = this.task.statusClass();
       this.project = this.task.project;
       this.textCss = `::ng-deep f-task-status-card .mat-mdc-text-field-wrapper.mdc-text-field {
-        background-color: #${this.taskStatusColor} !important;
+        background-color: var(--ot-status-${this.taskStatusColor}) !important;
+        color: var(--ot-status-${this.taskStatusColor}-on) !important;
       }`;
     }
   }

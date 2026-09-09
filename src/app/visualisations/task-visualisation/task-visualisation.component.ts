@@ -62,13 +62,15 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
 
       this.data = Array.from(taskCounts)
         .map(([status, count]) => {
-          const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
+          // Inline [style] bindings accept CSS vars, so point the card straight at
+          // the status tokens and its AA-fixed -on foreground; both flip on their own.
+          const key = status.replace(/_/g, '-');
           return {
             status,
             name: TaskStatus.STATUS_LABELS.get(status) ?? status,
             value: count,
-            color,
-            textColor: this.contrastingTextColor(color),
+            color: `var(--ot-status-${key})`,
+            textColor: `var(--ot-status-${key}-on)`,
           };
         })
         .filter((task) => task.value > 0 || sortOrder.includes(task.status))
@@ -82,26 +84,5 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
           return aIndex - bIndex;
         });
     }
-  }
-
-  private contrastingTextColor(color: string): string {
-    const hex = color.replace('#', '');
-    if (!/^[0-9a-f]{6}$/i.test(hex)) {
-      return '#ffffff';
-    }
-
-    const channels = [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
-    const [red, green, blue] = channels.map((channel) =>
-      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
-    );
-    // #111827 was too light to be the dark option here. Against ready_for_feedback
-    // (#0079D8) it reached 3.99:1 and white only 4.44:1, so the card that always renders
-    // sat under the 4.5:1 AA floor for normal text. Black clears the floor on every
-    // status colour, and the divisor now matches the colour it is measuring.
-    const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-    const whiteContrast = 1.05 / (luminance + 0.05);
-    const darkContrast = (luminance + 0.05) / 0.05;
-
-    return whiteContrast >= darkContrast ? '#ffffff' : '#000000';
   }
 }

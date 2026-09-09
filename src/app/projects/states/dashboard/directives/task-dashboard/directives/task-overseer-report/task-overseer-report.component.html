@@ -27,13 +27,13 @@
               <div>
                 Submission {{ histories.length - idx }}
                 @if (idx === 0) {
-                  <span class="text-gray-500">(Most recent)</span>
+                  <span class="text-ot-muted">(Most recent)</span>
                 }
                 @if (isComparisonSource(history)) {
-                  <span class="text-blue-600">(Selected for comparison)</span>
+                  <span class="text-ot-link">(Selected for comparison)</span>
                 }
               </div>
-              <div class="text-xs font-normal text-gray-500">
+              <div class="text-xs font-normal text-ot-muted">
                 {{ history.timestamp | date: 'dd/MM/yyyy HH:mm' }}
               </div>
             </div>
@@ -47,8 +47,8 @@
           >
             @if (assessmentFor(history); as oa) {
               @if (oa.reportReady) {
-                <span class="text-xs text-gray-500">Click to view Overseer report</span>
-                <span class="text-gray-500"> {{ oa.passedSteps }} / {{ oa.totalSteps }}</span>
+                <span class="text-xs text-ot-muted">Click to view Overseer report</span>
+                <span class="text-ot-muted"> {{ oa.passedSteps }} / {{ oa.totalSteps }}</span>
                 @if (oa.passedSteps === oa.totalSteps) {
                   <mat-icon color="primary">done</mat-icon>
                 } @else {
@@ -127,7 +127,7 @@
                   <!-- <p>Pass?: {{ result.pass }}</p> -->
 
                   @if (!result.pass) {
-                    <p class="text-normal w-full p-1 text-left tracking-wide text-gray-500">
+                    <p class="text-normal w-full p-1 text-left tracking-wide text-ot-muted">
                       {{ result.feedbackMessage }}
                     </p>
                   }
@@ -198,14 +198,14 @@
                     }
                   } @else if (result.stdout) {
                     <pre
-                      class="max-h-64 max-w-full scrollbar-gutter-stable overflow-auto rounded-md border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-gray-800 shadow-inner"
+                      class="max-h-64 max-w-full scrollbar-gutter-stable overflow-auto rounded-md border border-ot-divider bg-ot-code p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-ot-text shadow-inner"
                     ><code [innerHTML]="renderOutput(result.stdout)"></code></pre>
                   } @else if (result.pass) {
-                    <div class="w-full text-center tracking-wide text-gray-400 uppercase">
+                    <div class="w-full text-center tracking-wide text-ot-muted uppercase">
                       SUCCESS
                     </div>
                     <div
-                      class="text-normal w-full p-1 text-center tracking-wide text-gray-200 uppercase"
+                      class="text-normal w-full p-1 text-center tracking-wide text-ot-muted uppercase"
                     >
                       (No Output)
                     </div>
@@ -249,8 +249,9 @@
         }
       </mat-expansion-panel>
     } @empty {
-      <div class="flex size-full flex-col items-center justify-center text-[#c5c5c5]">
-        <mat-icon style="height: 120px; width: 120px; font-size: 120px; color: #c5c5c5"
+      <div class="flex size-full flex-col items-center justify-center text-ot-muted">
+        <mat-icon
+          style="height: 120px; width: 120px; font-size: 120px; color: var(--ot-color-text-muted)"
           >subtitles_off</mat-icon
         >
         <div>No retained submissions for this task.</div>

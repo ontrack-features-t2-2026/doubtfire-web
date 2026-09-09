@@ -72,7 +72,7 @@ $comment-inner-border-radius: 4px;
   overflow-x: hidden;
 
   p#commentTimestamp {
-    color: #9696969d;
+    color: var(--ot-color-text-muted);
     font-size: 12px;
     text-align: center;
     width: 100%;
@@ -90,7 +90,7 @@ $comment-inner-border-radius: 4px;
     height: 80px;
     width: 80px;
     font-size: 80px;
-    color: #c5c5c5;
+    color: var(--ot-color-text-muted);
   }
 
   .comments-body {
@@ -115,7 +115,7 @@ $comment-inner-border-radius: 4px;
     border-radius: 10px;
     outline-width: 1.5px;
     outline-style: dashed;
-    outline-color: #3939ff;
+    outline-color: var(--ot-color-focus);
   }
 
   .comment-container {
@@ -153,7 +153,7 @@ $comment-inner-border-radius: 4px;
     .original-comment {
       .reply-text {
         margin-left: 1em;
-        color: rgba(0, 0, 0, 0.7);
+        color: var(--ot-color-text-muted);
       }
     }
   }
@@ -181,14 +181,14 @@ $comment-inner-border-radius: 4px;
       position: relative;
       outline: 0;
       border: 0;
-      color: black;
+      color: var(--ot-color-text-muted);
       text-align: center;
       height: 1.5em;
       opacity: 0.8;
 
       &:before {
         content: '';
-        background: linear-gradient(to right, transparent, #9696969d, transparent);
+        background: linear-gradient(to right, transparent, var(--ot-color-divider), transparent);
         position: absolute;
         left: 0;
         top: 50%;
@@ -200,11 +200,11 @@ $comment-inner-border-radius: 4px;
         content: attr(data-content);
         position: relative;
         display: inline-block;
-        color: black;
+        color: var(--ot-color-text-muted);
         padding: 0 0.5em;
         line-height: 1.5em;
-        color: #9696969d;
-        background-color: #fff;
+        color: var(--ot-color-text-muted);
+        background-color: var(--ot-color-page);
       }
     }
   }
@@ -346,13 +346,13 @@ $comment-inner-border-radius: 4px;
     max-width: 300px;
     margin-left: 5px;
     display: flex;
-    color: #fff;
+    color: var(--ot-color-on-primary);
     font-size: 1em;
     padding-top: 6px;
     padding-bottom: 6px;
     padding-left: 0;
     line-height: 1.5em;
-    background: $comment-bubble-color;
+    background: var(--ot-color-primary);
 
     .comment-text,
     .comment-pdf,
@@ -393,7 +393,7 @@ $comment-inner-border-radius: 4px;
 
     a p,
     a {
-      color: white;
+      color: inherit;
       margin-bottom: 0px;
     }
 
@@ -454,20 +454,19 @@ $comment-inner-border-radius: 4px;
   } */
 
   .comment.comment-by-other-user .text-bubble {
-    background: $comment-bubble-color-other-user;
-    color: black;
+    background: var(--ot-color-surface-raised);
+    color: var(--ot-color-text);
     margin-left: 0;
   }
 
   .comment.comment-by-other-user .pdf-bubble {
-    background: $comment-bubble-color-other-user;
-    color: black;
-    color: black;
+    background: var(--ot-color-surface-raised);
+    color: var(--ot-color-text);
     margin-right: 50px;
     margin-left: 0;
 
     a p {
-      color: black;
+      color: var(--ot-color-text);
       margin-bottom: 0;
     }
   }
@@ -500,7 +499,7 @@ $comment-inner-border-radius: 4px;
   .panel-footer {
     padding: 0;
     font-size: 15px;
-    background-color: white;
+    background-color: var(--ot-color-surface);
   }
 
   // Editor & submitter

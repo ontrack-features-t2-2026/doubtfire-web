@@ -347,9 +347,11 @@ describe('CrossDashboardComponent', () => {
       'input[aria-label="Search tasks in SIT764"]',
     ) as HTMLInputElement;
 
-    expect(searchInput.classList.contains('bg-white')).toBe(true);
-    expect(searchInput.classList.contains('text-gray-900')).toBe(true);
-    expect(searchInput.classList.contains('placeholder:text-gray-600')).toBe(true);
+    // Themed token utilities (flip with data-ot-theme) replaced the literal
+    // bg-white / text-gray-900 / placeholder:text-gray-600 during the theme migration.
+    expect(searchInput.classList.contains('bg-ot-surface')).toBe(true);
+    expect(searchInput.classList.contains('text-ot-text')).toBe(true);
+    expect(searchInput.classList.contains('placeholder:text-ot-muted')).toBe(true);
     expect(searchInput.classList.contains('placeholder:opacity-100')).toBe(true);
   });
 

@@ -280,23 +280,52 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     return false;
   }
 
+  private cssVar(name: string): string {
+    return getComputedStyle(this.elementRef.nativeElement).getPropertyValue(name).trim();
+  }
+
+  private cssVarRgba(name: string, alpha: number): string {
+    const value = this.cssVar(name);
+    const match = /^#?([0-9a-f]{6})$/i.exec(value);
+    if (!match) {
+      return value;
+    }
+    const int = parseInt(match[1], 16);
+    const r = (int >> 16) & 255;
+    const g = (int >> 8) & 255;
+    const b = int & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
   getItemClasses(item: TaskGanttItem): string[] {
     const classes: string[] = ['gantt-bar'];
     if (this.animateBackground) {
       classes.push('flash');
     }
     if (item.highlighted) {
-      classes.push('[--bar-bg:#03c6fc]');
+      classes.push('[--bar-bg:var(--ot-color-info)]', '[color:var(--ot-color-on-primary)]');
     } else if (this.isAboveTargetGrade(item)) {
-      classes.push('[--bar-bg:#9ca3af]', 'text-white');
+      classes.push(
+        '[--bar-bg:var(--ot-color-disabled-surface)]',
+        '[color:var(--ot-color-text-muted)]',
+      );
     } else if (this.isPastFeedbackDeadline(item)) {
-      classes.push('[--bar-bg:#cd3704]', 'text-white');
+      classes.push(
+        '[--bar-bg:var(--ot-status-time-exceeded)]',
+        '[color:var(--ot-status-time-exceeded-on)]',
+      );
     } else if (this.isBlockedByPrerequisite(item)) {
-      classes.push('[--bar-bg:#e88307]', 'text-black');
+      classes.push(
+        '[--bar-bg:var(--ot-status-attention-required)]',
+        '[color:var(--ot-status-attention-required-on)]',
+      );
     } else if (this.isCloseToFeedbackDeadline(item)) {
-      classes.push('[--bar-bg:#ffc53d]', 'text-black');
+      classes.push(
+        '[--bar-bg:var(--ot-status-fix-and-resubmit)]',
+        '[color:var(--ot-status-fix-and-resubmit-on)]',
+      );
     } else {
-      classes.push('[--bar-bg:#0e467b]', 'text-white');
+      classes.push('[--bar-bg:var(--ot-color-primary)]', '[color:var(--ot-color-on-primary)]');
     }
 
     return classes;
@@ -752,7 +781,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         draggable: this.project.unit.allowFlexibleDates,
         // color: this.gradeService.gradeColors[td.targetGrade],
         expanded: false,
-        color: '#3333ff',
+        color: this.cssVar('--ot-color-primary'),
         taskDefinition: td,
         task: task,
         // progress: 0.5,
@@ -765,19 +794,19 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
             switch (p.taskStatus) {
               case 'ready_for_feedback':
-                color = 'rgba(0, 121, 216, 0.1)';
+                color = this.cssVarRgba('--ot-status-ready-for-feedback', 0.1);
                 break;
               case 'complete':
-                color = 'rgba(91, 183, 91, 0.1)';
+                color = this.cssVarRgba('--ot-status-complete', 0.1);
                 break;
               case 'discuss':
-                color = 'rgba(49, 176, 213, 0.1)';
+                color = this.cssVarRgba('--ot-status-discuss', 0.1);
                 break;
               case 'demonstrate':
-                color = 'rgba(49, 176, 213, 0.1)';
+                color = this.cssVarRgba('--ot-status-discuss', 0.1);
                 break;
               default:
-                color = 'gray';
+                color = this.cssVar('--ot-color-border');
             }
             const link: GanttLink = {
               type: GanttLinkType.fs,

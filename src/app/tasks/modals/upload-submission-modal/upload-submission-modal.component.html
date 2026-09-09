@@ -21,10 +21,10 @@
         <mat-card-content class="flex flex-col gap-2 pt-3.5">
           <div>
             <h3 class="font-semibold">Team Contribution</h3>
-            <p class="text-gray-600">
+            <p class="text-ot-muted">
               Please rate each team member's effort on {{ task.definition.name }}.
             </p>
-            <p class="text-gray-500">Click the same rating twice to record no contribution.</p>
+            <p class="text-ot-muted">Click the same rating twice to record no contribution.</p>
           </div>
 
           <f-group-member-contribution-assigner
@@ -47,12 +47,12 @@
             </h3>
 
             @if (submissionType === 'need_help') {
-              <p class="text-gray-600">
+              <p class="text-ot-muted">
                 Upload the required files so your tutor can help with this task, even if they are
                 not finished yet.
               </p>
             } @else {
-              <p class="text-gray-600">
+              <p class="text-ot-muted">
                 Upload files that show your evidence of work until each required file has been
                 selected.
               </p>
@@ -86,17 +86,17 @@
             <div>
               @if (submissionType === 'need_help') {
                 <h3 class="font-semibold">What do you need help with?</h3>
-                <p class="text-gray-600">
+                <p class="text-ot-muted">
                   Add a short comment so your tutor knows what help you need on this task.
                 </p>
               } @else {
                 <h3 class="font-semibold">Final comments</h3>
                 @if (task.definition.assessInPortfolioOnly) {
-                  <p class="text-gray-600">
+                  <p class="text-ot-muted">
                     Please specify which areas of your submission you would like feedback on.
                   </p>
                 } @else {
-                  <p class="text-gray-600">
+                  <p class="text-ot-muted">
                     Add an optional note for your tutor to read while assessing this submission.
                   </p>
                 }
@@ -113,7 +113,7 @@
               ></textarea>
             </mat-form-field>
 
-            <div class="text-right text-gray-500">
+            <div class="text-right text-ot-muted">
               Character count: {{ comment.length }}
               @if (requiresComment) {
                 <span>(Min. {{ minCommentLength }})</span>
@@ -127,7 +127,7 @@
             <mat-card-content class="flex flex-col gap-2 pt-3.5">
               <div>
                 <h3 class="font-semibold">Declaration</h3>
-                <p class="text-[14px] text-gray-600">{{ privacyPolicy.privacy }}</p>
+                <p class="text-[14px] text-ot-muted">{{ privacyPolicy.privacy }}</p>
               </div>
 
               <div>
@@ -141,7 +141,7 @@
                 </button>
 
                 @if (showPlagiarism) {
-                  <div class="mt-1 text-[13px] text-gray-600">
+                  <div class="mt-1 text-[13px] text-ot-muted">
                     {{ privacyPolicy.plagiarism }}
                   </div>
                 }

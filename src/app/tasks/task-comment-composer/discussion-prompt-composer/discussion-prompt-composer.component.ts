@@ -157,13 +157,18 @@ export class DiscussionPromptComposerComponent
       analyser.getByteFrequencyData(dataArray);
 
       this.canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+      // Resolve the fill from the theme token once per frame so the waveform flips with the
+      // panel, rather than baking in a literal blue on every bar.
+      const fill =
+        getComputedStyle(document.documentElement).getPropertyValue('--ot-color-primary').trim() ||
+        '#2563eb';
       let i = 0;
       const bar_width = 0.5;
       while (i < WIDTH) {
         const bar_x = i * 8;
         const bar_y = HEIGHT / 2;
         const bar_height = -(dataArray[i] / 4) + 1;
-        this.canvasCtx.fillStyle = '#2563eb';
+        this.canvasCtx.fillStyle = fill;
         this.canvasCtx.fillRect(bar_x, bar_y, bar_width, bar_height);
         this.canvasCtx.fillRect(bar_x, bar_y - bar_height, bar_width, bar_height);
         i++;

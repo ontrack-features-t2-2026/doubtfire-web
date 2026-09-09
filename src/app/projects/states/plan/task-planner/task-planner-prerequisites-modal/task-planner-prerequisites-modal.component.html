@@ -15,7 +15,7 @@
       [taskDefinition]="taskDefinition"
     ></f-task-prerequisites-card>
     @if (!task.hasPrerequisiteTasks()) {
-      <div class="w-full p-3 text-center text-gray-400">This task has no prerequisites.</div>
+      <div class="w-full p-3 text-center text-ot-muted">This task has no prerequisites.</div>
     }
     <mat-divider class="my-3"></mat-divider>
     @if (dependents.length) {
@@ -71,7 +71,7 @@
         </mat-card-content>
       </mat-card>
     } @else {
-      <div class="w-full p-3 text-center text-gray-400">
+      <div class="w-full p-3 text-center text-ot-muted">
         This task is not a prerequisite for any other tasks.
       </div>
     }

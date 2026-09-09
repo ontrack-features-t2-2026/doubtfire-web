@@ -18,7 +18,7 @@
       }
     </mat-menu>
     @if (editor.actionFor(rule).subject) {
-      <div class="rounded border border-slate-200 bg-slate-50 p-3">
+      <div class="rounded border border-ot-border bg-ot-raised p-3 text-ot-text">
         <div class="mb-2 font-medium">Subject Preview</div>
         <div [innerHTML]="editor.renderTemplatePreview(editor.actionFor(rule).subject, rule)"></div>
       </div>
@@ -31,7 +31,9 @@
           <mat-icon>add_circle</mat-icon>
         </button>
       </mat-form-field>
-      <div class="flex h-full flex-col rounded border border-slate-200 bg-slate-50 p-3">
+      <div
+        class="flex h-full flex-col rounded border border-ot-border bg-ot-raised p-3 text-ot-text"
+      >
         <div class="mb-2 font-medium">Body Preview</div>
         <div class="flex-1">
           @if (editor.actionFor(rule).body) {
@@ -39,7 +41,7 @@
               [innerHTML]="editor.renderTemplatePreview(editor.actionFor(rule).body, rule)"
             ></div>
           } @else {
-            <div class="text-black/40">Preview will appear here.</div>
+            <div class="text-ot-muted">Preview will appear here.</div>
           }
         </div>
       </div>
@@ -55,7 +57,7 @@
       <mat-checkbox [(ngModel)]="editor.actionFor(rule).email_tutors">Tutors</mat-checkbox>
       <mat-checkbox [(ngModel)]="editor.actionFor(rule).email_convenors">Convenors</mat-checkbox>
     </div>
-    <div class="text-sm text-black/50">Sent from the main convenor.</div>
+    <div class="text-sm text-ot-muted">Sent from the main convenor.</div>
   </div>
 } @else {
   <div class="flex w-full min-w-[520px] flex-col gap-3">
@@ -78,7 +80,7 @@
     </mat-menu>
 
     @if (editor.actionFor(rule).subject) {
-      <div class="rounded border border-slate-200 bg-slate-50 p-3">
+      <div class="rounded border border-ot-border bg-ot-raised p-3 text-ot-text">
         <div class="mb-2 font-medium">Subject Preview</div>
         <div [innerHTML]="editor.renderTemplatePreview(editor.actionFor(rule).subject, rule)"></div>
       </div>
@@ -92,7 +94,9 @@
           <mat-icon>add_circle</mat-icon>
         </button>
       </mat-form-field>
-      <div class="flex size-full flex-col rounded border border-slate-200 bg-slate-50 p-3">
+      <div
+        class="flex size-full flex-col rounded border border-ot-border bg-ot-raised p-3 text-ot-text"
+      >
         <div class="mb-2 font-medium">Body Preview</div>
         <div class="flex-1">
           @if (editor.actionFor(rule).body) {
@@ -100,7 +104,7 @@
               [innerHTML]="editor.renderTemplatePreview(editor.actionFor(rule).body, rule)"
             ></div>
           } @else {
-            <div class="text-black/40">Preview will appear here.</div>
+            <div class="text-ot-muted">Preview will appear here.</div>
           }
         </div>
       </div>
@@ -117,6 +121,6 @@
       <mat-checkbox [(ngModel)]="editor.actionFor(rule).email_tutors">Tutors</mat-checkbox>
       <mat-checkbox [(ngModel)]="editor.actionFor(rule).email_convenors">Convenors</mat-checkbox>
     </div>
-    <div class="text-sm text-black/50">Sent from the main convenor.</div>
+    <div class="text-sm text-ot-muted">Sent from the main convenor.</div>
   </div>
 }

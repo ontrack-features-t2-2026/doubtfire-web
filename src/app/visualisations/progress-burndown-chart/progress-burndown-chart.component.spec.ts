@@ -7,6 +7,7 @@ import {
   PeerProgressState,
   Project,
 } from 'src/app/api/models/doubtfire-model';
+import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
 
@@ -99,6 +100,7 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
       } as unknown as PeerProgressService,
       {enabled: demoEnabled} as DemoModeStore,
       'en-US',
+      {token: (name: string) => name} as unknown as ThemeColorService,
     );
 
     component.project = project;

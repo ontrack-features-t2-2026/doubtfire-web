@@ -718,7 +718,9 @@ export class CrossDashboardComponent implements OnInit {
         subtitle: `${def.abbreviation} - ${def.targetGradeText} Task`,
         statusLabel: TaskStatus.STATUS_LABELS.get(task.status),
         abbreviation: def.abbreviation,
-        color: TaskStatus.STATUS_COLORS.get(task.status),
+        // CSS var so the list-item status accent flips with the theme (used in a
+        // [style] binding, where var() resolves).
+        color: `var(--ot-status-${String(task.status).replace(/_/g, '-')})`,
         comments: task.numNewComments ?? 0,
         status: task.status,
         targetGrade: def.targetGrade,

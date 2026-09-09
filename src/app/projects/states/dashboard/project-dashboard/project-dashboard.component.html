@@ -1,6 +1,6 @@
 <ng-template #TaskListSkeleton>
   <div class="task-list-skeleton flex h-full flex-col p-1">
-    <div class="mb-2 rounded-2xl bg-white p-1">
+    <div class="mb-2 rounded-2xl bg-ot-surface p-1">
       <div class="flex items-center gap-2">
         <ngx-skeleton-loader
           appearance="circle"
@@ -13,10 +13,10 @@
       </div>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-hidden rounded-lg bg-white">
+    <div class="min-h-0 flex-1 overflow-hidden rounded-lg bg-ot-surface">
       @for (row of skeletonRows; track row) {
         <div
-          class="skeleton-task-row flex h-[65px] items-center gap-2 border-b border-gray-200 px-2"
+          class="skeleton-task-row flex h-[65px] items-center gap-2 border-b border-ot-divider px-2"
         >
           <div class="min-w-0 flex-1">
             <ngx-skeleton-loader
@@ -44,10 +44,10 @@
         @if (selectedTaskDefinition && mobilePane !== 'overview') {
           <div class="mobile-task-heading">
             <div class="min-w-0 px-3">
-              <div class="truncate text-sm font-bold text-gray-900">
+              <div class="truncate text-sm font-bold text-ot-text">
                 {{ selectedTaskDefinition.abbreviation }}
               </div>
-              <div class="truncate text-xs text-gray-600">
+              <div class="truncate text-xs text-ot-muted">
                 {{ selectedTaskDefinition.name }}
               </div>
             </div>
@@ -144,7 +144,7 @@
             #leftResizerEl
             cdkDrag
             cdkDragLockAxis="x"
-            class="absolute inset-y-0 left-0 z-50 w-[3px] cursor-ew-resize bg-slate-100"
+            class="absolute inset-y-0 left-0 z-50 w-[3px] cursor-ew-resize bg-ot-divider"
             [cdkDragBoundary]="boundary"
             (cdkDragEnded)="stoppedDragging($event, boundary)"
             (cdkDragMoved)="dragging($event, boundary)"
@@ -153,7 +153,10 @@
         </div>
       }
       @if (isPhoneLayout && mobilePane === 'overview') {
-        <section aria-label="Project overview" class="mobile-overview-view min-w-0 flex-1 bg-white">
+        <section
+          aria-label="Project overview"
+          class="mobile-overview-view min-w-0 flex-1 bg-ot-surface"
+        >
           <div class="mobile-overview-pane">
             @if (isProjectTaskListReady(project)) {
               <f-progress-dashboard
@@ -162,7 +165,7 @@
                 [showSubmittedGrade]="showSubmittedGrade"
               ></f-progress-dashboard>
             } @else {
-              <div class="dashboard-skeleton min-h-full rounded-lg bg-white p-2.5">
+              <div class="dashboard-skeleton min-h-full rounded-lg bg-ot-surface p-2.5">
                 <ngx-skeleton-loader
                   [theme]="{
                     height: '28px',
@@ -193,7 +196,7 @@
         </section>
       } @else if (selectedTaskDefinition) {
         @if (isPhoneLayout) {
-          <section aria-label="Selected task" class="mobile-task-view min-w-0 flex-1 bg-white">
+          <section aria-label="Selected task" class="mobile-task-view min-w-0 flex-1 bg-ot-surface">
             <div class="mobile-task-pane">
               @if (mobilePane === 'task') {
                 <f-task-dashboard
@@ -207,7 +210,7 @@
             </div>
           </section>
         } @else {
-          <div class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-white p-1">
+          <div class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-ot-surface p-1">
             <f-task-dashboard
               [task]="project.findTaskForDefinition(selectedTaskDefinition.id)"
             ></f-task-dashboard>
@@ -228,7 +231,7 @@
           }
           <div
             #commentspanel
-            class="comments-sidebar w-1/4 flex-none bg-white p-1"
+            class="comments-sidebar w-1/4 flex-none bg-ot-surface p-1"
             [class.comments-sidebar--narrow]="isCommentsNarrow"
             [class.hidden]="commentsPanelCollapsed"
           >
@@ -253,7 +256,7 @@
           class="project-dashboard-placeholder min-h-0 flex-1 overflow-y-auto p-1"
           [class.project-dashboard-placeholder--phone-hidden]="isPhoneLayout"
         >
-          <div class="dashboard-skeleton h-full rounded-lg bg-white p-2.5">
+          <div class="dashboard-skeleton h-full rounded-lg bg-ot-surface p-2.5">
             <ngx-skeleton-loader
               [theme]="{
                 height: '28px',

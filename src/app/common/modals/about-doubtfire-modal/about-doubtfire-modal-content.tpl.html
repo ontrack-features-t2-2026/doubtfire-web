@@ -13,14 +13,14 @@
   </div>
   <mat-divider class="my-6"></mat-divider>
   <div>
-    <h2 class="text-center text-xl font-bold text-gray-800 uppercase">Lead Contributors</h2>
+    <h2 class="text-center text-xl font-bold text-ot-text uppercase">Lead Contributors</h2>
     <ul
       class="mx-auto flex w-11/12 list-none flex-wrap justify-center gap-y-8 p-0 sm:w-5/6 sm:gap-x-10 sm:py-12"
     >
       @for (person of data.mainContributors; track person) {
       <li class="mx-auto w-4/5 sm:mx-0 sm:w-1/5">
         <a
-          class="block w-full text-center text-lg text-gray-700 no-underline hover:underline"
+          class="block w-full text-center text-lg text-ot-link no-underline hover:underline"
           target="_blank"
           [href]="person.html_url"
         >
@@ -31,7 +31,7 @@
       </li>
       }
     </ul>
-    <h2 class="text-center text-xl font-bold text-gray-800 uppercase">Contributors</h2>
+    <h2 class="text-center text-xl font-bold text-ot-text uppercase">Contributors</h2>
     <table
       class="mb-4 w-full"
       mat-table
@@ -80,12 +80,12 @@
     <p class="text-muted text-center">&copy; 2012&ndash;2023. Made in Melbourne.</p>
     <p class="text-muted text-center text-sm">
       OnTrack is an
-      <a class="text-gray-900" href="http://github.com/doubtfire-lms" target="_blank"
+      <a class="text-ot-link" href="http://github.com/doubtfire-lms" target="_blank"
         >Open Source</a
       >
       project licensed under <strong>GNU Affero General Public License (AGPL) v3.0</strong>. Star us
       on
-      <a class="text-gray-900" href="http://github.com/doubtfire-lms/doubtfire-web" target="_blank"
+      <a class="text-ot-link" href="http://github.com/doubtfire-lms/doubtfire-web" target="_blank"
         >GitHub</a
       >!
     </p>

@@ -19,7 +19,10 @@
             [class.mat-chip-clicked]="selectedTask === task"
             [ngClass]="newTaskService.statusClass(task.status)"
             [style.--mat-chip-elevated-container-color]="
-              newTaskService.statusColors.get(task.status)
+              'var(--ot-status-' + newTaskService.statusClass(task.status) + ')'
+            "
+            [style.--mat-chip-label-text-color]="
+              'var(--ot-status-' + newTaskService.statusClass(task.status) + '-on)'
             "
             (click)="selectChip(task)"
           >

@@ -102,8 +102,8 @@ export class TaskOverseerReportComponent implements OnInit {
   private ansi = new Convert({
     newline: false,
     escapeXML: true,
-    fg: '#1f2937',
-    bg: '#f9fafb',
+    fg: 'var(--ot-code-text)',
+    bg: 'var(--ot-code-surface)',
   });
 
   protected renderOutput(output?: string | null): SafeHtml {

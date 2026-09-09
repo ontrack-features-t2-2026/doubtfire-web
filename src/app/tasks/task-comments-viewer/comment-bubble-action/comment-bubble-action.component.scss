@@ -16,7 +16,7 @@
 }
 
 .mat-icon {
-  color: #9696969d;
+  color: var(--ot-color-text-muted);
   font-size: 16px;
   width: 16px;
   height: 16px;
@@ -28,7 +28,7 @@
 
 .bubble-action:hover .mat-icon,
 .bubble-action:focus-visible .mat-icon {
-  color: black;
+  color: var(--ot-color-text);
 }
 
 #overflowContainer {

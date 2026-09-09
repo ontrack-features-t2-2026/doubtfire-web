@@ -1,8 +1,8 @@
 .demo-mode-banner {
   align-items: center;
-  background: #fff4cc;
-  border-bottom: 1px solid #9a6700;
-  color: #5f3b00;
+  background: var(--ot-status-working-on-it);
+  border-bottom: 1px solid var(--ot-color-border);
+  color: var(--ot-status-working-on-it-on);
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;

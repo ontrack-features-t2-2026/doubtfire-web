@@ -25,9 +25,9 @@
 }
 
 mat-chip-option.f-chip {
-  background-color: $primary-color;
-  color: white;
+  background-color: var(--ot-color-primary);
+  color: var(--ot-color-on-primary);
   font-style: bold;
   opacity: 1;
-  --mat-chip-disabled-label-text-color: white;
+  --mat-chip-disabled-label-text-color: var(--ot-color-on-primary);
 }

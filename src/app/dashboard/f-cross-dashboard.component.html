@@ -28,7 +28,7 @@
 
     <button
       aria-controls="dashboard-secondary-filters"
-      class="flex min-h-12 w-full items-center justify-between rounded border border-gray-400 bg-white px-4 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
+      class="flex min-h-12 w-full items-center justify-between rounded border border-ot-border bg-ot-surface px-4 font-medium text-ot-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
       data-mobile-global-filter-toggle
       type="button"
       [attr.aria-expanded]="mobileGlobalFiltersExpanded"
@@ -93,7 +93,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-start-date">Start date</label>
         <input
-          class="h-12 min-w-0 rounded border border-gray-400 bg-white px-3"
+          class="h-12 min-w-0 rounded border border-ot-border bg-ot-surface px-3 text-ot-text"
           id="dashboard-start-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -105,7 +105,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-end-date">End date</label>
         <input
-          class="h-12 min-w-0 rounded border border-gray-400 bg-white px-3"
+          class="h-12 min-w-0 rounded border border-ot-border bg-ot-surface px-3 text-ot-text"
           id="dashboard-end-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -115,7 +115,7 @@
         />
       </div>
       <button
-        class="h-12 rounded border border-gray-400 bg-white px-4 font-medium disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
+        class="h-12 rounded border border-ot-border bg-ot-surface px-4 font-medium text-ot-text disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
         type="button"
         [disabled]="!startDate && !endDate"
         (click)="clearDateRange()"
@@ -124,7 +124,7 @@
       </button>
 
       @if (isDateRangeInvalid) {
-        <p class="text-red-700 sm:mb-5" id="date-range-error" role="alert">
+        <p class="text-ot-error sm:mb-5" id="date-range-error" role="alert">
           Start date must be on or before end date.
         </p>
       }
@@ -210,7 +210,7 @@
 
             <input
               autocomplete="off"
-              class="text-md h-12 min-w-0 rounded-md bg-white p-2 px-4 text-gray-900 placeholder:text-gray-600 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-full sm:w-56"
+              class="text-md h-12 min-w-0 rounded-md bg-ot-surface p-2 px-4 text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-full sm:w-56"
               placeholder="Search tasks..."
               type="search"
               [attr.aria-label]="'Search tasks in ' + unit.code"
@@ -224,7 +224,7 @@
                 [attr.aria-label]="'Sort tasks in ' + unit.code"
                 [matMenuTriggerFor]="sortmenu"
               >
-                <mat-icon style="color: white">sort</mat-icon>
+                <mat-icon style="color: var(--ot-color-on-primary)">sort</mat-icon>
               </button>
               <mat-menu #sortmenu="matMenu">
                 @for (mode of sortOptions; track mode) {
@@ -239,7 +239,7 @@
                 [attr.aria-label]="'Filter tasks in ' + unit.code"
                 [matMenuTriggerFor]="filtermenu"
               >
-                <mat-icon style="color: white">filter_list_alt</mat-icon>
+                <mat-icon style="color: var(--ot-color-on-primary)">filter_list_alt</mat-icon>
               </button>
               <mat-menu #filtermenu="matMenu">
                 @for (mode of filterOptions; track mode) {
@@ -263,7 +263,7 @@
         >
           @if (unit.gradeSummaries.length > 0) {
             <div
-              class="border-x border-gray-300 bg-gray-50 px-4 py-3"
+              class="border-x border-ot-border bg-ot-raised px-4 py-3 text-ot-text"
               [attr.aria-label]="'Grade task completion for ' + unit.code"
             >
               <p class="m-0 text-sm font-semibold">Grade task completion</p>
@@ -284,13 +284,13 @@
 
           <div class="flex min-h-0 flex-col overflow-visible sm:overflow-y-auto">
             @for (task of unit.tasks; track task.abbreviation) {
-              <div class="min-w-0 border-b border-gray-300">
+              <div class="min-w-0 border-b border-ot-border">
                 <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
               </div>
             }
 
             @if (unit.tasks.length === 0) {
-              <div class="border border-t-0 border-gray-300 p-6 text-center" role="status">
+              <div class="border border-t-0 border-ot-border p-6 text-center" role="status">
                 @if (hasActiveTaskCriteria(unit.projectId)) {
                   <p class="m-0">No tasks match the current search and filters.</p>
                 } @else {
@@ -310,7 +310,7 @@
       !previousUnitsLoadError
     ) {
       <div
-        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded border border-gray-300 bg-white p-6"
+        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded border border-ot-border bg-ot-surface p-6 text-ot-text"
         role="status"
       >
         <p class="m-0">No tasks match the current global search and filters.</p>
@@ -319,7 +319,7 @@
 
     @if (unitScope !== 'active' && loadingPreviousUnits) {
       <div
-        class="flex w-full shrink-0 items-center self-start rounded border border-gray-300 p-6 sm:w-80"
+        class="flex w-full shrink-0 items-center self-start rounded border border-ot-border p-6 sm:w-80"
       >
         Loading previous units...
       </div>
@@ -327,7 +327,7 @@
 
     @if (unitScope !== 'active' && previousUnitsLoadError) {
       <div
-        class="flex w-full shrink-0 flex-col self-start rounded border border-gray-300 p-6 sm:w-96"
+        class="flex w-full shrink-0 flex-col self-start rounded border border-ot-border p-6 sm:w-96"
       >
         <h3 class="mt-0">Previous units</h3>
         <p class="mb-0">Previous units could not be loaded.</p>
@@ -345,7 +345,7 @@
         <div class="bg-green-600 p-4 text-white">
           <h3 class="m-0">Previous units</h3>
         </div>
-        <div class="border border-t-0 border-gray-300 p-6">
+        <div class="border border-t-0 border-ot-border p-6">
           <p class="m-0">No previous units are available.</p>
         </div>
       </div>

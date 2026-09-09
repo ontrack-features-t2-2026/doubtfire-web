@@ -11,9 +11,9 @@ import {Observable, Subscription} from 'rxjs';
  * 'system' is an instruction, never a resolved value.
  *
  * This service owns the token layer's marker and the resolved-theme signal. The
- * no-flash <head> script (THM-F04), the Tailwind dark variant (THM-F03), the
- * accessible toggle (THM-F02) and the browser theme-color chrome (THM-W01) are
- * deliberately out of scope here.
+ * no-flash <head> script (THM-F04), the Tailwind dark variant (THM-F03) and the
+ * accessible toggle (THM-F02) are out of scope here. The browser theme-color chrome
+ * (THM-W01) is applied here in applyResolved, since it must follow the resolved theme.
  */
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -412,6 +412,28 @@ export class ThemeService {
     // Only ever 'light' or 'dark' reaches the attribute. Section 5.
     root.setAttribute('data-ot-theme', resolved);
     root.style.colorScheme = resolved;
+    this.applyBrowserThemeColour(root);
+  }
+
+  /**
+   * THM-W01: keep the mobile browser chrome (address bar, status bar, task-switcher
+   * tint) and the installed-app top bar in step with the resolved theme. The manifest
+   * theme_color is fixed at install time, so the live surface is the theme-color meta;
+   * set its content to the resolved page colour. Read the token back after the marker
+   * is applied so the meta always matches whatever the token layer resolved to.
+   */
+  private applyBrowserThemeColour(root: HTMLElement): void {
+    if (typeof getComputedStyle !== 'function') {
+      return;
+    }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      return;
+    }
+    const page = getComputedStyle(root).getPropertyValue('--ot-color-page').trim();
+    if (page) {
+      meta.setAttribute('content', page);
+    }
   }
 
   private prefersDark(): boolean {

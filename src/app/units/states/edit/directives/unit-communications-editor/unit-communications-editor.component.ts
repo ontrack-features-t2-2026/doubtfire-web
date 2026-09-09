@@ -840,7 +840,7 @@ export class UnitCommunicationsEditorComponent implements OnInit, OnChanges, OnD
     const escaped = this.escapeHtml(value);
     const rendered = escaped.replace(/\{\{[\w.]+\}\}/g, (token) => {
       const replacement = this.resolveTemplateVariable(token, rule) || token;
-      return `<span class="rounded bg-blue-50 px-1 text-blue-800">${this.escapeHtml(replacement)}</span>`;
+      return `<span class="rounded bg-ot-raised px-1 text-ot-text">${this.escapeHtml(replacement)}</span>`;
     });
 
     return rendered.replace(/\n/g, '<br />');

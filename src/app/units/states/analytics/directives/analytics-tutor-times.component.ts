@@ -215,8 +215,12 @@ export class AnalyticsTutorTimesComponent implements OnInit {
           this.events = data.map((session) => {
             const tutor = this.unit.staff.find((t) => t.user.id === session.user?.id);
 
-            const primary = tutor ? this.stringToHexColor(tutor.user.firstName) : '#e0e0e0';
-            const secondary = tutor ? this.stringToHexColor(tutor.user.firstName) : '#e3e2e1';
+            const primary = tutor
+              ? this.stringToHexColor(tutor.user.firstName)
+              : 'var(--ot-color-disabled-surface)';
+            const secondary = tutor
+              ? this.stringToHexColor(tutor.user.firstName)
+              : 'var(--ot-color-disabled-text)';
             return {
               start: new Date(session.startTime),
               end: new Date(session.endTime),

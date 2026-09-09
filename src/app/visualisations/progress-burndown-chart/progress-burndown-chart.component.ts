@@ -23,6 +23,7 @@ import {
   Unit,
 } from 'src/app/api/models/doubtfire-model';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
+import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 
 interface BurndownPoint {
@@ -66,19 +67,22 @@ export class ProgressBurndownChartComponent
   xAxisLabel: string = 'Time';
   yAxisLabel: string = 'Tasks Remaining';
   // ngx-charts hands the scheme domain to the series by position, so the full palette is
-  // kept here and the scheme is narrowed to whatever is on show.
+  // kept here and the scheme is narrowed to whatever is on show. These are token names,
+  // resolved to concrete colours at render time (seriesColor) so the lines flip with the
+  // theme; ngx-charts needs a real colour string, not a var().
   private readonly seriesPalette: string[] = [
-    '#AAAAAA',
-    '#777777',
-    '#0079d8',
-    '#E01B5D',
-    '#7C3AED',
+    '--ot-color-text-muted',
+    '--ot-chart-axis',
+    '--ot-chart-2',
+    '--ot-chart-5',
+    '--ot-chart-1',
   ];
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: [...this.seriesPalette],
+    // Light fallbacks; replaced with resolved tokens on the first applyVisibility().
+    domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED'],
   };
 
   yScaleMin: number = 0;
@@ -98,6 +102,7 @@ export class ProgressBurndownChartComponent
     private peerProgressService: PeerProgressService,
     readonly demoMode: DemoModeStore,
     @Inject(LOCALE_ID) private locale: string,
+    private themeColor: ThemeColorService,
   ) {
     super(viewContainerRef);
     this.data = [];
@@ -370,7 +375,7 @@ export class ProgressBurndownChartComponent
   }
 
   seriesColor(index: number): string {
-    return this.seriesPalette[index % this.seriesPalette.length];
+    return this.themeColor.token(this.seriesPalette[index % this.seriesPalette.length]);
   }
 
   public formatPerc(input: number): string {

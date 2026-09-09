@@ -1,5 +1,12 @@
 @use 'styles/common/hero-sidebar-layout' as *;
 
+// logo-bw.svg ships as solid black (its paths carry no fill) so the small-screen
+// wordmark stays black in every theme. Invert it in dark so the mark reads like
+// the wordmark text, which already uses the text token.
+:root[data-ot-theme='dark'] .wordmark img {
+  filter: invert(1);
+}
+
 .sign-in-form {
   section {
     padding: 8px;

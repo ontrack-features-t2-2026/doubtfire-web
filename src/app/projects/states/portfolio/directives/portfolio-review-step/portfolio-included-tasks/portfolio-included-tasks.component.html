@@ -5,7 +5,7 @@
   </div>
 } @else {
   @if (tasksInPortfolio.length === 0) {
-    <div class="flex size-full flex-col items-center justify-center p-2.5 text-gray-400">
+    <div class="flex size-full flex-col items-center justify-center p-2.5 text-ot-muted">
       <mat-icon class="scale-125">assignment_late</mat-icon>
       <p class="p-2.5">No tasks found</p>
     </div>
@@ -24,21 +24,21 @@
     </ol>
   }
   @if (tasksStillProcessing.length > 0) {
-    <div class="my-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+    <div class="my-4 rounded-md border border-ot-warning bg-ot-raised p-4">
       <div class="mb-3 flex items-start gap-3">
-        <mat-icon class="text-amber-600">hourglass_top</mat-icon>
+        <mat-icon class="text-ot-warning">hourglass_top</mat-icon>
         <div>
-          <p class="font-medium text-amber-900">Tasks still processing</p>
-          <p class="mt-1 text-sm text-amber-800">
+          <p class="font-medium text-ot-warning">Tasks still processing</p>
+          <p class="mt-1 text-sm text-ot-warning">
             Please wait until these tasks have finished processing before creating your portfolio to
             ensure they are included.
           </p>
         </div>
       </div>
-      <ol class="border-t border-amber-200">
+      <ol class="border-t border-ot-warning">
         @for (task of tasksStillProcessing; track task) {
           <li class="flex items-center justify-between gap-3 py-3">
-            <div class="text-sm text-amber-950">
+            <div class="text-sm text-ot-warning">
               {{ task.definition.abbreviation }} &mdash; {{ task.definition.name }}
             </div>
             <div class="shrink-0">
@@ -47,7 +47,7 @@
           </li>
         }
       </ol>
-      <p class="mt-4 px-4 py-3 text-center text-sm text-amber-800">
+      <p class="mt-4 px-4 py-3 text-center text-sm text-ot-warning">
         This list will automatically refresh as tasks finish processing.
       </p>
     </div>

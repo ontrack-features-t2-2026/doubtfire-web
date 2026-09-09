@@ -108,7 +108,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
       .map((entry) => ({
         ...entry,
         label: this.statusLabel(entry.status),
-        color: TaskStatus.STATUS_COLORS.get(entry.status) ?? '#64748b',
+        color: `var(--ot-status-${TaskStatus.statusClass(entry.status)}, var(--ot-color-text-muted))`,
       }));
   }
 
