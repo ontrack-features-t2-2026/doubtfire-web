@@ -79,7 +79,7 @@
                 }
               ],
               "optimization": true,
-              "outputHashing": "bundles",
+              "outputHashing": "all",
               "sourceMap": false,
               "extractLicenses": true,
               "serviceWorker": "ngsw-config.json"
