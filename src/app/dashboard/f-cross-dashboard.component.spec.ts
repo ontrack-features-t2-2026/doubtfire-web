@@ -11,6 +11,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Observable, ReplaySubject, Subject, of, throwError} from 'rxjs';
 import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
@@ -128,6 +129,8 @@ describe('CrossDashboardComponent', () => {
         NoopAnimationsModule,
       ],
       providers: [
+        {provide: ActivatedRoute, useValue: {queryParamMap: of(convertToParamMap({}))}},
+        {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
         {
           provide: GlobalStateService,
           useValue: globalStateServiceStub,
