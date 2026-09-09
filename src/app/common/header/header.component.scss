@@ -34,9 +34,9 @@
 // mat-menu-item a badge is positioned against the item's own box and ends up
 // over the label.
 .notification-menu-count {
-  background: #d93025;
+  background: var(--ot-color-error);
   border-radius: 999px;
-  color: #fff;
+  color: var(--ot-color-on-primary);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;

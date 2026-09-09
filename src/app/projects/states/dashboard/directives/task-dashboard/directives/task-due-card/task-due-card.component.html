@@ -55,7 +55,7 @@
     <!--/is due soon-->
     @if (task?.betweenDueDateAndDeadlineDate()) {
       <mat-card appearance="outlined">
-        <mat-card-header class="bg-yellow-600 text-white">
+        <mat-card-header class="bg-ot-warning text-white">
           <mat-card-title class="mb-2.5 flex items-center"
             ><mat-icon>warning</mat-icon>
             @if (flexibleDatesEnabled) {
@@ -69,7 +69,7 @@
         </mat-card-header>
 
         <mat-card-content
-          class="bg-yellow-50"
+          class="bg-ot-raised"
           [hidden]="$safeNavigationMigration(task?.inDiscussState())"
         >
           <!--Not in submitted state and overdue-->
@@ -120,7 +120,7 @@
     <!--/between due date and deadline-->
     @if (task?.isPastDeadline()) {
       <mat-card appearance="outlined">
-        <mat-card-header class="bg-red-600 text-white">
+        <mat-card-header class="bg-ot-error text-white">
           <mat-card-title class="mb-2.5 flex items-center"
             ><mat-icon>error</mat-icon>
             <span class="ml-2.5"
@@ -129,7 +129,7 @@
           >
         </mat-card-header>
         <mat-card-content
-          class="bg-red-50"
+          class="bg-ot-raised"
           [hidden]="$safeNavigationMigration(task?.inDiscussState())"
         >
           <!--Past deadline and not submitted-->

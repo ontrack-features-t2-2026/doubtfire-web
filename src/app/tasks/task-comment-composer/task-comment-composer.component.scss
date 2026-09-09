@@ -7,7 +7,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   display: flex;
   flex-grow: 1;
   #textFieldContainer {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--ot-color-hover);
     border-radius: 18px;
     display: flex;
     flex: 1 1 auto;
@@ -20,7 +20,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   }
 
   #textFieldContainer.recording {
-    background-color: #3939ff;
+    background-color: var(--ot-color-primary);
   }
 
   #textField {
@@ -51,7 +51,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
     padding: 9px 0;
     -webkit-font-smoothing: antialiased;
     content: attr(placeholder);
-    color: #555;
+    color: var(--ot-color-text-muted);
     cursor: text;
   }
 
@@ -107,7 +107,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   height: 24px;
   width: 24px;
   cursor: pointer;
-  color: $emoji-color;
+  color: var(--ot-color-text-muted);
 }
 
 .emoji-picker {
@@ -121,11 +121,11 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   margin: 0 5px 0 5px;
   max-height: 125px;
   overflow: scroll;
-  background-color: white;
+  background-color: var(--ot-color-surface-raised);
   border-radius: 12px;
   border-style: solid;
   border-width: 1px;
-  border-color: color.adjust($color: white, $lightness: -10%);
+  border-color: var(--ot-color-border);
 }
 
 #replyContainer {
@@ -133,7 +133,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   font-size: 14px;
 
   p {
-    color: rgba(0, 0, 0, 0.5);
+    color: var(--ot-color-text-muted);
     font-size: 12px;
     max-lines: 2;
     max-height: 35px;
@@ -180,7 +180,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
 }
 
 .markdown-editor-action {
-  color: grey;
+  color: var(--ot-color-text-muted);
   font-size: 1em;
   cursor: pointer;
 }
@@ -211,7 +211,7 @@ form {
   width: 20px;
   height: 20px;
   transform: rotate(-45deg);
-  background: #fff;
+  background: var(--ot-color-surface-raised);
   position: absolute;
   box-shadow: 1px 4px 8px rgba(0, 0, 0, 0.5);
   z-index: -1;
@@ -222,7 +222,7 @@ form {
 .image-uploader {
   width: 100%;
   border-left: 1px solid;
-  border-color: #ddd;
+  border-color: var(--ot-color-divider);
 }
 
 .composer-action-group {
@@ -232,7 +232,7 @@ form {
 button.btn-no-outline {
   margin-left: -12px;
   margin-right: -12px;
-  color: $emoji-color;
+  color: var(--ot-color-text-muted);
   line-height: 1;
   transform: scale(0.8);
 }

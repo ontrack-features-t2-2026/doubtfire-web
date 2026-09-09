@@ -91,6 +91,8 @@ export class IntelligentDiscussionRecorderComponent
       let WIDTH: number;
       let HEIGHT: number;
 
+      this.resolveWaveformColours();
+
       this.canvas.width = 1;
       this.canvas.height = 1;
 
@@ -122,12 +124,32 @@ export class IntelligentDiscussionRecorderComponent
     draw();
   }
 
+  // Waveform fill colours are read from the theme tokens so the visualiser flips with the
+  // panel. getComputedStyle is resolved once per animation frame (see resolveWaveformColours),
+  // never inside the per-bar draw loop where the getter is read.
+  private waveformIdleColour = '#2563eb';
+  private waveformRecordingColour = '#dc2626';
+  private waveformRecordingMutedColour = '#b91c1c66';
+
+  private resolveWaveformColours(): void {
+    const styles = getComputedStyle(document.documentElement);
+    const idle = styles.getPropertyValue('--ot-color-primary').trim();
+    const error = styles.getPropertyValue('--ot-color-error').trim();
+    if (idle) {
+      this.waveformIdleColour = idle;
+    }
+    if (error) {
+      this.waveformRecordingColour = error;
+      this.waveformRecordingMutedColour = `color-mix(in srgb, ${error} 40%, transparent)`;
+    }
+  }
+
   private get waveformColour(): string {
     if (!this.isRecording) {
-      return '#2563eb';
+      return this.waveformIdleColour;
     }
 
-    return this.promptActive ? '#b91c1c66' : '#dc2626';
+    return this.promptActive ? this.waveformRecordingMutedColour : this.waveformRecordingColour;
   }
 
   private clearWaveform(): void {
