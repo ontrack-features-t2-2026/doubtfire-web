@@ -1,8 +1,15 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {EMPTY} from 'rxjs';
-import {TaskCommentService, TaskService, UserService} from 'src/app/api/models/doubtfire-model';
+import {EMPTY, of} from 'rxjs';
+import {
+  Project,
+  Task,
+  TaskComment,
+  TaskCommentService,
+  TaskService,
+  UserService,
+} from 'src/app/api/models/doubtfire-model';
 import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
 import {CommentsModalService} from 'src/app/common/modals/comments-modal/comments-modal.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
@@ -16,6 +23,7 @@ import {TaskCommentsViewerComponent} from './task-comments-viewer.component';
 
 const taskCommentServiceStub = {
   commentAdded$: EMPTY,
+  fetchAll: vi.fn(),
 };
 const taskServiceStub = {
   taskStatusUpdated$: EMPTY,
@@ -51,6 +59,53 @@ describe('TaskCommentsViewerComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+  it('removes cached comments missing from the latest response', () => {
+    const keptComment = {
+      id: 1,
+      text: 'keep',
+      recipientReadTime: null,
+      recipientIsMe: false,
+    } as unknown as TaskComment;
+
+    const staleComment = {
+      id: 2,
+      text: 'remove',
+      recipientReadTime: null,
+      recipientIsMe: false,
+    } as unknown as TaskComment;
+
+    const latestComment = {
+      ...keptComment,
+    } as TaskComment;
+
+    const deleteFromCache = vi.fn();
+
+    const task = {
+      comments: [keptComment, staleComment],
+      commentCache: {
+        get: vi.fn((id: number) => (id === 1 ? keptComment : undefined)),
+        add: vi.fn(),
+        set: vi.fn(),
+        delete: deleteFromCache,
+      },
+      definition: {id: 1},
+      numNewComments: 2,
+      refreshCommentData: vi.fn(),
+    } as unknown as Task;
+
+    component.project = {
+      id: 1,
+      unit: {currentUserIsStaff: false},
+    } as unknown as Project;
+
+    component.scrollDown = vi.fn();
+    taskCommentServiceStub.fetchAll.mockReturnValue(of([latestComment]));
+
+    component.fetchComments(task, false);
+
+    expect(deleteFromCache).toHaveBeenCalledTimes(1);
+    expect(deleteFromCache).toHaveBeenCalledWith(2);
   });
 });
 
