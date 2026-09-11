@@ -4,6 +4,9 @@
   max-width: 400px !important;
   min-width: 400px !important;
   width: 400px !important;
+  // Match the sibling notifications dropdown at the 12px menu rung (it forced 16px,
+  // this inherited Material's 4px default — two radii on adjacent header menus).
+  border-radius: var(--ot-radius-md);
 }
 
 ::ng-deep .mdc-list-item__primary-text {

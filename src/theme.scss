@@ -276,6 +276,14 @@ $dark-theme: mat.m2-define-dark-theme(
     border: 1px solid var(--ot-color-border);
   }
 
+  // The shared data table (.f-table, styles.scss) is a bare <table> styled as a
+  // raised panel with mat.elevation(1). It matches none of the card/menu/dialog
+  // selectors above, so it gets no central edge — give it the same hairline so
+  // every data table reads as a defined surface in dark, not a floating grid.
+  .f-table {
+    border: 1px solid var(--ot-color-border);
+  }
+
   // M2's dark filled text-field container defaults to a pale overlay, so appearance="fill"
   // fields (the target/submitted-grade cards, the enrolment modal) render as a light box on
   // the dark card. Point the container onto the surface token so a filled field reads as a
