@@ -245,14 +245,14 @@
                         @if (taskListItem(taskDef); as task) {
                           @if (taskStartApproaching(task)) {
                             <span
-                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-sky-500"
+                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-ot-link"
                             >
                               <mat-icon class="size-4! text-[16px]!"> event_upcoming </mat-icon>
                               {{ taskStartLabel(task) }}
                             </span>
                           } @else if (taskOngoing(task)) {
                             <span
-                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-sky-500"
+                              class="flex shrink-0 items-center gap-px text-[12px] font-normal text-ot-link"
                             >
                               <mat-icon class="size-4! text-[16px]!"> event_upcoming </mat-icon>
                               Start now
