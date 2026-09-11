@@ -85,6 +85,15 @@
       mat-row
       [style.background]="selectedOutcome === row ? 'var(--ot-color-selected)' : ''"
     ></tr>
+    <tr *matNoDataRow class="mat-row">
+      <td class="mat-cell !border-b-0" [attr.colspan]="outcomeColumns.length">
+        <f-empty-state
+          hint="Add an outcome to describe what students should achieve."
+          icon="school"
+          message="No learning outcomes yet"
+        ></f-empty-state>
+      </td>
+    </tr>
   </table>
 
   <span class="flex items-center">

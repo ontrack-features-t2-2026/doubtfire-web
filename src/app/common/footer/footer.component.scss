@@ -148,14 +148,16 @@
   }
   &.redo {
     @include status-icon('redo');
-    color: #000;
+    // Glyph sits on the transparent footer (page token), so use the theme text
+    // token instead of #000 or it goes invisible on the dark footer.
+    color: var(--ot-color-text);
   }
   &.attention-required {
     @include status-icon('attention-required');
   }
   &.fix-and-resubmit {
     @include status-icon('fix-and-resubmit');
-    color: #000;
+    color: var(--ot-color-text);
   }
 
   &.large-button.fix-and-resubmit:hover,
@@ -165,7 +167,7 @@
   }
   &.discuss {
     @include status-icon('discuss');
-    color: #000;
+    color: var(--ot-color-text);
   }
   &.rediscuss {
     @include status-icon('rediscuss');
@@ -175,7 +177,7 @@
   }
   &.complete {
     @include status-icon('complete');
-    color: #000;
+    color: var(--ot-color-text);
   }
   &.assess-in-portfolio {
     @include status-icon('assess-in-portfolio');
@@ -185,7 +187,7 @@
   &.mat-mdc-button-disabled,
   &.mdc-icon-button--disabled {
     background-color: transparent;
-    color: rgba(0, 0, 0, 0.25);
+    color: var(--ot-color-disabled-text);
     filter: none;
     opacity: 1;
   }
@@ -199,6 +201,6 @@
   &.rediscuss:disabled,
   &.rediscuss.mat-mdc-button-disabled,
   &.rediscuss.mdc-icon-button--disabled {
-    color: rgba(0, 0, 0, 0.25);
+    color: var(--ot-color-disabled-text);
   }
 }

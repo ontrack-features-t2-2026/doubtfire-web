@@ -1,5 +1,5 @@
 .mat-icon {
-  color: #9696969d;
+  color: var(--ot-color-text-muted);
   font-size: 20px;
   width: 20px;
   height: 20px;
@@ -10,7 +10,7 @@
 }
 
 .mat-icon:hover {
-  color: black;
+  color: var(--ot-color-text);
 }
 
 // Edit, reply and delete are real buttons, stripped back to look the way the bare icons
@@ -31,7 +31,7 @@
 
 .note-action:hover .mat-icon,
 .note-action:focus-visible .mat-icon {
-  color: black;
+  color: var(--ot-color-text);
 }
 
 // The row used to be shown by a mouseover handler writing hoveredNoteId, which no keyboard

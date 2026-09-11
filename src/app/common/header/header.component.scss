@@ -17,7 +17,32 @@
 
   .mat-icon {
     color: var(--ot-color-text, #000);
-    transform: scale(1.5);
+    transform: scale(1.5); // keep for the brand logo + dropdown glyphs
+  }
+
+  // Icon buttons: the global scale(1.5) overran the 48px state layer, leaving only
+  // a ~6px hover ring. Scale the glyph to 32px inside the 48px target for an even
+  // ~8px ring on every toolbar hover.
+  .mat-mdc-icon-button.mat-mdc-button-base .mat-icon {
+    transform: scale(1.33);
+  }
+
+  // Account avatar: make the text button a circular 48px target matching the round
+  // 32px avatar, so its hover ring is even instead of a cramped rectangle.
+  .account-menu-trigger.mat-mdc-button.mat-mdc-button-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+
+    .mat-mdc-button-persistent-ripple,
+    .mat-mdc-button-persistent-ripple::before {
+      border-radius: 50%;
+    }
   }
 }
 

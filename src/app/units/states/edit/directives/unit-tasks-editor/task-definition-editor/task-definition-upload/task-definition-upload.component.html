@@ -89,11 +89,20 @@
 
   <tr *matHeaderRowDef="columns" mat-header-row></tr>
   <tr *matRowDef="let row; columns: columns" class="table-row" mat-row></tr>
+  <tr *matNoDataRow class="mat-row">
+    <td class="mat-cell !border-b-0" [attr.colspan]="columns.length">
+      <f-empty-state
+        hint="Add a file students must submit."
+        icon="folder_off"
+        message="No upload requirements"
+      ></f-empty-state>
+    </td>
+  </tr>
   <tr *matFooterRowDef="['actions']" mat-footer-row></tr>
 </table>
 
 @if (missingOverseerSubmissionHistory) {
-  <div class="mt-2 text-sm text-red-700">
+  <div class="mt-2 text-sm text-ot-error">
     Overseer requires at least one upload requirement to be retained in submission history.
   </div>
 }

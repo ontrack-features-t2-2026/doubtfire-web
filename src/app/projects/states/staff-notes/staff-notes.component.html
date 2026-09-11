@@ -1,6 +1,6 @@
 <div class="flex h-full flex-col">
   @if (!loadingStaffNotes && project?.staffNoteCount === 0) {
-    <div class="flex size-full items-center justify-center text-gray-300">
+    <div class="flex size-full items-center justify-center text-ot-muted">
       No staff notes for {{ project.student.preferredName }} {{ project.student.lastName }}
     </div>
   }
@@ -9,11 +9,11 @@
       @for (note of project?.staffNoteCache?.currentValues; track note) {
         @if (note.replyToId) {
           <div
-            class="flex items-center justify-between rounded-t-md border border-gray-300 p-1 text-sm select-none"
+            class="flex items-center justify-between rounded-t-md border border-ot-border p-1 text-sm select-none"
           >
             <div
               class="flex items-center"
-              [ngClass]="note.replyTo && 'cursor-pointer hover:text-blue-500 hover:underline'"
+              [ngClass]="note.replyTo && 'cursor-pointer hover:text-ot-link hover:underline'"
               (click)="scrollToNote(note.replyTo)"
             >
               <mat-icon class="mr-2">reply</mat-icon>
@@ -23,9 +23,9 @@
                     Replying to {{ note.replyTo.user.preferredName }}
                     {{ note.replyTo.user.lastName }} ({{ note.replyTo.user.nickname }})
                   </span>
-                  <span class="text-xs text-gray-600">{{ note.replyTo.note }}</span>
+                  <span class="text-xs text-ot-muted">{{ note.replyTo.note }}</span>
                 } @else {
-                  <span class="text-xs text-gray-400 italic">Replying to: Deleted note</span>
+                  <span class="text-xs text-ot-muted italic">Replying to: Deleted note</span>
                 }
               </div>
             </div>
@@ -108,10 +108,10 @@
     }
   </div>
 
-  <div class="h-[150px] border-t border-gray-300 p-2.5">
+  <div class="h-[150px] border-t border-ot-divider p-2.5">
     @if (replyingToNote) {
       <div
-        class="flex items-center justify-between rounded-t-md border border-b-0 border-gray-300 p-1 text-sm select-none"
+        class="flex items-center justify-between rounded-t-md border border-b-0 border-ot-border p-1 text-sm select-none"
       >
         <div class="flex items-center">
           <mat-icon class="mt-0.5 mr-2">reply</mat-icon>
@@ -121,7 +121,7 @@
                 replyingToNote.user.nickname
               }})
             </span>
-            <span class="text-xs text-gray-600">{{ replyingToNote.note }}</span>
+            <span class="text-xs text-ot-muted">{{ replyingToNote.note }}</span>
           </div>
         </div>
         <mat-icon class="cursor-pointer" (click)="cancelReplyingToNote()">close</mat-icon>

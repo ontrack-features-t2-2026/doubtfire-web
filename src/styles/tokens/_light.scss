@@ -7,8 +7,10 @@
 :root,
 :root[data-ot-theme='light'] {
   // --- 7. Semantic ---
-  --ot-color-page: #fafafa;
-  --ot-color-surface: #ffffff;
+  // Softened whites: a whitesmoke ground and off-white cards read less harsh than
+  // pure #fff, while raised elements keep true white to pop.
+  --ot-color-page: #f3f4f6;
+  --ot-color-surface: #fbfcfd;
   --ot-color-surface-raised: #ffffff;
   --ot-color-text: #212121;
   --ot-color-text-muted: #616161;

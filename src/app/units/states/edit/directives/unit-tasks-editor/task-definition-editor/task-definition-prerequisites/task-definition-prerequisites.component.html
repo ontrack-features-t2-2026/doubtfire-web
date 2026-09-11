@@ -83,6 +83,15 @@
       </ng-container>
       <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
       <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+      <tr *matNoDataRow class="mat-row">
+        <td class="mat-cell !border-b-0" [attr.colspan]="displayedColumns.length">
+          <f-empty-state
+            hint="Add a task that must be done first."
+            icon="account_tree"
+            message="No prerequisites"
+          ></f-empty-state>
+        </td>
+      </tr>
     </table>
   </div>
 

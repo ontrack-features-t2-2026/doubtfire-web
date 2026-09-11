@@ -79,7 +79,7 @@
                 </button>
               } @else {
                 <div
-                  class="text-green-600"
+                  class="text-ot-success"
                   matTooltip="You can not manually change tutorials for this unit"
                   matTooltipPosition="above"
                   matTooltipShowDelay="1000"
@@ -104,6 +104,15 @@
         </ng-container>
         <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
         <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+        <tr *matNoDataRow class="mat-row">
+          <td class="mat-cell !border-b-0" [attr.colspan]="displayedColumns.length">
+            <f-empty-state
+              hint="There are no tutorials to enrol in yet. Check back later or contact your unit coordinator."
+              icon="event_busy"
+              message="No tutorials available"
+            ></f-empty-state>
+          </td>
+        </tr>
       </table>
     </div>
   </f-page-container>

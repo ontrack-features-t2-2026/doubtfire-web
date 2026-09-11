@@ -79,7 +79,7 @@
           </div>
         } @else {
           <div></div>
-          <div class="mt-3 text-gray-500 italic">Click the QR code to open the scanner..</div>
+          <div class="mt-3 text-ot-muted italic">Click the QR code to open the scanner..</div>
         }
         <button class="scale-[2]" color="primary" mat-icon-button (click)="scanQrCode()">
           <mat-icon>qr_code_scanner</mat-icon>
@@ -87,7 +87,7 @@
       </div>
 
       @if (project && !filteredTasks.length) {
-        <div class="py-6 text-gray-400 italic">No tasks to discuss.</div>
+        <div class="py-6 text-ot-muted italic">No tasks to discuss.</div>
       }
       <mat-selection-list #tasks class="m-0 h-min p-0">
         @for (task of filteredTasks; track task) {
@@ -147,7 +147,7 @@
                   <button
                     aria-label="task-comments"
                     mat-icon-button
-                    [ngClass]="task.id === selectedTask?.id ? 'text-blue-500' : 'text-gray-400'"
+                    [ngClass]="task.id === selectedTask?.id ? 'text-blue-500' : 'text-ot-muted'"
                     (click)="loadTaskComments($event, task)"
                   >
                     <mat-icon>chat-bubble</mat-icon>
@@ -185,7 +185,7 @@
         <div class="my-2 flex w-full items-center justify-center gap-5">
           @if (attendance) {
             <button
-              class="medium-icon-button bg-gray-100"
+              class="medium-icon-button bg-ot-raised"
               color="secondary"
               mat-fab
               [disabled]="!tasks.selectedOptions.selected.length"
@@ -196,7 +196,7 @@
             </button>
           } @else {
             <button
-              class="medium-icon-button bg-gray-100"
+              class="medium-icon-button bg-ot-raised"
               color="secondary"
               mat-fab
               [disabled]="!tasks.selectedOptions.selected.length"
@@ -261,7 +261,7 @@
             class="h-full"
             ng-if="selectedTask"
             refocus-on-task-change="true"
-            style="padding: 0 8px 0 12px; background: white; border-radius: 12px"
+            style="padding: 0 8px 0 12px; background: var(--ot-color-surface); border-radius: 12px"
             [project]="project"
             [task]="selectedTask"
           >

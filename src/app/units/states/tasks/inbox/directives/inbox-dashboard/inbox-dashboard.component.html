@@ -14,7 +14,7 @@
             <span class="inline-flex items-center gap-1">
               Similarities
               @if (task.similaritiesDetected) {
-                <mat-icon class="text-red-500">warning</mat-icon>
+                <mat-icon class="text-ot-error">warning</mat-icon>
               }
             </span>
           </ng-template>
@@ -44,7 +44,7 @@
 
       <button
         aria-label="Task actions"
-        class="shrink-0 text-gray-600"
+        class="shrink-0 text-ot-muted"
         mat-icon-button
         [matMenuTriggerFor]="taskMenu"
       >
@@ -71,7 +71,7 @@
               <f-pdf-viewer [pdfUrl]="task.submissionUrl()"></f-pdf-viewer>
             } @else {
               <div class="flex h-full flex-col items-center justify-center">
-                <mat-icon class="size-[120px] text-[120px] text-[#c5c5c5]">
+                <mat-icon class="size-[120px] text-[120px] text-ot-muted">
                   description_off
                 </mat-icon>
               </div>
@@ -84,9 +84,7 @@
               <f-pdf-viewer [pdfUrl]="task.definition.getTaskPDFUrl()"></f-pdf-viewer>
             } @else {
               <div class="flex h-full flex-col items-center justify-center">
-                <mat-icon class="size-[120px] text-[120px] text-[#c5c5c5]">
-                  subtitles_off
-                </mat-icon>
+                <mat-icon class="size-[120px] text-[120px] text-ot-muted"> subtitles_off </mat-icon>
               </div>
             }
           </div>
@@ -119,8 +117,8 @@
     </div>
   } @else {
     <div class="flex h-full flex-col items-center justify-center">
-      <mat-icon class="size-[120px] text-[120px] text-[#c5c5c5]">subtitles_off</mat-icon>
-      <p class="mt-1 text-[#c5c5c5]">Select a task to review</p>
+      <mat-icon class="size-[120px] text-[120px] text-ot-muted">subtitles_off</mat-icon>
+      <p class="mt-1 text-ot-muted">Select a task to review</p>
     </div>
   }
 </div>

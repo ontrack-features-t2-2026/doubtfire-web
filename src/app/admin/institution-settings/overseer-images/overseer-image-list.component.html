@@ -18,7 +18,7 @@
   </div>
   @if (loadingImages) {
     <div aria-busy="true" aria-label="Loading overseer images" class="overflow-hidden">
-      <div class="flex h-14 items-center gap-6 border-b border-gray-300 px-4">
+      <div class="flex h-14 items-center gap-6 border-b border-ot-divider px-4">
         @for (width of ['22%', '18%', '8%', '16%', '10%', '4%']; track $index) {
           <ngx-skeleton-loader
             [theme]="{width: width, height: '12px', 'border-radius': '999px', margin: '0'}"
@@ -27,7 +27,7 @@
       </div>
 
       @for (row of skeletonRows; track row) {
-        <div class="flex h-[72px] items-center gap-6 border-b border-y-gray-300 px-4">
+        <div class="flex h-[72px] items-center gap-6 border-b border-y-ot-divider px-4">
           <ngx-skeleton-loader
             class="w-[28%]"
             [theme]="{width: '35%', height: '12px', 'border-radius': '999px', margin: '0'}"
@@ -223,6 +223,15 @@
 
     <tr *matHeaderRowDef="columns" mat-header-row></tr>
     <tr *matRowDef="let row; columns: columns" mat-row></tr>
+    <tr *matNoDataRow class="mat-row">
+      <td class="mat-cell !border-b-0" [attr.colspan]="columns.length">
+        <f-empty-state
+          hint="Add an image using the row below to enable automated task analysis."
+          icon="image_not_supported"
+          message="No overseer images yet"
+        ></f-empty-state>
+      </td>
+    </tr>
     <tr *matFooterRowDef="columns" mat-footer-row [hidden]="selected"></tr>
   </table>
 </div>

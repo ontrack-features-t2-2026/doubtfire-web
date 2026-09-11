@@ -118,6 +118,15 @@
           [routerLink]="['/projects', row.id, 'dashboard']"
         ></tr>
       }
+      <tr *matNoDataRow class="mat-row">
+        <td class="mat-cell !border-b-0" [attr.colspan]="displayedColumns.length">
+          <f-empty-state
+            hint="Try a different search term."
+            icon="school"
+            message="No units found"
+          ></f-empty-state>
+        </td>
+      </tr>
     </table>
     <span class="flex items-center">
       <mat-paginator class="mat-elevation-z0" [pageSizeOptions]="[10, 25, 100]"></mat-paginator>

@@ -29,9 +29,7 @@
             @if (task.similarityFlag) {
               <mat-icon svgIcon="visibility"></mat-icon>
             }
-            <span class="{{ task.status === 'not_started' ? 'text-black' : '' }}">{{
-              taskText(task)
-            }}</span></mat-chip
+            <span>{{ taskText(task) }}</span></mat-chip
           >
         }
       </div>

@@ -55,9 +55,9 @@
     </div>
 
     @if (showOverseerResourcesEditor) {
-      <div class="mt-2.5 rounded border border-slate-200 p-1">
+      <div class="mt-2.5 rounded border border-ot-border p-1">
         @if (isLoadingOverseerResourcesArchive) {
-          <div class="flex h-[32rem] items-center justify-center text-slate-600">
+          <div class="flex h-[32rem] items-center justify-center text-ot-muted">
             Loading Overseer Resources archive...
           </div>
         } @else if (overseerResourcesArchive) {
@@ -72,7 +72,7 @@
             (saveSuccess)="onOverseerResourcesArchiveSaved($event)"
           ></f-archive-viewer>
         } @else {
-          <div class="flex h-[32rem] items-center justify-center text-slate-600">
+          <div class="flex h-[32rem] items-center justify-center text-ot-muted">
             Unable to load Overseer Resources archive.
           </div>
         }
@@ -116,9 +116,9 @@
     </div>
 
     <mat-drawer-container class="example-container">
-      <mat-drawer class="min-w-[300px] border border-gray-300" mode="side" opened>
+      <mat-drawer class="min-w-[300px] border border-ot-border" mode="side" opened>
         <div
-          class="flex min-h-[50px] w-[300px] items-center justify-between border border-gray-300 bg-gray-300 px-[20px]"
+          class="flex min-h-[50px] w-[300px] items-center justify-between border border-ot-border bg-ot-raised px-[20px]"
         >
           <div>Overseer Steps</div>
           @if (!newOverseerStep) {
@@ -131,7 +131,7 @@
               cdkDrag
               class="example-box"
               [ngClass]="{
-                'bg-gray-100': selectedOverseerStep?.id === step.id,
+                'bg-ot-selected': selectedOverseerStep?.id === step.id,
               }"
               (click)="selectStep(step)"
             >
@@ -143,7 +143,7 @@
             <div
               cdkDrag
               cdkDragDisabled
-              class="example-box bg-gray-100"
+              class="example-box bg-ot-selected"
               (click)="selectStep(newOverseerStep)"
             >
               {{ newOverseerStep.sortOrder }}. {{ newOverseerStep.name || 'Untitled Step' }}
@@ -400,7 +400,7 @@
             </mat-card-content>
           </mat-card>
         } @else {
-          <div class="flex min-h-[350px] w-full flex-col items-center justify-center bg-gray-50">
+          <div class="flex min-h-[350px] w-full flex-col items-center justify-center bg-ot-surface">
             No steps selected
             <mat-icon style="width: 75px; height: 75px; font-size: 75px">tab_unselected</mat-icon>
           </div>
@@ -408,7 +408,7 @@
       </mat-drawer-content>
     </mat-drawer-container>
   } @else {
-    <div class="p-3 text-center text-gray-500">
+    <div class="p-3 text-center text-ot-muted">
       Please save the task definition before configuring the overseer steps.
     </div>
   }

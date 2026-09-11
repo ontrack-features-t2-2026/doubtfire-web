@@ -14,7 +14,7 @@
 .file-drop-zone {
   align-items: center;
   background: transparent;
-  border: 2px dashed rgba(0, 0, 0, 0.24);
+  border: 2px dashed var(--ot-color-border);
   border-radius: 8px;
   color: inherit;
   cursor: pointer;

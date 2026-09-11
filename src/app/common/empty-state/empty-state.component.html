@@ -1,0 +1,9 @@
+<div class="flex flex-col items-center justify-center gap-2 py-12 text-center text-ot-muted">
+  @if (icon) {
+    <mat-icon class="empty-state-icon">{{ icon }}</mat-icon>
+  }
+  <p class="m-0 text-base font-medium">{{ message }}</p>
+  @if (hint) {
+    <p class="m-0 max-w-md text-sm">{{ hint }}</p>
+  }
+</div>

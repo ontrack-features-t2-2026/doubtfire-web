@@ -30,6 +30,7 @@ module.exports = {
         'ot-error': 'var(--ot-color-error)',
         'ot-info': 'var(--ot-color-info)',
         'ot-selected': 'var(--ot-color-selected)',
+        'ot-hover': 'var(--ot-color-hover)',
         'ot-code': 'var(--ot-code-surface)',
         'ot-inverse': 'var(--ot-color-inverse-surface)',
         'ot-on-inverse': 'var(--ot-color-inverse-text)',
