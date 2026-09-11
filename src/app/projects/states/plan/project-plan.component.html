@@ -46,8 +46,13 @@
   </f-page-container>
 
   <f-page-container [fullWidth]="true">
-    <div [style.height.px]="(planner?.items.length + 2) * 43">
-      <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
+    <!-- The gantt Tasks column is a fixed 350px; on a phone that squeezes the timeline
+         to an unusable sliver. Scroll the whole chart horizontally inside its own
+         container (min width keeps the timeline legible) so the page body never scrolls. -->
+    <div class="w-full overflow-x-auto">
+      <div class="min-w-[820px]" [style.height.px]="(planner?.items.length + 2) * 43">
+        <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
+      </div>
     </div>
   </f-page-container>
 }
