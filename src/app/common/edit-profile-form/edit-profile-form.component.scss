@@ -57,7 +57,13 @@ section {
 }
 
 .peer-progress-preference {
+  // Divider token equals the raised surface in dark (#353c47), so this separator
+  // vanishes on the dialog. Use the border token in dark where it actually reads;
+  // keep the softer divider in light.
   border-block: 1px solid var(--ot-color-divider);
+  :root[data-ot-theme='dark'] & {
+    border-block-color: var(--ot-color-border);
+  }
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;

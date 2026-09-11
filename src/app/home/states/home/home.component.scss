@@ -30,9 +30,9 @@
 }
 
 .base-card {
-  margin-right: 15px;
-  margin-bottom: 15px;
-  border-radius: 15px;
+  margin-right: 16px;
+  margin-bottom: 16px;
+  border-radius: var(--ot-radius-md);
   overflow: hidden;
   clip: auto;
 
@@ -88,4 +88,12 @@
 :host {
   --mat-progress-bar-track-height: 16px;
   --mat-progress-bar-active-indicator-height: 16px;
+}
+
+// The card-footer progress bar is 16px tall, so Material's default square ends
+// read as a chunky rectangle. Round it to the pill rung so the track matches the
+// chips and buttons on the same card.
+mat-progress-bar {
+  border-radius: var(--ot-radius-pill);
+  overflow: hidden;
 }

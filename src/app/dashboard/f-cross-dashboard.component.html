@@ -28,7 +28,7 @@
 
     <button
       aria-controls="dashboard-secondary-filters"
-      class="flex min-h-12 w-full items-center justify-between rounded border border-ot-border bg-ot-surface px-4 font-medium text-ot-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
+      class="flex min-h-12 w-full items-center justify-between rounded-ot-sm border border-ot-border bg-ot-surface px-4 font-medium text-ot-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
       data-mobile-global-filter-toggle
       type="button"
       [attr.aria-expanded]="mobileGlobalFiltersExpanded"
@@ -93,7 +93,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-start-date">Start date</label>
         <input
-          class="h-12 min-w-0 rounded border border-ot-border bg-ot-surface px-3 text-ot-text"
+          class="h-12 min-w-0 rounded-ot-sm border border-ot-border bg-ot-surface px-3 text-ot-text"
           id="dashboard-start-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -105,7 +105,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-end-date">End date</label>
         <input
-          class="h-12 min-w-0 rounded border border-ot-border bg-ot-surface px-3 text-ot-text"
+          class="h-12 min-w-0 rounded-ot-sm border border-ot-border bg-ot-surface px-3 text-ot-text"
           id="dashboard-end-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -115,7 +115,7 @@
         />
       </div>
       <button
-        class="h-12 rounded border border-ot-border bg-ot-surface px-4 font-medium text-ot-text disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
+        class="h-12 rounded-ot-sm border border-ot-border bg-ot-surface px-4 font-medium text-ot-text disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
         type="button"
         [disabled]="!startDate && !endDate"
         (click)="clearDateRange()"
@@ -135,7 +135,7 @@
   >
     @for (unit of displayedUnits; track unit.projectId) {
       <section
-        class="flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-lg shadow sm:h-full sm:w-128"
+        class="flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-ot-md shadow dark:border dark:border-ot-border sm:h-full sm:w-128"
         [attr.aria-label]="unit.code + ' project tasks'"
       >
         <div
@@ -210,7 +210,7 @@
 
             <input
               autocomplete="off"
-              class="text-md h-12 min-w-0 rounded-md bg-ot-surface p-2 px-4 text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-full sm:w-56"
+              class="text-md h-12 min-w-0 rounded-ot-sm bg-ot-surface p-2 px-4 text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-full sm:w-56"
               placeholder="Search tasks..."
               type="search"
               [attr.aria-label]="'Search tasks in ' + unit.code"
@@ -310,7 +310,7 @@
       !previousUnitsLoadError
     ) {
       <div
-        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded border border-ot-border bg-ot-surface p-6 text-ot-text"
+        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded-ot-md border border-ot-border bg-ot-surface p-6 text-ot-text"
         role="status"
       >
         <p class="m-0">No tasks match the current global search and filters.</p>

@@ -88,7 +88,7 @@ $my-palette: mat.m2-define-palette($md-formatif);
 
 .mat-mdc-list-item .item-content {
   height: 60px;
-  border-radius: 6px;
+  border-radius: var(--ot-radius-sm);
 }
 
 .mat-mdc-list-item .item-content:hover {

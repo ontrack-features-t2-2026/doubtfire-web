@@ -15,7 +15,7 @@
   align-items: center;
   background: transparent;
   border: 2px dashed var(--ot-color-border);
-  border-radius: 8px;
+  border-radius: var(--ot-radius-sm);
   color: inherit;
   cursor: pointer;
   display: flex;
