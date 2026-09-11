@@ -232,6 +232,14 @@ $dark-theme: mat.m2-define-dark-theme(
     color: var(--ot-color-text);
   }
 
+  // M2's dark paginator keeps a warm-grey container that reads as a stray band on
+  // the slate ground (seen under the units tables and the View-all list). Sit it on
+  // the page token so it matches the rest of the design.
+  .mat-mdc-paginator {
+    --mat-paginator-container-background-color: var(--ot-color-page);
+    background-color: var(--ot-color-page);
+  }
+
   // M2's dark theme paints every raised surface a neutral warm #424242, which
   // fights the cool slate ramp and reads muddy. Repoint the container colours onto
   // the raised token so cards, menus, dialogs and select panels sit in the same
