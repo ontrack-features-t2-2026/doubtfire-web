@@ -1,9 +1,11 @@
 @use 'theme' as *;
 
 ::ng-deep .unit-dropdown-menu.mat-mdc-menu-panel {
-  max-width: 400px !important;
-  min-width: 400px !important;
-  width: 400px !important;
+  // Cap to the viewport on a phone so the switcher never spills off the right edge
+  // (a hard 400px overran a 390px screen).
+  min-width: min(400px, calc(100vw - 16px)) !important;
+  max-width: calc(100vw - 16px) !important;
+  width: auto !important;
 }
 
 ::ng-deep .mdc-list-item__primary-text {
