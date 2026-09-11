@@ -45,11 +45,18 @@
 
   .f-card-title {
     font-size: 18px;
-    min-height: 65px; // Ensures consistent card height while allowing text to wrap
-    white-space: wrap;
+    min-height: 65px; // reserve two lines so short and long titles keep a uniform card
+    // Clamp to two lines with a real ellipsis. The old white-space:wrap +
+    // text-overflow:ellipsis never truncated (ellipsis needs a single line), so long
+    // unit names wrapped to 3-4 lines and pushed the chip and progress bar out of the
+    // fixed-height card. -webkit-line-clamp truncates a genuinely long name instead.
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
-    overflow: hidden;
     font-weight: 100;
   }
 
@@ -81,7 +88,9 @@
   @extend .base-card;
   width: 300px;
   max-width: 300px;
-  max-height: 200px;
+  // No hard max-height: with the title clamped to two lines the card is already a
+  // bounded, uniform height, and the 200px clip was cutting off the term chip and
+  // progress bar on any multi-line title.
 
   .mat-mdc-card-actions {
     margin-bottom: 0px;
