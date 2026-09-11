@@ -1,3 +1,24 @@
+// Unit column header. The full-saturation accent band (bg-ot-primary / green-600)
+// read as a loud block against the calm slate ground in dark, drawing more weight
+// than the task content below it. Keep the colour as a per-column identity and the
+// active/previous signal, but in dark sit it on a deep, low-brightness tint of the
+// accent (mixed toward the page token) so the header belongs to the slate family
+// instead of shouting over it. White label text still clears AA (~7.7:1 blue,
+// ~6.5:1 green). Light keeps the saturated band — white text needs a dark-enough
+// ground and a saturated header reads fine on the near-white page.
+.dashboard-project-header {
+  background-color: var(--ot-color-primary);
+}
+.dashboard-project-header.is-previous {
+  background-color: #16a34a; // tailwind green-600, the previous-unit accent
+}
+:root[data-ot-theme='dark'] .dashboard-project-header {
+  background-color: color-mix(in srgb, var(--ot-color-primary) 55%, var(--ot-color-page));
+}
+:root[data-ot-theme='dark'] .dashboard-project-header.is-previous {
+  background-color: color-mix(in srgb, #16a34a 55%, var(--ot-color-page));
+}
+
 .dashboard-global-advanced-filters {
   display: none !important;
 }
