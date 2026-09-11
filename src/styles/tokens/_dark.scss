@@ -5,18 +5,18 @@
 
 :root[data-ot-theme='dark'] {
   // --- 7. Semantic ---
-  // GitHub-dark inspired ground: a cool blue-grey ramp with a bright blue accent.
+  // Soft slate ground (a lifted GitHub-dark), easier on the eye than a near-black:
   // Softened whites (never #fff), elevation by lightness, subtle borders that sit
   // just above the surface. Vivid, saturated status fills carry the colour.
-  --ot-color-page: #0d1117;
-  --ot-color-surface: #161b22;
-  --ot-color-surface-raised: #21262d;
-  --ot-color-text: #e6edf3;
-  --ot-color-text-muted: #8b949e;
-  --ot-color-border: #30363d;
-  --ot-color-divider: #262c34;
+  --ot-color-page: #21262d;
+  --ot-color-surface: #2b313b;
+  --ot-color-surface-raised: #353c47;
+  --ot-color-text: #dbe3ea;
+  --ot-color-text-muted: #a4afbd;
+  --ot-color-border: #464f5b;
+  --ot-color-divider: #353c47;
   --ot-color-focus: #388bfd;
-  --ot-color-link: #58a6ff;
+  --ot-color-link: #6cb2ff;
   // Filled buttons/chips use primary with a white label, so it must clear AA on
   // white: #1f6feb measures 4.6:1 (the lighter #388bfd only 3.3). Link stays the
   // brighter #58a6ff for text on the dark ground.
@@ -25,7 +25,7 @@
   --ot-color-success: #3fb950;
   --ot-color-warning: #e3b341;
   --ot-color-error: #ff7b72;
-  --ot-color-info: #58a6ff;
+  --ot-color-info: #6cb2ff;
   --ot-color-inverse-surface: #e6edf3;
   --ot-color-inverse-text: #161b22;
 
@@ -74,19 +74,19 @@
   --ot-chart-4: #f85149;
   --ot-chart-5: #bc8cff;
   --ot-chart-6: #e3b341;
-  --ot-chart-grid: #21262d;
+  --ot-chart-grid: #353c47;
   --ot-chart-axis: #8b949e;
 
-  --ot-code-surface: #010409;
+  --ot-code-surface: #1a1f26;
   --ot-code-text: #e6edf3;
 
   --ot-scrim: rgba(1, 4, 9, 0.8);
   --ot-elevation-1: 0 1px 3px rgba(1, 4, 9, 0.5);
 
-  --ot-color-disabled-text: #6e7681;
-  --ot-color-disabled-surface: #21262d;
+  --ot-color-disabled-text: #7e8896;
+  --ot-color-disabled-surface: #353c47;
 
-  --ot-color-selected: #163a63;
+  --ot-color-selected: #1e4272;
   --ot-color-selected-text: #e6edf3;
   --ot-color-hover: rgba(255, 255, 255, 0.06);
 }
