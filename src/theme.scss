@@ -238,26 +238,42 @@ $dark-theme: mat.m2-define-dark-theme(
   // family as the page. Angular Material 22 reads the --mat-* tokens (the --mdc-*
   // ones are not honoured), and the card also needs the literal background because
   // M2 paints it directly.
+  //
+  // Dark elevation reads by a defined edge, not a drop shadow: --ot-elevation-1 is
+  // near invisible on the #21262d ground, so a raised surface separated only by an
+  // ~18-point lightness step still reads flat. Give every raised surface a hairline
+  // border on the border token (#464f5b, one clear step above the #353c47 card) so
+  // cards, dialogs, menus and select panels lift off the page the way a shadow does
+  // in light. The outlined-card outline previously pointed at --ot-color-divider,
+  // which is the SAME value as the raised surface in dark (#353c47), so it drew
+  // nothing — repointed to the border token so it actually reads.
   .mat-mdc-card {
     --mat-card-elevated-container-color: var(--ot-color-surface-raised);
     --mat-card-outlined-container-color: var(--ot-color-surface-raised);
-    // Outlined cards separated the light-mode way with a hard border, which glows
-    // on the dark ground. Drop the outline onto the ~8% divider so the raised
-    // surface does the separating and the line is only a faint edge.
-    --mat-card-outlined-outline-color: var(--ot-color-divider);
+    --mat-card-outlined-outline-color: var(--ot-color-border);
     background-color: var(--ot-color-surface-raised);
     color: var(--ot-color-text);
+    border: 1px solid var(--ot-color-border);
   }
   .mat-mdc-menu-panel {
     --mat-menu-container-color: var(--ot-color-surface-raised);
+    border: 1px solid var(--ot-color-border);
   }
   .mat-mdc-dialog-container {
     --mat-dialog-container-color: var(--ot-color-surface-raised);
+  }
+  // The visible, rounded dialog element is the surface, not the container — border
+  // it so the modal has a defined edge against the scrimmed page (the Web calendar
+  // dialog read as a floating slab with no boundary before this).
+  .mat-mdc-dialog-container .mat-mdc-dialog-surface,
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    border: 1px solid var(--ot-color-border);
   }
   .mat-mdc-select-panel,
   .mat-mdc-autocomplete-panel {
     --mat-select-panel-background-color: var(--ot-color-surface-raised);
     background-color: var(--ot-color-surface-raised);
+    border: 1px solid var(--ot-color-border);
   }
 
   // M2's dark filled text-field container defaults to a pale overlay, so appearance="fill"
