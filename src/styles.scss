@@ -114,17 +114,26 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 // token so every tab strip clears AA; the active label keeps the theme accent.
 .mat-mdc-tab-group,
 .mat-mdc-tab-nav-bar {
-  --mat-tab-header-inactive-label-text-color: var(--ot-color-text-muted);
-  --mat-tab-header-inactive-hover-label-text-color: var(--ot-color-text);
-  --mat-tab-header-inactive-focus-label-text-color: var(--ot-color-text);
-  // The active label defaulted to the mid primary (#1f6feb), which reads dim on the
-  // dark panel. Use the brighter link token (#6cb2ff dark / #3939ff light) for the
-  // active label and the ink bar so the selected tab actually pops.
-  --mat-tab-header-active-label-text-color: var(--ot-color-link);
-  --mat-tab-header-active-hover-label-text-color: var(--ot-color-link);
-  --mat-tab-header-active-focus-label-text-color: var(--ot-color-link);
-  --mat-tab-header-active-ripple-color: var(--ot-color-link);
-  --mdc-tab-indicator-active-indicator-color: var(--ot-color-link);
+  // This Material build reads --mat-tab-{active,inactive}-label-text-color for the
+  // label colour (the --mat-tab-header-* names are NOT honoured, verified computed).
+  // Inactive defaulted to a low-contrast tone on the dark panel -> muted text; the
+  // active label defaulted to the mid primary #1f6feb which read dim -> brighter link
+  // token (#6cb2ff dark / #3939ff light) so the selected tab pops.
+  --mat-tab-inactive-label-text-color: var(--ot-color-text-muted);
+  --mat-tab-active-label-text-color: var(--ot-color-link);
+}
+// The theme mixin re-sets --mat-tab-active-label-text-color inside the dark scope at
+// higher specificity than the declaration above, so the token override is beaten in
+// dark. Force the active label colour directly (!important clears the scoped token).
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label,
+.mat-mdc-tab-link.mdc-tab--active .mdc-tab__text-label {
+  color: var(--ot-color-link) !important;
+}
+// Ink bar to match the active label (Material's own indicator rule wins on source
+// order, so this needs !important).
+.mat-mdc-tab-group .mdc-tab-indicator__content--underline,
+.mat-mdc-tab-nav-bar .mdc-tab-indicator__content--underline {
+  border-color: var(--ot-color-link) !important;
 }
 
 /* Ensures smooth resizing of task list in project dashboard */
