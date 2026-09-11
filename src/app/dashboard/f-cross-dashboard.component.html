@@ -37,7 +37,7 @@
       <span>More filters</span>
       <span class="flex items-center gap-2">
         @if (mobileSecondaryFilterCount > 0) {
-          <span class="rounded-full bg-formatif-blue px-2 py-0.5 text-sm text-white">
+          <span class="rounded-full bg-ot-primary px-2 py-0.5 text-sm text-white">
             {{ mobileSecondaryFilterCount }} active
           </span>
         }
@@ -140,7 +140,7 @@
       >
         <div
           class="flex w-full shrink-0 flex-col p-4 sm:flex-row sm:items-center sm:gap-4"
-          [class.bg-formatif-blue]="!unit.isPrevious"
+          [class.bg-ot-primary]="!unit.isPrevious"
           [class.bg-green-600]="unit.isPrevious"
         >
           <h2 class="m-0 sm:hidden">
