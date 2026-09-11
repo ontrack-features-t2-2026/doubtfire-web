@@ -14,7 +14,7 @@
   </div>
   @if (loadingStudents) {
     <div aria-busy="true" aria-label="Loading students" class="overflow-hidden">
-      <div class="flex h-14 items-center gap-6 border-b border-gray-300 px-4">
+      <div class="flex h-14 items-center gap-6 border-b border-ot-divider px-4">
         @for (width of ['10%', '12%', '12%', '20%', '10%', '20%', '8%', '8%']; track $index) {
           <ngx-skeleton-loader
             [theme]="{width: width, height: '12px', 'border-radius': '999px', margin: '0'}"
@@ -23,7 +23,7 @@
       </div>
 
       @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
-        <div class="flex h-[72px] items-center gap-6 border-b border-gray-300 px-4">
+        <div class="flex h-[72px] items-center gap-6 border-b border-ot-divider px-4">
           <ngx-skeleton-loader
             class="w-[10%]"
             [theme]="{width: '100%', height: '12px', 'border-radius': '999px', margin: '0'}"
@@ -60,8 +60,8 @@
   >
     <!-- Username Column -->
     <ng-container matColumnDef="username" sticky>
-      <th *matHeaderCellDef class="bg-white" mat-header-cell mat-sort-header>Username</th>
-      <td *matCellDef="let project" class="bg-white" mat-cell>
+      <th *matHeaderCellDef class="bg-ot-surface" mat-header-cell mat-sort-header>Username</th>
+      <td *matCellDef="let project" class="bg-ot-surface" mat-cell>
         {{ project.student.username }}
       </td>
     </ng-container>
@@ -168,6 +168,15 @@
 
     <tr *matHeaderRowDef="columns" mat-header-row></tr>
     <tr *matRowDef="let row; columns: columns" class="table-row" mat-row></tr>
+    <tr *matNoDataRow class="mat-row">
+      <td class="mat-cell !border-b-0" [attr.colspan]="columns.length">
+        <f-empty-state
+          hint="Enrol students or batch enrol using the toolbar below."
+          icon="person_off"
+          message="No students enrolled"
+        ></f-empty-state>
+      </td>
+    </tr>
     <tr *matFooterRowDef="['actions']" mat-footer-row></tr>
   </table>
 </div>

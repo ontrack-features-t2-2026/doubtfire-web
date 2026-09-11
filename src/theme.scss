@@ -168,25 +168,24 @@ $is-dark-theme: map.get($color-config, 'is-dark');
 // component *colours* (typography/density stay from the light include above), so
 // every Material component flips to dark when <html data-ot-theme="dark">.
 //
-// The brand blue #3939ff is too saturated for a dark surface (it "shakes" and
-// reads harsh). This is the same blue desaturated into a slate-friendly indigo,
-// with 500 = #5457e5 to match --ot-color-primary exactly, so chips, buttons and
-// progress bars stop fighting the token accent.
+// A GitHub-blue ramp with 500 = #1f6feb to match --ot-color-primary exactly, so
+// Material chips, buttons and progress bars use the same accent as the token layer
+// (white labels clear AA on #1f6feb at 4.6:1).
 $md-formatif-dark: (
-  50: #eef0ff,
-  100: #e0e3fe,
-  200: #c7ccfc,
-  300: #a7aef9,
-  400: #818cf8,
-  500: #5457e5,
-  600: #464add,
-  700: #4a51d6,
-  800: #3d43ad,
-  900: #2f347f,
+  50: #cae3ff,
+  100: #a5cbff,
+  200: #79b0ff,
+  300: #4d94fa,
+  400: #2f80f0,
+  500: #1f6feb,
+  600: #1a63d8,
+  700: #1657bf,
+  800: #1247a0,
+  900: #0d3576,
   A100: #ffffff,
-  A200: #e0e3ff,
-  A400: #b3b8ff,
-  A700: #9aa0ff,
+  A200: #cae3ff,
+  A400: #79b0ff,
+  A700: #4d94fa,
   contrast: (
     50: #000000,
     100: #000000,
@@ -204,9 +203,9 @@ $md-formatif-dark: (
     A700: #000000,
   ),
 );
-// Default 500 = #5457e5 with a white contrast (white measures 5.4:1 on it), so
-// filled buttons, the fab and progress bars read as one indigo with white labels,
-// matching --ot-color-primary. (contrast for 500 is #ffffff in the map above.)
+// Default 500 = #1f6feb with a white contrast, so filled buttons, the fab and
+// progress bars read as one blue with white labels, matching --ot-color-primary.
+// (contrast for 500 is #ffffff in the map above.)
 $primary-dark: mat.m2-define-palette($md-formatif-dark, 500, 300, 700);
 
 $dark-theme: mat.m2-define-dark-theme(
@@ -242,6 +241,10 @@ $dark-theme: mat.m2-define-dark-theme(
   .mat-mdc-card {
     --mat-card-elevated-container-color: var(--ot-color-surface-raised);
     --mat-card-outlined-container-color: var(--ot-color-surface-raised);
+    // Outlined cards separated the light-mode way with a hard border, which glows
+    // on the dark ground. Drop the outline onto the ~8% divider so the raised
+    // surface does the separating and the line is only a faint edge.
+    --mat-card-outlined-outline-color: var(--ot-color-divider);
     background-color: var(--ot-color-surface-raised);
     color: var(--ot-color-text);
   }
@@ -255,5 +258,16 @@ $dark-theme: mat.m2-define-dark-theme(
   .mat-mdc-autocomplete-panel {
     --mat-select-panel-background-color: var(--ot-color-surface-raised);
     background-color: var(--ot-color-surface-raised);
+  }
+
+  // M2's dark filled text-field container defaults to a pale overlay, so appearance="fill"
+  // fields (the target/submitted-grade cards, the enrolment modal) render as a light box on
+  // the dark card. Point the container onto the surface token so a filled field reads as a
+  // subtle inset one step below the raised card, mirroring the light-mode look. The wrapper is
+  // repainted directly because M2 honours the --mat-* tokens over the --mdc-* ones here too.
+  .mat-mdc-text-field-wrapper.mdc-text-field--filled {
+    --mdc-filled-text-field-container-color: var(--ot-color-surface);
+    --mdc-filled-text-field-disabled-container-color: var(--ot-color-surface);
+    background-color: var(--ot-color-surface);
   }
 }

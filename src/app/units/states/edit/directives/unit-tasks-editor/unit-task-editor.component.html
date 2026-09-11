@@ -103,7 +103,7 @@
                       (ngModelChange)="setGradeDueDate(td, grade, $event)"
                     />
                     @if (isStartAfterTarget(td, grade)) {
-                      <mat-hint class="text-red-500">
+                      <mat-hint class="text-ot-error">
                         Target date must be after start date
                       </mat-hint>
                     }
@@ -117,6 +117,15 @@
 
           <tr *matHeaderRowDef="dueDateColumns" mat-header-row></tr>
           <tr *matRowDef="let row; columns: dueDateColumns" mat-row></tr>
+          <tr *matNoDataRow class="mat-row">
+            <td class="mat-cell !border-b-0" [attr.colspan]="dueDateColumns.length">
+              <f-empty-state
+                hint="Add a task to set target dates for each grade."
+                icon="assignment"
+                message="No task definitions yet"
+              ></f-empty-state>
+            </td>
+          </tr>
         </table>
       </div>
     }
@@ -130,7 +139,9 @@
         'w-full md:w-[92px]': isTaskListCollapsed,
       }"
     >
-      <div class="overflow-hidden rounded-2xl bg-white md:flex md:h-[calc(100vh-2rem)] md:flex-col">
+      <div
+        class="overflow-hidden rounded-2xl bg-ot-surface md:flex md:h-[calc(100vh-2rem)] md:flex-col"
+      >
         <div
           class="text-left text-[15px]"
           [ngClass]="{
@@ -184,13 +195,13 @@
             ) {
               <mat-list-item class="clearfix h-[60px] p-0" [disableRipple]="true">
                 <div
-                  class="flex h-[60px] w-full cursor-pointer items-center rounded-[6px] hover:bg-gray-50"
+                  class="flex h-[60px] w-full cursor-pointer items-center rounded-[6px] hover:bg-ot-hover"
                   matTooltipPosition="above"
                   [matTooltip]="taskDefinition.name"
                   [matTooltipDisabled]="!isTaskListCollapsed"
                   [matTooltipShowDelay]="250"
                   [ngClass]="{
-                    'bg-[#e7e7ff]': isSelectedTaskDefinition(taskDefinition),
+                    'bg-ot-selected': isSelectedTaskDefinition(taskDefinition),
                   }"
                   (click)="selectTaskDefinition(taskDefinition)"
                 >
@@ -255,7 +266,9 @@
           [unit]="unit"
         ></f-task-definition-editor>
       } @else {
-        <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-gray-600">
+        <div
+          class="rounded-xl border border-dashed border-ot-border bg-ot-surface p-5 text-ot-muted"
+        >
           <h4>Select a task definition</h4>
           <p>Pick a task from the left list to edit its details.</p>
         </div>

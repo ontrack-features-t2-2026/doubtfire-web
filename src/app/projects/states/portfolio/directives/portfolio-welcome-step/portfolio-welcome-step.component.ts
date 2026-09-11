@@ -7,6 +7,7 @@ import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
   styleUrls: ['portfolio-welcome-step.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
+  host: {class: 'flex min-h-0 flex-1 flex-col'},
 })
 export class PortfolioWelcomeStepComponent implements OnInit {
   @Input() onAdvanceActiveTab?: (index: 1 | -1) => void;

@@ -86,5 +86,14 @@
       mat-row
       [style.background]="selectedTaskDefinition === row ? 'lightblue' : ''"
     ></tr>
+    <tr *matNoDataRow class="mat-row">
+      <td class="mat-cell !border-b-0" [attr.colspan]="columns.length">
+        <f-empty-state
+          hint="Actions will appear here once they run."
+          icon="receipt_long"
+          message="No Turnitin actions"
+        ></f-empty-state>
+      </td>
+    </tr>
   </table>
 </div>

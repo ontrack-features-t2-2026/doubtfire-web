@@ -1,11 +1,58 @@
-.mat-mdc-card {
+:host {
+  display: block;
+}
+
+// Wrap the whole status card in the current task's status colour. --tsc / --tsc-on
+// are bound on the card from the template (the status token and its on-colour), with
+// a neutral fallback until they resolve.
+.mat-mdc-card.task-status-card {
+  --tsc: var(--ot-color-selected);
+  --tsc-on: var(--ot-color-selected-text);
+
+  --mat-card-outlined-outline-color: var(--tsc);
+  border-color: var(--tsc) !important;
+
+  // A faint status wash over the raised surface so the whole card carries the hue.
+  background-color: color-mix(in srgb, var(--tsc) 7%, var(--ot-color-surface-raised)) !important;
+
   .mat-mdc-form-field-infix {
-    padding: 6px;
+    padding: 2px 6px;
   }
 }
 
+// The status header (the select field) becomes a solid status bar with on-colour text.
 ::ng-deep f-task-status-card .mat-mdc-text-field-wrapper.mdc-text-field {
-  background: var(--ot-color-selected);
+  background: var(--tsc) !important;
+}
+
+::ng-deep f-task-status-card .mat-mdc-text-field-wrapper {
+  .mat-mdc-select-value,
+  .mat-mdc-select-value-text,
+  .mat-mdc-select-arrow,
+  .mat-mdc-select-min-line,
+  h2 {
+    color: var(--tsc-on) !important;
+  }
+
+  // The status-icon chip inside the solid header: drop its own fill and draw the
+  // glyph in the on-colour so it reads against the header. Tighten the padding
+  // around it and enlarge the glyph so the header icon is bold, not a small chip.
+  status-icon .status-chip {
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 6px 0 0 !important;
+    background: transparent !important;
+    color: var(--tsc-on) !important;
+
+    mat-icon {
+      width: 30px;
+      height: 30px;
+      font-size: 30px;
+      transform: none;
+    }
+  }
 }
 
 ::ng-deep .mat-mdc-option {

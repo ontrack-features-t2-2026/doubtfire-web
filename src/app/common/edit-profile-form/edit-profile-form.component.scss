@@ -57,7 +57,7 @@ section {
 }
 
 .peer-progress-preference {
-  border-block: 1px solid #e4e4e7;
+  border-block: 1px solid var(--ot-color-divider);
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;
@@ -67,7 +67,7 @@ section {
   }
 
   small {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     max-width: 42rem;
   }
 }

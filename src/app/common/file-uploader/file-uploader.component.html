@@ -44,7 +44,7 @@
                   }
                 } @else {
                   <span
-                    class="flex !w-full flex-col items-center justify-center text-base !text-red-500"
+                    class="flex !w-full flex-col items-center justify-center text-base !text-ot-error"
                   >
                     <mat-icon>block</mat-icon>
                     <span>Invalid file provided</span>
@@ -150,7 +150,7 @@
 
           @if (!uploadingInfo.success) {
             <div class="flex max-w-xl flex-col items-center justify-center">
-              <hr class="border-b border-gray-300" />
+              <hr class="border-b border-ot-divider" />
               <p><strong>Error Message:</strong> {{ uploadingInfo.error }}</p>
 
               <div class="flex gap-3">

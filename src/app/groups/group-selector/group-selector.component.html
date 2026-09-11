@@ -51,7 +51,7 @@
   </mat-card-header>
 
   @if (selectedGroupSet && selectedGroupSet.groups.length === 0) {
-    <div class="flex size-full flex-col items-center justify-center p-2.5 text-gray-400">
+    <div class="flex size-full flex-col items-center justify-center p-2.5 text-ot-muted">
       <mat-icon class="scale-125">group_off</mat-icon>
       <p class="p-2.5">There are no groups in this set</p>
     </div>
@@ -130,7 +130,7 @@
         </th>
         <td *matCellDef="let group" mat-cell>
           @if (isPartOfGroup(project, group)) {
-            <div class="text-center font-bold text-green-500">Joined</div>
+            <div class="text-center font-bold text-ot-success">Joined</div>
           } @else if (project && group.hasSpace() && selectedGroupSet.allowStudentsToManageGroups) {
             <div class="flex w-full justify-center">
               @if (!group.locked && !selectedGroupSet.locked) {
@@ -183,6 +183,15 @@
 
       <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
       <tr *matRowDef="let row; columns: displayedColumns" mat-row (click)="selectGroup(row)"></tr>
+      <tr *matNoDataRow class="mat-row">
+        <td class="mat-cell !border-b-0" [attr.colspan]="displayedColumns.length">
+          <f-empty-state
+            hint="Try clearing the group name search or tutorial filter."
+            icon="filter_list_off"
+            message="No groups match"
+          ></f-empty-state>
+        </td>
+      </tr>
     </table>
     <mat-paginator class="mat-elevation-z0" [pageSizeOptions]="[10, 15, 20, 25]"></mat-paginator>
   }

@@ -76,6 +76,11 @@
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <tr *matNoDataRow class="mat-row">
+        <td class="mat-cell !border-b-0" [attr.colspan]="displayedColumns.length">
+          <f-empty-state icon="group_off" message="No contributors to show"></f-empty-state>
+        </td>
+      </tr>
     </table>
     <p class="text-muted text-center">&copy; 2012&ndash;2023. Made in Melbourne.</p>
     <p class="text-muted text-center text-sm">

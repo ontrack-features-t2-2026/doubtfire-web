@@ -21,6 +21,16 @@
   display: none !important;
 }
 
+// The route background colour is painted on <body> by GlobalStateService, but body is
+// only as tall as its content, so on short pages (empty states, error pages) the darker
+// <html> colour showed through below it as a seam. Fill the true viewport so the canvas
+// always reaches the bottom (dvh accounts for mobile browser chrome; --vh has a header
+// offset baked in and would leave a sliver, so it is not used here).
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 $main-view-top-padding: 30px;
 $main-view-bottom-padding: $main-view-top-padding;
 
@@ -112,4 +122,90 @@ body.split-pane-resizing pdf-viewer {
 :root[data-ot-theme='dark'] body {
   background-color: var(--ot-color-page);
   color: var(--ot-color-text);
+}
+
+// Make stroked/outlined buttons read clearly as buttons in both themes. A plain
+// surface fill matched the card body and disappeared, so give them a control fill
+// that is a distinct step lighter than any surface (mixing in the text colour),
+// a clearly visible border, and a small shadow for affordance. Material's own
+// state layer keeps the hover/focus feedback on top.
+.mat-mdc-outlined-button:not(:disabled) {
+  --mdc-outlined-button-outline-color: color-mix(in srgb, var(--ot-color-text) 26%, transparent);
+  --mdc-outlined-button-label-text-color: var(--ot-color-text);
+  background-color: color-mix(in srgb, var(--ot-color-text) 12%, var(--ot-color-surface-raised));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.mat-mdc-outlined-button:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--ot-color-text) 20%, var(--ot-color-surface-raised));
+}
+
+// Gantt (ngx-gantt) dark theme. The library paints from var(--gantt-color-*,
+// <light-fallback>) AND sets those variables' light defaults INLINE on its own
+// <ngx-gantt-root> host, which beats a :root definition. So override them on the
+// host with !important (a stylesheet !important wins over an inline non-important
+// custom property). References only — the --ot-* tokens stay the single source.
+:root[data-ot-theme='dark'] ngx-gantt-root {
+  --gantt-color-background: var(--ot-color-surface) !important;
+  --gantt-color-gray-100: var(--ot-color-page) !important;
+  --gantt-color-gray-200: var(--ot-color-selected) !important;
+  --gantt-color-gray-300: var(--ot-color-surface-raised) !important;
+  --gantt-color-gray-400: var(--ot-color-border) !important;
+  --gantt-color-gray-500: var(--ot-color-divider) !important;
+  --gantt-color-gray-600: var(--ot-color-border) !important;
+  --gantt-color-text-main: var(--ot-color-text) !important;
+  --gantt-color-text-muted: var(--ot-color-text-muted) !important;
+  --gantt-color-text-light: var(--ot-color-text-muted) !important;
+  --gantt-color-text-inverse: var(--ot-color-on-primary) !important;
+  --gantt-color-primary: var(--ot-color-primary) !important;
+  --gantt-color-highlight: var(--ot-color-warning) !important;
+  --gantt-color-danger: var(--ot-color-error) !important;
+}
+
+// gray-600 above is reused by ngx-gantt for its empty-table message text, where
+// the border tone is unreadable (1.4:1). Give that one string a muted-text colour.
+:root[data-ot-theme='dark'] .gantt-table-empty .empty-text {
+  color: var(--ot-color-text-muted);
+}
+
+// Accessibility: a single global keyboard focus ring, driven by the focus token so
+// it flips light/dark. :is() (not :where()) so it beats the browser default;
+// :focus-visible so mouse clicks never draw it. Interactive elements only.
+:is(
+    a[href],
+    area[href],
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]:not([tabindex='-1']),
+    [role='button'],
+    [role='link'],
+    [role='tab'],
+    [role='menuitem'],
+    [role='menuitemcheckbox'],
+    [role='menuitemradio'],
+    [role='option'],
+    [role='checkbox'],
+    [role='radio'],
+    [role='switch'],
+    [role='slider'],
+    [contenteditable='true']
+  ):focus-visible {
+  outline: 2px solid var(--ot-color-focus);
+  outline-offset: 2px;
+}
+
+// Accessibility: honour prefers-reduced-motion. Near-zero (not 0) durations keep
+// JS transitionend/animationend callbacks firing.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

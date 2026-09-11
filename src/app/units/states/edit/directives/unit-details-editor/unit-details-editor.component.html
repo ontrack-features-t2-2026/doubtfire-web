@@ -136,11 +136,11 @@
   <mat-card appearance="outlined" class="flex flex-col gap-3 p-4">
     <div>
       <h4 class="mb-1">Grade definitions</h4>
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-ot-muted">
         Index -1 is used when work fails assessment. Target grades start at index 0, and higher
         indexes include tasks from every lower level.
       </p>
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-ot-muted">
         Grades already used by tasks, students, or communications can be renamed, but cannot be
         removed or moved to another index.
       </p>
@@ -273,6 +273,15 @@
 
         <tr *matHeaderRowDef="gradeDefinitionColumns" mat-header-row></tr>
         <tr *matRowDef="let row; columns: gradeDefinitionColumns" mat-row></tr>
+        <tr *matNoDataRow class="mat-row">
+          <td class="mat-cell !border-b-0" [attr.colspan]="gradeDefinitionColumns.length">
+            <f-empty-state
+              hint="Use Add grade to define this unit's grading scale."
+              icon="grade"
+              message="No grade definitions yet"
+            ></f-empty-state>
+          </td>
+        </tr>
       </table>
     </div>
 

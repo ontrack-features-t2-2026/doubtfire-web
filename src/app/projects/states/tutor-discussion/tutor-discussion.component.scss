@@ -11,7 +11,7 @@
 :host {
   --background-gray: rgba(0, 0, 0, 0.04);
   padding-right: 8px;
-  border-right-color: rgba(0, 0, 0, 0.1);
+  border-right-color: var(--ot-color-divider);
   border-right-style: solid;
   border-right-width: 1px;
 }

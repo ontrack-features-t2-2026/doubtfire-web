@@ -128,6 +128,15 @@
           mat-row
           [style.background]="selectedTemplate === row ? 'var(--ot-color-selected)' : ''"
         ></tr>
+        <tr *matNoDataRow class="mat-row">
+          <td class="mat-cell !border-b-0" [attr.colspan]="templateColumns.length">
+            <f-empty-state
+              hint="Add a template to reuse feedback for this outcome."
+              icon="forum"
+              message="No feedback templates yet"
+            ></f-empty-state>
+          </td>
+        </tr>
       </table>
 
       <span class="flex items-center">

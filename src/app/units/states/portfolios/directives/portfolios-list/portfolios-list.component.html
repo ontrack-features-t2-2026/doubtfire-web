@@ -108,7 +108,7 @@
   @if (loading) {
     <div aria-busy="true" aria-label="Loading student portfolios" class="overflow-x-auto">
       <div class="min-w-[1600px]">
-        <div class="flex h-14 items-center gap-6 border-b border-gray-300 px-4">
+        <div class="flex h-14 items-center gap-6 border-b border-ot-divider px-4">
           @for (
             column of [
               {columnWidth: '110px', rowWidth: '100%'},
@@ -137,7 +137,7 @@
         </div>
 
         @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
-          <div class="flex h-15 items-center gap-6 border-b border-gray-300 px-4">
+          <div class="flex h-15 items-center gap-6 border-b border-ot-divider px-4">
             @for (
               column of [
                 {columnWidth: '110px', rowWidth: '100%'},

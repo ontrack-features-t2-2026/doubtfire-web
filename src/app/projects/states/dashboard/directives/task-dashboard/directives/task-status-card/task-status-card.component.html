@@ -1,4 +1,9 @@
-<mat-card appearance="outlined">
+<mat-card
+  appearance="outlined"
+  class="task-status-card"
+  [style.--tsc]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + ')' : null"
+  [style.--tsc-on]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + '-on)' : null"
+>
   @if (triggers?.length > 0) {
     <mat-form-field appearance="outline" class="px-2.5 pt-2.5">
       <mat-select

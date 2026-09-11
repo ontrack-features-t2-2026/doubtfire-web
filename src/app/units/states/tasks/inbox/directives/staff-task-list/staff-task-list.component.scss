@@ -9,9 +9,9 @@
 $my-palette: mat.m2-define-palette($md-formatif);
 
 :host {
-  --background-gray: rgba(0, 0, 0, 0.04);
+  --background-gray: var(--ot-color-hover);
   padding-right: 8px;
-  border-right-color: rgba(0, 0, 0, 0.1);
+  border-right-color: var(--ot-color-divider);
   border-right-style: solid;
   border-right-width: 1px;
 }
@@ -39,7 +39,7 @@ $warn-color: #f44336;
   height: 100%;
 
   .mat-icon {
-    color: #bcc0c4;
+    color: var(--ot-color-text-muted);
   }
 }
 
@@ -140,7 +140,7 @@ user-icon {
 }
 
 .muted {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--ot-color-text-muted);
 }
 
 .task-list-data {
@@ -242,7 +242,7 @@ user-icon {
   p {
     margin-bottom: 0;
     padding: 0;
-    color: gray;
+    color: var(--ot-color-text-muted);
   }
 }
 
@@ -257,6 +257,6 @@ user-icon {
 
   .mat-icon {
     // font-size: 50px;
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--ot-color-text-muted);
   }
 }

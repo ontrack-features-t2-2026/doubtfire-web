@@ -101,7 +101,7 @@
           </button>
           <input
             autocomplete="off"
-            class="search w-full text-gray-900 placeholder:text-gray-600 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
+            class="search w-full text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
             placeholder="Search Tasks"
             spellcheck="false"
             type="text"
@@ -116,7 +116,7 @@
           [matMenuTriggerFor]="taskListFiltersMenu"
         >
           <mat-icon
-            class="text-gray-500"
+            class="text-ot-muted"
             matBadgeColor="accent"
             matBadgeSize="small"
             [matBadge]="activeViewPreferenceCount || null"
@@ -125,17 +125,17 @@
         </button>
         <mat-menu #taskListFiltersMenu="matMenu" class="task-list-filters-menu" xPosition="after">
           <div class="px-3 py-2" (click)="$event.stopPropagation()">
-            <div class="mb-1 text-xs font-bold tracking-normal text-gray-500 uppercase">
+            <div class="mb-1 text-xs font-bold tracking-normal text-ot-muted uppercase">
               Sort tasks
             </div>
             <div class="mb-2">
               @for (option of sortOptions; track option.value) {
                 <button
-                  class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-gray-50"
+                  class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-ot-hover"
                   type="button"
                   [ngClass]="{
-                    'bg-blue-50 text-formatif-blue': viewPreferences.sortBy === option.value,
-                    'text-gray-700': viewPreferences.sortBy !== option.value,
+                    'bg-ot-selected text-ot-link': viewPreferences.sortBy === option.value,
+                    'text-ot-text': viewPreferences.sortBy !== option.value,
                   }"
                   (click)="setSortBy(option.value)"
                 >
@@ -153,7 +153,7 @@
               }
             </div>
 
-            <div class="mb-1 text-xs font-bold tracking-normal text-gray-500 uppercase">
+            <div class="mb-1 text-xs font-bold tracking-normal text-ot-muted uppercase">
               Filters
             </div>
             <div class="flex flex-col gap-1">
@@ -174,9 +174,9 @@
               </mat-checkbox>
             </div>
 
-            <div class="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500">
+            <div class="mt-2 flex items-center justify-end gap-2 text-xs text-ot-muted">
               <button
-                class="shrink-0 text-formatif-blue disabled:text-gray-400"
+                class="shrink-0 text-formatif-blue disabled:text-ot-muted"
                 mat-button
                 type="button"
                 [disabled]="!hasNonDefaultViewPreferences"
@@ -195,11 +195,11 @@
     <mat-nav-list #taskDefinitions>
       @for (taskDef of filteredTaskDefinitions; track taskDef) {
         <mat-list-item
-          class="flex w-full cursor-pointer items-center border-b border-gray-200 p-1"
+          class="flex w-full cursor-pointer items-center border-b border-ot-divider p-1"
           [disableRipple]="true"
           [ngClass]="{
-            'bg-blue-50 hover:bg-blue-50': isSelectedTaskDefinition(taskDef),
-            'hover:bg-gray-50': !isSelectedTaskDefinition(taskDef),
+            'bg-ot-selected hover:bg-ot-selected': isSelectedTaskDefinition(taskDef),
+            'hover:bg-ot-hover': !isSelectedTaskDefinition(taskDef),
             'h-16.25': !isCollapsed,
             'h-21': isCollapsed,
           }"
@@ -213,7 +213,7 @@
                 [matTooltip]="taskDef.name"
               >
                 <span
-                  class="min-w-0 flex-1 truncate text-center text-sm leading-none font-bold text-gray-700"
+                  class="min-w-0 flex-1 truncate text-center text-sm leading-none font-bold text-ot-text"
                 >
                   {{ taskDef.abbreviation }}
                 </span>
@@ -232,12 +232,12 @@
 
                       <div class="flex min-w-0 items-center gap-0.5">
                         @if (taskDef.isGroupTask()) {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">groups</mat-icon>
+                          <mat-icon class="shrink-0 scale-75 text-ot-muted">groups</mat-icon>
                         } @else {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">person</mat-icon>
+                          <mat-icon class="shrink-0 scale-75 text-ot-muted">person</mat-icon>
                         }
 
-                        <div class="mr-1 truncate text-[14px] leading-tight text-gray-500">
+                        <div class="mr-1 truncate text-[14px] leading-tight text-ot-muted">
                           {{ taskDef.abbreviation }}
                           -
                           {{ gradeNames[taskDef.targetGrade] }} Task
@@ -264,7 +264,7 @@
                                 'text-[#da532c]': task.daysUntilDueDate() <= 0,
                                 'font-normal text-[#fab143]':
                                   task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
-                                'font-normal text-gray-500': task.daysUntilDueDate() > 11,
+                                'font-normal text-ot-muted': task.daysUntilDueDate() > 11,
                               }"
                             >
                               <mat-icon class="!h-[16px] !w-[16px] !text-[16px]">
@@ -293,7 +293,7 @@
 
       @if (mode === 'project' && project) {
         <mat-list-item
-          class="item-content flex h-21 w-full cursor-pointer items-center border-b border-gray-200 p-1 hover:bg-gray-50"
+          class="item-content flex h-21 w-full cursor-pointer items-center border-b border-ot-divider p-1 hover:bg-ot-hover"
           [disableRipple]="true"
           [ngClass]="project.portfolioTaskStatusClass()"
         >
@@ -303,7 +303,7 @@
               [routerLink]="['/projects', project.id, 'portfolio']"
             >
               <span
-                class="flex min-w-0 flex-1 items-center justify-center truncate text-center text-sm leading-none text-gray-700"
+                class="flex min-w-0 flex-1 items-center justify-center truncate text-center text-sm leading-none text-ot-text"
                 matTooltip="Create Portfolio"
               >
                 <mat-icon class="m-0 place-self-center">history_edu</mat-icon>

@@ -269,7 +269,7 @@
   @if (filteredTasks && !loading) {
     <cdk-virtual-scroll-viewport class="tasks-viewport scrollable" itemSize="60">
       @if (filteredTasks.length) {
-        <div class="mt-2.5 w-full text-center text-gray-400">{{ filteredTasks.length }} Tasks</div>
+        <div class="mt-2.5 w-full text-center text-ot-muted">{{ filteredTasks.length }} Tasks</div>
       }
       <mat-list class="m-0 p-0">
         <mat-list-item
@@ -306,21 +306,21 @@
                   <h4 class="student-name flex min-w-0 items-center gap-0.5">
                     @if (task.moderationType === 'escalation') {
                       <mat-icon
-                        class="shrink-0 text-amber-500"
+                        class="shrink-0 text-ot-warning"
                         matTooltip="This task has been escalated by the student"
                         >gavel</mat-icon
                       >
                     }
                     @if (getWarningIcon(task) === 'warning') {
                       <mat-icon
-                        class="shrink-0 text-amber-500"
+                        class="shrink-0 text-ot-warning"
                         matTooltip="Feedback due soon — please review before it escalates."
                       >
                         warning
                       </mat-icon>
                     } @else if (getWarningIcon(task) === 'overflow') {
                       <mat-icon
-                        class="shrink-0 text-red-500"
+                        class="shrink-0 text-ot-error"
                         [matTooltip]="
                           'Feedback overdue by ' +
                           task.daysSinceSubmission() +
