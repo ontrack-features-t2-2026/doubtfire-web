@@ -103,7 +103,12 @@ describe('TaskListItemComponent', () => {
   // existed, so every case below failed; after it they pass.
   it.each([
     ['new comments', 'new-comments-badge', {numNewComments: 3}, '3 new comments'],
-    ['similarities', 'plagiarism-detected-badge', {similaritiesDetected: true}, 'Similarities detected'],
+    [
+      'similarities',
+      'plagiarism-detected-badge',
+      {similaritiesDetected: true},
+      'Similarities detected',
+    ],
     ['due soon', 'soon-badge', {isDueSoon: () => true}, 'Due soon'],
     [
       'due before the deadline',
