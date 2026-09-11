@@ -33,6 +33,9 @@
   margin-right: 16px;
   margin-bottom: 16px;
   border-radius: var(--ot-radius-md);
+  // Material's default subtitle tone (the unit code under the title) sits around
+  // 4.6:1 and read as too faint. Pin it to the muted text token (AA in both themes).
+  --mat-card-subtitle-text-color: var(--ot-color-text-muted);
   overflow: hidden;
   clip: auto;
 

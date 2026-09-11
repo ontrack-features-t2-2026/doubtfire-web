@@ -103,6 +103,22 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
   stroke: var(--ot-color-divider) !important;
 }
 
+// Dialogs follow the 12px surface rung (Material defaults to a tight 4px), so every
+// modal has the same soft corner as a card. Both themes.
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-shape: var(--ot-radius-md);
+}
+
+// Inactive tab labels default to a low-contrast tone (visible on the calendar
+// modal's For Google / Apple / Outlook strip in dark). Pin them to the muted text
+// token so every tab strip clears AA; the active label keeps the theme accent.
+.mat-mdc-tab-group,
+.mat-mdc-tab-nav-bar {
+  --mat-tab-header-inactive-label-text-color: var(--ot-color-text-muted);
+  --mat-tab-header-inactive-hover-label-text-color: var(--ot-color-text);
+  --mat-tab-header-inactive-focus-label-text-color: var(--ot-color-text);
+}
+
 /* Ensures smooth resizing of task list in project dashboard */
 body.split-pane-resizing {
   cursor: col-resize;
