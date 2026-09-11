@@ -197,6 +197,13 @@ body.split-pane-resizing pdf-viewer {
   outline-offset: 2px;
 }
 
+// Inside a menu/list the 2px outward ring is clipped by the panel edge and reads as
+// two harsh bars top and bottom of the focused row. Inset it so it frames the row.
+.mat-mdc-menu-item:focus-visible,
+.mat-mdc-option:focus-visible {
+  outline-offset: -2px;
+}
+
 // Accessibility: honour prefers-reduced-motion. Near-zero (not 0) durations keep
 // JS transitionend/animationend callbacks firing.
 @media (prefers-reduced-motion: reduce) {
