@@ -125,22 +125,24 @@
                 <button
                   class="ml-4"
                   color="primary"
-                  mat-icon-button
+                  mat-flat-button
                   matTooltip="Save changes"
                   matTooltipPosition="above"
                   [disabled]="working"
                   (click)="onSaveReminderEdits()"
                 >
                   <mat-icon>save</mat-icon>
+                  Save
                 </button>
                 <button
-                  mat-icon-button
+                  class="ml-2"
+                  mat-stroked-button
                   matTooltip="Cancel"
                   matTooltipPosition="above"
                   [disabled]="working"
                   (click)="onCancelReminderEdits()"
                 >
-                  <mat-icon>close</mat-icon>
+                  Cancel
                 </button>
               }
               <br />
