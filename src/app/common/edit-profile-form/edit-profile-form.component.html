@@ -21,12 +21,17 @@
         </div>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Username</mat-label>
-          <input matInput name="username" [disabled]="!newUser" [(ngModel)]="user.username" />
-        </mat-form-field>
-      </div>
+      <!-- Username is assigned by the institution and is not user-editable, so it only
+           appears when an admin is creating a brand-new account. In the student's own
+           setup/edit view it is hidden; the value stays on `user` and submits unchanged. -->
+      @if (newUser) {
+        <div fxFlexFill fxLayout="row">
+          <mat-form-field appearance="outline" fxFlexFill>
+            <mat-label>Username</mat-label>
+            <input matInput name="username" [(ngModel)]="user.username" />
+          </mat-form-field>
+        </div>
+      }
 
       <div fxFlexFill fxLayout="row">
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
@@ -61,7 +66,10 @@
         />
       </mat-form-field>
 
-      @if (user.systemRole === 'Student') {
+      <!-- Student ID comes from enrolment and is not user-editable, so like Username it
+           only shows while an admin is creating the account. Hidden from the student's own
+           setup/edit view; the value stays on `user` and submits unchanged. -->
+      @if (user.systemRole === 'Student' && newUser) {
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Student ID</mat-label>
           <input matInput name="student_id" required [(ngModel)]="user.studentId" />
