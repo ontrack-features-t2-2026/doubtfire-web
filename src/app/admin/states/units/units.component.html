@@ -1,5 +1,5 @@
-<div class="flex flex-row gap-5 md:px-16">
-  <div class="flex flex-grow flex-col gap-5 gap-y-0">
+<div class="flex min-w-0 flex-row gap-5 px-4 md:px-16">
+  <div class="flex min-w-0 flex-grow flex-col gap-5 gap-y-0">
     <div class="flex flex-col">
       <div>
         <h3>{{ title }}</h3>
@@ -12,6 +12,7 @@
         </mat-form-field>
       </div>
     </div>
+    <div class="w-full min-w-0 overflow-x-auto">
     <table
       class="f-table selectable flex-grow"
       mat-table
@@ -23,7 +24,7 @@
       (matSortChange)="sortTableData($event)"
     >
       <!-- Unit Code Column -->
-      <ng-container matColumnDef="unit_code" sticky>
+      <ng-container matColumnDef="unit_code">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Unit Code</th>
         <td *matCellDef="let element" class="w-0 min-w-full" mat-cell>
           <f-unit-code [unit_code]="element.unit_code"></f-unit-code>
@@ -31,13 +32,13 @@
       </ng-container>
 
       <!-- Name Column -->
-      <ng-container matColumnDef="name" sticky>
+      <ng-container matColumnDef="name">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Name</th>
         <td *matCellDef="let element" mat-cell>{{ element.name }}</td>
       </ng-container>
 
       <!-- Unit Role Column -->
-      <ng-container matColumnDef="unit_role" sticky>
+      <ng-container matColumnDef="unit_role">
         <th
           *matHeaderCellDef
           mat-header-cell
@@ -52,7 +53,7 @@
       </ng-container>
 
       <!-- Teaching Period Column -->
-      <ng-container matColumnDef="teaching_period" sticky>
+      <ng-container matColumnDef="teaching_period">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Teaching Period</th>
         <td *matCellDef="let element" mat-cell>
           {{ element.teaching_period }}
@@ -60,19 +61,19 @@
       </ng-container>
 
       <!-- Start Date Column -->
-      <ng-container matColumnDef="start_date" sticky>
+      <ng-container matColumnDef="start_date">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Start Date</th>
         <td *matCellDef="let element" mat-cell>{{ element.start_date | date: 'EEE d MMM y' }}</td>
       </ng-container>
 
       <!-- End Date Column -->
-      <ng-container matColumnDef="end_date" sticky>
+      <ng-container matColumnDef="end_date">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>End Date</th>
         <td *matCellDef="let element" mat-cell>{{ element.end_date | date: 'EEE d MMM y' }}</td>
       </ng-container>
 
       <!-- Active Column -->
-      <ng-container matColumnDef="active" sticky>
+      <ng-container matColumnDef="active">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Active</th>
         <td *matCellDef="let element" mat-cell>
           <!-- If element.teachingPeriod exists -->
@@ -128,7 +129,8 @@
         </td>
       </tr>
     </table>
-    <span class="flex items-center">
+    </div>
+    <span class="flex flex-wrap items-center gap-2">
       <mat-paginator class="mat-elevation-z0" [pageSizeOptions]="[10, 25, 100]"></mat-paginator>
       <span class="flex-grow"></span>
       @if (mode === 'admin') {
