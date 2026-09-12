@@ -12,7 +12,10 @@
 
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
-    justify-content: center;
+    // Left-align, not centre: when the tab strip is wider than a phone the centred
+    // strip clipped its own active first and last labels ("ask Details" / "Submissic").
+    // Left-aligned, the active first tab stays whole and the rest scrolls into view.
+    justify-content: flex-start;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -21,7 +24,7 @@
 
   .mat-mdc-tab-label-container {
     flex: 0 0 auto;
-    margin: 0 auto;
+    margin: 0;
     overflow: visible;
   }
 
