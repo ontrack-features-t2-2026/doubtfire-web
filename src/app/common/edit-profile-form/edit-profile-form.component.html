@@ -16,7 +16,6 @@
 
           <div>
             <h1>{{ user?.firstName }}</h1>
-            Set up your {{ externalName.value }} profile
           </div>
         </div>
       </div>
@@ -52,12 +51,8 @@
         </div>
       }
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Preferred Name</mat-label>
-          <input matInput name="preferred_name" [(ngModel)]="user.nickname" />
-        </mat-form-field>
-      </div>
+      <!-- Preferred Name dropped: profile identity is university-managed and not
+           customisable by the student. The nickname value stays on `user` untouched. -->
 
       <mat-form-field appearance="outline" fxFlexFill [hidden]="!customPronouns">
         <mat-label>Custom Pronouns</mat-label>
