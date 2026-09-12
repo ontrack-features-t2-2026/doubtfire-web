@@ -152,6 +152,33 @@ describe('NotificationsPageComponent', () => {
     expect(rows()).toHaveLength(0);
   });
 
+  it('explains what notifications are and what the available actions do', () => {
+    fixture.detectChanges();
+
+    expect(pageText()).toContain('Comments on your tasks, feedback and reminders appear here.');
+    expect(pageText()).toContain(
+      'Mark all read marks notifications as read but does not remove them.',
+    );
+    expect(pageText()).toContain(
+      'Deleting a notification permanently removes it and cannot be undone.',
+    );
+  });
+
+  it('keeps the notification guidance visible when loading the list fails', () => {
+    fixture.detectChanges();
+
+    list.error(new Error('GET /notifications failed'));
+    fixture.detectChanges();
+
+    expect(pageText()).toContain('could not load');
+    expect(pageText()).toContain(
+      'Mark all read marks notifications as read but does not remove them.',
+    );
+    expect(pageText()).toContain(
+      'Deleting a notification permanently removes it and cannot be undone.',
+    );
+  });
+
   it('says it could not load rather than claiming there is nothing', () => {
     fixture.detectChanges();
 
