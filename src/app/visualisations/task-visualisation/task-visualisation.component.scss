@@ -25,3 +25,27 @@
   font-weight: 500;
   line-height: 1.35;
 }
+
+// On phones the 12rem minimum collapses to a single column, stacking every
+// status into a tall wall of full-bleed colour. Pack them two-up and shrink the
+// tiles so the whole breakdown is visible without a long scroll.
+@media (max-width: 639.98px) {
+  .task-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .task-status-card {
+    min-height: 6rem;
+    padding: 0.75rem;
+  }
+
+  .task-status-value {
+    font-size: clamp(1.75rem, 9vw, 2.5rem);
+  }
+
+  .task-status-label {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+  }
+}
