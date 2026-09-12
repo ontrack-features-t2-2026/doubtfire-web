@@ -1,19 +1,21 @@
-<div class="overflow-hidden rounded-lg bg-ot-surface shadow-md max-[991px]:mt-6 min-[992px]:mt-0">
-  <div class="items-center bg-ot-raised px-3.5">
-    <h4 class="py-3.5 font-semibold text-ot-text">
+<div
+  class="mt-0 overflow-hidden rounded-none bg-ot-surface shadow-none sm:rounded-lg sm:shadow-md"
+>
+  <div class="flex items-center border-b border-ot-divider bg-ot-raised px-4">
+    <h4 class="py-3.5 text-lg font-semibold text-ot-text">
       Progress Dashboard
       @if (viewingOtherStudentProject) {
         <span>for {{ project?.student?.name }}</span>
       }
     </h4>
   </div>
-  <div class="grid grid-cols-1 items-stretch gap-3.5 p-3.5 xl:grid-cols-2">
+  <div class="grid grid-cols-1 items-stretch gap-4 p-3 sm:p-4 xl:grid-cols-2">
     <!-- Task Planner Card -->
     <div
       class="size-full"
       [ngClass]="
         showSubmittedGrade
-          ? 'xl:col-span-2 xl:mx-auto xl:w-[calc((100%-0.875rem)/2)]'
+          ? 'xl:col-span-2 xl:mx-auto xl:w-[calc((100%-1rem)/2)]'
           : 'xl:col-span-1'
       "
     >
@@ -87,23 +89,7 @@
       </div>
     }
 
-    <!-- Unit learning outcomes -->
-    <div class="xl:col-span-2">
-      <f-task-ilos-card [iloContextType]="'Unit'" [unit]="project.unit"></f-task-ilos-card>
-    </div>
-
-    <!-- Engagement Passport Card -->
-    <div class="xl:col-span-2">
-      <f-engagement-passport-card [project]="project"></f-engagement-passport-card>
-    </div>
-    <!-- PPI-F02 Unit Peer Progress Summary -->
-    @if (showDemoPeerProgress) {
-      <div class="xl:col-span-2">
-        <f-peer-progress-unit-summary [view]="peerProgressView"></f-peer-progress-unit-summary>
-      </div>
-    }
-
-    <div class="grid grid-cols-1 items-stretch gap-3.5 xl:col-span-2 xl:grid-cols-2">
+    <div class="grid grid-cols-1 items-stretch gap-4 xl:col-span-2 xl:grid-cols-2">
       <mat-card appearance="outlined" class="h-full min-w-0">
         <mat-card-header>
           <mat-card-title>Progress Burndown</mat-card-title>
@@ -144,5 +130,21 @@
         </mat-card-content>
       </mat-card>
     </div>
+
+    <!-- Unit learning outcomes -->
+    <div class="xl:col-span-2">
+      <f-task-ilos-card [iloContextType]="'Unit'" [unit]="project.unit"></f-task-ilos-card>
+    </div>
+
+    <!-- Engagement Passport Card -->
+    <div class="xl:col-span-2">
+      <f-engagement-passport-card [project]="project"></f-engagement-passport-card>
+    </div>
+    <!-- PPI-F02 Unit Peer Progress Summary -->
+    @if (showDemoPeerProgress) {
+      <div class="xl:col-span-2">
+        <f-peer-progress-unit-summary [view]="peerProgressView"></f-peer-progress-unit-summary>
+      </div>
+    }
   </div>
 </div>

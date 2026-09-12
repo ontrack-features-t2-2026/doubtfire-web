@@ -1,47 +1,60 @@
-<mat-card appearance="outlined">
+<mat-card appearance="outlined" class="flex h-full flex-col">
   <mat-card-header>
     <mat-card-title>Plan Your Tasks</mat-card-title>
     <mat-card-subtitle class="mb-2.5">
-      <p>
-        The Task Planner shows a timeline of your tasks, their due dates, and prerequisite
-        relationships. Use it to plan when to start and submit tasks, ensuring prerequisites are
-        completed early so you have time for feedback.
-      </p>
-      @if (unit.allowFlexibleDates) {
-        <p>
-          You can set your own start and target dates. Be mindful of each task’s
-          <strong>Feedback Deadline</strong> — submissions after this date will not be checked. Aim
-          to finish at least one week before the deadline, especially if you are targeting a higher
-          grade.
-        </p>
-      }
+      A timeline of your tasks, their due dates, and prerequisites, so you can plan when to start
+      and submit with time left for feedback.
     </mat-card-subtitle>
   </mat-card-header>
-  <mat-card-content class="task-planner-controls flex flex-col items-start gap-4">
-    <button mat-stroked-button [routerLink]="['/projects', project.id, 'plan']">
-      <mat-icon aria-label="Launch icon" style="width: 20px; height: 20px; font-size: 20px">
+  <mat-card-content class="task-planner-controls flex flex-1 flex-col items-start gap-4">
+    @if (unit.allowFlexibleDates) {
+      <details class="task-planner-tips w-full">
+        <summary class="cursor-pointer text-sm font-medium text-ot-text">
+          Tips for planning your dates
+        </summary>
+        <p class="mt-2 text-sm leading-6 text-ot-muted">
+          You can set your own start and target dates. Be mindful of each task’s
+          <strong class="font-semibold text-ot-text">Feedback Deadline</strong> — submissions after
+          this date will not be checked. Aim to finish at least one week before the deadline,
+          especially if you are targeting a higher grade.
+        </p>
+      </details>
+    }
+
+    <a
+      class="min-h-11 w-full sm:w-auto"
+      color="primary"
+      mat-flat-button
+      [routerLink]="['/projects', project.id, 'plan']"
+    >
+      <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px">
         launch
       </mat-icon>
       View Task Planner
-    </button>
-    <mat-form-field appearance="outline" class="w-full max-w-xs">
-      <mat-label>Grade to include</mat-label>
-      <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
-        @for (grade of gradeValues; track grade) {
-          <mat-option [value]="grade">{{ gradeLabel(grade) }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    <button
-      class="download-ics-link"
-      mat-stroked-button
-      [disabled]="!hasDownloadableTasks"
-      (click)="downloadIcs()"
-    >
-      <mat-icon aria-label="Download icon" style="width: 20px; height: 20px; font-size: 20px">
-        download
-      </mat-icon>
-      Download .ics
-    </button>
+    </a>
+
+    <div class="mt-1 flex w-full flex-col items-start gap-3 border-t border-ot-divider pt-4">
+      <span class="text-sm font-medium text-ot-text">Export to your calendar</span>
+      <mat-form-field appearance="outline" class="w-full max-w-xs">
+        <mat-label>Calendar export grade</mat-label>
+        <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
+          @for (grade of gradeValues; track grade) {
+            <mat-option [value]="grade">{{ gradeLabel(grade) }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Only the tasks for this grade are exported.</mat-hint>
+      </mat-form-field>
+      <button
+        class="download-ics-link min-h-11"
+        mat-stroked-button
+        [disabled]="!hasDownloadableTasks"
+        (click)="downloadIcs()"
+      >
+        <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px">
+          download
+        </mat-icon>
+        Download calendar (.ics)
+      </button>
+    </div>
   </mat-card-content>
 </mat-card>
