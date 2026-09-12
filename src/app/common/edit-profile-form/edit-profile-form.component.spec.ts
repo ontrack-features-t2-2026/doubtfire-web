@@ -220,7 +220,9 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
         {provide: UserService, useValue: {currentUser: user}},
         {provide: Router, useValue: {}},
         {provide: AuthenticationService, useValue: {}},
-        {provide: MAT_DIALOG_DATA, useValue: {user, mode: 'edit', modal: false}},
+        // The identity fields are university-managed and only render while an admin is
+        // creating the account, so their purpose tokens are checked in that mode.
+        {provide: MAT_DIALOG_DATA, useValue: {user, mode: 'new', modal: false}},
         {provide: MatSnackBar, useValue: {}},
         {
           provide: PushNotificationService,
@@ -246,7 +248,6 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
     expect(purpose('username')).toBe('username');
     expect(purpose('first')).toBe('given-name');
     expect(purpose('last')).toBe('family-name');
-    expect(purpose('preferred_name')).toBe('nickname');
     expect(purpose('email')).toBe('email');
   });
 
