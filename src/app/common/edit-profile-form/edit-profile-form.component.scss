@@ -3,6 +3,13 @@
   overflow-y: auto;
 }
 
+// The profile page (non-modal) ran its last controls hard against the bottom edge.
+// Give the content breathing room below the buttons so nothing sits flush at the
+// viewport bottom on either the page or the modal.
+.main {
+  padding-bottom: 3rem;
+}
+
 h1 {
   // THM-M01: was hardcoded black.
   color: var(--ot-color-text, #000);

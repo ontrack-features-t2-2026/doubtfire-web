@@ -1,6 +1,6 @@
 .notification-settings {
-  gap: 12px;
-  padding: 12px 0;
+  gap: 16px;
+  padding: 12px 0 4px;
 }
 
 .notification-settings h3,
@@ -8,12 +8,21 @@
   margin: 0;
 }
 
+.notification-settings__intro {
+  color: var(--ot-color-text-muted);
+}
+
 .notification-setting {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
+// Align the helper text under the checkbox label rather than with a guessed magic
+// number. Material's checkbox control column is 40px wide, so start the description
+// there; padding-inline-start keeps it correct under RTL. Muted so the label leads.
 .notification-setting small {
-  margin-left: 32px;
+  padding-inline-start: 40px;
+  color: var(--ot-color-text-muted);
+  line-height: 1.35;
 }
