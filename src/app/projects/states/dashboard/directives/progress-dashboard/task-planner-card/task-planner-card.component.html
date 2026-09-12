@@ -34,8 +34,8 @@
     </a>
 
     <div class="mt-1 w-full border-t border-ot-divider pt-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <mat-form-field appearance="outline" class="w-52 min-w-0" subscriptSizing="dynamic">
+      <div class="flex flex-wrap items-center gap-2">
+        <mat-form-field appearance="outline" class="min-w-0 max-w-[15rem] flex-1" subscriptSizing="dynamic">
           <mat-label>Calendar export grade</mat-label>
           <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
             @for (grade of gradeValues; track grade) {
@@ -44,7 +44,7 @@
           </mat-select>
         </mat-form-field>
         <button
-          class="download-ics-link min-h-11"
+          class="download-ics-link min-h-11 shrink-0"
           mat-stroked-button
           [disabled]="!hasDownloadableTasks"
           (click)="downloadIcs()"
