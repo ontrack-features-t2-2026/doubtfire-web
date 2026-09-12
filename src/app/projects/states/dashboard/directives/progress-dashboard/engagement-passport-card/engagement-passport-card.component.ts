@@ -94,6 +94,10 @@ export class EngagementPassportCardComponent implements OnChanges {
     return this.project?.unit?.currentUnitWeek ?? null;
   }
 
+  get hasStamps(): boolean {
+    return this.weeks.some((week) => week.stamps.length > 0);
+  }
+
   get currentUserCanAddEngagement(): boolean {
     const currentUserId = this.userService.currentUser?.id;
     return (
