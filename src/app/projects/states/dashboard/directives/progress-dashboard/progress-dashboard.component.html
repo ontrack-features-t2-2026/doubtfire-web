@@ -1,5 +1,5 @@
 <div
-  class="@container mt-0 overflow-hidden rounded-none bg-ot-surface shadow-none sm:rounded-lg sm:shadow-md"
+  class="dashboard-frame mt-0 overflow-hidden rounded-none bg-ot-surface shadow-none sm:rounded-lg sm:shadow-md"
 >
   <div class="flex items-center border-b border-ot-divider bg-ot-raised px-4">
     <h4 class="py-3.5 text-lg font-semibold text-ot-text">
@@ -9,21 +9,21 @@
       }
     </h4>
   </div>
-  <div class="grid grid-cols-1 items-stretch gap-4 p-3 sm:p-4 @4xl:grid-cols-2">
+  <div class="grid grid-cols-1 items-stretch gap-4 p-3 sm:p-4 @3xl:grid-cols-2">
     <!-- Task Planner Card -->
     <div
       class="size-full"
       [ngClass]="
         showSubmittedGrade
-          ? '@4xl:col-span-2 @4xl:mx-auto @4xl:w-[calc((100%-1rem)/2)]'
-          : '@4xl:col-span-1'
+          ? '@3xl:col-span-2 @3xl:mx-auto @3xl:w-[calc((100%-1rem)/2)]'
+          : '@3xl:col-span-1'
       "
     >
       <f-task-planner-card class="block size-full" [project]="project"></f-task-planner-card>
     </div>
 
     <!-- Target Grade Card -->
-    <div class="h-full @4xl:col-span-1">
+    <div class="h-full @3xl:col-span-1">
       <mat-card appearance="outlined" class="flex h-full flex-col">
         <mat-card-header>
           <mat-card-title>Target Grade</mat-card-title>
@@ -62,7 +62,7 @@
 
     @if (showSubmittedGrade) {
       <!-- Submitted Grade Card -->
-      <div class="h-full @4xl:col-span-1">
+      <div class="h-full @3xl:col-span-1">
         <mat-card appearance="outlined" class="flex h-full flex-col">
           <mat-card-header>
             <mat-card-title>Submitted Grade</mat-card-title>
@@ -89,7 +89,7 @@
       </div>
     }
 
-    <div class="grid grid-cols-1 items-stretch gap-4 @4xl:col-span-2 @4xl:grid-cols-2">
+    <div class="grid grid-cols-1 items-stretch gap-4 @3xl:col-span-2 @3xl:grid-cols-2">
       <mat-card appearance="outlined" class="h-full min-w-0">
         <mat-card-header>
           <mat-card-title>Progress Burndown</mat-card-title>
@@ -132,17 +132,17 @@
     </div>
 
     <!-- Unit learning outcomes -->
-    <div class="@4xl:col-span-2">
+    <div class="@3xl:col-span-2">
       <f-task-ilos-card [iloContextType]="'Unit'" [unit]="project.unit"></f-task-ilos-card>
     </div>
 
     <!-- Engagement Passport Card -->
-    <div class="@4xl:col-span-2">
+    <div class="@3xl:col-span-2">
       <f-engagement-passport-card [project]="project"></f-engagement-passport-card>
     </div>
     <!-- PPI-F02 Unit Peer Progress Summary -->
     @if (showDemoPeerProgress) {
-      <div class="@4xl:col-span-2">
+      <div class="@3xl:col-span-2">
         <f-peer-progress-unit-summary [view]="peerProgressView"></f-peer-progress-unit-summary>
       </div>
     }
