@@ -37,7 +37,11 @@
   // The status-icon chip inside the solid header: drop its own fill and draw the
   // glyph in the on-colour so it reads against the header. Tighten the padding
   // around it and enlarge the glyph so the header icon is bold, not a small chip.
-  status-icon .status-chip {
+  // Scope to .mat-mdc-select-value (the trigger display) only. This Material build
+  // renders the select panel inside the field wrapper, so an unscoped rule here also
+  // hits the option chips and blanks their fills — dark glyph on the dark panel, the
+  // dark-mode invisible-status-glyph bug. The options keep their own status colours.
+  .mat-mdc-select-value status-icon .status-chip {
     min-width: 0 !important;
     height: auto !important;
     min-height: 0 !important;
