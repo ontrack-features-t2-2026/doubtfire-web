@@ -58,3 +58,18 @@
 ::ng-deep .mat-mdc-option {
   height: 50px;
 }
+
+// The action buttons sit on the status-tinted card. Left neutral they read as
+// dropped-in grey, so tint them with the same status hue: a status-coloured outline
+// over a wash a touch stronger than the card, label kept in the high-contrast text
+// colour. Works for every status token and both themes; disabled buttons keep
+// Material's muted treatment.
+::ng-deep f-task-status-card .mat-mdc-card-actions .mat-mdc-outlined-button:not(:disabled) {
+  --mdc-outlined-button-outline-color: color-mix(in srgb, var(--tsc) 55%, var(--ot-color-border));
+  --mdc-outlined-button-label-text-color: var(--ot-color-text);
+  background-color: color-mix(in srgb, var(--tsc) 12%, var(--ot-color-surface-raised));
+}
+
+::ng-deep f-task-status-card .mat-mdc-card-actions .mat-mdc-outlined-button:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--tsc) 22%, var(--ot-color-surface-raised));
+}
