@@ -27,6 +27,7 @@ export class UserService extends CachedEntityService<User> {
       'email',
       'username',
       'nickname',
+      'notificationEmail',
       'systemRole',
       'receiveTaskNotifications',
       'receivePortfolioNotifications',

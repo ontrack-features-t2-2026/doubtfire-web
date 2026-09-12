@@ -15,6 +15,9 @@ export class User extends Entity {
   public email: string;
   public username: string;
   public nickname: string;
+  // Optional student-owned address for email notifications. Blank falls back to
+  // the university-managed email (see notification_recipient_email on the API).
+  public notificationEmail: string | null;
   public systemRole: 'Admin' | 'Convenor' | 'Tutor' | 'Student' | 'Auditor';
   public receiveTaskNotifications: boolean;
   public receivePortfolioNotifications: boolean;

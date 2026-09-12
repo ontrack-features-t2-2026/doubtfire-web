@@ -5,6 +5,27 @@
     Choose which notification categories you want to receive.
   </p>
 
+  <mat-form-field appearance="outline" class="notification-email">
+    <mat-label>Notification email</mat-label>
+    <input
+      matInput
+      #notifEmail="ngModel"
+      autocomplete="email"
+      email
+      name="notificationEmail"
+      type="email"
+      aria-describedby="notification-email-hint"
+      [ngModelOptions]="{standalone: true}"
+      [(ngModel)]="user.notificationEmail"
+    />
+    <mat-hint id="notification-email-hint">
+      Email notifications are sent here. Leave blank to use your university email.
+    </mat-hint>
+    @if (notifEmail.invalid && notifEmail.value) {
+      <mat-error>Enter a valid email address.</mat-error>
+    }
+  </mat-form-field>
+
   <div class="notification-setting">
     <mat-checkbox
       aria-describedby="task-notification-description"
