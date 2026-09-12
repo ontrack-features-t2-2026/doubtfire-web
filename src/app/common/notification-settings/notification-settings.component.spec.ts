@@ -106,9 +106,7 @@ describe('NotificationSettingsComponent', () => {
   });
 
   it('links the notification preferences to the notifications page', () => {
-    const link: HTMLAnchorElement = fixture.nativeElement.querySelector(
-      'a[href="/notifications"]',
-    );
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href="/notifications"]');
 
     expect(link).not.toBeNull();
     expect(link.textContent.trim()).toBe('Notifications page');
