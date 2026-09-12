@@ -1,0 +1,12 @@
+:host {
+  display: block;
+}
+
+// Establish an inline-size container so the grid inside responds to the width of the
+// dashboard pane (which the resizable task list changes) rather than the viewport. The
+// @4xl:* utilities in the template are anonymous container queries and bind to this.
+// Tailwind's own @container utility does not emit container-type in this build, so set
+// it explicitly here.
+.dashboard-frame {
+  container-type: inline-size;
+}
