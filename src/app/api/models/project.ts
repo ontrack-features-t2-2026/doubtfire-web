@@ -245,6 +245,7 @@ export class Project extends Entity {
     const alerts = AppInjector.get(AlertService);
     const projectService: ProjectService = AppInjector.get(ProjectService);
     const oldGrade: number = this.grade || 0;
+    const oldRationale = this.gradeRationale;
     this.grade = score;
     this.gradeRationale = rationale;
 
@@ -262,7 +263,9 @@ export class Project extends Entity {
           alerts.success('Grade updated.');
         },
         error: (message) => {
+          // Put back both halves of the old grade, so the rationale shown matches it.
           this.grade = oldGrade;
+          this.gradeRationale = oldRationale;
           alerts.error(`Grade was not updated: ${message}`);
         },
       });

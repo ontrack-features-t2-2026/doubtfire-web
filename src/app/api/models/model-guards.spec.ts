@@ -1,7 +1,6 @@
-import {describe, expect, it, vi} from 'vitest';
+import {beforeAll, describe, expect, it, vi} from 'vitest';
 import {Injector} from '@angular/core';
-import {TestBed} from '@angular/core/testing';
-import {Observable} from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -27,6 +26,22 @@ describe('Tutorial.description', () => {
   });
 });
 
+// AppInjector can only be set once per file, so the model specs that need services
+// share one injector whose stand-ins each test fills in.
+const projectService: {loadStudents?: unknown; update?: unknown} = {};
+const alerts = {error: vi.fn(), success: vi.fn()};
+
+beforeAll(() => {
+  setAppInjector(
+    Injector.create({
+      providers: [
+        {provide: ProjectService, useValue: projectService},
+        {provide: AlertService, useValue: alerts},
+      ],
+    }),
+  );
+});
+
 describe('Unit.refreshStudents', () => {
   it('sends the request, which it used to build and never subscribe to', () => {
     let subscribed = false;
@@ -36,19 +51,27 @@ describe('Unit.refreshStudents', () => {
           subscribed = true;
         }),
     );
-
-    TestBed.configureTestingModule({
-      providers: [
-        {provide: ProjectService, useValue: {loadStudents}},
-        {provide: AlertService, useValue: {error: vi.fn()}},
-      ],
-    });
-    setAppInjector(TestBed.inject(Injector));
+    projectService.loadStudents = loadStudents;
 
     const unit = new Unit();
     unit.refreshStudents(true);
 
     expect(loadStudents).toHaveBeenCalledWith(unit, true, true);
     expect(subscribed).toBe(true);
+  });
+});
+
+describe('Project.assignGrade', () => {
+  it('puts back the old rationale as well as the old grade when the save fails', () => {
+    projectService.update = vi.fn(() => throwError(() => 'no connection'));
+    const project = new Project(new Unit());
+    project.grade = 70;
+    project.gradeRationale = 'Met every distinction criterion.';
+
+    project.assignGrade(80, 'Now meets the high distinction criteria.');
+
+    expect(project.grade).toBe(70);
+    expect(project.gradeRationale).toBe('Met every distinction criterion.');
+    expect(alerts.error).toHaveBeenCalled();
   });
 });
