@@ -104,7 +104,9 @@ export class ProjectService extends CachedEntityService<Project> {
             },
             {
               key: 'not_started',
-              value: Math.round((values['grey_pct'] || 1) * 100),
+              // ?? not ||: a student with nothing left to start has a grey share
+              // of 0, and || turned that into a bar that was all grey.
+              value: Math.round((values['grey_pct'] ?? 1) * 100),
             },
             {
               key: 'working_on_it',

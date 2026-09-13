@@ -364,8 +364,9 @@ export class Project extends Entity {
     }
   }
 
-  public isEnrolledIn(tutorial: Tutorial): boolean {
-    return this.tutorials.some((t) => t.id === tutorial.id);
+  public isEnrolledIn(tutorial: Tutorial | undefined): boolean {
+    // A group can be left without a tutorial, and no one is enrolled in no tutorial.
+    return !!tutorial && this.tutorials.some((t) => t.id === tutorial.id);
   }
 
   public updateUnitEnrolment(): void {

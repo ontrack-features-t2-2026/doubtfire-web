@@ -561,9 +561,15 @@ export class Unit extends Entity {
       );
   }
 
-  public refreshStudents(includeWithdrawnStudents: boolean = false) {
+  public refreshStudents(includeWithdrawnStudents: boolean = false): void {
     const projectService: ProjectService = AppInjector.get(ProjectService);
-    projectService.loadStudents(this, includeWithdrawnStudents, true);
+    // The load is a cold observable. Without a subscriber the request never went out,
+    // so an enrolment change did not show until the page was reloaded.
+    projectService.loadStudents(this, includeWithdrawnStudents, true).subscribe({
+      error: (message) => {
+        AppInjector.get(AlertService).error(`Could not refresh the students: ${message}`, 6000);
+      },
+    });
   }
 
   public findProjectForUsername(username: string): Project {
