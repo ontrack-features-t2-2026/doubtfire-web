@@ -1,4 +1,4 @@
-import {MediaObserver} from 'ng-flex-layout';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {Subscription, asapScheduler, observeOn} from 'rxjs';
@@ -76,7 +76,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     protected globalState: GlobalStateService,
     private userService: UserService,
     private authService: AuthenticationService,
-    protected media: MediaObserver,
+    private breakpointObserver: BreakpointObserver,
     protected doubtfireConstants: DoubtfireConstants,
     private notificationService: NotificationService,
     private sidekiqJobService: SidekiqJobService,
@@ -88,6 +88,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   public externalName: string;
+
+  protected get isExtraSmall(): boolean {
+    return this.breakpointObserver.isMatched('(max-width: 599.98px)');
+  }
 
   ngOnInit(): void {
     this.doubtfireConstants.ExternalName.subscribe((externalName) => {
@@ -262,7 +266,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   public refreshMobileUnreadCount(): void {
-    if (!this.media.isActive('xs') || !this.authService.isAuthenticated()) {
+    if (!this.isExtraSmall || !this.authService.isAuthenticated()) {
       return;
     }
 
