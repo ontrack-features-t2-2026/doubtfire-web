@@ -102,10 +102,12 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Downloads the current web calendar feed as an .ics file.
+   * Downloads the current web calendar feed as an .ics file. Skipped while a settings update
+   * is still saving, the same as every other control in this dialog, so the copy never reflects
+   * settings the server has not stored yet or a URL that is being regenerated.
    */
   downloadCalendar() {
-    if (!this.webcal?.enabled || !this.webcal.guid) {
+    if (this.working || !this.webcal?.enabled || !this.webcal.guid) {
       return;
     }
 

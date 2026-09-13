@@ -40,6 +40,8 @@ describe('CalendarModalComponent', () => {
 
     fixture = TestBed.createComponent(CalendarModalComponent);
     component = fixture.componentInstance;
+    // The dialog opens in its loading state. These tests start after the webcal has loaded.
+    component.working = false;
   });
 
   afterEach(() => {
@@ -85,6 +87,18 @@ describe('CalendarModalComponent', () => {
 
   it('does not download when there is no webcal loaded yet', () => {
     component.webcal = null;
+
+    component.downloadCalendar();
+
+    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+  });
+
+  it('does not download while a settings update is still saving', () => {
+    const webcal = new Webcal();
+    webcal.enabled = true;
+    webcal.guid = 'abc-123';
+    component.webcal = webcal;
+    component.working = true;
 
     component.downloadCalendar();
 
@@ -142,5 +156,18 @@ describe('CalendarModalComponent accessible URL controls', () => {
     expect(
       copy.compareDocumentPosition(regenerate) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('disables the download a copy button while a settings update is saving', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const download = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+      button.textContent?.includes('Download a copy'),
+    )!;
+    expect(download.disabled).toBe(false);
+
+    fixture.componentInstance.working = true;
+    fixture.detectChanges();
+
+    expect(download.disabled).toBe(true);
   });
 });
