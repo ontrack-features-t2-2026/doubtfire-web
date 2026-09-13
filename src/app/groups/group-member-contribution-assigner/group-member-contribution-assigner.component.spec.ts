@@ -101,7 +101,14 @@ describe('GroupMemberContributionAssignerComponent', () => {
   });
 
   it('asks for the members once when it opens', () => {
-    create();
+    // Bind the inputs the way the dialog does, so the first ngOnChanges runs too.
+    const fixture = TestBed.createComponent(GroupMemberContributionAssignerComponent);
+    fixture.componentRef.setInput('isTestSubmission', false);
+    fixture.componentRef.setInput('project', project);
+    fixture.componentRef.setInput('task', task);
+
+    fixture.detectChanges();
+
     expect(group.getMembers).toHaveBeenCalledTimes(1);
   });
 
