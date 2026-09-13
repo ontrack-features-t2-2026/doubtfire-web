@@ -1,61 +1,116 @@
-<mat-card appearance="outlined" class="flex h-full flex-col">
-  <mat-card-header>
-    <mat-card-title>Plan Your Tasks</mat-card-title>
-    <mat-card-subtitle class="mb-2.5">
-      A timeline of your tasks, their due dates, and prerequisites, so you can plan when to start
-      and submit with time left for feedback.
-    </mat-card-subtitle>
-  </mat-card-header>
-  <mat-card-content class="task-planner-controls flex flex-1 flex-col items-start gap-4">
-    @if (unit.allowFlexibleDates) {
-      <details class="task-planner-tips w-full">
-        <summary class="cursor-pointer text-sm font-medium text-ot-text">
-          Tips for planning your dates
+<mat-card appearance="outlined" class="task-planner-card">
+  <mat-card-content class="flex flex-col gap-2 pt-4">
+    <div class="task-planner-row flex flex-wrap items-start gap-x-4 gap-y-3">
+      <!-- The dashboard projects its grade fields here, so the target grade keeps its own
+           save logic and staff guard in progress-dashboard.component. -->
+      <ng-content></ng-content>
+
+      <div class="task-planner-actions flex min-h-14 grow basis-88 flex-wrap items-center gap-2">
+        <a
+          class="min-h-11 grow @lg:grow-0"
+          mat-stroked-button
+          [routerLink]="['/projects', project.id, 'plan']"
+        >
+          <mat-icon aria-hidden="true">calendar_month</mat-icon>
+          View Task Planner
+        </a>
+
+        <button
+          class="download-ics-link min-h-11 grow @lg:grow-0"
+          mat-stroked-button
+          type="button"
+          [disabled]="!hasAnyTasks"
+          [matMenuTriggerFor]="calendarMenu"
+        >
+          <mat-icon aria-hidden="true">download</mat-icon>
+          Download calendar
+          <mat-icon aria-hidden="true" iconPositionEnd>arrow_drop_down</mat-icon>
+        </button>
+
+        <mat-menu #calendarMenu="matMenu">
+          @if (hasTargetGrade) {
+            <button
+              class="calendar-grade-option"
+              mat-menu-item
+              type="button"
+              [disabled]="!hasTasksFor(project.targetGrade)"
+              (click)="downloadIcs(project.targetGrade)"
+            >
+              Tasks for {{ gradeLabel(project.targetGrade) }} (your target)
+            </button>
+            <mat-divider></mat-divider>
+          }
+          @for (grade of otherGrades; track grade) {
+            <button
+              class="calendar-grade-option"
+              mat-menu-item
+              type="button"
+              [disabled]="!hasTasksFor(grade)"
+              (click)="downloadIcs(grade)"
+            >
+              Tasks for {{ gradeLabel(grade) }}
+            </button>
+          }
+        </mat-menu>
+      </div>
+    </div>
+
+    @if (showTips) {
+      <details class="task-planner-tips">
+        <summary class="min-h-11 cursor-pointer py-3 text-sm font-medium text-ot-text">
+          New here? How this page works
         </summary>
-        <p class="mt-2 text-sm leading-6 text-ot-muted">
-          You can set your own start and target dates. Be mindful of each task’s
-          <strong class="font-semibold text-ot-text">Feedback Deadline</strong> — submissions after
-          this date will not be checked. Aim to finish at least one week before the deadline,
-          especially if you are targeting a higher grade.
-        </p>
+        <dl class="grid max-w-3xl gap-3 pb-2 text-sm leading-6">
+          <div>
+            <dt class="font-semibold text-ot-text">Target grade</dt>
+            <dd class="text-ot-muted">
+              This is the grade you want to get. {{ lowestGradeLabel }} tasks are for everyone. Each
+              higher grade adds more tasks. This page only counts the tasks you need for your target
+              grade.
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-ot-text">Target date and feedback deadline</dt>
+            <dd class="text-ot-muted">
+              The target date is the day to aim to submit a task. The feedback deadline is the last
+              day to submit it and still get feedback from your tutor.
+              @if (unit?.allowFlexibleDates) {
+                In this unit you can change your own target dates in the Task Planner.
+              }
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-ot-text">Submit early</dt>
+            <dd class="text-ot-muted">
+              Your tutor may ask you to fix something and submit again. Try to submit at least one
+              week before the feedback deadline, so you have time to do this.
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-ot-text">Task Planner</dt>
+            <dd class="text-ot-muted">
+              It shows the tasks for your target grade on a timeline. Turn on "Show tasks beyond
+              target grade" to see the rest. Click a task to see which tasks you must finish before
+              it.
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-ot-text">Download calendar</dt>
+            <dd class="text-ot-muted">
+              Pick a grade to save the target dates of its tasks as a calendar file. Open the file
+              with a calendar app, like Outlook or Apple Calendar. If your dates change, download it
+              again.
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-ot-text">The two charts</dt>
+            <dd class="text-ot-muted">
+              Progress Burndown shows how much work you have left. Task Statuses shows how many of
+              your tasks are at each step.
+            </dd>
+          </div>
+        </dl>
       </details>
     }
-
-    <a
-      class="min-h-11 w-full sm:w-auto"
-      color="primary"
-      mat-flat-button
-      [routerLink]="['/projects', project.id, 'plan']"
-    >
-      <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px">
-        launch
-      </mat-icon>
-      View Task Planner
-    </a>
-
-    <div class="mt-1 w-full border-t border-ot-divider pt-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <mat-form-field appearance="outline" class="min-w-0 max-w-[15rem] flex-1" subscriptSizing="dynamic">
-          <mat-label>Calendar export grade</mat-label>
-          <mat-select class="w-full" [(ngModel)]="selectedDownloadGrade">
-            @for (grade of gradeValues; track grade) {
-              <mat-option [value]="grade">{{ gradeLabel(grade) }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <button
-          class="download-ics-link min-h-11 shrink-0"
-          mat-stroked-button
-          [disabled]="!hasDownloadableTasks"
-          (click)="downloadIcs()"
-        >
-          <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px">
-            download
-          </mat-icon>
-          Download .ics
-        </button>
-      </div>
-      <div class="mt-1.5 text-xs text-ot-muted">Only the tasks for this grade are exported.</div>
-    </div>
   </mat-card-content>
 </mat-card>

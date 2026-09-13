@@ -10,91 +10,60 @@
     </h4>
   </div>
   <div class="grid grid-cols-1 items-stretch gap-4 p-3 sm:p-4 @3xl:grid-cols-2">
-    <!-- Task Planner Card -->
-    <div
-      class="size-full"
-      [ngClass]="
-        showSubmittedGrade
-          ? '@3xl:col-span-2 @3xl:mx-auto @3xl:w-[calc((100%-1rem)/2)]'
-          : '@3xl:col-span-1'
-      "
-    >
-      <f-task-planner-card class="block size-full" [project]="project"></f-task-planner-card>
+    <!-- Plan strip: target grade, Task Planner and calendar download in one card -->
+    <div class="@3xl:col-span-2">
+      <f-task-planner-card
+        class="block"
+        [project]="project"
+        [showTips]="!viewingOtherStudentProject"
+      >
+        <mat-form-field
+          appearance="outline"
+          class="target-grade-field w-full @lg:w-72"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>Target grade</mat-label>
+          <mat-select
+            aria-label="Target grade"
+            [disabled]="isUpdatingTargetGrade || viewingOtherStudentProject"
+            [value]="project.targetGrade"
+            (selectionChange)="updateTargetGrade($event.value)"
+          >
+            @for (grade of grades.values; track grade) {
+              <mat-option [value]="grade">
+                {{ grades.names[grade] }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ targetProgressText }}</mat-hint>
+        </mat-form-field>
+
+        @if (showSubmittedGrade) {
+          <mat-form-field
+            appearance="outline"
+            class="submitted-grade-field w-full @lg:w-56"
+            subscriptSizing="dynamic"
+          >
+            <mat-label>Submitted grade</mat-label>
+            <mat-select aria-label="Submitted grade" disabled [value]="project.submittedGrade">
+              @for (grade of grades.values; track grade) {
+                <mat-option [value]="grade">
+                  {{ grades.names[grade] }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>The grade this portfolio was submitted for.</mat-hint>
+          </mat-form-field>
+        }
+      </f-task-planner-card>
     </div>
-
-    <!-- Target Grade Card -->
-    <div class="h-full @3xl:col-span-1">
-      <mat-card appearance="outlined" class="flex h-full flex-col">
-        <mat-card-header>
-          <mat-card-title>Target Grade</mat-card-title>
-          <mat-card-subtitle class="mb-2.5">
-            <p>Your target grade changes which tasks you need to complete.</p>
-          </mat-card-subtitle>
-        </mat-card-header>
-
-        <mat-card-content class="flex flex-1 items-center">
-          <div class="w-full">
-            <mat-form-field appearance="fill" class="w-full">
-              <mat-label>Select Target Grade</mat-label>
-              <mat-select
-                aria-label="Target grade"
-                [disabled]="isUpdatingTargetGrade || viewingOtherStudentProject"
-                [value]="project.targetGrade"
-                (selectionChange)="updateTargetGrade($event.value)"
-              >
-                @for (grade of grades.values; track grade) {
-                  <mat-option [value]="grade">
-                    {{ grades.names[grade] }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <div class="ml-0.5 py-1 text-ot-muted">
-              Plan task dates and prerequisites in the
-              <a class="cursor-pointer underline" [routerLink]="['/projects', project.id, 'plan']">
-                Task Planner
-              </a>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    @if (showSubmittedGrade) {
-      <!-- Submitted Grade Card -->
-      <div class="h-full @3xl:col-span-1">
-        <mat-card appearance="outlined" class="flex h-full flex-col">
-          <mat-card-header>
-            <mat-card-title>Submitted Grade</mat-card-title>
-            <mat-card-subtitle class="mb-2.5">
-              <p>The grade you are submitting your portfolio for.</p>
-            </mat-card-subtitle>
-          </mat-card-header>
-
-          <mat-card-content class="flex flex-1 items-center">
-            <div class="w-full">
-              <mat-form-field appearance="fill" class="w-full">
-                <mat-label>Select Submitted Grade</mat-label>
-                <mat-select disabled [value]="project.submittedGrade">
-                  @for (grade of grades.values; track grade) {
-                    <mat-option [value]="grade">
-                      {{ grades.names[grade] }}
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    }
 
     <div class="grid grid-cols-1 items-stretch gap-4 @3xl:col-span-2 @3xl:grid-cols-2">
       <mat-card appearance="outlined" class="h-full min-w-0">
         <mat-card-header>
           <mat-card-title>Progress Burndown</mat-card-title>
           <mat-card-subtitle>
-            The burndown chart shows how much work remains for you to achieve your target grade.
+            How much work you have left to reach {{ targetGradeName }}.
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content class="min-w-0">
@@ -104,13 +73,13 @@
             [project]="project"
             [unit]="project.unit"
           ></f-progress-burndown-chart>
-          <div class="mt-2.5 p-2.5 font-light text-ot-muted">
-            Aim to keep your
-            <strong class="font-semibold text-ot-error">Complete</strong>
-            line close to or ahead of the
-            <strong class="font-semibold text-ot-muted">Target</strong>
-            line to keep on track.
-          </div>
+          <p class="mt-2.5 p-2.5 text-ot-muted">
+            Try to keep the
+            <strong class="font-semibold text-ot-text">To Complete</strong>
+            line at or below the
+            <strong class="font-semibold text-ot-text">Target</strong>
+            line. If it goes above, you are falling behind.
+          </p>
         </mat-card-content>
       </mat-card>
 
@@ -118,7 +87,7 @@
         <mat-card-header>
           <mat-card-title>Task Statuses</mat-card-title>
           <mat-card-subtitle>
-            Breakdown of tasks at or below your selected target grade
+            The tasks you need for {{ targetGradeName }}, grouped by status.
           </mat-card-subtitle>
         </mat-card-header>
         <mat-card-content class="min-w-0">
