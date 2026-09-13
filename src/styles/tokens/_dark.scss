@@ -96,6 +96,17 @@
   --ot-chart-grid: #353c47;
   --ot-chart-axis: #8b949e;
 
+  // Unit accents: each light accent mixed 70% into the page, so the bands stay
+  // distinct without shouting over the slate ground. White text clears 7:1.
+  --ot-unit-1: #3233c0;
+  --ot-unit-2: #145e5a;
+  --ot-unit-3: #6134b3;
+  --ot-unit-4: #8f1838;
+  --ot-unit-5: #0c557e;
+  --ot-unit-6: #884614;
+  --ot-unit-previous: #3c4757;
+  --ot-unit-on: #ffffff;
+
   --ot-code-surface: #1a1f26;
   --ot-code-text: #e6edf3;
 

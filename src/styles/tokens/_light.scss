@@ -93,6 +93,18 @@
   --ot-chart-grid: #e0e0e0;
   --ot-chart-axis: #616161;
 
+  // Unit accents: the header band that tells units apart on the cross-unit
+  // dashboard. White text sits on each, so every value clears 4.5:1 with white.
+  // Previous units take the slate band so active units lead.
+  --ot-unit-1: #3939ff;
+  --ot-unit-2: #0f766e;
+  --ot-unit-3: #7c3aed;
+  --ot-unit-4: #be123c;
+  --ot-unit-5: #0369a1;
+  --ot-unit-6: #b45309;
+  --ot-unit-previous: #475569;
+  --ot-unit-on: #ffffff;
+
   --ot-code-surface: #f5f5f5;
   --ot-code-text: #212121;
 

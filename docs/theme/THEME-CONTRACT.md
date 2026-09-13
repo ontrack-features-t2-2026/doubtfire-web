@@ -773,6 +773,9 @@ One source of truth, in CSS.
 |           | `--ot-chart-6`                | `#d07e05`                    | `#eb8f06`                    |                                                                  |
 |           | `--ot-chart-grid`             | `#e0e0e0`                    | `#353438`                    | gridlines, decorative                                            |
 |           | `--ot-chart-axis`             | `#616161`                    | `#adaaaf`                    | axis labels are text, 4.5:1                                      |
+| Units     | `--ot-unit-1` … `-6`          | see below                    | see below                    | cross-unit dashboard header bands; white text ≥4.5:1             |
+|           | `--ot-unit-previous`          | `#475569`                    | `#3c4757`                    | band for units that have finished                                |
+|           | `--ot-unit-on`                | `#ffffff`                    | `#ffffff`                    | text and icons on every unit band                                |
 | Code      | `--ot-code-surface`           | `#f5f5f5`                    | `#0e0e11`                    | `<pre>`, ANSI output, diff panes                                 |
 |           | `--ot-code-text`              | `#212121`                    | `#e5e1e6`                    | 14.77 / 14.91 on their own surface                               |
 |           | Monaco theme name             | `vs`                         | `vs-dark`                    | not a CSS var; set in TS from the resolved theme                 |
@@ -783,6 +786,21 @@ One source of truth, in CSS.
 | Selection | `--ot-color-selected`         | `#e7e7ff`                    | `#2e2e5c`                    | selected row or chip fill                                        |
 |           | `--ot-color-selected-text`    | `#212121`                    | `#e5e1e6`                    | 13.24 / 9.78                                                     |
 |           | `--ot-color-hover`            | `rgba(0, 0, 0, 0.04)`        | `rgba(255, 255, 255, 0.06)`  | matches the M2 `hover` slot already in use                       |
+
+The unit accents give each column on the cross-unit dashboard its own colour, handed out in
+display order. They are identity, not data, so they stay apart from the status and chart
+palettes.
+
+| Token         | Light     | White on it | Dark      | White on it |
+| ------------- | --------- | ----------- | --------- | ----------- |
+| `--ot-unit-1` | `#3939ff` | 6.56        | `#3233c0` | 8.86        |
+| `--ot-unit-2` | `#0f766e` | 5.47        | `#145e5a` | 7.56        |
+| `--ot-unit-3` | `#7c3aed` | 5.70        | `#6134b3` | 7.92        |
+| `--ot-unit-4` | `#be123c` | 6.29        | `#8f1838` | 8.91        |
+| `--ot-unit-5` | `#0369a1` | 5.93        | `#0c557e` | 8.03        |
+| `--ot-unit-6` | `#b45309` | 5.02        | `#884614` | 7.16        |
+
+The dark values are each light accent mixed 70% into the dark page (`#21262d`).
 
 `--ot-color-selected` light is `#e7e7ff`, which is `formatif-blue-lighter` from
 `tailwind.config.js` and `$md-formatif.50` from `theme.scss`. It is already the app's selection

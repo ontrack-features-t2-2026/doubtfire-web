@@ -35,6 +35,7 @@ enum SortMode {
 }
 
 const completedTypes: readonly TaskStatusEnum[] = ['complete'];
+const UNIT_ACCENT_COUNT = 6;
 const finalTypes: readonly TaskStatusEnum[] = TaskStatus.FINAL_STATUSES;
 
 const displayedDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -83,6 +84,7 @@ type DashboardUnit = {
   gradeSummaries: GradeCompletionSummary[];
   mobileSummary: MobileUnitSummary;
   progress: UnitProgress;
+  accent: string;
   isPrevious: boolean;
 };
 
@@ -794,7 +796,7 @@ export class CrossDashboardComponent implements OnInit {
   }
 
   private mapProjects(projects: readonly Project[]): DashboardUnit[] {
-    return projects.map((project) => {
+    return projects.map((project, index) => {
       project.calcTopTasks();
       const unit = project.unit;
       // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
@@ -809,6 +811,11 @@ export class CrossDashboardComponent implements OnInit {
         tasks,
         gradeSummaries: [],
         progress: this.buildProgress(tasks),
+        // Active units take the six unit accents in order, so neighbouring columns
+        // never share a colour. Finished units share the quieter slate band.
+        accent: unit.isActive
+          ? `var(--ot-unit-${(index % UNIT_ACCENT_COUNT) + 1})`
+          : 'var(--ot-unit-previous)',
         mobileSummary: {
           taskCountLabel: '0 tasks',
           deadlineLabel: 'No upcoming deadlines',

@@ -1,5 +1,8 @@
+<!-- relative: the visually hidden labels below are absolutely positioned, and
+     without a containing block here they escape the sideways-scrolling unit strip
+     and stretch the whole page. -->
 <div
-  class="flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-ot-hover motion-reduce:transition-none sm:px-5"
+  class="relative flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-ot-hover motion-reduce:transition-none sm:px-5"
   [class.bg-ot-hover]="isExpanded"
 >
   <!-- The same status circle as the unit task list, so a status looks the same everywhere. -->

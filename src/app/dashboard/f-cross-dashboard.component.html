@@ -2,7 +2,7 @@
   class="cross-dashboard panel-full-screen flex h-full min-w-0 flex-col overflow-y-auto sm:overflow-hidden"
 >
   @let pageSummary = summary;
-  <header class="shrink-0 px-4 pt-6 sm:px-16">
+  <header class="shrink-0 px-4 pt-1 sm:px-16">
     <h1 class="m-0 text-2xl leading-tight font-semibold tracking-tight text-ot-text">My units</h1>
     <p class="mt-1 mb-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ot-muted">
       <span>{{ pageSummary.unitLabel }}</span>
@@ -185,198 +185,203 @@
   >
     @for (unit of displayedUnits; track unit.projectId) {
       <section
-        class="unit-card flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1) sm:h-full sm:w-auto sm:max-w-xl sm:flex-[1_0_26rem]"
+        class="unit-card relative flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1) sm:h-full sm:w-auto sm:max-w-xl sm:flex-[1_0_26rem]"
         [attr.aria-label]="unit.code + ' project tasks'"
+        [style.--unit-accent]="unit.accent"
       >
         <div
-          class="dashboard-project-header flex w-full shrink-0 flex-col gap-3 border-b border-ot-divider p-4 sm:px-5"
+          class="dashboard-project-header flex w-full shrink-0 flex-col border-b border-ot-divider"
         >
-          <h2 class="m-0 sm:hidden">
-            <button
-              class="flex min-h-12 w-full min-w-0 items-center gap-3 rounded-ot-sm text-left text-ot-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus"
-              data-mobile-unit-toggle
-              type="button"
-              [attr.aria-controls]="
-                'dashboard-unit-controls-' +
-                unit.projectId +
-                ' dashboard-unit-content-' +
-                unit.projectId
-              "
-              [attr.aria-expanded]="isMobileProjectExpanded(unit.projectId)"
-              (click)="toggleMobileProject(unit.projectId)"
-            >
-              <span class="min-w-0 grow">
-                <span class="block text-lg leading-tight font-semibold break-words">
-                  {{ unit.code }}
-                </span>
-                <span
-                  class="mt-1 block text-sm leading-tight font-normal break-words text-ot-muted"
-                >
-                  {{ unit.name }} · {{ unit.isPrevious ? 'Previous' : 'Active' }}
-                </span>
-                <span class="mt-2 flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-sm font-normal">
-                  <span>{{ unit.mobileSummary.taskCountLabel }}</span>
-                  <span
-                    class="min-w-0 break-words"
-                    [class.font-semibold]="unit.mobileSummary.hasDeadlineWarning"
-                  >
-                    {{ unit.mobileSummary.deadlineLabel }}
+          <!-- The unit's own colour band: identity only, so the task marks below keep
+               the status colours to themselves. -->
+          <div class="unit-band p-4 text-(--ot-unit-on) sm:px-5">
+            <h2 class="m-0 sm:hidden">
+              <button
+                class="flex min-h-12 w-full min-w-0 items-center gap-3 rounded-ot-sm text-left text-(--ot-unit-on) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
+                data-mobile-unit-toggle
+                type="button"
+                [attr.aria-controls]="
+                  'dashboard-unit-controls-' +
+                  unit.projectId +
+                  ' dashboard-unit-content-' +
+                  unit.projectId
+                "
+                [attr.aria-expanded]="isMobileProjectExpanded(unit.projectId)"
+                (click)="toggleMobileProject(unit.projectId)"
+              >
+                <span class="min-w-0 grow">
+                  <span class="block text-lg leading-tight font-semibold break-words">
+                    {{ unit.code }}
+                  </span>
+                  <span class="mt-1 block text-sm leading-tight font-normal break-words">
+                    {{ unit.name }} · {{ unit.isPrevious ? 'Previous' : 'Active' }}
+                  </span>
+                  <span class="mt-2 flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-sm font-normal">
+                    <span>{{ unit.mobileSummary.taskCountLabel }}</span>
+                    <span
+                      class="min-w-0 break-words"
+                      [class.font-semibold]="unit.mobileSummary.hasDeadlineWarning"
+                    >
+                      {{ unit.mobileSummary.deadlineLabel }}
+                    </span>
                   </span>
                 </span>
-              </span>
-              <mat-icon aria-hidden="true" class="shrink-0 text-ot-muted">
-                {{
-                  isMobileProjectExpanded(unit.projectId)
-                    ? 'keyboard_arrow_up'
-                    : 'keyboard_arrow_down'
-                }}
-              </mat-icon>
-            </button>
-          </h2>
-
-          <div class="hidden min-w-0 sm:block">
-            <div class="flex min-w-0 items-center gap-2">
-              <h2 class="m-0 min-w-0 text-lg leading-tight font-semibold">
-                <a
-                  class="unit-code-link block truncate rounded-ot-xs text-ot-text no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus"
-                  [routerLink]="['/projects', unit.projectId, 'dashboard']"
-                >
-                  {{ unit.code }}
-                </a>
-              </h2>
-              <span
-                class="inline-flex shrink-0 items-center gap-1 rounded-ot-pill border border-ot-divider px-2 py-0.5 text-xs font-medium text-ot-muted"
-              >
-                @if (unit.isPrevious) {
-                  <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
-                    history
-                  </mat-icon>
-                  Previous
-                } @else {
-                  <span aria-hidden="true" class="size-1.5 rounded-full bg-ot-success"></span>
-                  Active
-                }
-              </span>
-            </div>
-            <p class="m-0 mt-0.5 truncate text-sm text-ot-muted" [title]="unit.name">
-              {{ unit.name }}
-            </p>
-          </div>
-
-          <div class="unit-progress">
-            <div class="flex items-baseline justify-between gap-3 text-sm">
-              @if (unit.progress.total > 0) {
-                <span class="font-medium text-ot-text">
-                  {{ unit.progress.completed }} of {{ unit.progress.total }} complete
-                </span>
-                <span class="text-ot-muted tabular-nums">{{ unit.progress.percentage }}%</span>
-              } @else {
-                <span class="text-ot-muted">No tasks yet</span>
-              }
-            </div>
-            <div
-              class="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-ot-pill bg-ot-divider"
-              role="img"
-              [attr.aria-label]="unit.progress.ariaLabel"
-            >
-              @for (segment of unit.progress.segments; track segment.status) {
-                <span
-                  class="h-full min-w-1"
-                  [matTooltip]="segment.label + ': ' + segment.count"
-                  [style.background-color]="segment.color"
-                  [style.flex-grow]="segment.count"
-                ></span>
-              }
-            </div>
-          </div>
-
-          <div
-            class="dashboard-project-controls min-w-0"
-            [class.is-mobile-open]="isMobileProjectExpanded(unit.projectId)"
-            [id]="'dashboard-unit-controls-' + unit.projectId"
-          >
-            <a
-              class="rounded-ot-xs py-1 text-sm font-semibold text-ot-link underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus sm:hidden"
-              [routerLink]="['/projects', unit.projectId, 'dashboard']"
-            >
-              Open {{ unit.code }} dashboard
-            </a>
-
-            <div class="relative min-w-0 grow">
-              <mat-icon
-                aria-hidden="true"
-                class="pointer-events-none absolute top-1/2 left-2.5 !size-5 -translate-y-1/2 !text-xl !leading-none text-ot-muted"
-              >
-                search
-              </mat-icon>
-              <input
-                autocomplete="off"
-                class="h-10 w-full min-w-0 rounded-ot-sm border border-ot-border bg-ot-surface pr-3 pl-9 text-sm text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:border-ot-focus focus-visible:outline-1 focus-visible:outline-ot-focus"
-                placeholder="Search tasks"
-                type="search"
-                [attr.aria-label]="'Search tasks in ' + unit.code"
-                [value]="getSearchTerm(unit.projectId)"
-                (input)="setSearch(unit.projectId, $any($event.target).value)"
-              />
-            </div>
-
-            <div class="flex shrink-0 items-center gap-1">
-              <button
-                class="unit-sort-button text-ot-muted"
-                mat-button
-                type="button"
-                [attr.aria-label]="
-                  'Sort tasks in ' + unit.code + ', sorted by ' + getSort(unit.projectId)
-                "
-                [matMenuTriggerFor]="sortmenu"
-              >
-                <mat-icon aria-hidden="true">sort</mat-icon>
-                {{ getSort(unit.projectId) }}
+                <mat-icon aria-hidden="true" class="shrink-0">
+                  {{
+                    isMobileProjectExpanded(unit.projectId)
+                      ? 'keyboard_arrow_up'
+                      : 'keyboard_arrow_down'
+                  }}
+                </mat-icon>
               </button>
-              <mat-menu #sortmenu="matMenu">
-                @for (mode of sortOptions; track mode) {
-                  <button mat-menu-item type="button" (click)="setSort(unit.projectId, mode)">
-                    <mat-icon
-                      aria-hidden="true"
-                      [class.invisible]="getSort(unit.projectId) !== mode"
-                    >
-                      check
-                    </mat-icon>
-                    {{ mode }}
-                  </button>
-                }
-              </mat-menu>
+            </h2>
 
-              <button
-                class="relative text-ot-muted"
-                mat-icon-button
-                type="button"
-                [attr.aria-label]="
-                  'Filter tasks in ' +
-                  unit.code +
-                  (activeFilterCount(unit.projectId) > 0 ? ', filters on' : '')
-                "
-                [matMenuTriggerFor]="filtermenu"
+            <div class="hidden min-w-0 sm:block">
+              <div class="flex min-w-0 items-center gap-2">
+                <h2 class="m-0 min-w-0 text-lg leading-tight font-semibold">
+                  <a
+                    class="unit-code-link block truncate rounded-ot-xs text-(--ot-unit-on) no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
+                    [routerLink]="['/projects', unit.projectId, 'dashboard']"
+                  >
+                    {{ unit.code }}
+                  </a>
+                </h2>
+                <span
+                  class="inline-flex shrink-0 items-center gap-1 rounded-ot-pill border border-(--ot-unit-on)/60 px-2 py-0.5 text-xs font-medium"
+                >
+                  @if (unit.isPrevious) {
+                    <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
+                      history
+                    </mat-icon>
+                    Previous
+                  } @else {
+                    <span aria-hidden="true" class="size-1.5 rounded-full bg-(--ot-unit-on)"></span>
+                    Active
+                  }
+                </span>
+              </div>
+              <p class="m-0 mt-0.5 truncate text-sm" [title]="unit.name">
+                {{ unit.name }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3 px-4 pt-3.5 pb-4 sm:px-5">
+            <div class="unit-progress">
+              <div class="flex items-baseline justify-between gap-3 text-sm">
+                @if (unit.progress.total > 0) {
+                  <span class="font-medium text-ot-text">
+                    {{ unit.progress.completed }} of {{ unit.progress.total }} complete
+                  </span>
+                  <span class="text-ot-muted tabular-nums">{{ unit.progress.percentage }}%</span>
+                } @else {
+                  <span class="text-ot-muted">No tasks yet</span>
+                }
+              </div>
+              <div
+                class="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-ot-pill bg-ot-divider"
+                role="img"
+                [attr.aria-label]="unit.progress.ariaLabel"
               >
-                <mat-icon>filter_list</mat-icon>
-                @if (activeFilterCount(unit.projectId) > 0) {
+                @for (segment of unit.progress.segments; track segment.status) {
                   <span
-                    aria-hidden="true"
-                    class="absolute top-2 right-2 size-2 rounded-full bg-ot-link ring-2 ring-ot-surface"
+                    class="h-full min-w-1"
+                    [matTooltip]="segment.label + ': ' + segment.count"
+                    [style.background-color]="segment.color"
+                    [style.flex-grow]="segment.count"
                   ></span>
                 }
-              </button>
-              <mat-menu #filtermenu="matMenu">
-                @for (mode of filterOptions; track mode) {
-                  <div
-                    mat-menu-item
-                    (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
-                  >
-                    <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
-                    {{ mode }}
-                  </div>
-                }
-              </mat-menu>
+              </div>
+            </div>
+
+            <div
+              class="dashboard-project-controls min-w-0"
+              [class.is-mobile-open]="isMobileProjectExpanded(unit.projectId)"
+              [id]="'dashboard-unit-controls-' + unit.projectId"
+            >
+              <a
+                class="rounded-ot-xs py-1 text-sm font-semibold text-ot-link underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus sm:hidden"
+                [routerLink]="['/projects', unit.projectId, 'dashboard']"
+              >
+                Open {{ unit.code }} dashboard
+              </a>
+
+              <div class="relative min-w-0 grow">
+                <mat-icon
+                  aria-hidden="true"
+                  class="pointer-events-none absolute top-1/2 left-2.5 !size-5 -translate-y-1/2 !text-xl !leading-none text-ot-muted"
+                >
+                  search
+                </mat-icon>
+                <input
+                  autocomplete="off"
+                  class="h-10 w-full min-w-0 rounded-ot-sm border border-ot-border bg-ot-surface pr-3 pl-9 text-sm text-ot-text placeholder:text-ot-muted placeholder:opacity-100 focus-visible:border-ot-focus focus-visible:outline-1 focus-visible:outline-ot-focus"
+                  placeholder="Search tasks"
+                  type="search"
+                  [attr.aria-label]="'Search tasks in ' + unit.code"
+                  [value]="getSearchTerm(unit.projectId)"
+                  (input)="setSearch(unit.projectId, $any($event.target).value)"
+                />
+              </div>
+
+              <div class="flex shrink-0 items-center gap-1">
+                <button
+                  class="unit-sort-button text-ot-muted"
+                  mat-button
+                  type="button"
+                  [attr.aria-label]="
+                    'Sort tasks in ' + unit.code + ', sorted by ' + getSort(unit.projectId)
+                  "
+                  [matMenuTriggerFor]="sortmenu"
+                >
+                  <mat-icon aria-hidden="true">sort</mat-icon>
+                  {{ getSort(unit.projectId) }}
+                </button>
+                <mat-menu #sortmenu="matMenu">
+                  @for (mode of sortOptions; track mode) {
+                    <button mat-menu-item type="button" (click)="setSort(unit.projectId, mode)">
+                      <mat-icon
+                        aria-hidden="true"
+                        [class.invisible]="getSort(unit.projectId) !== mode"
+                      >
+                        check
+                      </mat-icon>
+                      {{ mode }}
+                    </button>
+                  }
+                </mat-menu>
+
+                <button
+                  class="relative text-ot-muted"
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="
+                    'Filter tasks in ' +
+                    unit.code +
+                    (activeFilterCount(unit.projectId) > 0 ? ', filters on' : '')
+                  "
+                  [matMenuTriggerFor]="filtermenu"
+                >
+                  <mat-icon>filter_list</mat-icon>
+                  @if (activeFilterCount(unit.projectId) > 0) {
+                    <span
+                      aria-hidden="true"
+                      class="absolute top-2 right-2 size-2 rounded-full bg-ot-link ring-2 ring-ot-surface"
+                    ></span>
+                  }
+                </button>
+                <mat-menu #filtermenu="matMenu">
+                  @for (mode of filterOptions; track mode) {
+                    <div
+                      mat-menu-item
+                      (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
+                    >
+                      <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
+                      {{ mode }}
+                    </div>
+                  }
+                </mat-menu>
+              </div>
             </div>
           </div>
         </div>

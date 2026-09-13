@@ -1611,4 +1611,39 @@ describe('CrossDashboardComponent', () => {
       vi.useRealTimers();
     }
   });
+
+  it('gives neighbouring active units different accents and finished units the slate band', async () => {
+    projectsSubject.next(
+      Array.from({length: 7}, (_, index) => makeProject(index + 1, `UNIT${index + 1}`, true)),
+    );
+    await syncView();
+
+    expect(component.displayedUnits.map((unit) => unit.accent)).toEqual([
+      'var(--ot-unit-1)',
+      'var(--ot-unit-2)',
+      'var(--ot-unit-3)',
+      'var(--ot-unit-4)',
+      'var(--ot-unit-5)',
+      'var(--ot-unit-6)',
+      'var(--ot-unit-1)',
+    ]);
+
+    const firstCard = fixture.nativeElement.querySelector('section.unit-card') as HTMLElement;
+    expect(firstCard.style.getPropertyValue('--unit-accent')).toBe('var(--ot-unit-1)');
+
+    projectsSubject.next([makeProject(1, 'SIT764', true), makeProject(2, 'SIT782', false)]);
+    await syncView();
+
+    expect(component.activeUnits.map((unit) => unit.accent)).toEqual(['var(--ot-unit-1)']);
+  });
+
+  it('marks previous units with the slate band', () => {
+    projectServiceQuery.mockReturnValue(of([makeProject(9, 'SIT700', false)]));
+
+    component.setUnitScope('previous');
+
+    expect(component.displayedUnits.map((unit) => unit.accent)).toEqual([
+      'var(--ot-unit-previous)',
+    ]);
+  });
 });
