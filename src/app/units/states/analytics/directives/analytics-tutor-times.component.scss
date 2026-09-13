@@ -194,6 +194,10 @@ f-analytics-tutor-times {
     }
   }
 
+  .analytics-session--tutorial {
+    border-left-style: dashed;
+  }
+
   .analytics-session__name,
   .analytics-session__meta {
     overflow: hidden;

@@ -401,7 +401,8 @@ export class AnalyticsTutorTimesComponent implements OnInit, OnChanges, OnDestro
 
   sessionAriaLabel(event: SessionEvent): string {
     const day = formatDate(event.start, 'EEEE d MMMM', this.locale);
-    return `${event.tutorName}, ${day}, ${event.startHour} to ${event.endHour}, ${event.duration} minutes`;
+    const tutorial = event.duringTutorial ? ', during a tutorial' : '';
+    return `${event.tutorName}, ${day}, ${event.startHour} to ${event.endHour}, ${event.duration} minutes${tutorial}`;
   }
 
   private setPeriod(start: Date, days: number) {

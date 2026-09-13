@@ -247,6 +247,8 @@
 
 <ng-template #calendarEventTemplate let-eventClicked="eventClicked" let-weekEvent="weekEvent">
   @let session = weekEvent.event;
+  <!-- A session during a tutorial also gets a dashed edge, so it still shows when the
+       block is too short for the second line. -->
   <button
     class="analytics-session"
     matTooltipClass="analytics-session-tooltip"
@@ -254,12 +256,16 @@
     [attr.aria-label]="sessionAriaLabel(session)"
     [attr.aria-pressed]="selectedUserId !== null && session.userId === selectedUserId"
     [matTooltip]="sessionEventTitle(session)"
+    [ngClass]="{'analytics-session--tutorial': session.duringTutorial}"
     [style.--session-accent]="session.accent"
     (click)="eventClicked.emit({sourceEvent: $event})"
   >
     <span class="analytics-session__name">{{ session.tutorName }}</span>
     <span class="analytics-session__meta">
       {{ session.startHour }}–{{ session.endHour }} · {{ session.duration }} min
+      @if (session.duringTutorial) {
+        · in tutorial
+      }
     </span>
   </button>
 </ng-template>

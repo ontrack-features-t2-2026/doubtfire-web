@@ -352,6 +352,27 @@ describe('AnalyticsTutorTimesComponent', () => {
       expect(blocks[0].getAttribute('role')).toBeNull();
     });
 
+    // The old blocks said "(T)" for these. The first rewrite left it to the tooltip.
+    it('marks a session during a tutorial on the block itself', async () => {
+      await start(
+        makeUnit(1, 'Convenor', () =>
+          of([
+            session({start: new Date(2026, 8, 10, 10), minutes: 45, duringTutorial: true}),
+            session({start: new Date(2026, 8, 11, 10), minutes: 45}),
+          ]),
+        ),
+      );
+
+      const [tutorial, other] = Array.from(
+        page().querySelectorAll<HTMLButtonElement>('button.analytics-session'),
+      );
+      expect(tutorial.classList).toContain('analytics-session--tutorial');
+      expect(tutorial.textContent).toContain('in tutorial');
+      expect(tutorial.getAttribute('aria-label')).toMatch(/, during a tutorial$/);
+      expect(other.classList).not.toContain('analytics-session--tutorial');
+      expect(other.textContent).not.toContain('in tutorial');
+    });
+
     // The library header made every day a tab stop with nothing behind it.
     it('draws the days without tab stops and marks today', async () => {
       await start(
