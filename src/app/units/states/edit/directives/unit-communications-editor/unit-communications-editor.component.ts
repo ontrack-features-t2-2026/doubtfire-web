@@ -81,6 +81,8 @@ export class UnitCommunicationsEditorComponent implements OnInit, OnChanges, OnD
   tutorials: readonly Tutorial[] = [];
   tutorialStreams: readonly TutorialStream[] = [];
   loading = false;
+  // The sets failed to load, so an empty list would wrongly read as no sets.
+  loadError = false;
   setPreviewLoading = false;
   readonly previewStudentColumns = [
     'preferred_name',
@@ -994,12 +996,17 @@ export class UnitCommunicationsEditorComponent implements OnInit, OnChanges, OnD
     }
   }
 
+  public retryLoadSets(): void {
+    this.loadSets();
+  }
+
   private loadSets(): void {
     if (!this.unit) {
       return;
     }
 
     this.loading = true;
+    this.loadError = false;
     this.setService.getForUnit(this.unit.id).subscribe({
       next: (sets) => {
         this.sets = sets;
@@ -1012,6 +1019,7 @@ export class UnitCommunicationsEditorComponent implements OnInit, OnChanges, OnD
       },
       error: (error) => {
         this.loading = false;
+        this.loadError = true;
         this.showError(error);
       },
     });

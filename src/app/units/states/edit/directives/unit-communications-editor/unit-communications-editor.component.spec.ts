@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 import {SimpleChange} from '@angular/core';
-import {BehaviorSubject, of} from 'rxjs';
+import {BehaviorSubject, of, throwError} from 'rxjs';
 import {CommunicationRule, CommunicationSet} from 'src/app/api/models/doubtfire-model';
 import {UnitCommunicationsEditorComponent} from './unit-communications-editor.component';
 
@@ -57,6 +57,19 @@ describe('UnitCommunicationsEditorComponent', () => {
 
     expect(setService.getForUnit).toHaveBeenCalledTimes(1);
     expect(projectService.loadStudents).toHaveBeenCalledTimes(1);
+    component.ngOnDestroy();
+  });
+
+  it('says the sets failed to load, rather than that there are none, and can try again', () => {
+    const {component, setService} = communicationsEditor();
+    setService.getForUnit.mockReturnValueOnce(throwError(() => 'offline') as never);
+
+    component.ngOnInit();
+    expect(component.loadError).toBe(true);
+
+    component.retryLoadSets();
+    expect(component.loadError).toBe(false);
+    expect(setService.getForUnit).toHaveBeenCalledTimes(2);
     component.ngOnDestroy();
   });
 

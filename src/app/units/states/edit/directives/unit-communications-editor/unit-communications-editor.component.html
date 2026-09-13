@@ -30,7 +30,12 @@
       </div>
 
       <div class="min-h-0 flex-1 overflow-y-auto max-lg:max-h-96">
-        @if (!sets.length && !loading) {
+        @if (loadError) {
+          <div class="flex flex-col items-start gap-2 px-4 py-6">
+            <p class="m-0 text-sm text-ot-text">The sets could not be loaded.</p>
+            <button mat-stroked-button type="button" (click)="retryLoadSets()">Try again</button>
+          </div>
+        } @else if (!sets.length && !loading) {
           <p class="m-0 px-4 py-6 text-sm text-ot-muted">
             No sets yet. Add a set, then give it rules.
           </p>
@@ -430,7 +435,7 @@
             </div>
           }
         </section>
-      } @else if (!loading) {
+      } @else if (!loading && !loadError) {
         <div class="rounded-ot-lg border border-dashed border-ot-border bg-ot-surface px-6 pb-8">
           <f-empty-state
             [hint]="
