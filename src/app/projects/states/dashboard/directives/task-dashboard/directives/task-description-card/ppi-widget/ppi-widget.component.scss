@@ -167,7 +167,7 @@
 }
 
 .ppi-track {
-  background: var(--ot-color-divider);
+  background: var(--ot-meter-track);
   height: 9px;
 }
 
@@ -254,7 +254,7 @@
 }
 
 .ppi-distribution {
-  background: var(--ot-color-divider);
+  background: var(--ot-meter-track);
   border: 2px solid var(--ot-color-surface);
   border-radius: 999px;
   box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
@@ -356,7 +356,7 @@
 }
 
 .ppi-independent__track {
-  background: var(--ot-color-divider);
+  background: var(--ot-meter-track);
   display: block;
   height: 9px;
 }

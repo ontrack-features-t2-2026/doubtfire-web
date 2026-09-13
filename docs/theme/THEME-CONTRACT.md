@@ -312,11 +312,11 @@ semantic token layer on top now, and move Material onto tokens per component gro
 
 ### The three options
 
-| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                                             |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose hexes outside the three palette files, and locks us further into an API Angular is winding down. |
-| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                          |
-| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                   |
+| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                                                |
+| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                                         |
 
 ### Why B is rejected
 
@@ -590,12 +590,12 @@ is the rule that decides the migration, so it is written as a table rather than 
 "has a preference" as "holds one of the three allowlisted strings"; anything else is treated as
 absent, per 6.1.
 
-| Local preference | Account preference | Outcome                                                                        |
-| ---------------- | ------------------ | ------------------------------------------------------------------------------ |
-| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.     |
-| absent           | present            | Adopt the account value and write it locally. Rule 4.                          |
+| Local preference | Account preference | Outcome                                                                                 |
+| ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.              |
+| absent           | present            | Adopt the account value and write it locally. Rule 4.                                   |
 | **present**      | **absent**         | **Keep the local value, upload it, and stamp `updatedAt` at the moment of the upload.** |
-| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                        |
+| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                                |
 
 Only the fourth row consults a timestamp. So "a local timestamp that is missing, unparseable or
 in the future counts as older, and the account value is taken" applies **inside that row only**,
@@ -629,7 +629,7 @@ Two consequences that follow from the third row and are intended:
 `localStorage` means nothing to compare, so the account value is adopted, written locally, and
 the next boot on that device is flash-free. Until the response lands, that first session follows
 `system`. One repaint, on the first session on a new device, is the accepted cost of rule 1. It
-is stated behaviour, not a defect for THM-Q01 to raise. Where the account is *also* empty, row
+is stated behaviour, not a defect for THM-Q01 to raise. Where the account is _also_ empty, row
 one of the table applies and nothing is written at all — a brand-new user is not given a stored
 preference they never chose.
 
@@ -775,6 +775,7 @@ One source of truth, in CSS.
 |           | `--ot-chart-6`                | `#d07e05`                    | `#eb8f06`                    |                                                                  |
 |           | `--ot-chart-grid`             | `#e0e0e0`                    | `#353438`                    | gridlines, decorative                                            |
 |           | `--ot-chart-axis`             | `#616161`                    | `#adaaaf`                    | axis labels are text, 4.5:1                                      |
+| Meters    | `--ot-meter-track`            | `#e0e0e0`                    | `#4a5361`                    | empty part of a progress bar; 1.43 on dark raised, decorative    |
 | Units     | `--ot-unit-1` … `-6`          | see below                    | see below                    | cross-unit dashboard header bands; white text ≥4.5:1             |
 |           | `--ot-unit-previous`          | `#475569`                    | `#3c4757`                    | band for units that have finished                                |
 |           | `--ot-unit-on`                | `#ffffff`                    | `#ffffff`                    | text and icons on every unit band                                |
@@ -818,13 +819,13 @@ tint, it just had no name.
 | The status **identity**, meaning which hue means `complete`                                | Green means complete in both themes. Teaching staff read these chips daily and re-learning them in dark mode is a real cost. |
 | `#da532c`, `$doubtfire-color` in `variables.scss`                                          | Legacy brand colour. Keep or retire it, do not theme it.                                                                     |
 
-| Theme-aware                                                 | Why                                                                                                                                |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Theme-aware                                                 | Why                                                                                                                                                                                                                               |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--ot-color-primary`, `--ot-color-link`, `--ot-color-focus` | `#3939ff` is 6.28:1 on the light page, 2.83:1 on the dark page and 2.20:1 on the worst-case dark raised surface. It misses 4.5:1 for text and 3:1 for a focus ring, so the brand blue cannot be the dark-mode interactive colour. |
-| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                      |
-| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                    |
-| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                      |
-| The `theme-color` meta tag                                  | Section 12.                                                                                                                        |
+| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                                                                                                                     |
+| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                                                                                                                   |
+| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                                                                                                                     |
+| The `theme-color` meta tag                                  | Section 12.                                                                                                                                                                                                                       |
 
 The distinction in one sentence: **the brand mark is fixed, the brand as an interface colour is
 theme-aware.**
@@ -1340,6 +1341,7 @@ Visual regression
   reporting it is a fingerprinting signal and this feature does not do it. If analytics is added
   to OnTrack later, the theme preference stays out of it, and that is a review gate rather than a
   preference.
+
 - **Not an authorisation or identity control.** `data-ot-theme` and
   `ontrack.theme.preference` are presentation state. They are attacker-controlled by definition,
   since any user can edit `localStorage`. **No permission check, no role check, no route guard,

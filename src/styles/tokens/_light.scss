@@ -95,6 +95,8 @@
   --ot-chart-6: #d07e05;
   --ot-chart-grid: #e0e0e0;
   --ot-chart-axis: #616161;
+  // The empty part of a progress or meter bar, so its full length shows on a card.
+  --ot-meter-track: #e0e0e0;
 
   // Unit accents: the header band that tells units apart on the cross-unit
   // dashboard. White text sits on each, so every value clears 4.5:1 with white.
