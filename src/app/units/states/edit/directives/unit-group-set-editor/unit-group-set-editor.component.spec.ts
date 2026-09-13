@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {throwError} from 'rxjs';
+import {BehaviorSubject, throwError} from 'rxjs';
 import {UnitGroupSetEditorComponent} from './unit-group-set-editor.component';
 
 function groupSetEditor() {
@@ -40,6 +40,22 @@ describe('UnitGroupSetEditorComponent', () => {
 
     expect(csvResultModal.show).toHaveBeenCalled();
     expect(unit.refresh).toHaveBeenCalled();
+  });
+
+  it('follows the open group set to its new object when the unit reloads', () => {
+    const {component} = groupSetEditor();
+    const labs = {id: 3, name: 'Labs'};
+    const projects = {id: 4, name: 'Projects'};
+    const groupSets: BehaviorSubject<object[]> = new BehaviorSubject([labs, projects]);
+    component.unit = {groupSets: [labs, projects], groupSetsCache: {values: groupSets}} as never;
+    component.ngOnInit();
+    component.selectGroupSet(projects as never);
+
+    const reloadedProjects = {id: 4, name: 'Projects'};
+    groupSets.next([{id: 3, name: 'Labs'}, reloadedProjects]);
+
+    expect(component.selectedGroupSet).toBe(reloadedProjects);
+    component.ngOnDestroy();
   });
 
   it('puts the old values back when saving a group set fails', () => {

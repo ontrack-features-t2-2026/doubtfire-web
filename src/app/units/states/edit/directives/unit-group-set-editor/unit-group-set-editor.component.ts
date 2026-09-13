@@ -1,4 +1,5 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Subscription} from 'rxjs';
 import {GroupSet, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
 import {GroupSetService} from 'src/app/api/services/group-set.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
@@ -24,7 +25,7 @@ interface GroupSetEditModel {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UnitGroupSetEditorComponent implements OnInit {
+export class UnitGroupSetEditorComponent implements OnInit, OnDestroy {
   @Input() unit: Unit;
   @Input() unitRole: UnitRole;
 
@@ -64,6 +65,8 @@ export class UnitGroupSetEditorComponent implements OnInit {
   public readonly handleGroupCSVSuccess = (response: CsvResult) => this.onGroupCSVSuccess(response);
   public readonly handleGroupCSVComplete = () => this.onGroupCSVComplete();
 
+  private groupSetsSub?: Subscription;
+
   constructor(
     private groupSetService: GroupSetService,
     private alertService: AlertService,
@@ -76,6 +79,21 @@ export class UnitGroupSetEditorComponent implements OnInit {
     if (this.unit?.groupSets?.length > 0) {
       this.selectGroupSet(this.unit.groupSets[0]);
     }
+
+    // Reloading the unit, as a CSV import does, builds new group set objects with
+    // the new groups in them. Follow the open set to its new object, or the page
+    // keeps showing the old one without the imported groups.
+    this.groupSetsSub = this.unit?.groupSetsCache?.values?.subscribe((groupSets) => {
+      const selected = this.selectedGroupSet;
+      if (!selected || groupSets.includes(selected)) {
+        return;
+      }
+      this.selectGroupSet(groupSets.find((set) => set.id === selected.id) ?? groupSets[0] ?? null);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.groupSetsSub?.unsubscribe();
   }
 
   public get canSaveGroupSet(): boolean {
