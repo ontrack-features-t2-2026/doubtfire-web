@@ -5,8 +5,11 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  ViewChild,
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormControl, FormGroup} from '@angular/forms';
+import {MatEndDate, MatStartDate} from '@angular/material/datepicker';
 import {ActivatedRoute, Router} from '@angular/router';
 import {catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
@@ -124,6 +127,18 @@ export class CrossDashboardComponent implements OnInit {
 
   startDate = '';
   endDate = '';
+  // The range picker works in Dates while the filter keeps ISO day strings. The
+  // form group owns what the field shows, so a reset also clears text that never
+  // parsed, and its validators flag typos and reversed ranges on the inputs.
+  readonly dateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
+  @ViewChild(MatStartDate) private startDateInput?: MatStartDate<Date>;
+  @ViewChild(MatEndDate) private endDateInput?: MatEndDate<Date>;
+  // Material re-runs its sibling validators during a reset and each run emits
+  // valueChanges, so the reset mutes the subscription and processes once itself.
+  private resettingDates = false;
 
   previousUnitsLoaded = false;
   loadingPreviousUnits = false;
@@ -153,6 +168,17 @@ export class CrossDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.dateRange.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({start, end}) => {
+        if (this.resettingDates) {
+          return;
+        }
+        this.startDate = this.formatDateAsIso(start);
+        this.endDate = this.formatDateAsIso(end);
+        this.processTasks();
+      });
+
     this.globalStateService.onLoad(() => {
       this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
         const requested = params.get('scope');
@@ -228,9 +254,28 @@ export class CrossDashboardComponent implements OnInit {
       this.globalSearchTerm.length > 0 ||
       this.selectedStatuses.length > 0 ||
       this.selectedGrades.length > 0 ||
-      !!this.startDate ||
-      !!this.endDate
+      this.hasDateText
     );
+  }
+
+  // True while either date field holds anything, including text that did not parse,
+  // so Clear all and the clear button stay available to wipe a typo.
+  get hasDateText(): boolean {
+    return !!this.startDate || !!this.endDate || this.hasDateParseError;
+  }
+
+  get dateRangeError(): string | null {
+    if (this.hasDateParseError) {
+      return 'Enter dates as dd/mm/yyyy.';
+    }
+
+    return this.isDateRangeInvalid ? 'Start date must be on or before end date.' : null;
+  }
+
+  private get hasDateParseError(): boolean {
+    const {start, end} = this.dateRange.controls;
+
+    return start.hasError('matDatepickerParse') || end.hasError('matDatepickerParse');
   }
 
   get mobileSecondaryFilterCount(): number {
@@ -296,8 +341,7 @@ export class CrossDashboardComponent implements OnInit {
     this.globalSearchTerm = '';
     this.selectedStatuses = [];
     this.selectedGrades = [];
-    this.startDate = '';
-    this.endDate = '';
+    this.resetDateRange();
 
     if (this.unitScope !== 'active') {
       this.setUnitScope('active');
@@ -309,17 +353,18 @@ export class CrossDashboardComponent implements OnInit {
 
   setStartDate(value: string): void {
     this.startDate = value;
+    this.dateRange.controls.start.setValue(this.parseIsoDate(value), {emitEvent: false});
     this.processTasks();
   }
 
   setEndDate(value: string): void {
     this.endDate = value;
+    this.dateRange.controls.end.setValue(this.parseIsoDate(value), {emitEvent: false});
     this.processTasks();
   }
 
   clearDateRange(): void {
-    this.startDate = '';
-    this.endDate = '';
+    this.resetDateRange();
     this.processTasks();
   }
 
@@ -747,6 +792,41 @@ export class CrossDashboardComponent implements OnInit {
     );
 
     return {numericDates, remainingText};
+  }
+
+  private resetDateRange(): void {
+    this.startDate = '';
+    this.endDate = '';
+    this.resettingDates = true;
+    try {
+      this.dateRange.reset({start: null, end: null}, {emitEvent: false});
+      // A reset writes null, and Material only reformats the field when the value
+      // changes, so text that never parsed (already null) would stay on screen. The
+      // inputs' own value setter always reformats, so clear through it too.
+      if (this.startDateInput) {
+        this.startDateInput.value = null;
+      }
+      if (this.endDateInput) {
+        this.endDateInput.value = null;
+      }
+      this.revalidateDateRange();
+    } finally {
+      this.resettingDates = false;
+    }
+  }
+
+  // Each end's range check depends on the other end, and Material only re-runs the
+  // one being typed in. Correcting the start would leave a stale "end before start"
+  // error on the end, so every edit re-checks both.
+  revalidateDateRange(): void {
+    this.dateRange.controls.start.updateValueAndValidity({emitEvent: false});
+    this.dateRange.controls.end.updateValueAndValidity({emitEvent: false});
+  }
+
+  private parseIsoDate(value: string): Date | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
+
+    return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
   }
 
   private normaliseNumericDate(year: string, month: string, day: string): string {

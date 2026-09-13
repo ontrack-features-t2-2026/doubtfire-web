@@ -1,9 +1,15 @@
+import {enAU} from 'date-fns/locale';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ReactiveFormsModule} from '@angular/forms';
+import {provideDateFnsAdapter} from '@angular/material-date-fns-adapter';
 import {MatButtonModule} from '@angular/material/button';
 import {MatButtonHarness} from '@angular/material/button/testing';
+import {MAT_DATE_LOCALE} from '@angular/material/core';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatDateRangeInputHarness} from '@angular/material/datepicker/testing';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
@@ -121,14 +127,28 @@ describe('CrossDashboardComponent', () => {
       declarations: [CrossDashboardComponent],
       imports: [
         MatButtonModule,
+        MatDatepickerModule,
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
         MatMenuModule,
         MatSelectModule,
         NoopAnimationsModule,
+        ReactiveFormsModule,
       ],
       providers: [
+        // The app's own date setup (doubtfire-angular.module.ts), so typed dates
+        // are read day-first the way an Australian student enters them.
+        {provide: MAT_DATE_LOCALE, useValue: enAU},
+        provideDateFnsAdapter({
+          parse: {dateInput: 'dd/MM/yyyy'},
+          display: {
+            dateInput: 'dd/MM/yyyy',
+            monthYearLabel: 'MMMM yyyy',
+            dateA11yLabel: 'do MMMM yyyy',
+            monthYearA11yLabel: 'MMMM yyyy',
+          },
+        }),
         {provide: ActivatedRoute, useValue: {queryParamMap: of(convertToParamMap({}))}},
         {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
         {
@@ -1645,5 +1665,105 @@ describe('CrossDashboardComponent', () => {
     expect(component.displayedUnits.map((unit) => unit.accent)).toEqual([
       'var(--ot-unit-previous)',
     ]);
+  });
+
+  it('filters by the dates typed into the range field, day first', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Early Task', 'EARLY', 'not_started', makeDate(5)),
+        makeTask('Middle Task', 'MIDDLE', 'not_started', makeDate(12)),
+        makeTask('Late Task', 'LATE', 'not_started', makeDate(20)),
+      ]),
+    ]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const range = await loader.getHarness(MatDateRangeInputHarness);
+    const start = await range.getStartInput();
+    const end = await range.getEndInput();
+
+    await start.setValue('10/08/2026');
+    await end.setValue('15/08/2026');
+    await end.blur();
+    await syncView();
+
+    expect(component.startDate).toBe('2026-08-10');
+    expect(component.endDate).toBe('2026-08-15');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['MIDDLE']);
+
+    await loader
+      .getHarness(MatButtonHarness.with({selector: '[aria-label="Clear dates"]'}))
+      .then((clear) => clear.click());
+    await syncView();
+
+    expect(await start.getValue()).toBe('');
+    expect(await end.getValue()).toBe('');
+    expect(component.displayedUnits[0].tasks).toHaveLength(3);
+  });
+
+  it('re-checks both ends when one is corrected, so no stale range error stays', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const range = await loader.getHarness(MatDateRangeInputHarness);
+    const start = await range.getStartInput();
+    const end = await range.getEndInput();
+
+    await start.setValue('20/08/2026');
+    await end.setValue('15/08/2026');
+    await end.blur();
+    await syncView();
+
+    expect(component.dateRange.controls.end.valid).toBe(false);
+
+    await start.setValue('10/08/2026');
+    await start.blur();
+    await syncView();
+
+    expect(component.dateRange.controls.start.valid).toBe(true);
+    expect(component.dateRange.controls.end.valid).toBe(true);
+    expect(component.dateRangeError).toBeNull();
+  });
+
+  it('filters the dashboard once when the dates are cleared', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-15');
+    const processTasks = vi.spyOn(
+      component as unknown as {processTasks: () => void},
+      'processTasks',
+    );
+
+    component.clearDateRange();
+
+    expect(processTasks).toHaveBeenCalledTimes(1);
+  });
+
+  it('flags a typo in the date field and clears it with Clear all', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const start = await (await loader.getHarness(MatDateRangeInputHarness)).getStartInput();
+
+    await start.setValue('31/31/2026');
+    await start.blur();
+    await syncView();
+
+    // Nothing parsed, so nothing filters, but the field still holds text to clear.
+    expect(component.startDate).toBe('');
+    expect(component.hasGlobalToolbarChanges).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-error')?.textContent).toContain(
+      'Enter dates as dd/mm/yyyy.',
+    );
+
+    await (await loader.getHarness(MatButtonHarness.with({text: 'Clear all'}))).click();
+    await syncView();
+
+    expect(await start.getValue()).toBe('');
+    expect(fixture.nativeElement.querySelector('mat-error')).toBeNull();
+    expect(component.hasGlobalToolbarChanges).toBe(false);
   });
 });

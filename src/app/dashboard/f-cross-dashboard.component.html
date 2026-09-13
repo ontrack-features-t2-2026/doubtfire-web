@@ -85,7 +85,7 @@
       id="dashboard-secondary-filters"
       [class.is-mobile-open]="mobileGlobalFiltersExpanded"
     >
-      <mat-form-field appearance="outline" class="w-full sm:w-48" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="w-full sm:w-40" subscriptSizing="dynamic">
         <mat-label>Task statuses</mat-label>
         <mat-select
           aria-label="Task statuses"
@@ -99,7 +99,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="w-full sm:w-44" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="w-full sm:w-40" subscriptSizing="dynamic">
         <mat-label>Target grades</mat-label>
         <mat-select
           aria-label="Target grades"
@@ -113,45 +113,35 @@
         </mat-select>
       </mat-form-field>
 
-      <div aria-label="Due date range" class="flex min-w-0 items-center gap-2" role="group">
-        <mat-form-field
-          appearance="outline"
-          class="min-w-0 flex-1 sm:w-40"
-          subscriptSizing="dynamic"
-        >
-          <mat-label>Start date</mat-label>
+      <!-- One field for the whole range: type both dates, or open the calendar and pick
+           a start and an end. The picker keeps the end on or after the start. -->
+      <!-- 20rem leaves room for both dates and both suffix buttons on one line. -->
+      <mat-form-field appearance="outline" class="w-full sm:w-80" subscriptSizing="dynamic">
+        <mat-label>Due between</mat-label>
+        <mat-date-range-input [formGroup]="dateRange" [rangePicker]="dueRangePicker">
           <input
+            aria-label="Start date"
+            formControlName="start"
             id="dashboard-start-date"
-            matInput
-            type="date"
-            [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
-            [attr.aria-invalid]="isDateRangeInvalid ? 'true' : null"
-            [value]="startDate"
-            (input)="setStartDate($any($event.target).value)"
+            matStartDate
+            placeholder="Start"
+            (dateInput)="revalidateDateRange()"
           />
-        </mat-form-field>
-        <span aria-hidden="true" class="text-ot-muted">–</span>
-        <mat-form-field
-          appearance="outline"
-          class="min-w-0 flex-1 sm:w-40"
-          subscriptSizing="dynamic"
-        >
-          <mat-label>End date</mat-label>
           <input
+            aria-label="End date"
+            formControlName="end"
             id="dashboard-end-date"
-            matInput
-            type="date"
-            [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
-            [attr.aria-invalid]="isDateRangeInvalid ? 'true' : null"
-            [value]="endDate"
-            (input)="setEndDate($any($event.target).value)"
+            matEndDate
+            placeholder="End"
+            (dateInput)="revalidateDateRange()"
           />
-        </mat-form-field>
-        @if (startDate || endDate) {
+        </mat-date-range-input>
+        @if (hasDateText) {
           <button
             aria-label="Clear dates"
-            class="shrink-0 text-ot-muted"
+            class="text-ot-muted"
             mat-icon-button
+            matIconSuffix
             matTooltip="Clear dates"
             type="button"
             (click)="clearDateRange()"
@@ -159,7 +149,16 @@
             <mat-icon>close</mat-icon>
           </button>
         }
-      </div>
+        <mat-datepicker-toggle matIconSuffix [for]="dueRangePicker">
+          <mat-icon matDatepickerToggleIcon>calendar_month</mat-icon>
+        </mat-datepicker-toggle>
+        <mat-date-range-picker #dueRangePicker></mat-date-range-picker>
+        <!-- Inside the field, so Material ties it to the inputs with aria-describedby
+             and marks them aria-invalid once the typed range is wrong. -->
+        @if (dateRangeError; as error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+      </mat-form-field>
 
       <!-- Always rendered, so setting the first filter does not shift the toolbar. -->
       <button
@@ -171,12 +170,6 @@
       >
         Clear all
       </button>
-
-      @if (isDateRangeInvalid) {
-        <p class="m-0 basis-full text-sm text-ot-error" id="date-range-error" role="alert">
-          Start date must be on or before end date.
-        </p>
-      }
     </div>
   </div>
 
