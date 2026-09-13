@@ -137,12 +137,22 @@ describe('UnitStaffEditorComponent', () => {
     expect(component.isMainConvenor(grace)).toBe(true);
   });
 
-  it('offers everyone else as a mentor, and keeps the current mentor listed', () => {
+  it('offers everyone else as a mentor', () => {
     const ada = role(1, 'Ada');
     const grace = role(2, 'Grace');
     const {component} = editorFor(unitWith([ada, grace]));
 
     expect(component.mentorOptions(ada).map((option) => option.id)).toEqual([2]);
+  });
+
+  // Older data can have someone set as their own mentor. They stay listed for that
+  // person so the field shows who it is rather than going blank.
+  it('keeps someone listed as their own mentor when the data says so', () => {
+    const ada = role(1, 'Ada', {mentorId: 1});
+    const grace = role(2, 'Grace');
+    const {component} = editorFor(unitWith([ada, grace]));
+
+    expect(component.mentorOptions(ada).map((option) => option.id)).toEqual([1, 2]);
   });
 
   // "(None)" used to send an empty string rather than clearing the mentor.
