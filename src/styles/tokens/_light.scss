@@ -28,6 +28,8 @@
   --ot-color-inverse-text: #fafafa;
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
+  // Status icons are white on every fill; the -on colours are for text.
+  --ot-status-glyph: #ffffff;
   --ot-status-ready-for-feedback: #0078d5;
   --ot-status-ready-for-feedback-on: #ffffff;
   --ot-status-not-started: #cccccc;

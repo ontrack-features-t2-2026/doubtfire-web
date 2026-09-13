@@ -35,7 +35,7 @@
   }
 
   // The status-icon chip inside the solid header: drop its own fill and draw the
-  // glyph in the on-colour so it reads against the header. Tighten the padding
+  // glyph white, like every other status icon. Tighten the padding
   // around it and enlarge the glyph so the header icon is bold, not a small chip.
   status-icon .status-chip {
     min-width: 0 !important;
@@ -44,7 +44,7 @@
     padding: 0 !important;
     margin: 0 6px 0 0 !important;
     background: transparent !important;
-    color: var(--tsc-on) !important;
+    color: var(--ot-status-glyph) !important;
 
     mat-icon {
       width: 30px;

@@ -735,6 +735,12 @@ The dark on-fill is the same hue lifted until it clears 4.5:1 on that container.
 Token names are `--ot-status-<key>` and `--ot-status-<key>-on`, where `<key>` is the existing
 kebab-case class from `TaskStatus.statusClass()`.
 
+Status icons are the one exception to the `-on` rule. The glyph in a status chip, the status
+card header icon and the due-soon badge all use `--ot-status-glyph` (`#ffffff` in both themes),
+so every status icon reads the same way. Text on a status fill still uses `-on`. White does not
+reach the 3:1 non-text minimum on the lighter fills, lowest `fix-and-resubmit` and
+`assess-in-portfolio` at 1.4:1 in light, so the chip tooltip still carries the status name.
+
 Only two light fills move: `ready-for-feedback` (`#0079d8` → `#0078d5`) and `demonstrate`
 (`#428bca` → `#337ab7`). Six flip their foreground from `#ffffff` to `--ot-color-text` with the
 fill untouched — `working-on-it`, `need-help`, `feedback-exceeded`, `discuss`, `complete`,

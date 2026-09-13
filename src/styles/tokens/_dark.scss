@@ -31,7 +31,8 @@
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
   // Vivid saturated fill + dark ink -on: chips read bright, and the footer glyph
-  // (base colour on the page) stays legible.
+  // (base colour on the page) stays legible. Status icons are white on every fill.
+  --ot-status-glyph: #ffffff;
   --ot-status-ready-for-feedback: #58a6ff;
   --ot-status-ready-for-feedback-on: #06131f;
   --ot-status-not-started: #7d8590;
