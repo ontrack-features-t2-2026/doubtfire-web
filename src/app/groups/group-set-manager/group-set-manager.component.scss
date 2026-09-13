@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+// Fields in the members card run at 48px (Material density -2), like the toolbar
+// fields in the groups card beside it.
+.group-name-form .mat-mdc-form-field,
+.member-add .mat-mdc-form-field {
+  --mat-form-field-container-height: 48px;
+  --mat-form-field-container-vertical-padding: 12px;
+}
