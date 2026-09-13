@@ -251,9 +251,13 @@ describe('UnitDetailsEditorComponent grades', () => {
   it('does not move grades while one is being renamed', () => {
     const {component, unitService} = editorFor();
 
+    const labels = () => component.gradeDefinitions.map((grade) => grade.label);
+    const before = labels();
+
     component.editGrade(component.gradeDefinitions[2]);
     component.moveGrade(2, -1);
 
+    expect(labels()).toEqual(before);
     expect(unitService.update).not.toHaveBeenCalled();
   });
 
