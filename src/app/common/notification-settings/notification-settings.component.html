@@ -5,10 +5,12 @@
     Choose which notification categories you want to receive.
   </p>
 
-  <p>
-    You can view the notifications controlled by these preferences on the
-    <a routerLink="/notifications">Notifications page</a>.
-  </p>
+  @if (showNotificationsLink) {
+    <p>
+      You can view the notifications controlled by these preferences on the
+      <a routerLink="/notifications">Notifications page</a>.
+    </p>
+  }
 
   <div class="notification-setting">
     <mat-checkbox

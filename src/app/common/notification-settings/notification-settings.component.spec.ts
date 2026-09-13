@@ -106,9 +106,19 @@ describe('NotificationSettingsComponent', () => {
   });
 
   it('links the notification preferences to the notifications page', () => {
+    fixture.componentRef.setInput('showNotificationsLink', true);
+    fixture.detectChanges();
+
     const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href="/notifications"]');
 
     expect(link).not.toBeNull();
     expect(link.textContent.trim()).toBe('Notifications page');
+  });
+
+  // The admin Users dialog and the first-login form render these settings too,
+  // and neither should link to the viewer's own notifications.
+  it('leaves the notifications page link out unless asked to show it', () => {
+    expect(fixture.nativeElement.querySelector('a[href="/notifications"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Notifications page');
   });
 });
