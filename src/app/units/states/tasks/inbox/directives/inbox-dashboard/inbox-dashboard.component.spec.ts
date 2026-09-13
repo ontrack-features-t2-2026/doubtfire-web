@@ -1,11 +1,11 @@
-import {beforeEach, describe, expect, it} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
-import {Tutorial} from 'src/app/api/models/tutorial/tutorial';
 import {TutorialStream} from 'src/app/api/models/tutorial-stream/tutorial-stream';
+import {Tutorial} from 'src/app/api/models/tutorial/tutorial';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
 import {User} from 'src/app/api/models/user/user';
@@ -132,5 +132,52 @@ describe('InboxDashboardComponent', () => {
 
     expect(component.currentUnitRole).toBeUndefined();
     expect(component.canAccessTutorNotes).toBe(false);
+  });
+
+  describe('the document on show', () => {
+    // The emitter is async, so a listener hears about a change on the next tick.
+    const nextTick = () => new Promise((resolve) => setTimeout(resolve));
+
+    function selectTask(task: Task | null): void {
+      const previous = component.task;
+      component.task = task;
+      component.ngOnChanges({task: new SimpleChange(previous, task, previous === undefined)});
+    }
+
+    // The details that say whether there is a PDF land after the task is selected. The
+    // URL used to be worked out only when the tab changed, so on a phone the download
+    // button stayed off for a submission that had already loaded.
+    it('announces the submission PDF once the submission details arrive', async () => {
+      const unit = new Unit();
+      const task = unstreamedTask(unit, user(7, 'Tess Tutor'));
+      vi.spyOn(task, 'submissionUrl').mockReturnValue('https://api.test/submission');
+      task.loadingSubmissionDetails = true;
+      const urls: (string | null)[] = [];
+      component.visiblePdfUrlChange.subscribe((url) => urls.push(url));
+
+      selectTask(task);
+      await nextTick();
+      expect(urls).toEqual([null]);
+
+      task.loadingSubmissionDetails = false;
+      task.hasPdf = true;
+      component.ngDoCheck();
+      await nextTick();
+
+      expect(urls).toEqual([null, 'https://api.test/submission']);
+    });
+
+    it('announces again for every newly selected task, even with no PDF on either', async () => {
+      const unit = new Unit();
+      const urls: (string | null)[] = [];
+      component.visiblePdfUrlChange.subscribe((url) => urls.push(url));
+
+      selectTask(unstreamedTask(unit, null));
+      selectTask(unstreamedTask(unit, null));
+      component.ngDoCheck();
+      await nextTick();
+
+      expect(urls).toEqual([null, null]);
+    });
   });
 });
