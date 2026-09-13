@@ -120,7 +120,8 @@
         </f-page-container>
       }
       @case ('tasks') {
-        <f-page-container [fullWidth]="true">
+        <!-- The same width as the other tabs, so its edges line up with the header. -->
+        <f-page-container>
           <f-unit-task-editor [unit]="unit"></f-unit-task-editor>
         </f-page-container>
       }
