@@ -10,7 +10,8 @@
   padding: 0.5rem 1rem;
 }
 
-.demo-mode-banner a,
-.demo-mode-banner button {
+// The text link sits on the banner fill, so it takes the banner's on-colour. The
+// outlined Exit button keeps its own control fill and label colour.
+.demo-mode-banner a {
   color: inherit;
 }

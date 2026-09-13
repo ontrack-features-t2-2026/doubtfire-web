@@ -5,10 +5,10 @@
 
 @mixin status-icon($status) {
   // Read the runtime status tokens so the chip flips with data-ot-theme. The
-  // token names match the $status keys ('ready-for-feedback' etc.). The glyph is
-  // white on every fill so the icon set reads as one; text keeps the -on colours.
+  // token names match the $status keys ('ready-for-feedback' etc.), and each
+  // -on foreground is white, which every fill clears at 4.5:1 by the contract.
   background-color: var(--ot-status-#{$status});
-  color: var(--ot-status-glyph);
+  color: var(--ot-status-#{$status}-on);
 }
 
 .status-chip {

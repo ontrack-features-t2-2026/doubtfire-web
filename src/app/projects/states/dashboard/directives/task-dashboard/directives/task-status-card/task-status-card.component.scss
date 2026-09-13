@@ -35,7 +35,7 @@
   }
 
   // The status-icon chip inside the solid header: drop its own fill and draw the
-  // glyph white, like every other status icon. Tighten the padding
+  // glyph in the on-colour, the same as the header text. Tighten the padding
   // around it and enlarge the glyph so the header icon is bold, not a small chip.
   // Scope to .mat-mdc-select-value (the trigger display) only. This Material build
   // renders the select panel inside the field wrapper, so an unscoped rule here also
@@ -48,7 +48,7 @@
     padding: 0 !important;
     margin: 0 6px 0 0 !important;
     background: transparent !important;
-    color: var(--ot-status-glyph) !important;
+    color: var(--tsc-on) !important;
 
     mat-icon {
       width: 30px;

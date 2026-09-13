@@ -11,7 +11,6 @@ import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 export class StatusIconComponent implements OnInit {
   @Input() status?: TaskStatusEnum = 'not_started';
   @Input() showTooltip: boolean;
-  @Input() compact = false;
 
   ngOnInit(): void {
     if (this.showTooltip == null) {

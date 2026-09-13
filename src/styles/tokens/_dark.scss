@@ -30,39 +30,38 @@
   --ot-color-inverse-text: #161b22;
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
-  // Vivid saturated fill + dark ink -on: chips read bright, and the footer glyph
-  // (base colour on the page) stays legible. Status icons are white on every fill.
-  --ot-status-glyph: #ffffff;
-  --ot-status-ready-for-feedback: #58a6ff;
-  --ot-status-ready-for-feedback-on: #06131f;
-  --ot-status-not-started: #7d8590;
-  --ot-status-not-started-on: #0d1117;
-  --ot-status-working-on-it: #f0a838;
-  --ot-status-working-on-it-on: #241800;
-  --ot-status-need-help: #bc8cff;
-  --ot-status-need-help-on: #190c2e;
-  --ot-status-fix-and-resubmit: #e6cf4a;
-  --ot-status-fix-and-resubmit-on: #241f00;
-  --ot-status-feedback-exceeded: #ff9a5b;
-  --ot-status-feedback-exceeded-on: #240c04;
-  --ot-status-redo: #db6d28;
-  --ot-status-redo-on: #1d0d00;
-  --ot-status-discuss: #56d4dd;
-  --ot-status-discuss-on: #04191b;
-  --ot-status-rediscuss: #2dd4bf;
-  --ot-status-rediscuss-on: #04170f;
-  --ot-status-demonstrate: #6cb6ff;
-  --ot-status-demonstrate-on: #06131f;
-  --ot-status-complete: #3fb950;
-  --ot-status-complete-on: #04160a;
-  --ot-status-fail: #f85149;
-  --ot-status-fail-on: #1c0402;
-  --ot-status-time-exceeded: #f85149;
-  --ot-status-time-exceeded-on: #1c0402;
-  --ot-status-assess-in-portfolio: #e6cf4a;
-  --ot-status-assess-in-portfolio-on: #241f00;
-  --ot-status-attention-required: #f0883e;
-  --ot-status-attention-required-on: #200b02;
+  // Every status carries white icons and text, so each fill is darkened (hue and
+  // saturation held) until white clears 4.5:1. See THEME-CONTRACT.md 8.1.
+  --ot-status-ready-for-feedback: #0071f1;
+  --ot-status-ready-for-feedback-on: #ffffff;
+  --ot-status-not-started: #6f7782;
+  --ot-status-not-started-on: #ffffff;
+  --ot-status-working-on-it: #a4690c;
+  --ot-status-working-on-it-on: #ffffff;
+  --ot-status-need-help: #9447ff;
+  --ot-status-need-help-on: #ffffff;
+  --ot-status-fix-and-resubmit: #877613;
+  --ot-status-fix-and-resubmit-on: #ffffff;
+  --ot-status-feedback-exceeded: #cb4e00;
+  --ot-status-feedback-exceeded-on: #ffffff;
+  --ot-status-redo: #bb5b1f;
+  --ot-status-redo-on: #ffffff;
+  --ot-status-discuss: #1c8189;
+  --ot-status-discuss-on: #ffffff;
+  --ot-status-rediscuss: #1b8376;
+  --ot-status-rediscuss-on: #ffffff;
+  --ot-status-demonstrate: #0074e6;
+  --ot-status-demonstrate-on: #ffffff;
+  --ot-status-complete: #2e863a;
+  --ot-status-complete-on: #ffffff;
+  --ot-status-fail: #eb1309;
+  --ot-status-fail-on: #ffffff;
+  --ot-status-time-exceeded: #eb1309;
+  --ot-status-time-exceeded-on: #ffffff;
+  --ot-status-assess-in-portfolio: #877613;
+  --ot-status-assess-in-portfolio-on: #ffffff;
+  --ot-status-attention-required: #be580f;
+  --ot-status-attention-required-on: #ffffff;
 
   // --- 8.2 Everything else ---
   --ot-urgency-overdue: #f85149;

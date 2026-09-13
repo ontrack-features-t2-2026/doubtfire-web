@@ -53,10 +53,6 @@
       color: #fff;
     }
 
-    .large-button.status-chip.fix-and-resubmit:hover {
-      color: #000;
-    }
-
     .large-button.status-chip:disabled,
     .large-button.status-chip.mat-mdc-button-disabled,
     .large-button.status-chip.mdc-icon-button--disabled {
@@ -81,27 +77,15 @@
       filter: none;
     }
 
-    .extra-large-button.status-chip.suggested-task-status.fix-and-resubmit {
-      color: #000;
-    }
-
     .extra-large-button.status-chip.suggested-task-status:hover {
       background-color: var(--status-chip-bg);
       color: #fff;
       filter: none;
     }
 
-    .extra-large-button.status-chip.suggested-task-status.fix-and-resubmit:hover {
-      color: #000;
-    }
-
     .extra-large-button.status-chip:hover {
       background-color: var(--status-chip-bg);
       color: #fff;
-    }
-
-    .extra-large-button.status-chip.fix-and-resubmit:hover {
-      color: #000;
     }
 
     .extra-large-button:hover {
@@ -160,11 +144,6 @@
     color: var(--ot-color-text);
   }
 
-  &.large-button.fix-and-resubmit:hover,
-  &.extra-large-button.fix-and-resubmit:hover,
-  &.button:not(.large-button):not(.extra-large-button).fix-and-resubmit:hover {
-    color: #000;
-  }
   &.discuss {
     @include status-icon('discuss');
     color: var(--ot-color-text);

@@ -190,7 +190,8 @@
             font-size: 9px;
           }
           &.soon-badge {
-            background-color: color.adjust(#eb8f06, $lightness: 15%);
+            // The working-on-it amber is dark enough for the white clock in both themes.
+            background-color: var(--ot-status-working-on-it);
           }
           &.due-badge {
             background-color: $doubtfire-color;

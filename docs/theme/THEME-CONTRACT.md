@@ -707,46 +707,36 @@ Three notes that are part of the contract, not commentary.
 
 ### 8.1 Task status
 
-Fifteen statuses. The method, applied in order: keep the shipped fill if white text on it already
-clears 4.5:1; otherwise keep the shipped fill and use `--ot-color-text` (`#212121`) if that
-clears 4.5:1; only if neither works, darken the fill in 0.5% HSL lightness steps, hue and
-saturation held, until white text reaches 4.5:1. **Thirteen of fifteen fills come through
-unchanged.** The dark fill is a container: same hue, same saturation, lightness pinned to 22%.
-The dark on-fill is the same hue lifted until it clears 4.5:1 on that container.
+Fifteen statuses. Every status fill carries white icons and white text, so `-on` is `#ffffff`
+for all fifteen in both themes. The method: keep the fill if white already clears 4.5:1;
+otherwise darken it in 0.5% HSL lightness steps, hue and saturation held, until white reaches
+4.5:1. The dark theme's fills go through the same method. Ratios below are white on the fill.
 
-| Status                | Shipped fill | `--ot-status-*` light | `-on` light | Ratio | `--ot-status-*` dark | `-on` dark | Ratio |
-| --------------------- | ------------ | --------------------- | ----------- | ----- | -------------------- | ---------- | ----- |
-| `ready-for-feedback`  | `#0079d8`    | `#0078d5`             | `#ffffff`   | 4.52  | `#003f70`            | `#47aeff`  | 4.51  |
-| `not-started`         | `#cccccc`    | `#cccccc`             | `#212121`   | 10.03 | `#383838`            | `#a1a1a1`  | 4.54  |
-| `working-on-it`       | `#eb8f06`    | `#eb8f06`             | `#212121`   | 6.49  | `#6d4303`            | `#fab042`  | 4.63  |
-| `need-help`           | `#a48fce`    | `#a48fce`             | `#212121`   | 5.67  | `#31224e`            | `#9d86ca`  | 4.56  |
-| `fix-and-resubmit`    | `#f2d85c`    | `#f2d85c`             | `#212121`   | 11.31 | `#685708`            | `#f1d44c`  | 4.83  |
-| `feedback-exceeded`   | `#d46b54`    | `#d46b54`             | `#212121`   | 4.62  | `#5a2317`            | `#dc8572`  | 4.53  |
-| `redo`                | `#804000`    | `#804000`             | `#ffffff`   | 7.92  | `#703800`            | `#ff9e3d`  | 4.53  |
-| `discuss`             | `#31b0d5`    | `#31b0d5`             | `#212121`   | 6.37  | `#134c5d`            | `#5ec1de`  | 4.58  |
-| `rediscuss`           | `#126352`    | `#126352`             | `#ffffff`   | 7.16  | `#115f4f`            | `#5be1c5`  | 4.69  |
-| `demonstrate`         | `#428bca`    | `#337ab7`             | `#ffffff`   | 4.56  | `#193a58`            | `#6ea6d6`  | 4.53  |
-| `complete`            | `#5bb75b`    | `#5bb75b`             | `#212121`   | 6.42  | `#224e22`            | `#78c478`  | 4.57  |
-| `fail`                | `#d93713`    | `#d93713`             | `#ffffff`   | 4.66  | `#671a09`            | `#f17c62`  | 4.51  |
-| `time-exceeded`       | `#d93713`    | `#d93713`             | `#ffffff`   | 4.66  | `#671a09`            | `#f17c62`  | 4.51  |
-| `assess-in-portfolio` | `#f2d85c`    | `#f2d85c`             | `#212121`   | 11.31 | `#685708`            | `#f1d44c`  | 4.83  |
-| `attention-required`  | `#f1814d`    | `#f1814d`             | `#212121`   | 6.12  | `#682708`            | `#f28a5a`  | 4.55  |
+| Status                | Shipped fill | `--ot-status-*` light | Ratio | `--ot-status-*` dark | Ratio |
+| --------------------- | ------------ | --------------------- | ----- | -------------------- | ----- |
+| `ready-for-feedback`  | `#0079d8`    | `#0078d5`             | 4.52  | `#0071f1`            | 4.53  |
+| `not-started`         | `#cccccc`    | `#757575`             | 4.61  | `#6f7782`            | 4.53  |
+| `working-on-it`       | `#eb8f06`    | `#a86604`             | 4.60  | `#a4690c`            | 4.56  |
+| `need-help`           | `#a48fce`    | `#8366bc`             | 4.57  | `#9447ff`            | 4.56  |
+| `fix-and-resubmit`    | `#f2d85c`    | `#8b750b`             | 4.52  | `#877613`            | 4.53  |
+| `feedback-exceeded`   | `#d46b54`    | `#ca4e33`             | 4.52  | `#cb4e00`            | 4.54  |
+| `redo`                | `#804000`    | `#804000`             | 7.92  | `#bb5b1f`            | 4.54  |
+| `discuss`             | `#31b0d5`    | `#20809c`             | 4.54  | `#1c8189`            | 4.61  |
+| `rediscuss`           | `#126352`    | `#126352`             | 7.16  | `#1b8376`            | 4.61  |
+| `demonstrate`         | `#428bca`    | `#337ab7`             | 4.56  | `#0074e6`            | 4.53  |
+| `complete`            | `#5bb75b`    | `#3b863b`             | 4.51  | `#2e863a`            | 4.58  |
+| `fail`                | `#d93713`    | `#d93713`             | 4.66  | `#eb1309`            | 4.54  |
+| `time-exceeded`       | `#d93713`    | `#d93713`             | 4.66  | `#eb1309`            | 4.54  |
+| `assess-in-portfolio` | `#f2d85c`    | `#8b750b`             | 4.52  | `#877613`            | 4.53  |
+| `attention-required`  | `#f1814d`    | `#cd4c10`             | 4.53  | `#be580f`            | 4.57  |
 
 Token names are `--ot-status-<key>` and `--ot-status-<key>-on`, where `<key>` is the existing
 kebab-case class from `TaskStatus.statusClass()`.
 
-Status icons are the one exception to the `-on` rule. The glyph in a status chip, the status
-card header icon and the due-soon badge all use `--ot-status-glyph` (`#ffffff` in both themes),
-so every status icon reads the same way. Text on a status fill still uses `-on`. White does not
-reach the 3:1 non-text minimum on the lighter fills, lowest `fix-and-resubmit` and
-`assess-in-portfolio` at 1.4:1 in light, so the chip tooltip still carries the status name.
-
-Only two light fills move: `ready-for-feedback` (`#0079d8` → `#0078d5`) and `demonstrate`
-(`#428bca` → `#337ab7`). Six flip their foreground from `#ffffff` to `--ot-color-text` with the
-fill untouched — `working-on-it`, `need-help`, `feedback-exceeded`, `discuss`, `complete`,
-`attention-required`. Three keep their fill and move their foreground off the shipped `#444444`
-onto the same token — `not-started`, `fix-and-resubmit`, `assess-in-portfolio`. That leaves four
-untouched in both fill and foreground: `redo`, `rediscuss`, `fail`, `time-exceeded`.
+In light, 4 fills keep their value: `redo`, `rediscuss`, `fail`, `time-exceeded`. The rest
+darken. The biggest shift is the yellow pair, `fix-and-resubmit` and `assess-in-portfolio`,
+which becomes an olive gold. A white glyph cannot clear 3:1 on any yellow light enough to
+still read as yellow, so the hue survives and the lightness does not.
 
 Thirteen of fifteen dark fills are distinct. The two collisions are `fail`/`time-exceeded` and
 `fix-and-resubmit`/`assess-in-portfolio`, which already share a base colour today. No **new**

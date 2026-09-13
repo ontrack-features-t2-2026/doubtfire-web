@@ -28,38 +28,38 @@
   --ot-color-inverse-text: #fafafa;
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
-  // Status icons are white on every fill; the -on colours are for text.
-  --ot-status-glyph: #ffffff;
+  // Every status carries white icons and text, so each fill is darkened (hue and
+  // saturation held) until white clears 4.5:1. See THEME-CONTRACT.md 8.1.
   --ot-status-ready-for-feedback: #0078d5;
   --ot-status-ready-for-feedback-on: #ffffff;
-  --ot-status-not-started: #cccccc;
-  --ot-status-not-started-on: #212121;
-  --ot-status-working-on-it: #eb8f06;
-  --ot-status-working-on-it-on: #212121;
-  --ot-status-need-help: #a48fce;
-  --ot-status-need-help-on: #212121;
-  --ot-status-fix-and-resubmit: #f2d85c;
-  --ot-status-fix-and-resubmit-on: #212121;
-  --ot-status-feedback-exceeded: #d46b54;
-  --ot-status-feedback-exceeded-on: #212121;
+  --ot-status-not-started: #757575;
+  --ot-status-not-started-on: #ffffff;
+  --ot-status-working-on-it: #a86604;
+  --ot-status-working-on-it-on: #ffffff;
+  --ot-status-need-help: #8366bc;
+  --ot-status-need-help-on: #ffffff;
+  --ot-status-fix-and-resubmit: #8b750b;
+  --ot-status-fix-and-resubmit-on: #ffffff;
+  --ot-status-feedback-exceeded: #ca4e33;
+  --ot-status-feedback-exceeded-on: #ffffff;
   --ot-status-redo: #804000;
   --ot-status-redo-on: #ffffff;
-  --ot-status-discuss: #31b0d5;
-  --ot-status-discuss-on: #212121;
+  --ot-status-discuss: #20809c;
+  --ot-status-discuss-on: #ffffff;
   --ot-status-rediscuss: #126352;
   --ot-status-rediscuss-on: #ffffff;
   --ot-status-demonstrate: #337ab7;
   --ot-status-demonstrate-on: #ffffff;
-  --ot-status-complete: #5bb75b;
-  --ot-status-complete-on: #212121;
+  --ot-status-complete: #3b863b;
+  --ot-status-complete-on: #ffffff;
   --ot-status-fail: #d93713;
   --ot-status-fail-on: #ffffff;
   --ot-status-time-exceeded: #d93713;
   --ot-status-time-exceeded-on: #ffffff;
-  --ot-status-assess-in-portfolio: #f2d85c;
-  --ot-status-assess-in-portfolio-on: #212121;
-  --ot-status-attention-required: #f1814d;
-  --ot-status-attention-required-on: #212121;
+  --ot-status-assess-in-portfolio: #8b750b;
+  --ot-status-assess-in-portfolio-on: #ffffff;
+  --ot-status-attention-required: #cd4c10;
+  --ot-status-attention-required-on: #ffffff;
 
   // --- 8.2 Everything else ---
   --ot-urgency-overdue: #c94823;
