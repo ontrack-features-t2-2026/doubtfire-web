@@ -4,12 +4,14 @@ import {
   BehaviorSubject,
   Observable,
   Subject,
+  asapScheduler,
   catchError,
   combineLatest,
   distinctUntilChanged,
   filter,
   first,
   map,
+  observeOn,
   of,
   switchMap,
   takeUntil,
@@ -33,6 +35,14 @@ export class TaskViewerStateComponent implements OnInit, OnDestroy {
   public loading = true;
   public loadFailed = false;
 
+  /**
+   * The selected task, as the template sees it. The task list picks the task the url
+   * names while it is being drawn, which is after this screen's own bindings were
+   * checked, so reading the subject straight into the template changed them mid-check.
+   * Taking the value on the next turn lets the list settle first.
+   */
+  public activeTaskDef: TaskDefinition | null = null;
+
   private readonly retry$: BehaviorSubject<void> = new BehaviorSubject(undefined);
   private readonly destroy$: Subject<void> = new Subject();
 
@@ -50,6 +60,12 @@ export class TaskViewerStateComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.selectedTaskDefinition$
+      .pipe(observeOn(asapScheduler), takeUntil(this.destroy$))
+      .subscribe((taskDef) => {
+        this.activeTaskDef = taskDef;
+      });
+
     const routeUnit$ =
       this.unit$ ?? this.route.parent.data.pipe(map((data) => data.unit as Unit | undefined));
 

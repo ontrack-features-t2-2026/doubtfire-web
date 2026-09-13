@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {Component, Input, NO_ERRORS_SCHEMA, OnChanges} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, throwError} from 'rxjs';
@@ -128,5 +128,65 @@ describe('TaskViewerStateComponent', () => {
     expect(requestedUnitIds).toEqual([1, 1]);
     expect(component.loadFailed).toBe(false);
     expect(component.unit.id).toBe(1);
+  });
+});
+
+/**
+ * Stands in for the task list, which opens the task the url names while it is being
+ * drawn, straight from ngOnChanges. It draws nothing, so its empty template stays here.
+ */
+// eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+@Component({selector: 'f-unit-task-list', template: '', standalone: false})
+class TaskListThatOpensATaskComponent implements OnChanges {
+  @Input() mode: string;
+  @Input() taskDefinitions: readonly TaskDefinition[];
+  @Input() selectedTaskDefinition$: BehaviorSubject<TaskDefinition>;
+
+  ngOnChanges(): void {
+    const named = this.taskDefinitions?.[0];
+    if (named && this.selectedTaskDefinition$.value !== named) {
+      this.selectedTaskDefinition$.next(named);
+    }
+  }
+}
+
+describe('TaskViewerStateComponent rendered', () => {
+  let fixture: ComponentFixture<TaskViewerStateComponent>;
+  let response: Subject<Unit>;
+
+  beforeEach(async () => {
+    response = new Subject();
+
+    await TestBed.configureTestingModule({
+      declarations: [TaskViewerStateComponent, TaskListThatOpensATaskComponent],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            parent: {data: new BehaviorSubject({unit: bareUnit(1)}), snapshot: {data: {}}},
+          },
+        },
+        {provide: Router, useValue: {navigate: () => {}}},
+        {provide: UnitService, useValue: {get: () => response}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TaskViewerStateComponent);
+  });
+
+  // A deep link such as /units/1/tasks/1.2P: the list selects the task during the
+  // same check that drew the panes, which used to change their bindings mid-check.
+  it('shows the task the list opens on its first render without a mid-check change', async () => {
+    fixture.detectChanges();
+    response.next(loadedUnit(1, '1.2P'));
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.activeTaskDef?.abbreviation).toBe('1.2P');
+    expect(fixture.nativeElement.querySelector('f-task-sheet-view')).not.toBeNull();
   });
 });
