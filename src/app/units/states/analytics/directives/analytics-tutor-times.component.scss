@@ -158,10 +158,11 @@ f-analytics-tutor-times {
     }
 
     // A session of a few minutes is only a few pixels tall at the calendar's scale,
-    // which cut its label down to a sliver. Every session gets room for one line,
-    // and a short one puts the name and time side by side on that line.
+    // which cut its label down to a sliver. The calendar's minimumEventHeight input
+    // gives every session room for one line (set there, not here, so the calendar
+    // lays out neighbouring sessions around the same height it draws), and a short
+    // one puts the name and time side by side on that line.
     .cal-time-events .cal-event-container {
-      min-height: 1.25rem;
       container-type: size;
     }
 
