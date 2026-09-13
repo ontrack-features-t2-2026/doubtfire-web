@@ -99,6 +99,7 @@ export class AnalyticsTutorTimesComponent implements OnInit, OnChanges, OnDestro
   public loadError: string | null = null;
 
   private sessionsSub?: Subscription;
+  private dateFieldsPending = false;
 
   constructor(
     private alertService: AlertService,
@@ -250,8 +251,25 @@ export class AnalyticsTutorTimesComponent implements OnInit, OnChanges, OnDestro
     this.fitHoursTo(shown);
   }
 
-  /** Runs when either end of the date field changes, typed or picked. */
+  /**
+   * Runs when either end of the date field changes, typed or picked. A click in the picker
+   * sets the first day and then clears the last, announcing each in turn, so reading the
+   * field straight away paired the new first day with the old last day, applied that and
+   * closed the picker. The field is read once both ends have landed.
+   */
   onDateChange() {
+    if (this.dateFieldsPending) {
+      return;
+    }
+    this.dateFieldsPending = true;
+    Promise.resolve().then(() => {
+      this.dateFieldsPending = false;
+      this.applyDateFields();
+    });
+  }
+
+  /** Makes the dates in the field the period, once both ends are there and valid. */
+  applyDateFields() {
     const {start, end} = this.dateRange.getRawValue();
     if (!start || !end) {
       // The picker is still waiting for the last day.

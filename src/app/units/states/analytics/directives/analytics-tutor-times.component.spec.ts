@@ -2,12 +2,14 @@ import {DateAdapter as CalendarDateAdapter, CalendarModule} from 'angular-calend
 import {adapterFactory} from 'angular-calendar/date-adapters/date-fns';
 import {enAU} from 'date-fns/locale';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {provideDateFnsAdapter} from '@angular/material-date-fns-adapter';
 import {MatButtonModule} from '@angular/material/button';
 import {MAT_DATE_LOCALE} from '@angular/material/core';
 import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatDateRangeInputHarness} from '@angular/material/datepicker/testing';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
@@ -187,7 +189,7 @@ describe('AnalyticsTutorTimesComponent', () => {
       expect(previous().getAttribute('aria-label')).toBe('Previous week');
 
       component.dateRange.setValue({start: day(8, 1), end: day(8, 14)});
-      component.onDateChange();
+      component.applyDateFields();
       fixture.detectChanges();
       expect(previous().getAttribute('aria-label')).toBe('Previous 14 days');
     });
@@ -197,14 +199,49 @@ describe('AnalyticsTutorTimesComponent', () => {
       await start(unit);
 
       component.dateRange.setValue({start: day(7, 30), end: null});
-      component.onDateChange();
+      component.applyDateFields();
       expect(unit.getUserMarkingSessions).toHaveBeenCalledTimes(1);
 
       component.dateRange.setValue({start: day(7, 30), end: day(8, 2)});
-      component.onDateChange();
+      component.applyDateFields();
       expect(component.daysInWeek).toBe(4);
       expect(lastRequest(unit)).toEqual([day(7, 30), day(8, 2)]);
       expect(component.rangeLabel).toBe('30 Aug – 2 Sep 2026');
+    });
+
+    // The picker sets the first day and then clears the last, announcing each in turn. The
+    // new first day was read with the old last day, applied, and the picker closed after
+    // one click.
+    it('waits for both clicks in the picker before changing the dates', async () => {
+      const unit = makeUnit(1, 'Convenor');
+      await start(unit);
+      const range =
+        await TestbedHarnessEnvironment.loader(fixture).getHarness(MatDateRangeInputHarness);
+
+      await range.openCalendar();
+      const calendar = await range.getCalendar();
+      await calendar.selectCell({text: '1'});
+
+      expect(await range.isCalendarOpen()).toBe(true);
+      expect(unit.getUserMarkingSessions).toHaveBeenCalledTimes(1);
+
+      await calendar.selectCell({text: '5'});
+
+      expect(await range.isCalendarOpen()).toBe(false);
+      expect(lastRequest(unit)).toEqual([day(8, 1), day(8, 5)]);
+      expect(component.rangeLabel).toBe('1 – 5 Sep 2026');
+    });
+
+    it('applies a typed first day with the last day already in the field', async () => {
+      const unit = makeUnit(1, 'Convenor');
+      await start(unit);
+      const range =
+        await TestbedHarnessEnvironment.loader(fixture).getHarness(MatDateRangeInputHarness);
+
+      await (await range.getStartInput()).setValue('01/09/2026');
+
+      expect(lastRequest(unit)).toEqual([day(8, 1), day(8, 14)]);
+      expect(component.daysInWeek).toBe(14);
     });
 
     it('puts the period back in the field when the picker closes half way', async () => {
@@ -221,7 +258,7 @@ describe('AnalyticsTutorTimesComponent', () => {
       await start(unit);
 
       component.dateRange.setValue({start: new Date(2025, 0, 1), end: day(8, 14)});
-      component.onDateChange();
+      component.applyDateFields();
 
       expect(alertError).toHaveBeenCalledWith('You cannot select more than a year', 3000);
       expect(unit.getUserMarkingSessions).toHaveBeenCalledTimes(1);
