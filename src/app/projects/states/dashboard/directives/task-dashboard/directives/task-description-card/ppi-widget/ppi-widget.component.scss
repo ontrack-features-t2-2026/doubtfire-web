@@ -4,30 +4,19 @@
   min-width: 0;
 }
 
+// A flat card like the other task cards: surface, hairline border, the shared
+// radius and elevation. The corner glow and the coloured state borders are gone;
+// the state icon and the badge in the header already say when data is stale or
+// failed, so the frame no longer shouts it as well.
 .ppi-card {
-  background:
-    radial-gradient(circle at 92% -10%, rgb(57 57 255 / 12%), transparent 34%),
-    var(--ot-color-surface-raised);
+  background: var(--ot-color-surface-raised);
   border: 1px solid var(--ot-color-divider);
-  border-radius: 12px;
+  border-radius: var(--ot-radius-md);
   box-sizing: border-box;
-  box-shadow: 0 3px 12px rgb(29 25 78 / 8%);
+  box-shadow: var(--ot-elevation-1);
   color: var(--ot-color-text);
   max-width: 100%;
   overflow: hidden;
-
-  &.is-error {
-    border-color: var(--ot-color-error);
-  }
-
-  &.is-warning {
-    border-color: var(--ot-color-warning);
-  }
-
-  &.is-muted {
-    background: var(--ot-color-surface-raised);
-    border-color: var(--ot-color-divider);
-  }
 }
 
 .ppi-head {
@@ -35,7 +24,7 @@
   display: flex;
   gap: 10px;
   justify-content: space-between;
-  padding: 9px 12px 5px;
+  padding: 14px 16px 8px;
 }
 
 .ppi-identity {
@@ -54,7 +43,6 @@
   background: var(--ot-color-selected);
   border: 1px solid var(--ot-color-divider);
   border-radius: 50%;
-  box-shadow: inset 0 0 0 3px rgb(255 255 255 / 58%);
   color: var(--ot-color-primary);
   display: inline-flex;
   flex: 0 0 34px;
@@ -144,7 +132,8 @@
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
-  padding: 2px 12px 10px 54px;
+  // Lines up under the title: 16px header padding, 34px avatar, 8px gap.
+  padding: 4px 16px 14px 58px;
 }
 
 .ppi-value {
@@ -179,7 +168,6 @@
 
 .ppi-track {
   background: var(--ot-color-divider);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 10%);
   height: 9px;
 }
 
@@ -192,7 +180,6 @@
 
 .ppi-fill {
   background: var(--ot-color-primary);
-  box-shadow: 0 0 10px rgb(57 57 255 / 34%);
   transition: width 260ms ease;
 }
 
@@ -210,7 +197,7 @@
   border-top: 1px solid var(--ot-color-divider);
   display: grid;
   gap: 9px;
-  padding: 10px 12px 12px;
+  padding: 12px 16px 14px;
 }
 
 .ppi-metrics {
@@ -370,7 +357,6 @@
 
 .ppi-independent__track {
   background: var(--ot-color-divider);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
   display: block;
   height: 9px;
 }
@@ -404,7 +390,7 @@
   display: flex;
   gap: 12px;
   min-height: 42px;
-  padding: 3px 12px 10px 54px;
+  padding: 4px 16px 14px 58px;
 
   > mat-icon {
     color: var(--ot-color-text-muted);
@@ -454,13 +440,13 @@
   }
 
   .ppi-summary {
-    padding-left: 12px;
+    padding-left: 16px;
   }
 
   .ppi-state {
     align-items: flex-start;
     flex-wrap: wrap;
-    padding-left: 12px;
+    padding-left: 16px;
 
     button {
       margin-left: 30px;
