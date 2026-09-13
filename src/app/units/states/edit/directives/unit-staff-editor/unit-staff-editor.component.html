@@ -50,7 +50,7 @@
   </div>
 
   <!-- The table scrolls sideways on its own on a narrow screen, never the page. -->
-  <div class="overflow-x-auto">
+  <div class="relative overflow-x-auto">
     <table class="w-full min-w-[60rem]" mat-table [dataSource]="dataSource">
       <ng-container matColumnDef="name">
         <th *matHeaderCellDef mat-header-cell>Name</th>

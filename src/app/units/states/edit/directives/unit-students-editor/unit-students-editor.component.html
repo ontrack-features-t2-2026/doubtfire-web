@@ -77,7 +77,7 @@
   }
 
   <!-- The table scrolls sideways on its own on a narrow screen, never the page. -->
-  <div class="overflow-x-auto" [hidden]="loadingStudents || loadError">
+  <div class="relative overflow-x-auto" [hidden]="loadingStudents || loadError">
     <table class="w-full min-w-[68rem]" mat-table matSort [dataSource]="dataSource">
       <ng-container matColumnDef="username" sticky>
         <th *matHeaderCellDef class="bg-ot-surface" mat-header-cell mat-sort-header>Username</th>

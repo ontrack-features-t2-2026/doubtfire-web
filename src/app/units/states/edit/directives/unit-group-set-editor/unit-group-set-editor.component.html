@@ -76,7 +76,7 @@
         </div>
       } @else {
         <!-- Five columns of settings need room; the table scrolls in the card on a phone. -->
-        <div class="mt-2 overflow-x-auto">
+        <div class="relative mt-2 overflow-x-auto">
           <table class="w-full min-w-4xl" mat-table [dataSource]="unit.groupSets">
             <ng-container matColumnDef="name">
               <th *matHeaderCellDef mat-header-cell>Name</th>

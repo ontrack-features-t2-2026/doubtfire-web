@@ -1,5 +1,8 @@
 <div class="flex flex-col gap-3">
-  <div class="overflow-x-auto" [ngClass]="{'rounded-ot-md border border-ot-divider': staffView}">
+  <div
+    class="relative overflow-x-auto"
+    [ngClass]="{'rounded-ot-md border border-ot-divider': staffView}"
+  >
     <table class="w-full" mat-table [dataSource]="dataSource">
       <ng-container matColumnDef="task-definition">
         <th *matHeaderCellDef mat-header-cell>Task</th>

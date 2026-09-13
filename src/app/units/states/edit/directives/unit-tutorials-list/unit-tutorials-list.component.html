@@ -84,7 +84,7 @@
   </header>
 
   <!-- The table scrolls sideways on its own on a narrow screen, never the page. -->
-  <div class="overflow-x-auto" [formGroup]="formData">
+  <div class="relative overflow-x-auto" [formGroup]="formData">
     <table class="w-full min-w-[62rem]" mat-table matSort [dataSource]="dataSource">
       <ng-container matColumnDef="abbreviation">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Tutorial</th>

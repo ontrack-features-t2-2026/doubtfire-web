@@ -73,7 +73,7 @@
       </div>
 
       <!-- The table is as wide as its grades need and scrolls inside the card. -->
-      <div class="overflow-x-auto">
+      <div class="relative overflow-x-auto">
         <table class="w-full min-w-max" mat-table [dataSource]="taskDefinitionSource">
           <ng-container matColumnDef="taskDefinition">
             <th *matHeaderCellDef mat-header-cell>Task</th>

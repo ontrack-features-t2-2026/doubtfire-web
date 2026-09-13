@@ -209,7 +209,7 @@
 
   <!-- Hidden rather than removed while there is nothing to show, so the sort the tutor
        picked survives a search that briefly matches nobody. -->
-  <div class="overflow-x-auto" [ngClass]="{hidden: loading || loadError || !hasRows}">
+  <div class="relative overflow-x-auto" [ngClass]="{hidden: loading || loadError || !hasRows}">
     <table
       class="portfolio-table w-full"
       mat-table

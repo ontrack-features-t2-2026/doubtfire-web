@@ -138,7 +138,7 @@
   }
 
   <!-- Kept in the page while hidden: the data source is bound to this paginator once. -->
-  <div class="overflow-x-auto" [hidden]="dataSource.data.length === 0">
+  <div class="relative overflow-x-auto" [hidden]="dataSource.data.length === 0">
     <table class="groups-table min-w-full bg-transparent" mat-table [dataSource]="dataSource">
       <ng-container matColumnDef="name" [formGroup]="formData">
         <th *matHeaderCellDef mat-header-cell>Name</th>

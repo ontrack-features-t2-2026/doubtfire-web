@@ -181,7 +181,10 @@
 
     <!-- The table and paginator stay in the page while hidden: the data source is
          bound to this paginator once, when the view starts. -->
-    <div class="overflow-x-auto" [hidden]="loadingStudents || loadError || emptyState !== 'none'">
+    <div
+      class="relative overflow-x-auto"
+      [hidden]="loadingStudents || loadError || emptyState !== 'none'"
+    >
       <table
         class="students-table min-w-full bg-transparent"
         mat-table
