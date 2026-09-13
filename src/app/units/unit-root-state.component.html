@@ -2,9 +2,10 @@
   <router-outlet (activate)="onActivate($event)"></router-outlet>
 } @else {
   <div
-    class="mt-9 flex min-h-64 flex-col items-center justify-center gap-3 text-center text-ot-muted"
+    class="flex min-h-64 flex-col items-center justify-center gap-3 px-4 py-12 text-center text-ot-muted"
+    role="status"
   >
-    <mat-spinner diameter="75"></mat-spinner>
-    <p class="text-[24px]">Loading unit details...</p>
+    <mat-spinner aria-hidden="true" diameter="32"></mat-spinner>
+    <p class="m-0 text-sm">Loading the unit...</p>
   </div>
 }

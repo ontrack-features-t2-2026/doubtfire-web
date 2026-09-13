@@ -2,7 +2,13 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {Component, Input, NO_ERRORS_SCHEMA} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {By} from '@angular/platform-browser';
-import {ActivatedRouteSnapshot, Router, RouterModule, provideRouter} from '@angular/router';
+import {
+  ActivatedRoute,
+  ActivatedRouteSnapshot,
+  Router,
+  RouterModule,
+  provideRouter,
+} from '@angular/router';
 import {Observable, firstValueFrom, of} from 'rxjs';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRootStateComponent} from './unit-root-state.component';
@@ -86,5 +92,14 @@ describe('UnitRootStateComponent', () => {
     root.onActivate(child);
 
     expect(child.unit$).toBe(own);
+  });
+
+  it('announces that the unit is loading until it has one', () => {
+    TestBed.overrideProvider(ActivatedRoute, {useValue: {data: of({})}});
+    const fixture = TestBed.createComponent(UnitRootStateComponent);
+    fixture.detectChanges();
+
+    const status = (fixture.nativeElement as HTMLElement).querySelector('[role="status"]');
+    expect(status?.textContent).toContain('Loading the unit...');
   });
 });
