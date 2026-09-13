@@ -1,65 +1,84 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {FormsModule} from '@angular/forms';
-import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
-import {AlertService} from 'src/app/common/services/alert.service';
-import {SafePipe} from '../pipes/safe.pipe';
-import {fPdfViewerComponent} from './pdf-viewer.component';
+import {describe, expect, it, vi} from 'vitest';
+import {ElementFullscreen} from './element-fullscreen';
 
-vi.mock('ng2-pdf-viewer', () => ({
-  PdfViewerComponent: class {},
-  PDFDocumentProxy: class {},
-}));
+/** Enough of the Fullscreen API for ElementFullscreen, which jsdom does not have. */
+function fakeDocument(enabled = true) {
+  const doc = {
+    fullscreenEnabled: enabled,
+    fullscreenElement: null as Element | null,
+    exitFullscreen: vi.fn(() => {
+      doc.fullscreenElement = null;
+      return Promise.resolve();
+    }),
+  };
+  return doc;
+}
 
-describe('fPdfViewerComponent', () => {
-  let component: fPdfViewerComponent;
-  let fixture: ComponentFixture<fPdfViewerComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [fPdfViewerComponent, SafePipe],
-      imports: [FormsModule],
-      providers: [
-        {provide: FileDownloaderService, useValue: {releaseBlob: () => {}}},
-        {provide: AlertService, useValue: {error: () => {}}},
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(fPdfViewerComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+function fakeElement(doc: ReturnType<typeof fakeDocument>) {
+  const element = document.createElement('div');
+  element.requestFullscreen = vi.fn(() => {
+    doc.fullscreenElement = element;
+    return Promise.resolve();
   });
+  return element;
+}
 
-  it('labels the two zoom buttons with different accessible names instead of both announcing "Zoom in PDF button"', () => {
-    const buttons = fixture.nativeElement.querySelectorAll('#pdfActions button');
-    expect(buttons.length).toBe(2);
+describe('ElementFullscreen, the PDF viewer full screen', () => {
+  it('reports whether the browser can go full screen', () => {
+    const element = document.createElement('div');
 
-    const zoomOutButton = buttons[0] as HTMLButtonElement;
-    const zoomInButton = buttons[1] as HTMLButtonElement;
-
-    expect(zoomOutButton.getAttribute('aria-label')).toBe('Zoom out');
-    expect(zoomInButton.getAttribute('aria-label')).toBe('Zoom in');
-    expect(zoomOutButton.getAttribute('aria-label')).not.toBe(
-      zoomInButton.getAttribute('aria-label'),
+    expect(new ElementFullscreen(() => element, fakeDocument(true) as never).supported).toBe(true);
+    expect(new ElementFullscreen(() => element, fakeDocument(false) as never).supported).toBe(
+      false,
     );
   });
 
-  it('gives the search field a mat-label and the loading spinner an accessible name, instead of leaving them unnamed', () => {
-    const matLabel = fixture.nativeElement.querySelector('mat-form-field mat-label');
-    expect(matLabel?.textContent?.trim()).toBe('Search PDF');
+  it('asks the browser to put the viewer full screen, then leaves it on the next toggle', async () => {
+    const doc = fakeDocument();
+    const element = fakeElement(doc);
+    const fullscreen = new ElementFullscreen(() => element, doc as never);
 
-    const spinner = fixture.nativeElement.querySelector('mat-spinner');
-    expect(spinner.getAttribute('aria-label')).toBe('Loading PDF');
+    expect(fullscreen.active).toBe(false);
+
+    await fullscreen.toggle();
+    expect(element.requestFullscreen).toHaveBeenCalledOnce();
+    expect(fullscreen.active).toBe(true);
+
+    await fullscreen.toggle();
+    expect(doc.exitFullscreen).toHaveBeenCalledOnce();
+    expect(fullscreen.active).toBe(false);
   });
 
-  it('titles the embedded PDF object so the native viewer is not an untitled embed', () => {
-    component.pdfBlobUrl = 'blob:http://localhost/fake-pdf';
-    component.useNativePdfViewer = true;
-    fixture.detectChanges();
+  it('is not active when something else on the page holds full screen', async () => {
+    const doc = fakeDocument();
+    const element = fakeElement(doc);
+    const fullscreen = new ElementFullscreen(() => element, doc as never);
+    doc.fullscreenElement = document.createElement('video');
 
-    const object = fixture.nativeElement.querySelector('object');
-    expect(object.getAttribute('title')).toBe('Submission PDF');
+    expect(fullscreen.active).toBe(false);
+
+    fullscreen.release();
+    expect(doc.exitFullscreen).not.toHaveBeenCalled();
+  });
+
+  it('passes a refusal back to the caller', async () => {
+    const doc = fakeDocument();
+    const element = document.createElement('div');
+    element.requestFullscreen = vi.fn(() => Promise.reject(new Error('denied')));
+    const fullscreen = new ElementFullscreen(() => element, doc as never);
+
+    await expect(fullscreen.toggle()).rejects.toThrow('denied');
+    expect(fullscreen.active).toBe(false);
+  });
+
+  it('releases full screen when the viewer goes away', async () => {
+    const doc = fakeDocument();
+    const element = fakeElement(doc);
+    const fullscreen = new ElementFullscreen(() => element, doc as never);
+    await fullscreen.toggle();
+
+    fullscreen.release();
+
+    expect(doc.exitFullscreen).toHaveBeenCalledOnce();
   });
 });

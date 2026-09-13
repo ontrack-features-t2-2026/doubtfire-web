@@ -30,40 +30,89 @@ object {
   padding-top: 1rem;
   padding-left: 1rem;
   margin-right: auto;
+}
 
-  button {
-    margin-bottom: 28px;
+.pdf-actions-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  padding-top: 1rem;
+  padding-right: 1rem;
+}
+
+.pdf-search {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--ot-color-border);
+  border-radius: 999px;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+
+  &:focus-within {
+    border-color: var(--ot-color-focus);
+    box-shadow: 0 0 0 1px var(--ot-color-focus);
+  }
+
+  &[hidden] {
+    display: none;
   }
 }
 
-#pdfActions {
-  padding-top: 1rem;
-  padding-right: 1rem;
-  margin-left: auto;
+.pdf-search__icon {
+  flex: none;
+  color: var(--ot-color-text-muted);
+}
 
-  ::ng-deep .mdc-notched-outline__leading {
-    min-width: 28px !important;
-    border-top-left-radius: 28px !important;
-    border-bottom-left-radius: 28px !important;
-  }
-  ::ng-deep .mdc-notched-outline__notch {
-    border-radius: 28px 0 0 28px !important;
-  }
-  ::ng-deep .mdc-notched-outline__trailing {
-    border-radius: 0 28px 28px 0 !important;
-  }
-  ::ng-deep .mat-form-field-outline-end {
-    border-radius: 0 28px 28px 0 !important;
-  }
-  ::ng-deep .mat-mdc-form-field-flex {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-  }
+.pdf-search__input {
+  width: 11rem;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 8px;
+  border: 0;
+  appearance: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9375rem;
 
-  button {
-    margin-left: -12px;
+  &::placeholder {
+    color: var(--ot-color-text-muted);
+    opacity: 1;
+  }
+}
+
+.pdf-search__divider {
+  width: 1px;
+  height: 24px;
+  margin-inline: 2px;
+  background: var(--ot-color-divider);
+}
+
+.pdf-toolbar-button {
+  --mat-icon-button-state-layer-size: 36px;
+  color: var(--ot-color-text-muted);
+}
+
+.pdf-fullscreen-button {
+  color: var(--ot-color-text-muted);
+}
+
+// Full screen: the browser shows only this container, so it paints its own page
+// colour, and the pages stop at a comfortable reading width instead of filling a
+// wide monitor edge to edge.
+#pdfContainer:fullscreen {
+  background: var(--ot-color-page);
+  color: var(--ot-color-text);
+
+  pdf-viewer,
+  object {
+    min-width: 0;
+    max-width: 64rem;
   }
 }
 
