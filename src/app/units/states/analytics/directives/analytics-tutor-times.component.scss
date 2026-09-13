@@ -30,6 +30,9 @@ f-analytics-tutor-times {
       min-width: calc(#{$time-column-width} + var(--analytics-days, 7) * 5.5rem);
     }
 
+    // The sticky day row is opaque so hours scroll under it. It uses the card colour, not
+    // the raised one, because in dark mode the divider is the raised colour and the lines
+    // between days would vanish.
     .cal-day-headers {
       position: sticky;
       top: 0;
@@ -37,7 +40,7 @@ f-analytics-tutor-times {
       padding-left: 0;
       border-width: 0 0 1px;
       border-color: var(--ot-color-divider);
-      background-color: var(--ot-color-surface-raised);
+      background-color: var(--ot-color-surface);
     }
 
     .analytics-calendar__corner {
@@ -47,7 +50,7 @@ f-analytics-tutor-times {
       flex: none;
       width: $time-column-width;
       border-right: 1px solid var(--ot-color-divider);
-      background-color: var(--ot-color-surface-raised);
+      background-color: var(--ot-color-surface);
     }
 
     .cal-day-headers .cal-header {
@@ -68,25 +71,40 @@ f-analytics-tutor-times {
       &:hover {
         background-color: transparent;
       }
-    }
 
-    .analytics-day__weekday {
-      font-size: 0.75rem;
-      line-height: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+      // Written out because the library's own rule for this state outranks the one above
+      // and would keep its light grey divider in dark mode.
+      &:not(:last-child) {
+        border-right-color: var(--ot-color-divider);
+      }
 
-    .analytics-day__date {
-      font-size: 0.875rem;
-      font-weight: 600;
-      line-height: 1.25rem;
-      color: var(--ot-color-text);
-    }
+      .analytics-day__weekday {
+        font-size: 0.75rem;
+        line-height: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
 
-    .analytics-day--today .analytics-day__weekday,
-    .analytics-day--today .analytics-day__date {
-      color: var(--ot-color-primary);
+      .analytics-day__date {
+        padding: 0 0.5rem;
+        border-radius: var(--ot-radius-pill);
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.25rem;
+        color: var(--ot-color-text);
+      }
+
+      // Today's date sits in the selection pill. The pair is made to read in both themes,
+      // where the primary blue is a fill colour and too dark for text in dark mode.
+      &.analytics-day--today .analytics-day__date {
+        background-color: var(--ot-color-selected);
+        color: var(--ot-color-selected-text);
+      }
+
+      &.analytics-day--today .analytics-day__weekday {
+        color: var(--ot-color-text);
+        font-weight: 600;
+      }
     }
 
     .cal-time-events {
@@ -134,8 +152,9 @@ f-analytics-tutor-times {
       background-color: transparent;
     }
 
+    // The link blue clears 3:1 on the grid in both themes. The primary blue does not in dark.
     .cal-current-time-marker {
-      background-color: var(--ot-color-primary);
+      background-color: var(--ot-color-link);
     }
   }
 
