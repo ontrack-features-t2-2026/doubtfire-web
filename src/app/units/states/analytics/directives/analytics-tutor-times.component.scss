@@ -156,6 +156,28 @@ f-analytics-tutor-times {
     .cal-current-time-marker {
       background-color: var(--ot-color-link);
     }
+
+    // A session of a few minutes is only a few pixels tall at the calendar's scale,
+    // which cut its label down to a sliver. Every session gets room for one line,
+    // and a short one puts the name and time side by side on that line.
+    .cal-time-events .cal-event-container {
+      min-height: 1.25rem;
+      container-type: size;
+    }
+
+    @container (max-height: 2.25rem) {
+      .analytics-session {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.375rem;
+        padding-block: 0;
+      }
+
+      .analytics-session__name {
+        flex: none;
+        max-width: 60%;
+      }
+    }
   }
 
   // One marking session. The tutor's colour is a thin edge and a light wash, so the
