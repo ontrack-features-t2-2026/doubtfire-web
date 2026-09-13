@@ -4,7 +4,7 @@ import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
-import {EMPTY, Subject, of} from 'rxjs';
+import {EMPTY, Subject, of, throwError} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {Task} from 'src/app/api/models/task';
 import {Unit} from 'src/app/api/models/unit';
@@ -50,7 +50,7 @@ describe('StaffTaskListComponent', () => {
       declarations: [StaffTaskListComponent],
       providers: [
         {provide: SelectedTaskService, useValue: {setSelectedTask: () => {}}},
-        {provide: AlertService, useValue: emptyProvider},
+        {provide: AlertService, useValue: {error: () => {}}},
         {provide: FileDownloaderService, useValue: emptyProvider},
         {provide: MatDialog, useValue: emptyProvider},
         {provide: CsvUploadModalService, useValue: emptyProvider},
@@ -269,6 +269,134 @@ describe('StaffTaskListComponent', () => {
       component.hideTaskActionsForFocus(task);
 
       expect(component.rowActionsShown(task)).toBe(false);
+    });
+  });
+
+  describe('states the list can be in', () => {
+    function inboxTaskData(source: StaffTaskListComponent['taskData']['source']) {
+      return {
+        source,
+        selectedTask: null,
+        taskKey: null,
+        onSelectedTaskChange: () => {},
+        taskDefMode: false,
+      };
+    }
+
+    beforeEach(() => {
+      component.unit = unitStub(1, 'LA1');
+      component.unitRole = unitRoleStub(11);
+      component.filters = {};
+      component.viewType = 'inbox';
+    });
+
+    it('offers a retry, not a blank panel, when the task query fails', () => {
+      let fail = true;
+      component.taskData = inboxTaskData(() =>
+        fail ? throwError(() => 'offline') : of([] as Task[]),
+      );
+
+      component.ngOnInit();
+
+      expect(component.loading).toBe(false);
+      expect(component.loadError).toBe(true);
+      expect(component.listSummary).toBe('No tasks loaded');
+
+      fail = false;
+      component.refreshTasks();
+
+      expect(component.loadError).toBe(false);
+      expect(component.listSummary).toBe('0 tasks');
+    });
+
+    it('points an empty "my students" inbox at all students', () => {
+      component.taskData = inboxTaskData(() => of([] as Task[]));
+      component.ngOnInit();
+      component.filters.tutorialIdSelected = 'mine';
+
+      expect(component.emptyState.action).toBe('all-students');
+      expect(component.emptyState.actionLabel).toBe('Show all students');
+    });
+
+    it('offers to clear a search that matches nothing', () => {
+      component.taskData = inboxTaskData(() => of([] as Task[]));
+      component.ngOnInit();
+      component.filters.studentName = 'nobody';
+
+      expect(component.emptyState.action).toBe('clear-search');
+
+      component.runEmptyStateAction('clear-search');
+
+      expect(component.filters.studentName).toBeNull();
+    });
+
+    it('does not throw when the previous-task shortcut fires before the list loads', () => {
+      expect(() => component.previousTask()).not.toThrow();
+    });
+
+    // A new unit has no tasks, and the explorer used to read the id of the missing
+    // first task and then ask the server for the submissions of "null".
+    it('says the unit has no tasks instead of querying for one that does not exist', () => {
+      const requested: unknown[] = [];
+      component.unit = {
+        ...unitStub(1, 'LA1'),
+        taskDefinitions: [],
+        taskDefinitionCache: {currentValues: []},
+      } as unknown as Unit;
+      component.viewType = 'explorer';
+      component.taskData = {
+        ...inboxTaskData((_unit, taskDef) => {
+          requested.push(taskDef);
+          return of([] as Task[]);
+        }),
+        taskDefMode: true,
+      };
+
+      expect(() => component.ngOnInit()).not.toThrow();
+      expect(requested).toEqual([]);
+      expect(component.loading).toBe(false);
+      expect(component.emptyState.message).toBe('This unit has no tasks yet');
+    });
+
+    it('counts the tasks a search leaves out of the total', () => {
+      component.taskData = inboxTaskData(() => of([] as Task[]));
+      component.ngOnInit();
+      component.tasks = [{} as Task, {} as Task, {} as Task];
+      component.filteredTasks = [{} as Task];
+
+      expect(component.listSummary).toBe('1 of 3 tasks');
+    });
+  });
+
+  // The collapsed list used to keep a dot beside each avatar for new comments and
+  // similarities. The dot is back on the avatar, and the row's name says what it means.
+  it('names new comments and similarities on a collapsed row', () => {
+    const task = {
+      project: {student: {name: 'Sam Student'}},
+      definition: {abbreviation: '2.1P'},
+      numNewComments: 2,
+      similaritiesDetected: true,
+    } as unknown as Task;
+
+    expect(component.narrowRowLabel(task)).toBe(
+      'Sam Student, 2.1P, 2 new comments, similarities detected',
+    );
+  });
+
+  describe('waiting label', () => {
+    // The tooltip used to call the days since submission "overdue by", which is not
+    // what the number measures.
+    it('says how long the task has waited, and whether feedback is overdue', () => {
+      const task = {
+        submissionDate: new Date(),
+        status: 'ready_for_feedback',
+        daysSinceSubmission: () => 9,
+        unit: {feedbackOverflowThresholdDays: 8, feedbackWarningThresholdDays: 5},
+      } as unknown as Task;
+
+      expect(component.waitingLabel(task)).toBe(
+        'Waiting 9 days for feedback. Feedback is overdue.',
+      );
     });
   });
 });
