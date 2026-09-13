@@ -274,13 +274,18 @@
             switch.
           </p>
         </div>
-        <f-group-set-manager
-          [selectedGroupSet]="selectedGroupSet"
-          [showGroupSetSelector]="false"
-          [unit]="unit"
-          [unitRole]="unitRole"
-        >
-        </f-group-set-manager>
+        <!-- Built again whenever the open set changes, including when a reload swaps
+             it for a new copy. The manager keeps the group it last showed, so it
+             went on showing a group from the previous set, or an old copy of one. -->
+        @for (groupSet of [selectedGroupSet]; track groupSet) {
+          <f-group-set-manager
+            [selectedGroupSet]="groupSet"
+            [showGroupSetSelector]="false"
+            [unit]="unit"
+            [unitRole]="unitRole"
+          >
+          </f-group-set-manager>
+        }
       </section>
 
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
