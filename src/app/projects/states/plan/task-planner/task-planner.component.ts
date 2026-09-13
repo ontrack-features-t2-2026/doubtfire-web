@@ -768,16 +768,16 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
             switch (p.taskStatus) {
               case 'ready_for_feedback':
-                color = this.cssVarRgba('--ot-status-ready-for-feedback', 0.1);
+                color = this.cssVarRgba('--ot-status-ready-for-feedback-graphic', 0.1);
                 break;
               case 'complete':
-                color = this.cssVarRgba('--ot-status-complete', 0.1);
+                color = this.cssVarRgba('--ot-status-complete-graphic', 0.1);
                 break;
               case 'discuss':
-                color = this.cssVarRgba('--ot-status-discuss', 0.1);
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               case 'demonstrate':
-                color = this.cssVarRgba('--ot-status-discuss', 0.1);
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               default:
                 color = this.cssVar('--ot-color-border');
