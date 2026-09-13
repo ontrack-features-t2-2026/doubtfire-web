@@ -59,7 +59,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.globalState.projectsSubject.subscribe({
         next: (projects) => {
-          projects = projects.filter((project) => project.unit.myRole === 'Student');
+          // The cache is cleared on sign out and can briefly hold a project whose unit
+          // has not been mapped yet. The header guards the same filter the same way.
+          projects = (projects ?? []).filter((project) => project?.unit?.myRole === 'Student');
           this.projectsLoaded(projects);
         },
       }),
