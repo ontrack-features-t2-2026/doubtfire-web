@@ -78,6 +78,7 @@
         <mat-label>Search groups</mat-label>
         <mat-icon aria-hidden="true" class="text-ot-muted" matPrefix>search</mat-icon>
         <input
+          #groupSearchInput
           autocomplete="off"
           matInput
           type="search"
@@ -124,7 +125,12 @@
         message="No groups match"
       ></f-empty-state>
       @if (hasFilters) {
-        <button class="-mt-6" mat-stroked-button type="button" (click)="clearFilters()">
+        <button
+          class="-mt-6"
+          mat-stroked-button
+          type="button"
+          (click)="clearFilters(); groupSearchInput.focus()"
+        >
           Clear filters
         </button>
       }

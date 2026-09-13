@@ -43,6 +43,7 @@
       <mat-label>Search students</mat-label>
       <mat-icon aria-hidden="true" class="text-ot-muted" matPrefix>search</mat-icon>
       <input
+        #searchInput
         autocomplete="off"
         matInput
         type="search"
@@ -57,7 +58,7 @@
           mat-icon-button
           matSuffix
           type="button"
-          (click)="clearSearch()"
+          (click)="clearSearch(); searchInput.focus()"
         >
           <mat-icon>close</mat-icon>
         </button>
@@ -76,7 +77,9 @@
       [ngModel]="staffFilter"
       (ngModelChange)="setStaffFilter($event)"
     >
-      <mat-button-toggle class="flex-1 sm:flex-none" value="all">All tutorials</mat-button-toggle>
+      <mat-button-toggle #allTutorialsToggle class="flex-1 sm:flex-none" value="all">
+        All tutorials
+      </mat-button-toggle>
       <mat-button-toggle class="flex-1 sm:flex-none" value="mine">My tutorials</mat-button-toggle>
     </mat-button-toggle-group>
 
@@ -132,7 +135,12 @@
               icon="search_off"
               [message]="noMatchMessage"
             ></f-empty-state>
-            <button class="-mt-6" mat-stroked-button type="button" (click)="clearSearch()">
+            <button
+              class="-mt-6"
+              mat-stroked-button
+              type="button"
+              (click)="clearSearch(); searchInput.focus()"
+            >
               Clear search
             </button>
           }
@@ -142,7 +150,12 @@
               icon="group"
               message="No students in your tutorials"
             ></f-empty-state>
-            <button class="-mt-6" mat-stroked-button type="button" (click)="setStaffFilter('all')">
+            <button
+              class="-mt-6"
+              mat-stroked-button
+              type="button"
+              (click)="setStaffFilter('all'); allTutorialsToggle.focus()"
+            >
               Show all tutorials
             </button>
           }
