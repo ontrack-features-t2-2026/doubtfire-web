@@ -222,14 +222,16 @@ export class GroupSelectorComponent
         this.unit.tutorials[0].id;
     }
 
+    const groupSet = this.selectedGroupSet;
+
     this.groupService
       .create(
         {
           unitId: this.unit.id,
-          groupSetId: this.selectedGroupSet.id,
+          groupSetId: groupSet.id,
         },
         {
-          cache: this.selectedGroupSet.groupsCache,
+          cache: groupSet.groupsCache,
           constructorParams: this.unit,
           body: {
             group: {
@@ -242,7 +244,6 @@ export class GroupSelectorComponent
       .subscribe({
         next: (group) => {
           this.alertService.success('Successfully created group', 3000);
-          this.closeNewGroup();
 
           // The server puts a student into the group they create. Show that here too,
           // or the page offers them a Join button for their own group.
@@ -251,6 +252,14 @@ export class GroupSelectorComponent
             group.projectsCache.add(this.project);
           }
 
+          // Someone may have moved to another set while this was saving. Only open the
+          // new group if its set is still the one on screen.
+          if (groupSet !== this.selectedGroupSet) {
+            return;
+          }
+
+          // The form, and the button that had focus, go away; hand focus to New group.
+          this.closeNewGroup(true);
           this.applyFilters();
           this.selectGroup(group);
         },

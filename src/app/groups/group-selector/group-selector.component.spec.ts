@@ -273,6 +273,28 @@ describe('GroupSelectorComponent', () => {
       expect(onSelect).toHaveBeenCalledWith(created);
     });
 
+    it('does not open a new group once the page has moved to another set', () => {
+      const {unit, setA, setB} = makeUnit();
+      const created = new Group(unit);
+      created.id = 9;
+      created.name = 'Group 1';
+      created.groupSet = setA;
+      const response: Subject<Group> = new Subject();
+      groupService.create.mockReturnValue(response);
+
+      const component = create(unit, {
+        unitRole: {user: user(5, 'Tess')} as UnitRole,
+      }).componentInstance;
+      const onSelect = component.onSelect as ReturnType<typeof vi.fn>;
+
+      component.addGroup('Late');
+      component.selectGroupSet(setB);
+      response.next(created);
+
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(component.selectedGroupSet).toBe(setB);
+    });
+
     it('tells the parent when a different group set is picked', () => {
       const {unit, setA, setB} = makeUnit();
       addGroup(setA, 1, 'From set A');
