@@ -137,12 +137,19 @@ export class Task extends Entity {
   }
 
   public get tutor(): UnitRole {
-    const enrolments = this.project.tutorialEnrolmentsCache.currentValues.filter(
-      (t) => t.tutorialStream.name === this.definition.tutorialStream.name,
+    // A unit without streams has no stream on its tutorials or its task definitions,
+    // so neither side can be read blindly. A tutorial with no stream covers every
+    // task, which is also how the server picks the tutorial for a task.
+    const streamName = this.definition?.tutorialStream?.name;
+    const enrolments = (this.project?.tutorialEnrolmentsCache.currentValues ?? []).filter(
+      (t) => !t.tutorialStream || (!!streamName && t.tutorialStream.name === streamName),
     );
     if (enrolments.length === 1) {
       const user = enrolments[0].tutor;
-      return this.unit.staff.find((ur) => ur.user.id === user.id);
+      if (!user) {
+        return undefined;
+      }
+      return this.unit?.staff?.find((ur) => ur.user?.id === user.id);
     }
   }
 

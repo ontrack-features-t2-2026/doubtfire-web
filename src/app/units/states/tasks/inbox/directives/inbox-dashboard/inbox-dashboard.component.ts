@@ -106,11 +106,15 @@ export class InboxDashboardComponent implements OnChanges {
 
   public get currentUnitRole(): UnitRole | undefined {
     const currentUser = this.userService.currentUser;
-    return this.task.unit.staff.find((ur) => ur.user.id === currentUser.id);
+    if (!currentUser) {
+      return undefined;
+    }
+
+    return this.task?.unit?.staff?.find((ur) => ur.user?.id === currentUser.id);
   }
 
   public get canAccessTutorNotes(): boolean {
-    const tutor = this.task.tutor;
+    const tutor = this.task?.tutor;
     if (!tutor) {
       return false;
     }
