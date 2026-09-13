@@ -12,14 +12,14 @@
     >
       @if (task.numNewComments > 0) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-blue-500 text-[12px] leading-none font-bold text-white"
+          class="flex size-[20px] items-center justify-center rounded-full bg-blue-500 text-[12px] leading-none font-bold text-white ring-2 ring-ot-surface"
         >
           {{ task.numNewComments }}
         </span>
       }
       @if (task.similaritiesDetected) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c]"
+          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] ring-2 ring-ot-surface"
           matTooltip="Similarities Detected"
         >
           <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
@@ -32,7 +32,7 @@
     <div class="absolute right-0.5 -bottom-2 flex items-center gap-px text-[10px] leading-none">
       @if (task.hasGrade()) {
         <span
-          class="mr-3 flex size-5.5 items-center justify-center rounded-full bg-gray-800 font-bold text-white drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="mr-3 flex size-5.5 items-center justify-center rounded-full bg-gray-800 font-bold text-white ring-2 ring-ot-surface drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
         >
           <span>
             {{ task.gradeDesc() }}
@@ -41,7 +41,7 @@
       }
       @if (task.hasQualityPoints()) {
         <span
-          class="flex size-[22px] items-center justify-center rounded-full bg-formatif-blue font-bold text-white drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="flex size-[22px] items-center justify-center rounded-full bg-formatif-blue font-bold text-white ring-2 ring-ot-surface drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
         >
           <span class="mr-px mb-[6px] text-[8px]">{{ task.qualityPts }}</span>
           <span class="font-extrabold"> &frasl; </span>
@@ -50,7 +50,7 @@
       }
       @if (task.isDueSoon() && !task.inFinalState()) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-(--ot-status-working-on-it) drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="flex size-[20px] items-center justify-center rounded-full bg-(--ot-status-working-on-it) ring-2 ring-ot-surface drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
         >
           <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
             schedule
@@ -59,7 +59,7 @@
       }
       @if (task.betweenDueDateAndDeadlineDate() && !task.isPastDeadline() && !task.inFinalState()) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] ring-2 ring-ot-surface drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
         >
           <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
             schedule
@@ -68,7 +68,7 @@
       }
       @if (task.isPastDeadline() && !task.inFinalState()) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] ring-2 ring-ot-surface drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
         >
           <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
             schedule
