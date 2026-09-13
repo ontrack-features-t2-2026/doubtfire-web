@@ -487,7 +487,7 @@
                     matTooltip="Move up"
                     type="button"
                     [attr.aria-label]="'Move ' + grade.label + ' up'"
-                    [disabled]="isAddingGrade() || index === 1"
+                    [disabled]="editingGradeId !== null || index === 1"
                     (click)="moveGrade(index, -1)"
                   >
                     <mat-icon aria-hidden="true">arrow_upward</mat-icon>
@@ -497,7 +497,7 @@
                     matTooltip="Move down"
                     type="button"
                     [attr.aria-label]="'Move ' + grade.label + ' down'"
-                    [disabled]="isAddingGrade() || index === gradeDefinitions.length - 1"
+                    [disabled]="editingGradeId !== null || index === gradeDefinitions.length - 1"
                     (click)="moveGrade(index, 1)"
                   >
                     <mat-icon aria-hidden="true">arrow_downward</mat-icon>

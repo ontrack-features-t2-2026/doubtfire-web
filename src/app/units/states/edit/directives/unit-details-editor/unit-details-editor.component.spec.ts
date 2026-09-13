@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {BehaviorSubject, of, throwError} from 'rxjs';
+import {BehaviorSubject, Subject, of, throwError} from 'rxjs';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitDetailsEditorComponent, formatDay, sameSetting} from './unit-details-editor.component';
 
@@ -94,6 +94,24 @@ describe('UnitDetailsEditorComponent sections', () => {
     expect(alerts.error).toHaveBeenCalled();
   });
 
+  // The whole form used to be reset to what was sent once the save came back, which
+  // threw away anything typed in the meantime.
+  it('keeps what was typed while a save was on its way', () => {
+    const response: Subject<Unit> = new Subject();
+    const {component, unit} = editorFor({update: () => response});
+
+    component.forms.about.controls.name.setValue('Things, in depth');
+    component.saveSection('about');
+    component.forms.about.controls.description.setValue('Now with more things');
+    response.next(unit);
+    response.complete();
+
+    expect(unit.name).toBe('Things, in depth');
+    expect(unit.description).toBe('All about things');
+    expect(component.forms.about.controls.description.value).toBe('Now with more things');
+    expect(component.hasChanges('about')).toBe(true);
+  });
+
   it('does not send a section with a field left empty', () => {
     const {component, unitService} = editorFor();
 
@@ -186,6 +204,18 @@ describe('UnitDetailsEditorComponent teaching dates', () => {
 
     expect(component.forms.dates.hasError('datesOutOfOrder')).toBe(true);
   });
+
+  // Once a teaching period is chosen the custom dates are hidden, so dates left in the
+  // wrong order must not keep the section from saving.
+  it('saves a teaching period even when the hidden custom dates are out of order', () => {
+    const {component, unitService} = editorFor();
+
+    component.forms.dates.controls.endDate.setValue(new Date(2026, 5, 1));
+    component.forms.dates.controls.teachingPeriod.setValue({id: 9} as never);
+    component.saveSection('dates');
+
+    expect(sentBody(unitService)).toEqual({teaching_period_id: 9});
+  });
 });
 
 describe('UnitDetailsEditorComponent assess in portfolio', () => {
@@ -216,7 +246,47 @@ describe('UnitDetailsEditorComponent assess in portfolio', () => {
   });
 });
 
+describe('UnitDetailsEditorComponent grades', () => {
+  // Moving saves the whole list, and used to take a half typed rename with it.
+  it('does not move grades while one is being renamed', () => {
+    const {component, unitService} = editorFor();
+
+    component.editGrade(component.gradeDefinitions[2]);
+    component.moveGrade(2, -1);
+
+    expect(unitService.update).not.toHaveBeenCalled();
+  });
+
+  it('puts a renamed grade back when the rename is cancelled', () => {
+    const {component, unitService} = editorFor();
+
+    component.editGrade(component.gradeDefinitions[1]);
+    component.updateGrade(1, 'label', 'Satisfactory');
+    component.cancelGradeEdit();
+
+    expect(component.gradeDefinitions[1].label).toBe('Pass');
+    expect(component.editingGradeId).toBeNull();
+    expect(unitService.update).not.toHaveBeenCalled();
+  });
+});
+
 describe('UnitDetailsEditorComponent automated checking images', () => {
+  // The unit fetches its image separately, so it is often not there yet when the page
+  // builds its form. The select used to come up blank for a unit that had an image.
+  it('starts from the image id until the image itself arrives', () => {
+    const {component, unit, unitService} = editorFor({overseer: true, unit: {overseerImageId: 5}});
+    const control = component.forms.overseer.controls.overseerImage;
+
+    expect(component.compareById(control.value, {id: 5})).toBe(true);
+    expect(component.hasChanges('overseer')).toBe(false);
+
+    // Saving the other setting in the section leaves the image alone.
+    component.forms.overseer.controls.assessmentEnabled.setValue(true);
+    component.saveSection('overseer');
+    expect(sentBody(unitService)).toEqual({assessment_enabled: true});
+    expect(unit.overseerImage).toBeUndefined();
+  });
+
   it('does not ask for images when automated checking is off', () => {
     const {getDockerImagesAsPromise} = editorFor({overseer: false});
 

@@ -36,6 +36,8 @@ interface SettingField {
   json: string;
   /** Turns the form value into what the api expects. The value itself by default. */
   toJson?: (value: unknown) => unknown;
+  /** Reads the starting value off the unit. The unit's property by default. */
+  read?: (unit: Unit) => unknown;
   validators?: ValidatorFn[];
 }
 
@@ -104,7 +106,15 @@ const SECTION_FIELDS: Record<Exclude<UnitSettingsSection, 'dates'>, SettingField
   ],
   overseer: [
     {key: 'assessmentEnabled', json: 'assessment_enabled'},
-    {key: 'overseerImage', json: 'overseer_image_id', toJson: idOrNull},
+    {
+      key: 'overseerImage',
+      json: 'overseer_image_id',
+      toJson: idOrNull,
+      // The unit loads its image on its own, often after this page opens. Starting from
+      // the id lets the select show the image as soon as the list of images arrives.
+      read: (unit) =>
+        unit.overseerImage ?? (unit.overseerImageId ? {id: unit.overseerImageId} : null),
+    },
   ],
 };
 
@@ -230,8 +240,12 @@ export function sameSetting(left: unknown, right: unknown): boolean {
   return String(left) === String(right);
 }
 
-// The end date must fall on or after the start date. Only checked when both are set.
+// The end date must fall on or after the start date. Only checked when both are set, and
+// not at all once a teaching period is chosen, as its dates replace them.
 const datesInOrder: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  if (group.get('teachingPeriod')?.value) {
+    return null;
+  }
   const start = group.get('startDate')?.value as Date | null;
   const end = group.get('endDate')?.value as Date | null;
   if (start instanceof Date && end instanceof Date && formatDay(end) < formatDay(start)) {
@@ -345,9 +359,12 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
   }
 
   public hasChanges(section: UnitSettingsSection): boolean {
+    return this.changedKeys(section, this.forms[section].getRawValue()).length > 0;
+  }
+
+  private changedKeys(section: UnitSettingsSection, values: Record<string, unknown>): string[] {
     const saved = this.savedValues[section] ?? {};
-    const current = this.forms[section].getRawValue();
-    return Object.keys(current).some((key) => !sameSetting(current[key], saved[key]));
+    return Object.keys(values).filter((key) => !sameSetting(values[key], saved[key]));
   }
 
   // Save stays available while a field is wrong, so pressing it can point at the problem.
@@ -371,16 +388,21 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
     }
 
     const values = form.getRawValue();
-    const body = section === 'dates' ? this.datesBody(values) : this.fieldsBody(section, values);
+    const changed = this.changedKeys(section, values);
+    const body =
+      section === 'dates' ? this.datesBody(values) : this.fieldsBody(section, changed, values);
 
     this.saving[section] = true;
     delete this.saveErrors[section];
 
     this.unitService.update(this.unit, {body: {unit: body}}).subscribe({
       next: () => {
-        this.applyToUnit(section, values);
+        this.applyToUnit(section, changed, values);
+        // The form is left as it is rather than reset, so anything typed while the save
+        // was on its way is kept, and shows as a change still to save.
         this.savedValues[section] = values;
-        form.reset(values);
+        form.markAsPristine();
+        form.markAsUntouched();
         this.saving[section] = false;
         this.alertsService.success(`${SECTION_NAMES[section]} saved.`, 2000);
       },
@@ -440,7 +462,10 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
         Object.fromEntries(
           fields.map((field) => [
             field.key,
-            new FormControl(unit[field.key] ?? null, field.validators ?? []),
+            new FormControl(
+              (field.read ? field.read(unit) : unit[field.key]) ?? null,
+              field.validators ?? [],
+            ),
           ]),
         ),
       );
@@ -481,14 +506,14 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
 
   private fieldsBody(
     section: Exclude<UnitSettingsSection, 'dates'>,
+    changed: string[],
     values: Record<string, unknown>,
   ): Record<string, unknown> {
-    const saved = this.savedValues[section] ?? {};
     const body: Record<string, unknown> = {};
     // Only what changed is sent, so saving one setting cannot trip the api's checks on
     // another that was left alone.
     for (const field of SECTION_FIELDS[section]) {
-      if (!sameSetting(values[field.key], saved[field.key])) {
+      if (changed.includes(field.key)) {
         const value = values[field.key];
         body[field.json] = field.toJson ? field.toJson(value) : (value ?? null);
       }
@@ -509,7 +534,11 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
     };
   }
 
-  private applyToUnit(section: UnitSettingsSection, values: Record<string, unknown>): void {
+  private applyToUnit(
+    section: UnitSettingsSection,
+    changed: string[],
+    values: Record<string, unknown>,
+  ): void {
     if (section === 'dates') {
       const period = values.teachingPeriod as TeachingPeriod | null;
       this.unit.teachingPeriod = period ?? undefined;
@@ -518,7 +547,7 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
       return;
     }
 
-    for (const field of SECTION_FIELDS[section]) {
+    for (const field of SECTION_FIELDS[section].filter((each) => changed.includes(each.key))) {
       const value = values[field.key];
       if (field.key === 'overseerImage') {
         // The unit's setter reads the image's id, so it cannot take null.
@@ -596,8 +625,12 @@ export class UnitDetailsEditorComponent implements OnInit, OnDestroy {
 
   public moveGrade(index: number, offset: -1 | 1): void {
     const targetIndex = index + offset;
+    // Moving saves the whole list, so it waits until a rename is saved or cancelled.
+    // Otherwise the half typed name was saved too, and cancelling then put back a list
+    // the api no longer had.
     if (
       this.newGradeId ||
+      this.editingGradeId ||
       index <= 0 ||
       targetIndex <= 0 ||
       targetIndex >= this.unit.gradeDefinitions.length
