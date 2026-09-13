@@ -25,10 +25,10 @@ export class PortfolioReviewStepComponent implements OnInit {
   public canCreatePortfolio: boolean = false;
 
   public readonly icons: Record<string, string> = {
-    document: 'article_outlined',
-    code: 'integration_instructions_outlined',
-    image: 'image_outlined',
-    zip: 'zip_outlined',
+    document: 'description',
+    code: 'code',
+    image: 'image',
+    zip: 'folder_zip',
   };
 
   constructor(
