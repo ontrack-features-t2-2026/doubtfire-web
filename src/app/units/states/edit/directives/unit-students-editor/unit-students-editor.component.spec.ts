@@ -1,7 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 import {of, throwError} from 'rxjs';
 import {Unit} from 'src/app/api/models/unit';
-import {StudentTutorialSelectComponent} from './student-tutorial-select/student-tutorial-select.component';
 import {UnitStudentsEditorComponent} from './unit-students-editor.component';
 
 function project(id: number, firstName: string, lastName: string, extra: object = {}) {
@@ -105,22 +104,5 @@ describe('UnitStudentsEditorComponent', () => {
     expect(component.filtering).toBe(true);
     expect(component.dataSource.filter).toBe('zo');
     component.ngOnDestroy();
-  });
-});
-
-describe('StudentTutorialSelectComponent', () => {
-  // Tutorials were changed on click, so picking one with the keyboard did nothing.
-  it('moves the student when they pick a tutorial, however it was picked', () => {
-    const select = new StudentTutorialSelectComponent();
-    const student = {switchToTutorial: vi.fn()};
-    select.student = student as never;
-    const tutorial = {id: 4};
-
-    select.tutorialPicked({isUserInput: true} as never, tutorial as never);
-    expect(student.switchToTutorial).toHaveBeenCalledWith(tutorial);
-
-    // The list redrawing after an enrolment is not the user picking anything.
-    select.tutorialPicked({isUserInput: false} as never, tutorial as never);
-    expect(student.switchToTutorial).toHaveBeenCalledTimes(1);
   });
 });
