@@ -251,7 +251,9 @@ export class TaskDefinitionPrerequisitesComponent implements OnInit, OnChanges, 
             `Successfully added task ${selectedTaskPrerequisite.abbreviation} as a prerequisite`,
             5000,
           );
-          this.unit.refresh();
+          // The unit used to be reloaded here. It carries nothing about
+          // prerequisites, and the reload wrote the server's copy over the open
+          // task, so any edits not yet saved were lost without a word.
           this.searchCtrl.setValue('');
         },
         error: (error) => {

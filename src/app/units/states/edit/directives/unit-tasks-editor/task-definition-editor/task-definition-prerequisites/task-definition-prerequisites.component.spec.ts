@@ -18,19 +18,27 @@ function prerequisitesEditor() {
     ...third,
     unit: {
       id: 9,
+      refresh: vi.fn(),
       taskDefinitions: [first, second, third],
       taskDefinitionCache: {currentValues: [first, second, third]},
     },
-    taskPrerequisitesCache: {currentValues: [link], values: prerequisites, delete: vi.fn()},
+    taskPrerequisitesCache: {
+      currentValues: [link],
+      values: prerequisites,
+      delete: vi.fn(),
+      getOrCreate: vi.fn(),
+    },
   };
 
   const alerts = {success: vi.fn(), error: vi.fn()};
   const taskPrerequisiteService = {
     query: vi.fn(() => of([])),
     delete: vi.fn(() => of(undefined)),
+    getOrCreate: vi.fn(),
   };
+  const taskDefinitionService = {addTaskPrerequisite: vi.fn(() => of({id: 41}))};
   const component = new TaskDefinitionPrerequisitesComponent(
-    {} as never,
+    taskDefinitionService as never,
     alerts as never,
     taskPrerequisiteService as never,
   );
@@ -39,7 +47,7 @@ function prerequisitesEditor() {
   component.ngOnChanges({taskDefinition: new SimpleChange(undefined, current, true)});
   component.ngOnInit();
 
-  return {component, alerts, taskPrerequisiteService, link, current};
+  return {component, alerts, taskPrerequisiteService, taskDefinitionService, link, current};
 }
 
 describe('TaskDefinitionPrerequisitesComponent', () => {
@@ -62,6 +70,17 @@ describe('TaskDefinitionPrerequisitesComponent', () => {
     expect(current.taskPrerequisitesCache.delete).toHaveBeenCalledWith(40);
     expect(alerts.success).toHaveBeenCalled();
     expect(alerts.error).not.toHaveBeenCalled();
+    component.ngOnDestroy();
+  });
+
+  it('adds a prerequisite without reloading the unit over unsaved task edits', () => {
+    const {component, taskDefinitionService, current} = prerequisitesEditor();
+    component.selectedTaskPrerequisite = current.unit.taskDefinitions[0] as never;
+
+    component.addTaskPrerequisite(new Event('click'));
+
+    expect(taskDefinitionService.addTaskPrerequisite).toHaveBeenCalled();
+    expect(current.unit.refresh).not.toHaveBeenCalled();
     component.ngOnDestroy();
   });
 
