@@ -22,13 +22,17 @@
       <span>Choose file</span>
     }
   </button>
-  <div class="f-inner-border flex grow items-center rounded-lg rounded-l-none bg-ot-surface">
-    <div class="flex w-full flex-col">
-      <div class="ml-2.5 flex h-[48px] items-center">
+  <!-- min-w-0 down the chain lets a long file name truncate instead of pushing the
+       drop zone wider than a phone screen. -->
+  <div
+    class="f-inner-border flex min-w-0 grow items-center rounded-lg rounded-l-none bg-ot-surface"
+  >
+    <div class="flex w-full min-w-0 flex-col">
+      <div class="ml-2.5 flex h-[48px] min-w-0 items-center">
         @if (file?.name) {
           <mat-icon class="mr-1">upload_file</mat-icon>
         }
-        <span class="mt-[4px] max-w-xs grow truncate"> {{ file?.name || message }} </span>
+        <span class="mt-[4px] max-w-xs min-w-0 grow truncate"> {{ file?.name || message }} </span>
         {{ uploadProgress }}
         <button
           class="ml-auto"
