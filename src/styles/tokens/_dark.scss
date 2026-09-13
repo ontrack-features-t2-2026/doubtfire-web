@@ -24,7 +24,11 @@
   --ot-color-on-primary: #ffffff;
   --ot-color-success: #3fb950;
   --ot-color-warning: #e3b341;
+  // The dark warning and error are light enough to read as text on the slate ground,
+  // so text on a filled header goes dark: white would sit at 1.95:1 and 2.52:1.
+  --ot-color-on-warning: #161b22;
   --ot-color-error: #ff7b72;
+  --ot-color-on-error: #161b22;
   --ot-color-info: #6cb2ff;
   --ot-color-inverse-surface: #e6edf3;
   --ot-color-inverse-text: #161b22;

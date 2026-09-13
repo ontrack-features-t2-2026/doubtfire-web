@@ -683,7 +683,9 @@ where needed. Ratios were computed, not estimated. Appendix A has the script.
 | `--ot-color-on-primary`      | Text and icons on a primary fill                          | `#ffffff` | `#131316` | 6.56 / 10.87          |
 | `--ot-color-success`         | Success text and icons                                    | `#398239` | `#5bb75b` | 4.55 on light page    |
 | `--ot-color-warning`         | Warning text and icons                                    | `#a56504` | `#eb8f06` | 4.51 on light page    |
+| `--ot-color-on-warning`      | Text and icons on a filled warning header                 | `#ffffff` | `#161b22` | 4.71 / 8.89 on fill   |
 | `--ot-color-error`           | Error text, invalid fields, destructive actions           | `#d73613` | `#ef6445` | 4.53 on dark raised   |
+| `--ot-color-on-error`        | Text and icons on a filled error header                   | `#ffffff` | `#161b22` | 4.74 / 6.86 on fill   |
 | `--ot-color-info`            | Informational text and icons                              | `#0075d0` | `#0792ff` | 4.52 on light page    |
 | `--ot-color-inverse-surface` | Snackbars, tooltips, anything inverted                    | `#212121` | `#e5e1e6` | —                     |
 | `--ot-color-inverse-text`    | Text on an inverse surface                                | `#fafafa` | `#201f23` | 15.43 / 12.67         |

@@ -22,7 +22,10 @@
   --ot-color-on-primary: #ffffff;
   --ot-color-success: #398239;
   --ot-color-warning: #a56504;
+  // Text on a filled warning or error header. White clears 4.5:1 on both fills here.
+  --ot-color-on-warning: #ffffff;
   --ot-color-error: #d73613;
+  --ot-color-on-error: #ffffff;
   --ot-color-info: #0075d0;
   --ot-color-inverse-surface: #212121;
   --ot-color-inverse-text: #fafafa;
