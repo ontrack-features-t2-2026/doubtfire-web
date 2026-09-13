@@ -40,6 +40,10 @@ interface TaskGanttItem extends GanttItem {
   originalLinks: GanttLink[];
 }
 
+const GANTT_HEADER_HEIGHT = 52;
+const GANTT_ROW_HEIGHT = 44;
+const GANTT_SCROLL_ALLOWANCE = 18;
+
 @Component({
   selector: 'f-task-planner',
   templateUrl: './task-planner.component.html',
@@ -295,6 +299,10 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         '[--bar-bg:var(--ot-color-disabled-surface)]',
         '[color:var(--ot-color-text-muted)]',
       );
+    } else if (this.isComplete(item)) {
+      // A finished task has no deadline left to warn about, so it shows as done
+      // rather than keeping the planning colour it had while open.
+      classes.push('[--bar-bg:var(--ot-status-complete)]', '[color:var(--ot-status-complete-on)]');
     } else if (this.isPastFeedbackDeadline(item)) {
       classes.push(
         '[--bar-bg:var(--ot-status-time-exceeded)]',
@@ -315,6 +323,18 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return classes;
+  }
+
+  // Measured from the rendered chart: a 52px date header, 44px rows, and room for
+  // the timeline's own horizontal scrollbar.
+  get ganttHeight(): number {
+    return (
+      GANTT_HEADER_HEIGHT + (this.items?.length ?? 0) * GANTT_ROW_HEIGHT + GANTT_SCROLL_ALLOWANCE
+    );
+  }
+
+  isComplete(item: TaskGanttItem): boolean {
+    return item.task?.status === 'complete';
   }
 
   isAboveTargetGrade(item: TaskGanttItem) {

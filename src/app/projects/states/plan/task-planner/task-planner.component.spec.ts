@@ -20,6 +20,41 @@ const taskDefinition = (id: number, targetGrade: number): TaskDefinition =>
     startDate: new Date(2026, 0, id),
   }) as TaskDefinition;
 
+describe('TaskPlannerComponent bar states', () => {
+  const planner = (status: string, targetGrade = 0) => {
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    component.targetGrade = 0;
+    const item = {
+      taskDefinition: {targetGrade},
+      task: {status},
+    } as never;
+    return {component, item};
+  };
+
+  it('shows a complete task as done instead of a deadline warning', () => {
+    const {component, item} = planner('complete');
+    // Even past its feedback deadline, a finished task has nothing left to warn about.
+    component.isPastFeedbackDeadline = () => true;
+
+    expect(component.getItemClasses(item)).toContain('[--bar-bg:var(--ot-status-complete)]');
+  });
+
+  it('keeps the deadline warning on a task that is still open', () => {
+    const {component, item} = planner('working_on_it');
+    component.isPastFeedbackDeadline = () => true;
+
+    expect(component.getItemClasses(item)).toContain('[--bar-bg:var(--ot-status-time-exceeded)]');
+  });
+
+  it('sizes the chart from its row count', () => {
+    const {component} = planner('not_started');
+    component.items = [{}, {}, {}] as never;
+
+    // 52px date header, three 44px rows and room for the timeline scrollbar.
+    expect(component.ganttHeight).toBe(52 + 3 * 44 + 18);
+  });
+});
+
 describe('TaskPlannerComponent target-grade filtering', () => {
   it('shows tasks beyond the target grade only when the student opts in', () => {
     const passTask = taskDefinition(1, 0);

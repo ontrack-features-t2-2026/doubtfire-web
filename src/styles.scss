@@ -182,6 +182,13 @@ body.split-pane-resizing pdf-viewer {
 // <ngx-gantt-root> host, which beats a :root definition. So override them on the
 // host with !important (a stylesheet !important wins over an inline non-important
 // custom property). References only — the --ot-* tokens stay the single source.
+// Today is drawn in the warning colour in both themes, so the planner's legend can
+// key it with the same token. The library's light default was a salmon that also
+// put white text on the today chip at about 2:1.
+ngx-gantt-root {
+  --gantt-color-highlight: var(--ot-color-warning) !important;
+}
+
 :root[data-ot-theme='dark'] ngx-gantt-root {
   --gantt-color-background: var(--ot-color-surface) !important;
   --gantt-color-gray-100: var(--ot-color-page) !important;
