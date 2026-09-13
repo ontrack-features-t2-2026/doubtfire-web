@@ -187,8 +187,16 @@ export class AnalyticsTutorTimesComponent implements OnInit, OnChanges, OnDestro
     return count === 1 ? '1 session' : `${count} sessions`;
   }
 
+  /**
+   * Read from the staff list, not the legend, because the legend only lists tutors with
+   * sessions in these dates and the picked tutor may have none.
+   */
   get selectedTutorName(): string | undefined {
-    return this.tutorSummaries.find((t) => t.userId === this.selectedUserId)?.name;
+    if (this.selectedUserId === null) {
+      return undefined;
+    }
+    const tutor = this.unit?.staff?.find((s) => s.user?.id === this.selectedUserId);
+    return tutor?.user?.firstName ?? 'this tutor';
   }
 
   /** True when there are sessions in these dates but the filters hide all of them. */
@@ -411,7 +419,10 @@ export class AnalyticsTutorTimesComponent implements OnInit, OnChanges, OnDestro
     const tutor = staffIndex >= 0 ? staff[staffIndex] : undefined;
     const name = tutor?.user?.firstName ?? 'Unknown tutor';
     const start = new Date(session.startTime);
-    const end = new Date(session.endTime);
+    const recordedEnd = session.endTime ? new Date(session.endTime) : undefined;
+    // A session still being written can come back without an end. new Date(null) is 1970,
+    // which the calendar rejects with a console warning, so it ends where it starts.
+    const end = recordedEnd && recordedEnd >= start ? recordedEnd : start;
 
     return {
       id: session.id,

@@ -351,6 +351,23 @@ describe('AnalyticsTutorTimesComponent', () => {
       expect(component.events[2].tutorName).toBe('Unknown tutor');
     });
 
+    // new Date(null) is 1 January 1970, and the calendar warns about any event that ends
+    // before it starts.
+    it('ends a session with no end time where it starts, without a warning', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const open = {
+        ...session({start: new Date(2026, 8, 9, 10), minutes: 5}),
+        endTime: null,
+      } as unknown as MarkingSession;
+      await start(makeUnit(1, 'Convenor', () => of([open])));
+
+      expect(component.events[0].end).toEqual(new Date(2026, 8, 9, 10));
+      expect(component.events[0].endHour).toBe('10:00');
+      expect(page().querySelector('button.analytics-session')).not.toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     describe('visible hours', () => {
       const hoursFor = async (sessions: MarkingSession[]): Promise<[number, number]> => {
         await start(makeUnit(1, 'Convenor', () => of(sessions)));
@@ -487,6 +504,29 @@ describe('AnalyticsTutorTimesComponent', () => {
       fixture.detectChanges();
       expect(component.hideSessionsDuringTutorials).toBe(false);
       expect(page().querySelector('button.analytics-session')).not.toBeNull();
+    });
+
+    // The name came from the legend, which only lists tutors with sessions in these dates,
+    // so this read "Every session in these dates was during a tutorial."
+    it('names the picked tutor when the new dates have none of their sessions', async () => {
+      let week = 0;
+      await start(
+        makeUnit(1, 'Convenor', () =>
+          of(
+            week++ === 0
+              ? [session({userId: 8, start: new Date(2026, 8, 9, 10), minutes: 30})]
+              : [session({userId: 7, start: new Date(2026, 8, 2, 10), minutes: 30})],
+          ),
+        ),
+      );
+      component.toggleTutor(8);
+      component.goPreviousWeek();
+      fixture.detectChanges();
+
+      const empty = page().querySelector('[data-sessions-empty]');
+      expect(empty?.textContent).toContain(
+        'There are sessions in these dates, but none for Brian.',
+      );
     });
 
     it('speaks to a tutor about their own sessions', async () => {
