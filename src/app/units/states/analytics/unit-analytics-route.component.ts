@@ -33,10 +33,9 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
 
   constructor(
     private sidekiqProgressModalService: SidekiqProgressModalService,
-    private alertsService: AlertService,
+    private alertService: AlertService,
     private fileDownloaderService: FileDownloaderService,
     private userService: UserService,
-    private alertService: AlertService,
     private route: ActivatedRoute,
     @Inject(LOCALE_ID) private locale: string,
   ) {}
@@ -104,22 +103,32 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
     );
   }
 
-  public downloadCsv(newJob: Observable<SidekiqJob>, title: string, filename: string) {
+  // An arrow function, not a method, because the tutor times card calls it through its
+  // downloadCsvFn input. A method passed that way ran with the card as `this`, which has
+  // no alertsService, so a failed download threw instead of showing the alert.
+  public readonly downloadCsv = (
+    newJob: Observable<SidekiqJob>,
+    title: string,
+    filename: string,
+  ): void => {
     newJob.subscribe({
       next: (job) => {
-        if (!job || !job.id) {
-          return this.alertsService.error(`Failed to download ${title}`, 6000);
+        if (!job?.id) {
+          this.alertService.error(`Failed to download ${title}`, 6000);
+          return;
         }
-        this.sidekiqProgressModalService.show(`Downloading ${title}`, job.id).subscribe((job) => {
-          const blob = new Blob([job.result], {type: 'text/csv'});
+        this.sidekiqProgressModalService.show(`Downloading ${title}`, job.id).subscribe((done) => {
+          const blob = new Blob([done.result], {type: 'text/csv'});
           const url = URL.createObjectURL(blob);
 
           this.fileDownloaderService.downloadBlobToFile(url, filename);
+          // Give the browser time to start the download, then free the file's memory.
+          setTimeout(() => URL.revokeObjectURL(url), 10_000);
         });
       },
       error: (error) => {
-        this.alertsService.error(`Could not download ${title}: ${error}`, 6000);
+        this.alertService.error(`Could not download ${title}: ${error}`, 6000);
       },
     });
-  }
+  };
 }
