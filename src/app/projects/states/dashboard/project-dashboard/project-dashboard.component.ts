@@ -82,6 +82,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public startLeftX = 0;
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
+  // Desktop only: the chat covers the task list and task pane so a long
+  // conversation has room. Esc or the same button puts it back.
+  public commentsFullscreen = false;
   public isPhoneLayout = false;
   public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
 
@@ -156,7 +159,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(({matches}) => {
         this.isCommentsNarrow = matches;
-        this.commentsCollapsed = matches;
+        // Narrowing the window must not tuck away a chat the student has made
+        // full screen; that would hide its exit button along with it.
+        this.commentsCollapsed = matches && !this.commentsFullscreen;
         window.dispatchEvent(new Event('resize'));
       });
 
@@ -165,6 +170,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(({matches}) => {
         this.isPhoneLayout = matches;
+        if (matches) {
+          // The phone layout has its own feedback pane and no full-screen mode.
+          this.commentsFullscreen = false;
+        }
         if (matches && this.selectedTaskDefinition$.value) {
           this.mobilePane = this.shouldOpenFeedback(this.selectedTaskDefinition$.value)
             ? 'feedback'
@@ -176,6 +185,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDefinition) => {
       if (!taskDefinition) {
         this.mobilePane = 'task';
+        this.commentsFullscreen = false;
         return;
       }
 
@@ -241,6 +251,11 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
 
   public toggleCommentsPanel(): void {
     this.commentsCollapsed = !this.commentsCollapsed;
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  public toggleCommentsFullscreen(): void {
+    this.commentsFullscreen = !this.commentsFullscreen;
     window.dispatchEvent(new Event('resize'));
   }
 

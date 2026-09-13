@@ -212,6 +212,42 @@
   z-index: 250;
 }
 
+// Full-screen chat: the sidebar covers the task list and task pane inside the
+// dashboard layout, so the app header and demo banner stay where they are. The
+// template drops its w-1/4 utility while full screen (a layered !important this
+// file cannot beat); the !important widths here beat the narrow overlay's 375px.
+.project-dashboard-layout {
+  position: relative;
+}
+
+.comments-sidebar.comments-sidebar--fullscreen {
+  position: absolute;
+  inset: 0;
+  z-index: 270;
+  width: auto !important;
+  min-width: 0;
+  flex-basis: auto !important;
+  box-shadow: none;
+}
+
+// Keep a long line readable on a wide screen instead of running edge to edge.
+.comments-sidebar--fullscreen > task-comments-viewer {
+  display: block;
+  height: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+}
+
+.comments-sidebar__fullscreen {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  border: 1px solid var(--ot-color-divider);
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text-muted);
+}
+
 .comments-sidebar__collapse {
   position: absolute;
   top: 50%;

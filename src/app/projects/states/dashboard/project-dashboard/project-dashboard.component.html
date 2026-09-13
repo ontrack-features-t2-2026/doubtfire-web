@@ -108,9 +108,11 @@
     <div #boundary class="project-dashboard-layout flex h-full min-h-0 flex-row">
       @if (subs$ | async) {
         @if (isProjectTaskListReady(project)) {
+          <!-- inert while the chat is full screen, so Tab cannot reach what it covers. -->
           <f-unit-task-list
             #leftPanel
             class="project-task-list-panel h-full min-h-0 flex-none p-1"
+            [attr.inert]="commentsFullscreen ? '' : null"
             [class.project-task-list-panel--phone-hidden]="
               isPhoneLayout && (!!selectedTaskDefinition || mobilePane === 'overview')
             "
@@ -137,6 +139,7 @@
         }
         <div
           class="project-task-resizer relative flex-none"
+          [attr.inert]="commentsFullscreen ? '' : null"
           [class.project-task-resizer--phone-hidden]="isPhoneLayout"
           [style.width.px]="3"
         >
@@ -210,7 +213,10 @@
             </div>
           </section>
         } @else {
-          <div class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-ot-surface p-1">
+          <div
+            class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-ot-surface p-1"
+            [attr.inert]="commentsFullscreen ? '' : null"
+          >
             <f-task-dashboard
               [task]="project.findTaskForDefinition(selectedTaskDefinition.id)"
             ></f-task-dashboard>
@@ -231,11 +237,25 @@
           }
           <div
             #commentspanel
-            class="comments-sidebar w-1/4 flex-none bg-ot-surface p-1"
+            class="comments-sidebar flex-none bg-ot-surface p-1"
+            [class.comments-sidebar--fullscreen]="commentsFullscreen"
             [class.comments-sidebar--narrow]="isCommentsNarrow"
             [class.hidden]="commentsPanelCollapsed"
+            [ngClass]="{'w-1/4': !commentsFullscreen}"
+            (keydown.escape)="commentsFullscreen && toggleCommentsFullscreen()"
           >
-            @if (isCommentsNarrow && !commentsCollapsed) {
+            <button
+              aria-label="Full-screen chat"
+              class="comments-sidebar__fullscreen"
+              mat-icon-button
+              type="button"
+              [attr.aria-pressed]="commentsFullscreen"
+              [matTooltip]="commentsFullscreen ? 'Exit full screen (Esc)' : 'Full-screen chat'"
+              (click)="toggleCommentsFullscreen()"
+            >
+              <mat-icon>{{ commentsFullscreen ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+            </button>
+            @if (isCommentsNarrow && !commentsCollapsed && !commentsFullscreen) {
               <button
                 aria-label="Collapse task comments"
                 class="comments-sidebar__collapse"
