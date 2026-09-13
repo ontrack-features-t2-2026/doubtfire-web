@@ -8,7 +8,7 @@
         class="flex flex-wrap items-start justify-between gap-3 border-b border-ot-divider px-5 py-4"
       >
         <div class="min-w-0">
-          <h2 class="m-0 text-base font-semibold text-ot-text" id="group-sets-title">Group sets</h2>
+          <h3 class="m-0 text-base font-semibold text-ot-text" id="group-sets-title">Group sets</h3>
           <p class="m-0 mt-1 max-w-[70ch] text-sm leading-relaxed text-ot-muted">
             A group set holds the groups for one kind of group work. A unit can have several, for
             example one for labs and one for a project.
@@ -266,9 +266,9 @@
     @if (selectedGroupSet && unit.groupSets.length > 0) {
       <section aria-labelledby="groups-title" class="flex flex-col gap-3">
         <div>
-          <h2 class="m-0 text-lg leading-snug font-semibold text-ot-text" id="groups-title">
+          <h3 class="m-0 text-lg leading-snug font-semibold text-ot-text" id="groups-title">
             Groups in {{ selectedGroupSet.name }}
-          </h2>
+          </h3>
           <p class="m-0 mt-1 max-w-[70ch] text-sm text-ot-muted">
             Pick a group to see and change its members. Pick another set in the table above to
             switch.
@@ -289,9 +289,9 @@
           class="flex min-w-0 flex-col gap-3 rounded-ot-lg border border-ot-divider bg-ot-surface p-5 shadow-(--ot-elevation-1)"
         >
           <div>
-            <h2 class="m-0 text-base font-semibold text-ot-text" id="import-groups-title">
+            <h3 class="m-0 text-base font-semibold text-ot-text" id="import-groups-title">
               Import groups
-            </h2>
+            </h3>
             <p class="m-0 mt-1 text-sm text-ot-muted">
               Add groups to {{ selectedGroupSet.name }} from a CSV with these columns:
             </p>
@@ -328,9 +328,9 @@
           class="flex min-w-0 flex-col gap-3 rounded-ot-lg border border-ot-divider bg-ot-surface p-5 shadow-(--ot-elevation-1)"
         >
           <div>
-            <h2 class="m-0 text-base font-semibold text-ot-text" id="import-members-title">
+            <h3 class="m-0 text-base font-semibold text-ot-text" id="import-members-title">
               Import students into groups
-            </h2>
+            </h3>
             <p class="m-0 mt-1 text-sm text-ot-muted">
               Put students into the groups of {{ selectedGroupSet.name }} from a CSV with these
               columns:
