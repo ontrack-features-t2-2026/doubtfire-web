@@ -7,7 +7,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
 import {MatListModule} from '@angular/material/list';
 import {ActivatedRoute, ParamMap, Router, convertToParamMap} from '@angular/router';
-import {BehaviorSubject, Subscription, of, throwError} from 'rxjs';
+import {BehaviorSubject, Subject, Subscription, of, throwError} from 'rxjs';
 import {
   AuthenticationService,
   Project,
@@ -221,7 +221,7 @@ describe('TutorDiscussionComponent', () => {
 
     expect(component.scanningQr).toBe(false);
     expect(page.querySelector('[role="alert"]')?.textContent).toContain('Camera access is blocked');
-    expect(button('Try again')).toBeTruthy();
+    expect(button('Try the camera again')).toBeTruthy();
   });
 
   it('says so when the device has no camera', async () => {
@@ -383,6 +383,84 @@ describe('TutorDiscussionComponent', () => {
     expect(component.project).toBeNull();
     expect(unitService.get).toHaveBeenLastCalledWith({id: 2});
     expect(component.unit?.id).toBe(2);
+  });
+
+  // A late answer for the previous unit's student replaced the page the tutor had moved
+  // on to, so unit 2 showed unit 1's student with its marking buttons.
+  it('drops a student that arrives after the tutor has moved to another unit', async () => {
+    const late: Subject<Project> = new Subject();
+    projectService.loadProject.mockReturnValue(late);
+    query.next(convertToParamMap({username: 'ada'}));
+    await create();
+
+    fixture.ngZone.run(() => {
+      query.next(convertToParamMap({}));
+      unitParams.next(convertToParamMap({unitId: '2'}));
+    });
+    await settle();
+    fixture.ngZone.run(() => late.next(students[0]));
+    await settle();
+
+    expect(component.project).toBeNull();
+    expect(component.unit?.id).toBe(2);
+  });
+
+  // Stopping while the camera was coming up, with a remembered camera that then failed,
+  // went on to ask for a second camera, and the late clean up of one start could wipe
+  // the video of the next.
+  it('does not start another camera after the tutor stops during start up', async () => {
+    localStorage.setItem('HTML5_QRCODE_DATA', JSON.stringify({lastUsedCameraId: 'gone'}));
+    let failStart: (reason: unknown) => void;
+    scanner.start.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => (failStart = reject)),
+    );
+    await create();
+
+    button('Start scanning').click();
+    await settle();
+    expect(component.cameraStarting).toBe(true);
+    expect(button('Start scanning')).toBeUndefined();
+
+    button('Stop scanning').click();
+    fixture.ngZone.run(() => failStart(new DOMException('gone', 'NotFoundError')));
+    await settle();
+
+    expect(createScanner).toHaveBeenCalledTimes(1);
+    expect(component.cameraStarting).toBe(false);
+    expect(component.cameraProblem).toBeNull();
+    expect(button('Start scanning').disabled).toBe(false);
+    localStorage.removeItem('HTML5_QRCODE_DATA');
+  });
+
+  it('will not switch cameras while one is still starting', async () => {
+    scanner.start.mockImplementationOnce(() => new Promise(() => undefined));
+    await create();
+    button('Start scanning').click();
+    await settle();
+
+    await component.switchCamera('camera-2');
+
+    expect(createScanner).toHaveBeenCalledTimes(1);
+  });
+
+  // Once a student was open, the lookup and any camera message were hidden with the
+  // start card, so a tutor with no camera could not open a second student.
+  it('keeps the lookup and camera messages on the page once a student is open', async () => {
+    query.next(convertToParamMap({username: 'ada'}));
+    await create();
+    scanner.start.mockRejectedValueOnce(new DOMException('x', 'NotFoundError'));
+
+    button('Scan next student').click();
+    const page = await settle();
+
+    expect(component.project?.id).toBe(5);
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('No camera found');
+    expect(button('Find student')).toBeTruthy();
+
+    component.studentLookup = '226';
+    fixture.ngZone.run(() => component.findStudent());
+    await settle();
+    expect(component.project?.id).toBe(6);
   });
 
   describe('check-in', () => {

@@ -16,17 +16,6 @@
         }
       </p>
     </div>
-    @if (project && !scanningQr) {
-      <button
-        mat-stroked-button
-        type="button"
-        [disabled]="!canStartScanning"
-        (click)="scanQrCode()"
-      >
-        <mat-icon aria-hidden="true">qr_code_scanner</mat-icon>
-        Scan next student
-      </button>
-    }
   </header>
 
   <div class="flex flex-col gap-5 pb-6">
@@ -170,24 +159,7 @@
             </p>
           }
 
-          @if (loadError) {
-            <div class="discussion-callout discussion-callout--error" role="alert">
-              <mat-icon aria-hidden="true">error_outline</mat-icon>
-              <p class="m-0 text-sm">{{ loadError }}</p>
-            </div>
-          }
-
-          @if (cameraProblem; as problem) {
-            <div class="discussion-callout discussion-callout--warning" role="alert">
-              <mat-icon aria-hidden="true">
-                {{ problem === 'denied' ? 'no_photography' : 'videocam_off' }}
-              </mat-icon>
-              <div class="flex min-w-0 flex-col gap-0.5">
-                <p class="m-0 font-semibold">{{ cameraProblems[problem].title }}</p>
-                <p class="m-0 text-sm leading-relaxed">{{ cameraProblems[problem].detail }}</p>
-              </div>
-            </div>
-          }
+          <ng-container *ngTemplateOutlet="pageMessages"></ng-container>
 
           @if (attendance && hasUnit && !selectedTaskDefinition) {
             <p class="m-0 text-sm text-ot-muted">Choose the task to check in before you scan.</p>
@@ -205,7 +177,11 @@
             (click)="scanQrCode()"
           >
             <mat-icon aria-hidden="true">qr_code_scanner</mat-icon>
-            {{ cameraProblem && cameraProblem !== 'unsupported' ? 'Try again' : 'Start scanning' }}
+            {{
+              cameraProblem && cameraProblem !== 'unsupported'
+                ? 'Try the camera again'
+                : 'Start scanning'
+            }}
           </button>
         </footer>
       </section>
@@ -215,7 +191,7 @@
           aria-labelledby="student-lookup-heading"
           class="rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
         >
-          <form class="flex flex-col gap-3 p-5 sm:p-6" (ngSubmit)="findStudent()">
+          <div class="flex flex-col gap-3 p-5 sm:p-6">
             <div>
               <h2
                 class="m-0 text-base leading-snug font-semibold text-ot-text"
@@ -227,25 +203,8 @@
                 Type their username or student ID, as it appears in the student list.
               </p>
             </div>
-            <div class="flex flex-wrap items-center gap-3">
-              <mat-form-field
-                appearance="outline"
-                class="discussion-field w-full sm:max-w-xs"
-                subscriptSizing="dynamic"
-              >
-                <mat-label>Username or student ID</mat-label>
-                <input
-                  autocomplete="off"
-                  matInput
-                  name="studentLookup"
-                  [(ngModel)]="studentLookup"
-                />
-              </mat-form-field>
-              <button mat-stroked-button type="submit" [disabled]="!canFindStudent">
-                Find student
-              </button>
-            </div>
-          </form>
+            <ng-container *ngTemplateOutlet="studentLookup"></ng-container>
+          </div>
         </section>
       }
     }
@@ -301,6 +260,42 @@
     }
 
     @if (project && !scanningQr) {
+      <!-- The way to the next student stays on the page once one is open, and so do the
+           messages about the camera or a lookup, next to the buttons they are about. -->
+      <section
+        aria-labelledby="next-student-heading"
+        class="flex flex-col gap-3 rounded-ot-lg border border-ot-divider bg-ot-surface p-4 shadow-(--ot-elevation-1) sm:px-5"
+      >
+        <h2 class="sr-only" id="next-student-heading">Next student</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            color="primary"
+            mat-flat-button
+            type="button"
+            [disabled]="!canStartScanning"
+            (click)="scanQrCode()"
+          >
+            <mat-icon aria-hidden="true">qr_code_scanner</mat-icon>
+            {{
+              cameraProblem && cameraProblem !== 'unsupported'
+                ? 'Try the camera again'
+                : 'Scan next student'
+            }}
+          </button>
+          @if (hasUnit) {
+            <span class="text-sm text-ot-muted">or find them</span>
+            <ng-container *ngTemplateOutlet="studentLookup"></ng-container>
+          }
+        </div>
+        @if (loadingStudentData) {
+          <p class="m-0 flex items-center gap-2 text-sm text-ot-muted" role="status">
+            <mat-spinner aria-hidden="true" diameter="18"></mat-spinner>
+            Opening the student's tasks...
+          </p>
+        }
+        <ng-container *ngTemplateOutlet="pageMessages"></ng-container>
+      </section>
+
       <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <section
           aria-labelledby="discussion-student-heading"
@@ -561,3 +556,37 @@
     }
   </div>
 </f-page-container>
+
+<ng-template #pageMessages>
+  @if (loadError) {
+    <div class="discussion-callout discussion-callout--error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <p class="m-0 text-sm">{{ loadError }}</p>
+    </div>
+  }
+  @if (cameraProblem; as problem) {
+    <div class="discussion-callout discussion-callout--warning" role="alert">
+      <mat-icon aria-hidden="true">
+        {{ problem === 'denied' ? 'no_photography' : 'videocam_off' }}
+      </mat-icon>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <p class="m-0 font-semibold">{{ cameraProblems[problem].title }}</p>
+        <p class="m-0 text-sm leading-relaxed">{{ cameraProblems[problem].detail }}</p>
+      </div>
+    </div>
+  }
+</ng-template>
+
+<ng-template #studentLookup>
+  <form class="flex flex-wrap items-center gap-3" (ngSubmit)="findStudent()">
+    <mat-form-field
+      appearance="outline"
+      class="discussion-field w-full sm:w-64"
+      subscriptSizing="dynamic"
+    >
+      <mat-label>Username or student ID</mat-label>
+      <input autocomplete="off" matInput name="studentLookup" [(ngModel)]="studentLookup" />
+    </mat-form-field>
+    <button mat-stroked-button type="submit" [disabled]="!canFindStudent">Find student</button>
+  </form>
+</ng-template>

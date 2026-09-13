@@ -178,6 +178,13 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   public readonly externalName = inject(DoubtfireConstants).ExternalName;
 
   private qrScanner?: QrScanner;
+  // The scanner whose start() has not settled yet. Its own start flow releases it, so
+  // nothing else may stop or clear it while the camera is coming up.
+  private startingScanner?: QrScanner;
+  // Bumped whenever the page moves on, so a late answer to an older request is dropped
+  // instead of replacing what the tutor has opened since.
+  private loadGeneration = 0;
+  private unitLoadGeneration = 0;
   private originalViewportContent: string | null = null;
   private mobileDiscussionZoomApplied = false;
   private readonly destroyRef = inject(DestroyRef);
@@ -363,10 +370,12 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   }
 
   private resetPage(): void {
+    this.loadGeneration++;
+    this.unitLoadGeneration++;
+    this.loadingUnit = false;
     this.stopQrScanner();
     this.restoreViewportZoom();
     this.scanningQr = false;
-    this.cameraStarting = false;
     this.loadingStudentData = false;
     this.unit = null;
     this.project = null;
@@ -383,14 +392,27 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   }
 
   private loadUnit(): void {
+    const generation = ++this.unitLoadGeneration;
+    const isCurrent = () => generation === this.unitLoadGeneration && !this.destroyed;
     this.loadingUnit = true;
     this.loadError = null;
     this.getUnit()
-      .then((unit) => (this.unit = unit))
-      .catch(
-        () => (this.loadError = 'This unit could not be loaded. Reload the page to try again.'),
-      )
-      .finally(() => (this.loadingUnit = false));
+      .then((unit) => {
+        // A student opened in the meantime brings their own copy of the unit.
+        if (isCurrent() && !this.project) {
+          this.unit = unit;
+        }
+      })
+      .catch(() => {
+        if (isCurrent()) {
+          this.loadError = 'This unit could not be loaded. Reload the page to try again.';
+        }
+      })
+      .finally(() => {
+        if (isCurrent()) {
+          this.loadingUnit = false;
+        }
+      });
   }
 
   private decodeQrCode(data: string) {
@@ -436,7 +458,6 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   /** Close the camera and go back to the page, keeping any student already open. */
   public closeQrReader(): void {
     this.scanningQr = false;
-    this.cameraStarting = false;
     this.scanHint = null;
     this.stopQrScanner();
   }
@@ -495,10 +516,14 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   private async stopQrScanner(): Promise<void> {
     const scanner = this.qrScanner;
     this.qrScanner = undefined;
-    if (!scanner) {
+    if (!scanner || scanner === this.startingScanner) {
+      // A camera that is still starting is let go by its own start flow once it settles.
       return;
     }
+    await this.releaseScanner(scanner);
+  }
 
+  private async releaseScanner(scanner: QrScanner): Promise<void> {
     try {
       const state = scanner.getState();
       if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
@@ -506,7 +531,7 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
       }
       scanner.clear();
     } catch (_e) {
-      // The camera may already be closed, or still starting. Either way it is let go.
+      // The camera may already be closed. Either way it is let go.
     }
   }
 
@@ -585,16 +610,63 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
     }
 
     await this.stopQrScanner();
+    if (this.destroyed || !this.scanningQr) {
+      return;
+    }
     // Draw the camera view first: the scanner sizes the video to the element it is given.
     this.changeDetector.detectChanges();
     await this.startCamera(this.selectedCameraId ?? this.rememberedCameraId());
   }
 
+  /**
+   * Start the camera. Only one start runs at a time: cameraStarting stays true until this
+   * one has settled and cleaned up after itself, and the page offers no way to start or
+   * switch cameras until then. Two starts at once would both draw into #qr-reader, and
+   * the older one's clean up would wipe the newer one's video.
+   */
   private async startCamera(cameraId: string | null): Promise<void> {
-    const scanner = this.createQrScanner(QR_READER_ID);
-    this.qrScanner = scanner;
     this.cameraStarting = true;
+    try {
+      // Try the camera used last time first. It may be gone, so fall back on letting the
+      // browser choose, preferring a camera that faces away from the tutor.
+      const attempts = cameraId ? [cameraId, null] : [null];
+      for (const [index, attempt] of attempts.entries()) {
+        const outcome = await this.startCameraWith(attempt);
+        if (outcome === 'started' || outcome === 'cancelled') {
+          return;
+        }
+        const isLastAttempt = index === attempts.length - 1;
+        if (outcome === 'denied' || isLastAttempt) {
+          this.scanningQr = false;
+          this.cameraProblem = outcome;
+          return;
+        }
+        this.rememberCamera(null);
+        this.selectedCameraId = null;
+      }
+    } finally {
+      this.cameraStarting = false;
+    }
+  }
 
+  private async startCameraWith(
+    cameraId: string | null,
+  ): Promise<'started' | 'cancelled' | CameraProblem> {
+    if (this.destroyed || !this.scanningQr) {
+      return 'cancelled';
+    }
+
+    let scanner: QrScanner;
+    try {
+      scanner = this.createQrScanner(QR_READER_ID);
+    } catch (_e) {
+      // The camera view is not on the page, so there is nothing to draw into.
+      return this.destroyed ? 'cancelled' : 'failed';
+    }
+
+    this.qrScanner = scanner;
+    this.startingScanner = scanner;
+    let problem: CameraProblem | null = null;
     try {
       await scanner.start(
         cameraId ?? {facingMode: 'environment'},
@@ -605,38 +677,22 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
         },
       );
     } catch (error) {
-      if (this.qrScanner === scanner) {
-        this.qrScanner = undefined;
-      }
-      this.cameraStarting = false;
-      const problem = cameraProblemFrom(error);
-      if (cameraId && problem !== 'denied') {
-        // The camera used last time may be gone. Forget it and let the browser choose.
-        this.rememberCamera(null);
-        this.selectedCameraId = null;
-        return this.startCamera(null);
-      }
-      this.scanningQr = false;
-      this.cameraProblem = problem;
-      return;
+      problem = cameraProblemFrom(error);
     }
+    this.startingScanner = undefined;
 
-    this.cameraStarting = false;
-    if (this.destroyed || this.qrScanner !== scanner || !this.scanningQr) {
-      // The tutor stopped, or left, while the camera was starting.
+    const stillWanted = !this.destroyed && this.scanningQr && this.qrScanner === scanner;
+    if (problem || !stillWanted) {
       if (this.qrScanner === scanner) {
         this.qrScanner = undefined;
       }
-      try {
-        await scanner.stop();
-        scanner.clear();
-      } catch (_e) {
-        // Already closed.
-      }
-      return;
+      // The tutor stopped, or left, while the camera was starting, or it failed.
+      await this.releaseScanner(scanner);
+      return stillWanted ? problem : 'cancelled';
     }
 
     await this.listCameras(scanner);
+    return 'started';
   }
 
   private viewfinderBox(width: number, height: number): {width: number; height: number} {
@@ -697,7 +753,7 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   }
 
   public async switchCamera(cameraId: string): Promise<void> {
-    if (!cameraId || cameraId === this.selectedCameraId) {
+    if (!cameraId || cameraId === this.selectedCameraId || this.cameraStarting) {
       return;
     }
     this.selectedCameraId = cameraId;
@@ -997,19 +1053,27 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
   }
 
   public getStudentTasks(): void {
+    const generation = ++this.loadGeneration;
+    const isCurrent = () => generation === this.loadGeneration && !this.destroyed;
     this.loadError = null;
     this.loadingStudentData = true;
     const wasScanning = this.scanningQr;
 
     this.getUnit()
       .then((_unit) => {
+        if (!isCurrent()) {
+          return null;
+        }
         this.unit = _unit;
         return this.loadStudents(this.unit);
       })
       .then((student) => {
-        return this.getProject(this.unit, student.id);
+        return student && isCurrent() ? this.getProject(this.unit, student.id) : null;
       })
       .then((project) => {
+        if (!project || !isCurrent()) {
+          return;
+        }
         const discussionTasks = this.filteredDiscussionTasks(project.tasks);
         if (!this.attendance) {
           this.filteredTasks = [...discussionTasks];
@@ -1039,6 +1103,9 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
         this.applyMobileDiscussionZoom();
       })
       .catch((e) => {
+        if (!isCurrent()) {
+          return;
+        }
         this.loadingStudentData = false;
         const message =
           typeof e === 'string' && e.length > 0 ? e : 'That student could not be loaded.';
