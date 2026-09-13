@@ -122,8 +122,22 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       return;
     }
 
+    // Following a link or notification into another unit swaps this list while the
+    // old unit's task is still selected. The url already names the task to open in
+    // the new unit, so leave it for applyRouteTaskSelection. Rewriting it to the bare
+    // dashboard here is what used to land those links on the unit overview.
+    const routeOpensAnotherListedTask =
+      !!this.routeTaskAbbreviation &&
+      !!this.taskDefinitions?.some(
+        (taskDef) =>
+          taskDef.abbreviation === this.routeTaskAbbreviation &&
+          taskDef.id !== this.selectedTaskDef.id,
+      );
+
     this.selectedTaskDefinition$?.next(null);
-    this.replaceSelectionUrl(null);
+    if (!routeOpensAnotherListedTask) {
+      this.replaceSelectionUrl(null);
+    }
   }
 
   public setSortBy(sortBy: TaskListSortOption): void {
