@@ -61,6 +61,24 @@
   --ot-status-attention-required: #cd4c10;
   --ot-status-attention-required-on: #ffffff;
 
+  // Status as a mark on the page (chart slices, bars, accents, footer glyphs).
+  // The fills above already clear 3:1 on the light page, so these match them.
+  --ot-status-ready-for-feedback-graphic: #0078d5;
+  --ot-status-not-started-graphic: #757575;
+  --ot-status-working-on-it-graphic: #a86604;
+  --ot-status-need-help-graphic: #8366bc;
+  --ot-status-fix-and-resubmit-graphic: #8b750b;
+  --ot-status-feedback-exceeded-graphic: #ca4e33;
+  --ot-status-redo-graphic: #804000;
+  --ot-status-discuss-graphic: #20809c;
+  --ot-status-rediscuss-graphic: #126352;
+  --ot-status-demonstrate-graphic: #337ab7;
+  --ot-status-complete-graphic: #3b863b;
+  --ot-status-fail-graphic: #d93713;
+  --ot-status-time-exceeded-graphic: #d93713;
+  --ot-status-assess-in-portfolio-graphic: #8b750b;
+  --ot-status-attention-required-graphic: #cd4c10;
+
   // --- 8.2 Everything else ---
   --ot-urgency-overdue: #c94823;
   --ot-urgency-soon: #a56504;

@@ -1,8 +1,11 @@
 <ng-template #TaskStatusBadges let-task="task">
+  <!-- The expanded list keeps the old pill's 56px so the grade, quality and deadline
+       badges, anchored to the right edge, have room beside the 30px circle. -->
   <div
-    class="relative mr-1 flex shrink-0 items-center justify-center"
+    class="relative mr-1 flex shrink-0 items-center"
     [ngClass]="{
-      'pr-0.5': !isCollapsed,
+      'min-w-14 justify-end pr-0.5': !isCollapsed,
+      'justify-center': isCollapsed,
     }"
   >
     <status-icon [status]="task.status"></status-icon>

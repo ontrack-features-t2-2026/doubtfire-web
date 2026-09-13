@@ -733,6 +733,12 @@ otherwise darken it in 0.5% HSL lightness steps, hue and saturation held, until 
 Token names are `--ot-status-<key>` and `--ot-status-<key>-on`, where `<key>` is the existing
 kebab-case class from `TaskStatus.statusClass()`.
 
+A status drawn as a mark on the page, not as a fill under white content, uses
+`--ot-status-<key>-graphic`: chart slices and legends, peer-progress bars, list accents and the
+footer glyphs. Marks need 3:1 against the surface. In light the fills already clear that, so
+`-graphic` equals the fill. In dark the darkened fills do not, so `-graphic` keeps the vivid
+colours the dark theme used before, all of which clear 3:1 on `--ot-color-surface`.
+
 In light, 4 fills keep their value: `redo`, `rediscuss`, `fail`, `time-exceeded`. The rest
 darken. The biggest shift is the yellow pair, `fix-and-resubmit` and `assess-in-portfolio`,
 which becomes an olive gold. A white glyph cannot clear 3:1 on any yellow light enough to

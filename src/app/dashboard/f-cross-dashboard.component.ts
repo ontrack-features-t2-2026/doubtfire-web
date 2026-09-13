@@ -743,7 +743,7 @@ export class CrossDashboardComponent implements OnInit {
         abbreviation: def.abbreviation,
         // CSS var so the list-item status accent flips with the theme (used in a
         // [style] binding, where var() resolves).
-        color: `var(--ot-status-${String(task.status).replace(/_/g, '-')})`,
+        color: `var(--ot-status-${String(task.status).replace(/_/g, '-')}-graphic)`,
         comments: task.numNewComments ?? 0,
         hasFeedback: task.hasFeedback ?? false,
         status: task.status,

@@ -112,9 +112,11 @@
 @mixin status-icon($status) {
   // Drive the chip colour from the runtime status token so the footer chips and
   // their hover state flip with the theme instead of using the light-only map.
+  // The glyph sits on the page, so it takes the -graphic colour; the hover fill
+  // takes the darker status fill with the white glyph.
   --status-chip-bg: var(--ot-status-#{$status});
   background-color: transparent;
-  color: var(--status-chip-bg);
+  color: var(--ot-status-#{$status}-graphic);
 }
 
 .status-chip {

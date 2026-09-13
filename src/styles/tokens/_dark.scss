@@ -63,6 +63,25 @@
   --ot-status-attention-required: #be580f;
   --ot-status-attention-required-on: #ffffff;
 
+  // Status as a mark on the page (chart slices, bars, accents, footer glyphs).
+  // The darkened fills sit under 3:1 on the dark surface, so marks keep the
+  // vivid colours, which all clear it.
+  --ot-status-ready-for-feedback-graphic: #58a6ff;
+  --ot-status-not-started-graphic: #7d8590;
+  --ot-status-working-on-it-graphic: #f0a838;
+  --ot-status-need-help-graphic: #bc8cff;
+  --ot-status-fix-and-resubmit-graphic: #e6cf4a;
+  --ot-status-feedback-exceeded-graphic: #ff9a5b;
+  --ot-status-redo-graphic: #db6d28;
+  --ot-status-discuss-graphic: #56d4dd;
+  --ot-status-rediscuss-graphic: #2dd4bf;
+  --ot-status-demonstrate-graphic: #6cb6ff;
+  --ot-status-complete-graphic: #3fb950;
+  --ot-status-fail-graphic: #f85149;
+  --ot-status-time-exceeded-graphic: #f85149;
+  --ot-status-assess-in-portfolio-graphic: #e6cf4a;
+  --ot-status-attention-required-graphic: #f0883e;
+
   // --- 8.2 Everything else ---
   --ot-urgency-overdue: #f85149;
   --ot-urgency-soon: #e3b341;
