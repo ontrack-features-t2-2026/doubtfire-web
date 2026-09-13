@@ -1,4 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
+import {BehaviorSubject} from 'rxjs';
+import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
 import {UnitTaskEditorComponent} from './unit-task-editor.component';
 
 // The component is constructed directly rather than through TestBed. The three
@@ -107,5 +110,128 @@ describe('UnitTaskEditorComponent unsaved task guard', () => {
 
     expect(confirmationModal.show).not.toHaveBeenCalled();
     expect(component.selectedTaskDefinition).toBe(other);
+  });
+});
+
+// A task with real fields, so a discard has something to put back.
+function editableTask(): TaskDefinition {
+  const task = new TaskDefinition({} as never);
+  task.id = 7;
+  task.abbreviation = '1.1P';
+  task.name = 'Hello world';
+  task.targetGrade = 0;
+  task.startDate = new Date(2026, 2, 2);
+  task.targetDate = new Date(2026, 2, 16);
+  task.uploadRequirements = [{key: 'file0', name: 'Code', type: 'code'}];
+  return task;
+}
+
+function editorForRealTask() {
+  const confirmationModal = {show: vi.fn()};
+  const alerts = {success: vi.fn(), error: vi.fn()};
+  const mapping = new TaskDefinitionService({} as never, {} as never, {} as never, {} as never)
+    .mapping;
+
+  const component = new UnitTaskEditorComponent(
+    {mapping} as never,
+    {query: () => ({subscribe: () => {}})} as never,
+    alerts as never,
+    {} as never,
+    {} as never,
+    confirmationModal as never,
+  );
+  component.unit = {deleteTaskDefinition: vi.fn()} as never;
+  return {component, confirmationModal, alerts};
+}
+
+describe('UnitTaskEditorComponent discard', () => {
+  it('puts the saved values back when the convenor discards their edits', () => {
+    const task = editableTask();
+    const {component, confirmationModal} = editorForRealTask();
+    component.selectTaskDefinition(task);
+
+    task.name = 'Changed name';
+    task.targetDate.setDate(20);
+    task.uploadRequirements[0].name = 'Report';
+    expect(component.taskDefinitionHasChanges(task)).toBe(true);
+
+    component.discardTaskDefinitionChanges();
+    const proceed = confirmationModal.show.mock.calls[0][2] as () => void;
+    proceed();
+
+    expect(task.name).toBe('Hello world');
+    expect(task.targetDate.getDate()).toBe(16);
+    expect(task.uploadRequirements[0].name).toBe('Code');
+    expect(component.taskDefinitionHasChanges(task)).toBe(false);
+    expect(component.selectedTaskDefinition).toBe(task);
+  });
+
+  it('undoes the edits to a task that is left for another one', () => {
+    const task = editableTask();
+    const other = editableTask();
+    other.id = 8;
+    const {component, confirmationModal} = editorForRealTask();
+    component.selectTaskDefinition(task);
+
+    task.name = 'Changed name';
+    component.selectTaskDefinition(other);
+    (confirmationModal.show.mock.calls[0][2] as () => void)();
+
+    expect(component.selectedTaskDefinition).toBe(other);
+    expect(task.name).toBe('Hello world');
+  });
+});
+
+describe('UnitTaskEditorComponent delete', () => {
+  it('drops a task that was never saved without asking the server to delete it', () => {
+    const {component, confirmationModal} = editorWith(unsavedTask());
+    const unit = {deleteTaskDefinition: vi.fn()};
+    component.unit = unit as never;
+
+    component.deleteTaskDefinition(component.selectedTaskDefinition);
+    (confirmationModal.show.mock.calls[0][2] as () => void)();
+
+    expect(unit.deleteTaskDefinition).not.toHaveBeenCalled();
+    expect(component.selectedTaskDefinition).toBeNull();
+  });
+
+  it('closes the editor when the open task is deleted from the unit', () => {
+    const task = savedTask('1.1P');
+    const other = savedTask('2.1C');
+    const values: BehaviorSubject<unknown[]> = new BehaviorSubject([task, other]);
+    const {component} = editorWith(null);
+    component.unit = {taskDefinitionCache: {values}} as never;
+    component.ngOnInit();
+    component.selectTaskDefinition(task as never);
+
+    values.next([other]);
+
+    expect(component.selectedTaskDefinition).toBeNull();
+    component.ngOnDestroy();
+  });
+});
+
+describe('UnitTaskEditorComponent dates by grade', () => {
+  const firstGrade = {value: 0, label: 'Pass'} as never;
+
+  it('does not save when the first grade date is cleared while typing', () => {
+    const {component} = editorWith(null);
+    const task = {setGradeStartDate: vi.fn(), save: vi.fn()};
+
+    component.setGradeStartDate(task as never, firstGrade, null);
+
+    expect(task.setGradeStartDate).not.toHaveBeenCalled();
+    expect(task.save).not.toHaveBeenCalled();
+  });
+
+  it('flags a cell whose start is after its target', () => {
+    const {component} = editorWith(null);
+    const task = editableTask();
+    task.startDate = new Date(2026, 2, 20);
+
+    const matcher = component.dateOrderMatcher(task, firstGrade);
+
+    expect(matcher.isErrorState(null, null)).toBe(true);
+    expect(component.dateOrderMatcher(task, firstGrade)).toBe(matcher);
   });
 });
