@@ -54,6 +54,27 @@ type MobileUnitSummary = {
   hasDeadlineWarning: boolean;
 };
 
+type UnitProgressSegment = {
+  status: TaskStatusEnum;
+  label: string;
+  color: string;
+  count: number;
+};
+
+type UnitProgress = {
+  completed: number;
+  total: number;
+  percentage: number;
+  segments: UnitProgressSegment[];
+  ariaLabel: string;
+};
+
+type DashboardSummary = {
+  unitLabel: string;
+  overdue: number;
+  dueSoon: number;
+};
+
 type DashboardUnit = {
   projectId: number;
   code: string;
@@ -61,6 +82,7 @@ type DashboardUnit = {
   tasks: DashboardTask[];
   gradeSummaries: GradeCompletionSummary[];
   mobileSummary: MobileUnitSummary;
+  progress: UnitProgress;
   isPrevious: boolean;
 };
 
@@ -319,6 +341,20 @@ export class CrossDashboardComponent implements OnInit {
     return this.filters.get(project)?.includes(filter) === true;
   }
 
+  activeFilterCount(project: number): number {
+    return this.filters.get(project)?.length ?? 0;
+  }
+
+  getSort(project: number): SortMode {
+    return this.sorting.get(project) ?? SortMode.Recommended;
+  }
+
+  retryPreviousUnits(): void {
+    if (!this.loadingPreviousUnits) {
+      this.loadPreviousUnits();
+    }
+  }
+
   setSearch(project: number, value: string): void {
     this.searchTerms.set(project, value ?? '');
     this.processTasks();
@@ -403,7 +439,7 @@ export class CrossDashboardComponent implements OnInit {
             );
           })
           .sort((a, b) => {
-            const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
+            const sort = this.getSort(unit.projectId);
 
             if (finalTypes.includes(a.status) && !finalTypes.includes(b.status)) {
               return 1;
@@ -432,6 +468,56 @@ export class CrossDashboardComponent implements OnInit {
     }));
 
     this.changeDetectorRef.markForCheck();
+  }
+
+  // The page heading counts deadlines across the whole scope, not the filtered
+  // columns, so searching for one task does not make the overdue count vanish.
+  // It is a getter, like each row's deadline chip, so both read the same clock
+  // and a deadline that passes while the page is open moves them together.
+  get summary(): DashboardSummary {
+    const units = this.getUnitsForCurrentScope();
+    const scopeLabel = {active: 'active ', previous: 'previous ', all: ''}[this.unitScope];
+    const warnings = units
+      .filter((unit) => !unit.isPrevious)
+      .flatMap((unit) => unit.tasks)
+      .filter((task) => !finalTypes.includes(task.status))
+      .map((task) => getDueDateWarning(task.dueDate, task.showDueWarning)?.state)
+      .filter((state) => state !== undefined);
+
+    return {
+      unitLabel: `${units.length} ${scopeLabel}${units.length === 1 ? 'unit' : 'units'}`,
+      overdue: warnings.filter((state) => state === 'overdue').length,
+      dueSoon: warnings.filter((state) => state !== 'overdue').length,
+    };
+  }
+
+  private buildProgress(tasks: readonly DashboardTask[]): UnitProgress {
+    const counts: Map<TaskStatusEnum, number> = new Map();
+    tasks.forEach((task) => counts.set(task.status, (counts.get(task.status) ?? 0) + 1));
+
+    const segments = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.filter((status) =>
+      counts.has(status),
+    ).map((status) => ({
+      status,
+      label: TaskStatus.STATUS_LABELS.get(status) ?? status,
+      // The bar is drawn on the card surface, so it takes the -graphic colour,
+      // which keeps 3:1 against the surface in both themes.
+      color: `var(--ot-status-${TaskStatus.statusClass(status)}-graphic)`,
+      count: counts.get(status) ?? 0,
+    }));
+    const completed = counts.get('complete') ?? 0;
+    const total = tasks.length;
+
+    return {
+      completed,
+      total,
+      percentage: total === 0 ? 0 : Math.round((completed / total) * 100),
+      segments,
+      ariaLabel:
+        total === 0
+          ? 'No tasks yet'
+          : `Task statuses: ${segments.map((segment) => `${segment.count} ${segment.label}`).join(', ')}`,
+    };
   }
 
   private setRecommendationScores(recommendations: readonly TaskRecommendation[]): void {
@@ -711,16 +797,18 @@ export class CrossDashboardComponent implements OnInit {
     return projects.map((project) => {
       project.calcTopTasks();
       const unit = project.unit;
+      // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
+      // `activeTasks()` excludes definitions above the student's current target grade,
+      // even though those tasks are returned by the API and remain available to them.
+      const tasks = this.mapTasks(project.tasks, project.id, unit.code);
 
       return {
         projectId: project.id,
         code: unit.code,
         name: unit.name,
-        // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
-        // `activeTasks()` excludes definitions above the student's current target grade,
-        // even though those tasks are returned by the API and remain available to them.
-        tasks: this.mapTasks(project.tasks, project.id, unit.code),
+        tasks,
         gradeSummaries: [],
+        progress: this.buildProgress(tasks),
         mobileSummary: {
           taskCountLabel: '0 tasks',
           deadlineLabel: 'No upcoming deadlines',
@@ -741,9 +829,6 @@ export class CrossDashboardComponent implements OnInit {
         subtitle: `${def.abbreviation} - ${def.targetGradeText} Task`,
         statusLabel: TaskStatus.STATUS_LABELS.get(task.status),
         abbreviation: def.abbreviation,
-        // CSS var so the list-item status accent flips with the theme (used in a
-        // [style] binding, where var() resolves).
-        color: `var(--ot-status-${String(task.status).replace(/_/g, '-')}-graphic)`,
         comments: task.numNewComments ?? 0,
         hasFeedback: task.hasFeedback ?? false,
         status: task.status,

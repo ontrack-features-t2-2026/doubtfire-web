@@ -1501,7 +1501,7 @@ describe('CrossDashboardComponent', () => {
     expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('uses phone-safe widths while retaining the fixed desktop card strip', async () => {
+  it('uses phone-safe widths while retaining the desktop card strip', async () => {
     projectsSubject.next([makeProject(1, 'SIT764', true)]);
     await syncView();
 
@@ -1527,7 +1527,88 @@ describe('CrossDashboardComponent', () => {
       ]),
     );
     expect(Array.from(card.classList)).toEqual(
-      expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:w-128']),
+      expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:flex-[1_0_26rem]']),
     );
+  });
+
+  it('summarises each unit by status for the header progress bar', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('First', 'A', 'complete', makeDate(10)),
+        makeTask('Second', 'B', 'working_on_it', makeDate(11)),
+        makeTask('Third', 'C', 'not_started', makeDate(12)),
+        makeTask('Fourth', 'D', 'complete', makeDate(13)),
+      ]),
+    ]);
+    await syncView();
+
+    const progress = component.displayedUnits[0].progress;
+
+    expect(progress.completed).toBe(2);
+    expect(progress.total).toBe(4);
+    expect(progress.percentage).toBe(50);
+    expect(progress.segments.map(({status, count}) => [status, count])).toEqual([
+      ['not_started', 1],
+      ['working_on_it', 1],
+      ['complete', 2],
+    ]);
+    expect(progress.ariaLabel).toBe('Task statuses: 1 Not Started, 1 Working On It, 2 Complete');
+    expect(fixture.nativeElement.textContent).toContain('2 of 4 complete');
+
+    // The bar describes the whole unit, so a column search does not shrink it.
+    component.setSearch(1, 'first');
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks).toHaveLength(1);
+    expect(component.displayedUnits[0].progress.total).toBe(4);
+  });
+
+  it('counts open overdue and soon-due work in active units for the page summary', async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const inDays = (days: number): Date => new Date(Date.now() + days * day);
+
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Late', 'LATE', 'not_started', inDays(-1)),
+        makeTask('Soon', 'SOON', 'working_on_it', inDays(2)),
+        makeTask('Finished late', 'DONE', 'complete', inDays(-2)),
+        makeTask('Handed in', 'SENT', 'ready_for_feedback', inDays(-3)),
+        makeTask('Far away', 'FAR', 'not_started', inDays(30)),
+      ]),
+      makeProject(2, 'SIT782', false, [makeTask('Old', 'OLD', 'not_started', inDays(-5))]),
+    ]);
+    await syncView();
+
+    expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 1, dueSoon: 1});
+    expect(fixture.nativeElement.textContent).toContain('1 overdue');
+    expect(fixture.nativeElement.textContent).toContain('1 due within 7 days');
+
+    // Searching one column leaves the page-level counts alone.
+    component.setGlobalSearch('far away');
+    await syncView();
+
+    expect(component.summary.overdue).toBe(1);
+  });
+
+  it('moves a task from due soon to overdue when its deadline passes on an open page', async () => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(2026, 7, 10, 9, 0, 0));
+
+    try {
+      projectsSubject.next([
+        makeProject(1, 'SIT764', true, [
+          makeTask('Due at ten', 'TEN', 'not_started', new Date(2026, 7, 10, 10, 0, 0)),
+        ]),
+      ]);
+      await syncView();
+
+      expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 0, dueSoon: 1});
+
+      vi.setSystemTime(new Date(2026, 7, 10, 11, 0, 0));
+
+      expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 1, dueSoon: 0});
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
