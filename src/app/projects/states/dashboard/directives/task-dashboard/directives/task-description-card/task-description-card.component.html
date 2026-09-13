@@ -1,9 +1,13 @@
 <mat-card>
-  <mat-card-header>
-    <div class="mb-2.5 flex">
-      <f-task-badge class="mr-2.5" [taskDef]="taskDef"></f-task-badge>
-      <mat-card-title>{{ taskDef?.name }}</mat-card-title>
-    </div>
+  <mat-card-header class="mb-2.5">
+    <mat-card-title>{{ taskDef?.name }}</mat-card-title>
+    <!-- The task code reads as part of the task's details line, the way the
+         dashboard rows show it, instead of a tile that vanished on the dark card. -->
+    <mat-card-subtitle class="flex flex-wrap items-center gap-x-1.5">
+      <span class="font-semibold text-ot-text tabular-nums">{{ taskDef?.abbreviation }}</span>
+      <span aria-hidden="true">·</span>
+      <span>{{ grades.names[taskDef?.targetGrade] }} task</span>
+    </mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
     <div
@@ -14,8 +18,6 @@
       <f-task-date-slider [task]="task" />
     }
     <ul>
-      <li>{{ grades.names[taskDef?.targetGrade] }} Task</li>
-
       @if (unit?.allowFlexibleDates ?? taskDef?.unit?.allowFlexibleDates) {
         <li>I'm planning to <b>start</b> this task by {{ startDate() | date: 'EEE d MMM' }}.</li>
         <li [hidden]="!task?.extensions || task?.extensions <= 0">
