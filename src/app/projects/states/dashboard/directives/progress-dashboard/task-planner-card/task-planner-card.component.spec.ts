@@ -280,7 +280,7 @@ describe('TaskPlannerCardComponent', () => {
     expect(ics).toContain('UID:E-2');
   });
 
-  it('defaults excludeCompleted to true, so an untouched download excludes completed tasks and carries the -outstanding suffix', () => {
+  it('defaults excludeCompleted to true, so an untouched download excludes completed tasks and carries the -outstanding suffix', async () => {
     // Discriminating for the CAL-F09 default flip: if excludeCompleted silently reverted to
     // false, the boolean check below would fail, the completed task's UID would leak into the
     // ICS output, and the filename would lose its -outstanding suffix.
@@ -296,12 +296,21 @@ describe('TaskPlannerCardComponent', () => {
     expect(ics).not.toContain('UID:E-1');
     expect(ics).toContain('UID:E-2');
 
-    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const createObjectURLSpy = vi
+      .spyOn(window.URL, 'createObjectURL')
+      .mockReturnValue('blob:mock-url');
     component.downloadIcs();
     expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P-outstanding.ics',
     );
+
+    // Read the file the download actually built, so a downloadIcs() that skipped the
+    // completed filter would fail here even though the helper above is still correct.
+    const [blobArg] = createObjectURLSpy.mock.calls[0];
+    const downloaded = await (blobArg as Blob).text();
+    expect(downloaded).not.toContain('UID:E-1');
+    expect(downloaded).toContain('UID:E-2');
   });
 
   it('composes the completed filter with the grade filter', () => {
