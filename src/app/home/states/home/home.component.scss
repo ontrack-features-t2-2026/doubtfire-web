@@ -2,33 +2,14 @@
 
 #home {
   padding-top: 10px;
-
-  .spinner {
-    position: fixed;
-    // background: #f0f2f5;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 4999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    ::ng-deep .mat-mdc-progress-spinner circle,
-    .mat-mdc-progress-spinner circle {
-      stroke: var(--ot-color-text-muted);
-    }
-  }
 }
 
 .removeStyle {
   text-decoration: none;
 }
 
-.mat-mdc-card-header {
-}
-
+// The enrolled unit cards on the student side of this page. The staff cards are
+// built from token utilities in the template and use none of these rules.
 .base-card {
   margin-right: 16px;
   margin-bottom: 16px;
@@ -66,18 +47,6 @@
     opacity: 1;
     border-style: none;
     --mat-chip-disabled-label-text-color: var(--ot-color-on-primary);
-  }
-}
-
-.admin-card {
-  @extend .base-card;
-  width: 250px;
-  max-width: none;
-  height: auto;
-
-  .mat-mdc-list-item-icon {
-    color: var(--ot-color-text);
-    margin-right: 6px;
   }
 }
 
