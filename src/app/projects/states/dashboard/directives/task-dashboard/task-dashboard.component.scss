@@ -30,3 +30,11 @@
     width: max-content;
   }
 }
+
+// A card with nothing to show leaves an empty host, or a host around a hidden card.
+// Either one still counts as a flex item, so it added a second gap and the space
+// between cards jumped about. ::ng-deep because the hidden card is in the child's view.
+:host ::ng-deep .task-details > :empty,
+:host ::ng-deep .task-details > :has(> [hidden]:only-child) {
+  display: none;
+}
