@@ -25,7 +25,7 @@
       <th *matHeaderCellDef mat-header-cell>Type</th>
       <td *matCellDef="let upreq; let i = index" class="py-2" mat-cell>
         <mat-form-field appearance="outline" class="w-36" subscriptSizing="dynamic">
-          <mat-select [attr.aria-label]="'Type of file ' + (i + 1)" [(ngModel)]="upreq.type">
+          <mat-select [aria-label]="'Type of file ' + (i + 1)" [(ngModel)]="upreq.type">
             <mat-option value="code">Code</mat-option>
             <mat-option value="document">Document</mat-option>
             <mat-option value="image">Image</mat-option>
@@ -40,7 +40,7 @@
       <td *matCellDef="let upreq; let i = index" mat-cell>
         <mat-checkbox
           matTooltip="Keep this file in the task's submission history"
-          [attr.aria-label]="'Keep file ' + (i + 1) + ' in submission history'"
+          [aria-label]="'Keep file ' + (i + 1) + ' in submission history'"
           [(ngModel)]="upreq.submissionHistory"
         ></mat-checkbox>
       </td>

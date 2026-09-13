@@ -24,12 +24,16 @@
           {{ taskDefinition.hasTaskSheet ? 'Uploaded' : 'None yet' }}
         </span>
       </div>
-      <f-file-drop
-        mode="event"
-        [accept]="pdfAccept"
-        [desiredFileName]="'the task sheet PDF'"
-        (filesDropped)="uploadTaskSheet($event)"
-      />
+      <!-- The shared drop zone is as wide as its message and the chosen file
+           name, so on a phone it scrolls here instead of widening the card. -->
+      <div class="-m-0.5 min-w-0 overflow-x-auto p-0.5">
+        <f-file-drop
+          mode="event"
+          [accept]="pdfAccept"
+          [desiredFileName]="'a PDF'"
+          (filesDropped)="uploadTaskSheet($event)"
+        />
+      </div>
       @if (taskDefinition.hasTaskSheet) {
         <div class="flex flex-wrap gap-2">
           <button mat-stroked-button type="button" (click)="downloadTaskSheet()">
@@ -60,12 +64,14 @@
           {{ taskDefinition.hasTaskResources ? 'Uploaded' : 'None yet' }}
         </span>
       </div>
-      <f-file-drop
-        mode="event"
-        [accept]="zipAccept"
-        [desiredFileName]="'the resources ZIP'"
-        (filesDropped)="uploadTaskResources($event)"
-      />
+      <div class="-m-0.5 min-w-0 overflow-x-auto p-0.5">
+        <f-file-drop
+          mode="event"
+          [accept]="zipAccept"
+          [desiredFileName]="'a ZIP'"
+          (filesDropped)="uploadTaskResources($event)"
+        />
+      </div>
       @if (taskDefinition.hasTaskResources) {
         <div class="flex flex-wrap gap-2">
           <button mat-stroked-button type="button" (click)="downloadTaskResources()">

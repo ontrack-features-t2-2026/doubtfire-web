@@ -36,7 +36,7 @@
             <mat-form-field appearance="outline" class="w-52" subscriptSizing="dynamic">
               <mat-select
                 placeholder="Pick a status"
-                [attr.aria-label]="
+                [aria-label]="
                   'Status ' + (link.prerequisite?.abbreviation ?? 'this task') + ' needs'
                 "
                 [(value)]="link.taskStatus"
