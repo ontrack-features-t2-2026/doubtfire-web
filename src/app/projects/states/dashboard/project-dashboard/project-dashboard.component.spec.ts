@@ -21,7 +21,8 @@ describe('ProjectDashboardComponent task selection', () => {
   let commentsNarrow$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
   let phoneLayout$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
 
-  const project = {id: 7} as Project;
+  // findTaskForDefinition is read when the phone layout opens the selected task.
+  const project = {id: 7, findTaskForDefinition: () => undefined} as unknown as Project;
   const selectedTaskDefinition = {id: 42} as TaskDefinition;
 
   beforeEach(async () => {
