@@ -2,10 +2,13 @@ import {Html5QrcodeScannerState} from 'html5-qrcode';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
 import {MatListModule} from '@angular/material/list';
+import {MatSelectModule} from '@angular/material/select';
 import {ActivatedRoute, ParamMap, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject, Subscription, of, throwError} from 'rxjs';
 import {
@@ -127,7 +130,15 @@ describe('TutorDiscussionComponent', () => {
   async function create(): Promise<void> {
     await TestBed.configureTestingModule({
       declarations: [TutorDiscussionComponent],
-      imports: [EmptyStateComponent, MatButtonModule, MatIconModule, MatListModule],
+      imports: [
+        EmptyStateComponent,
+        FormsModule,
+        MatButtonModule,
+        MatIconModule,
+        MatInputModule,
+        MatListModule,
+        MatSelectModule,
+      ],
       providers: [
         {provide: UnitService, useValue: unitService},
         {
@@ -179,6 +190,19 @@ describe('TutorDiscussionComponent', () => {
   // would not wait for the work the scan starts.
   function scan(text: string): void {
     fixture.ngZone.run(() => scanner.onScan(text));
+  }
+
+  async function findByTyping(text: string): Promise<void> {
+    const input = (fixture.nativeElement as HTMLElement).querySelector(
+      'input[name="studentLookup"]',
+    ) as HTMLInputElement;
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    await settle();
+    const find = button('Find student');
+    expect(find.disabled).toBe(false);
+    fixture.ngZone.run(() => find.click());
+    await settle();
   }
 
   function button(label: string): HTMLButtonElement {
@@ -457,10 +481,32 @@ describe('TutorDiscussionComponent', () => {
     expect(page.querySelector('[role="alert"]')?.textContent).toContain('No camera found');
     expect(button('Find student')).toBeTruthy();
 
-    component.studentLookup = '226';
-    fixture.ngZone.run(() => component.findStudent());
-    await settle();
+    await findByTyping('226');
     expect(component.project?.id).toBe(6);
+  });
+
+  // The form's template was named #studentLookup, which shadowed the property of the same
+  // name, so the field bound to the template and Find student never enabled.
+  it('finds a student from what the tutor types', async () => {
+    await create();
+
+    await findByTyping('grace');
+
+    expect(projectService.loadProject).toHaveBeenCalledWith(6, expect.anything(), true);
+    expect(component.project?.id).toBe(6);
+  });
+
+  it('switches cameras only once when asked twice in a row', async () => {
+    await create();
+    button('Start scanning').click();
+    await settle();
+    const second = new FakeScanner();
+    createScanner.mockImplementation(() => second);
+
+    await Promise.all([component.switchCamera('camera-2'), component.switchCamera('camera-3')]);
+
+    expect(createScanner).toHaveBeenCalledTimes(2);
+    expect(second.start).toHaveBeenCalledTimes(1);
   });
 
   describe('check-in', () => {

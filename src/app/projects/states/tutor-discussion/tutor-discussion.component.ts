@@ -609,13 +609,20 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    await this.stopQrScanner();
-    if (this.destroyed || !this.scanningQr) {
-      return;
+    // Claim the camera before the first wait, so nothing else can start one while the
+    // old scanner is still being stopped.
+    this.cameraStarting = true;
+    try {
+      await this.stopQrScanner();
+      if (this.destroyed || !this.scanningQr) {
+        return;
+      }
+      // Draw the camera view first: the scanner sizes the video to the element it is given.
+      this.changeDetector.detectChanges();
+      await this.startCamera(this.selectedCameraId ?? this.rememberedCameraId());
+    } finally {
+      this.cameraStarting = false;
     }
-    // Draw the camera view first: the scanner sizes the video to the element it is given.
-    this.changeDetector.detectChanges();
-    await this.startCamera(this.selectedCameraId ?? this.rememberedCameraId());
   }
 
   /**
@@ -758,9 +765,16 @@ export class TutorDiscussionComponent implements OnInit, OnDestroy {
     }
     this.selectedCameraId = cameraId;
     this.rememberCamera(cameraId);
-    await this.stopQrScanner();
-    if (this.scanningQr) {
-      await this.startCamera(cameraId);
+    // Claim the camera before the first wait, so a second switch cannot slip in while
+    // this one is still stopping the old camera.
+    this.cameraStarting = true;
+    try {
+      await this.stopQrScanner();
+      if (this.scanningQr && !this.destroyed) {
+        await this.startCamera(cameraId);
+      }
+    } finally {
+      this.cameraStarting = false;
     }
   }
 

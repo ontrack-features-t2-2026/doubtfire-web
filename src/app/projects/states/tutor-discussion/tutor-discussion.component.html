@@ -203,7 +203,7 @@
                 Type their username or student ID, as it appears in the student list.
               </p>
             </div>
-            <ng-container *ngTemplateOutlet="studentLookup"></ng-container>
+            <ng-container *ngTemplateOutlet="lookupForm"></ng-container>
           </div>
         </section>
       }
@@ -284,7 +284,7 @@
           </button>
           @if (hasUnit) {
             <span class="text-sm text-ot-muted">or find them</span>
-            <ng-container *ngTemplateOutlet="studentLookup"></ng-container>
+            <ng-container *ngTemplateOutlet="lookupForm"></ng-container>
           }
         </div>
         @if (loadingStudentData) {
@@ -577,7 +577,9 @@
   }
 </ng-template>
 
-<ng-template #studentLookup>
+<!-- Not named studentLookup: a template reference shadows the component property of the
+     same name, and the field would bind to the template instead of the text. -->
+<ng-template #lookupForm>
   <form class="flex flex-wrap items-center gap-3" (ngSubmit)="findStudent()">
     <mat-form-field
       appearance="outline"
