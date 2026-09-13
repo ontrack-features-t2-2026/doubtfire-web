@@ -4,7 +4,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
-import {of} from 'rxjs';
+import {Subject, of} from 'rxjs';
 import {ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
@@ -91,6 +91,73 @@ describe('CalendarModalComponent', () => {
     component.downloadCalendar();
 
     expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+  });
+
+  it('refuses every other save while one is in flight and holds the download until it lands', () => {
+    // Each request gets its own pending response, so resolving the first cannot hide a second.
+    const pending: Subject<Webcal>[] = [];
+    const update = vi.fn(() => {
+      const response: Subject<Webcal> = new Subject();
+      pending.push(response);
+      return response.asObservable();
+    });
+    const internals = component as unknown as {
+      webcalService: {update: typeof update};
+      confirmationModal: {show: (title: string, message: string, confirm: () => void) => void};
+    };
+    internals.webcalService = {update};
+    // Hold on to each confirmation, so it can be confirmed later, while a save is running.
+    const confirmations: (() => void)[] = [];
+    internals.confirmationModal = {
+      show: (_title, _message, confirm) => confirmations.push(confirm),
+    };
+
+    const webcal = new Webcal();
+    webcal.enabled = true;
+    webcal.guid = 'abc-123';
+    webcal.unitExclusions = [];
+    webcal.reminder = {time: 1, unit: 'W'};
+    component.webcal = webcal;
+    component.newReminderActive = true;
+    component.newReminderTime = 1;
+    component.newReminderUnit = 'W';
+
+    // Open both confirmations before any save starts.
+    component.onChangeWebcalUrl();
+    component.onWebcalToggle();
+    expect(confirmations).toHaveLength(2);
+
+    component.includeExclusion({unit: {id: 1}});
+
+    // Every save entry point while the first save is pending.
+    component.includeExclusion({unit: {id: 2}});
+    component.removeExclusion({unit: {id: 1}});
+    component.toggleIncludeTaskStartDates();
+    component.newReminderTime = 3;
+    component.newReminderUnit = 'D';
+    component.onSaveReminderEdits();
+    component.newReminderActive = false;
+    component.onToggleReminderActive();
+    // Confirming the regenerate and disable dialogs now must not start a save either.
+    confirmations.forEach((confirm) => confirm());
+    component.downloadCalendar();
+
+    expect(update).toHaveBeenCalledOnce();
+    expect(webcal.unitExclusions).toEqual([1]);
+    expect(webcal.reminder).toEqual({time: 1, unit: 'W'});
+    expect(webcal.shouldChangeGuid).toBeFalsy();
+    expect(webcal.enabled).toBe(true);
+    // The refused reminder switch goes back to match the stored reminder.
+    expect(component.newReminderActive).toBe(true);
+    expect(component.newReminderTime).toBe(1);
+    expect(component.newReminderUnit).toBe('W');
+    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+
+    pending[0].next(webcal);
+    component.downloadCalendar();
+
+    expect(component.working).toBe(false);
+    expect(fileDownloaderStub.downloadFile).toHaveBeenCalledOnce();
   });
 
   it('does not download while a settings update is still saving', () => {
