@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DoCheck,
   EventEmitter,
   Inject,
   Input,
@@ -71,6 +72,49 @@ function buildGoogleCalendarUrl(event: WebCalEvent): string {
   return `https://calendar.google.com/calendar/render?${params}`;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** One date on the description card's timeline. */
+export interface TaskKeyDate {
+  key: 'start' | 'due' | 'feedback';
+  label: string;
+  date: Date;
+  passed: boolean;
+  /** The first date still to come, while the task is still the student's to work on. */
+  next: boolean;
+  /** When the next date is, in words, such as "In 3 days". Only set on the next date. */
+  when?: string;
+  /** An extension on the due date, in words. */
+  note?: string;
+  /** A planned submit date after the feedback date, which means no feedback. */
+  warning?: string;
+  /** How much of the time between this date and the following one has gone, 0 to 1. */
+  progress: number;
+}
+
+function isValidDate(value: Date | undefined | null): value is Date {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+function startOfDay(value: Date): number {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+}
+
+/** Calendar days from today to the date, so a date later today is "Today". */
+function describeWhen(date: Date, now: Date): string {
+  const days = Math.round((startOfDay(date) - startOfDay(now)) / DAY_MS);
+  if (days <= 0) {
+    return 'Today';
+  }
+  if (days === 1) {
+    return 'Tomorrow';
+  }
+  if (days < 14) {
+    return `In ${days} days`;
+  }
+  return `In ${Math.floor(days / 7)} weeks`;
+}
+
 @Component({
   selector: 'f-task-description-card',
   templateUrl: 'task-description-card.component.html',
@@ -78,7 +122,7 @@ function buildGoogleCalendarUrl(event: WebCalEvent): string {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskDescriptionCardComponent {
+export class TaskDescriptionCardComponent implements DoCheck {
   @Output() switchView$: EventEmitter<string> = new EventEmitter();
 
   @Input() task: Task;
@@ -90,6 +134,13 @@ export class TaskDescriptionCardComponent {
     acronyms: GradeService['gradeAcronyms'];
   };
 
+  /**
+   * The time the timeline is drawn for. Read once per change detection pass, in
+   * ngDoCheck, so the development-mode second check sees the same value and the
+   * countdown and the line never change between the two checks.
+   */
+  private now = Date.now();
+
   constructor(
     private GradeService: GradeService,
     @Inject(FileDownloaderService) private fileDownloader: FileDownloaderService,
@@ -98,6 +149,10 @@ export class TaskDescriptionCardComponent {
       names: GradeService.grades,
       acronyms: GradeService.gradeAcronyms,
     };
+  }
+
+  ngDoCheck(): void {
+    this.now = Date.now();
   }
 
   public downloadTaskSheet() {
@@ -133,10 +188,81 @@ export class TaskDescriptionCardComponent {
   }
 
   public feedbackDate(): Date {
-    if (this.task) {
+    // The task's deadline adds the project's special consideration days, so it needs
+    // the project; without one, fall back to the definition's own deadline.
+    if (this.task?.project) {
       return this.task.localDeadlineDate();
     }
     return this.taskDef?.localDeadlineDate();
+  }
+
+  public get allowsFlexibleDates(): boolean {
+    return !!(this.unit?.allowFlexibleDates ?? this.taskDef?.unit?.allowFlexibleDates);
+  }
+
+  /**
+   * Start, due and feedback dates in order, for the timeline on the card. Dates the
+   * task does not have are left out. Once the task is submitted or finished the
+   * dates stay as a record, without a "next" date or a countdown.
+   */
+  public get keyDates(): TaskKeyDate[] {
+    const flexible = this.allowsFlexibleDates;
+    const extensions = this.task?.extensions ?? 0;
+    const dueDate = this.dueDate();
+    const feedbackDate = this.feedbackDate();
+    const submitsTooLate =
+      flexible &&
+      isValidDate(dueDate) &&
+      isValidDate(feedbackDate) &&
+      dueDate.getTime() > feedbackDate.getTime();
+
+    const candidates: Pick<TaskKeyDate, 'key' | 'label' | 'date' | 'note' | 'warning'>[] = [
+      {key: 'start', label: flexible ? 'Planned start' : 'Start', date: this.startDate()},
+      {
+        key: 'due',
+        label: flexible ? 'Planned submit' : 'Due',
+        date: dueDate,
+        note:
+          extensions > 0 ? `Extended ${extensions} week${extensions > 1 ? 's' : ''}` : undefined,
+        warning: submitsTooLate ? 'After the feedback date' : undefined,
+      },
+      {key: 'feedback', label: 'Feedback by', date: feedbackDate},
+    ];
+
+    // In date order, so the line reads left to right in time. A planned submit
+    // date can fall after the feedback date, and then it is drawn after it.
+    const entries = candidates
+      .filter((entry) => isValidDate(entry.date))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const nowMs = this.now;
+    const now = new Date(nowMs);
+    const settled = !this.task || this.task.inSubmittedState() || this.task.inFinalState();
+    let nextFound = settled;
+
+    return entries.map((entry, index) => {
+      const time = entry.date.getTime();
+      const passed = time < nowMs;
+      const next = !passed && !nextFound;
+      nextFound ||= next;
+
+      const following = entries[index + 1]?.date.getTime();
+      let progress = 0;
+      if (following !== undefined) {
+        progress =
+          following > time
+            ? Math.min(Math.max((nowMs - time) / (following - time), 0), 1)
+            : Number(nowMs >= following);
+      }
+
+      return {
+        ...entry,
+        passed,
+        next,
+        when: next ? describeWhen(entry.date, now) : undefined,
+        progress,
+      };
+    });
   }
 
   public shouldShowDeadline(): boolean {
