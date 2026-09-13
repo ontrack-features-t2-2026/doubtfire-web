@@ -8,14 +8,17 @@ On a task's page, the task card shows an **Add to Google Calendar** button. It o
 
 ## Download a unit's due dates as a file
 
-On a unit's **Progress Dashboard**, the **Plan Your Tasks** card has a **Download .ics** button. This downloads an `.ics` calendar file containing the due dates for that unit's tasks, which you can import into Google Calendar, Apple Calendar, Outlook, or any calendar app.
+On a unit's **Progress Dashboard**, the **Plan Your Tasks** card has a **Download .ics** button. It opens a **Download options** dialog, and confirming there downloads an `.ics` calendar file containing the due dates for that unit's tasks, which you can import into Google Calendar, Apple Calendar, Outlook, or any calendar app.
 
-Two options sit next to the button:
+The dialog has three choices:
 
-- **Grade to include.** Choose the grade level you are working towards. The file includes only the tasks required up to that grade, so if you are targeting a Credit you will not get the Distinction and High Distinction tasks. It defaults to your current target grade.
-- **Exclude completed tasks.** Turn this on to leave out tasks you have already finished, so the file contains only the work still outstanding.
+- **Grade.** Choose a grade level. It defaults to your current target grade.
+- **Up to this grade** or **This grade and above.** Up to this grade is the default and includes only the tasks required up to that grade, so if you are targeting a Credit you will not get the Distinction and High Distinction tasks. This grade and above includes that grade's tasks and every higher grade's instead.
+- **Exclude completed tasks.** On by default, so the file contains only the work still outstanding. Untick it to include tasks you have already finished.
 
-The downloaded file is named after the unit and the options you chose (for example `COS10001-tasks-HD-outstanding.ics`), so downloads for different grades or settings do not overwrite each other. Like any downloaded file, it is a snapshot: it does not update if your dates later change.
+If nothing matches your choices, the dialog says so and its download button stays disabled. Your choices are not saved to your profile and do not change your target grade.
+
+The downloaded file is named after the unit and the options you chose (for example `COS10001-tasks-HD-outstanding.ics`, or `COS10001-tasks-D-and-above-outstanding.ics`), so downloads for different grades or settings do not overwrite each other. Like any downloaded file, it is a snapshot: it does not update if your dates later change.
 
 ## Find and open the calendar
 
