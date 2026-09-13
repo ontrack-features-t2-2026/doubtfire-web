@@ -210,14 +210,18 @@ export class UnitTutorialsListComponent
   /**
    * The unit keeps its streams under their short name. After a rename the old name
    * still pointed at the stream, so deleting it afterwards could not find it and it
-   * stayed on the page. The order is kept so the stream does not jump to the bottom.
+   * stayed on the page. The streams are filed again in their order, so the renamed one
+   * does not jump to the bottom. A stream with an unsaved rename of its own is left
+   * where it is, since the name it is filed under is not known from here, and filing
+   * it again would list it twice.
    */
   private rekeyStream(stream: TutorialStream, previousAbbreviation: string): void {
     const cache = this.unit.tutorialStreamsCache;
     const ordered = cache.currentValuesClone();
     cache.delete(previousAbbreviation);
-    ordered.filter((other) => other !== stream).forEach((other) => cache.delete(other));
-    ordered.forEach((other) => cache.add(other));
+    const refile = ordered.filter((other) => other === stream || cache.get(other.key) === other);
+    refile.filter((other) => other !== stream).forEach((other) => cache.delete(other));
+    refile.forEach((other) => cache.add(other));
   }
 
   public setEditStream(value: boolean): void {

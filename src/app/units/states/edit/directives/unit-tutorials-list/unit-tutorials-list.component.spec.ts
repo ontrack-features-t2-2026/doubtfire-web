@@ -182,6 +182,30 @@ describe('UnitTutorialsListComponent streams', () => {
   });
 });
 
+describe('UnitTutorialsListComponent streams being renamed at once', () => {
+  // Another stream open for renaming has already changed its short name on screen, so
+  // filing it again under that unsaved name used to list it twice.
+  it('does not list a stream twice when another one is mid rename', () => {
+    const first = stream('LA1', 'Lab 1');
+    const second = stream('WS1', 'Workshop 1');
+    const context = listFor({stream: first});
+    context.unit.tutorialStreamsCache.add(first);
+    context.unit.tutorialStreamsCache.add(second);
+    context.component.ngOnInit();
+    second.abbreviation = 'WS9';
+    context.tutorialStreamService.update.mockImplementation(() => {
+      first.abbreviation = 'LAB1';
+      return of(first);
+    });
+
+    context.component.saveStream();
+
+    expect(context.unit.tutorialStreams.length).toBe(2);
+    expect(context.unit.tutorialStreamsCache.get('LAB1')).toBe(first);
+    expect(context.unit.tutorialStreamsCache.get('WS1')).toBe(second);
+  });
+});
+
 describe('UnitTutorialsManagerComponent', () => {
   // Tutorials without a stream were never listed on this tab.
   it('knows when some tutorials are not in a stream', () => {
