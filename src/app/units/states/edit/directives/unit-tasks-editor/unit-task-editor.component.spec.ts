@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, of} from 'rxjs';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
 import {UnitTaskEditorComponent} from './unit-task-editor.component';
@@ -18,6 +18,7 @@ function editorWith(selected: unknown) {
     {} as never, // csvResultModalService
     {} as never, // csvUploadModal
     confirmationModal as never,
+    {} as never, // unitService
   );
 
   component.selectedTaskDefinition = selected as never;
@@ -126,7 +127,7 @@ function editableTask(): TaskDefinition {
   return task;
 }
 
-function editorForRealTask() {
+function editorForRealTask(unitService: object = {}) {
   const confirmationModal = {show: vi.fn()};
   const alerts = {success: vi.fn(), error: vi.fn()};
   const mapping = new TaskDefinitionService({} as never, {} as never, {} as never, {} as never)
@@ -139,6 +140,7 @@ function editorForRealTask() {
     {} as never,
     {} as never,
     confirmationModal as never,
+    unitService as never,
   );
   component.unit = {deleteTaskDefinition: vi.fn()} as never;
   return {component, confirmationModal, alerts};
@@ -198,6 +200,55 @@ describe('UnitTaskEditorComponent discard after leaving the tab', () => {
 
     expect(task.name).toBe('Hello world');
     expect(second.component.taskDefinitionHasChanges(task)).toBe(false);
+  });
+});
+
+describe('UnitTaskEditorComponent after an import', () => {
+  it('treats what the reload brought in as saved, so Discard does not undo the import', () => {
+    const task = editableTask();
+    const unitService = {
+      fetch: vi.fn(() => {
+        // The reload writes the server's copy over the task in place.
+        task.name = 'Imported name';
+        return of({});
+      }),
+    };
+    const csvUploadModal = {show: vi.fn()};
+    const {component, confirmationModal} = editorForRealTask(unitService);
+    (component as unknown as {csvUploadModal: object}).csvUploadModal = csvUploadModal;
+    (component as unknown as {csvResultModalService: object}).csvResultModalService = {
+      show: vi.fn(),
+    };
+    component.unit = {
+      id: 5,
+      taskDefinitions: [task],
+      getTaskDefinitionBatchUploadUrl: () => 'upload',
+    } as never;
+    component.selectTaskDefinition(task);
+
+    component.uploadTaskDefinitionsCsv();
+    const onSuccess = csvUploadModal.show.mock.calls[0][4] as (response: object) => void;
+    onSuccess({success: [{}]});
+
+    expect(component.taskDefinitionHasChanges(task)).toBe(false);
+    task.name = 'Edited after the import';
+    component.discardTaskDefinitionChanges();
+    (confirmationModal.show.mock.calls[0][2] as () => void)();
+    expect(task.name).toBe('Imported name');
+  });
+
+  it('asks before an import writes over unsaved edits to the open task', () => {
+    const task = editableTask();
+    const csvUploadModal = {show: vi.fn()};
+    const {component, confirmationModal} = editorForRealTask();
+    (component as unknown as {csvUploadModal: object}).csvUploadModal = csvUploadModal;
+    component.selectTaskDefinition(task);
+    task.name = 'Unsaved';
+
+    component.uploadTaskResourcesZip();
+
+    expect(confirmationModal.show).toHaveBeenCalled();
+    expect(csvUploadModal.show).not.toHaveBeenCalled();
   });
 });
 

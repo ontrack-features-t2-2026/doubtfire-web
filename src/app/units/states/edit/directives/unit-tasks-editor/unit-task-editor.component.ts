@@ -15,6 +15,7 @@ import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {GradeDefinition, Unit} from 'src/app/api/models/unit';
 import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
 import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
+import {UnitService} from 'src/app/api/services/unit.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {
   CsvResult,
@@ -145,6 +146,7 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     private csvResultModalService: CsvResultModalService,
     private csvUploadModal: CsvUploadModalService,
     private confirmationModal: ConfirmationModalService,
+    private unitService: UnitService,
   ) {
     // A task with no name or code yet must not stop the search from working.
     this.taskDefinitionSource.filterPredicate = (data: TaskDefinition, filter: string) =>
@@ -360,36 +362,58 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     );
   }
 
+  // An import reloads the unit, and the reload writes the server's copy over every
+  // task, the open one included. So any unsaved edits go first, with a warning.
   public uploadTaskDefinitionsCsv() {
-    this.csvUploadModal.show(
-      'Upload task list',
-      'Upload a CSV of task definitions.',
-      {file: {name: 'Task Definition CSV Data', type: 'csv'}},
-      this.unit.getTaskDefinitionBatchUploadUrl(),
-      (response: CsvResult) => {
-        // at least one student?
-        this.csvResultModalService.show('Task list import results', response);
-        if (response.success.length > 0) {
-          this.unit.refresh();
-        }
-      },
+    this.confirmDiscardingUnsavedTask(() =>
+      this.csvUploadModal.show(
+        'Upload task list',
+        'Upload a CSV of task definitions.',
+        {file: {name: 'Task Definition CSV Data', type: 'csv'}},
+        this.unit.getTaskDefinitionBatchUploadUrl(),
+        (response: CsvResult) => {
+          // at least one student?
+          this.csvResultModalService.show('Task list import results', response);
+          if (response.success.length > 0) {
+            this.reloadUnitAfterImport();
+          }
+        },
+      ),
     );
   }
 
   public uploadTaskResourcesZip() {
-    this.csvUploadModal.show(
-      'Upload task sheets and resources',
-      'Upload a ZIP of task sheets and resources.',
-      {file: {name: 'Task Sheets and Resources', type: 'zip'}},
-      this.unit.taskUploadUrl,
-      (response: CsvResult) => {
-        // at least one student?
-        this.csvResultModalService.show('Task sheet and resource import results', response);
-        if (response.success.length > 0) {
-          this.unit.refresh();
+    this.confirmDiscardingUnsavedTask(() =>
+      this.csvUploadModal.show(
+        'Upload task sheets and resources',
+        'Upload a ZIP of task sheets and resources.',
+        {file: {name: 'Task Sheets and Resources', type: 'zip'}},
+        this.unit.taskUploadUrl,
+        (response: CsvResult) => {
+          // at least one student?
+          this.csvResultModalService.show('Task sheet and resource import results', response);
+          if (response.success.length > 0) {
+            this.reloadUnitAfterImport();
+          }
+        },
+      ),
+    );
+  }
+
+  // The reload updates each task in place with what the server now holds, so
+  // that is the new saved state: the copy Discard goes back to, and what unsaved
+  // changes are measured against. Without this Discard put back the values from
+  // before the import.
+  private reloadUnitAfterImport() {
+    this.unitService.fetch(this.unit.id).subscribe({
+      next: () => {
+        for (const taskDefinition of this.unit.taskDefinitions) {
+          taskDefinition.setOriginalSaveData(this.taskDefinitionService.mapping);
+          rememberSavedTaskDefinition(taskDefinition);
         }
       },
-    );
+      error: (message) => this.alerts.error(message, 6000),
+    });
   }
 
   public createTaskDefinition() {
