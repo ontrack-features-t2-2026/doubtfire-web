@@ -20,7 +20,7 @@
 }
 
 // HACK - issue access this from the main style.scss
-$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
+$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px - var(--ot-demo-banner-height, 0px));
 
 f-task-viewer-state {
   height: calc(

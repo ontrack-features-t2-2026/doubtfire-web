@@ -37,7 +37,8 @@ body {
 $main-view-top-padding: 30px;
 $main-view-bottom-padding: $main-view-top-padding;
 
-$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
+// --ot-demo-banner-height is published by the demo banner, which sits above the header.
+$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px - var(--ot-demo-banner-height, 0px));
 
 // This is the new Angular Material 3 theme file which we will migrate to
 // @use './styles/m3-theme.scss';
@@ -208,27 +209,27 @@ body.split-pane-resizing pdf-viewer {
 // it flips light/dark. :is() (not :where()) so it beats the browser default;
 // :focus-visible so mouse clicks never draw it. Interactive elements only.
 :is(
-    a[href],
-    area[href],
-    button,
-    input,
-    select,
-    textarea,
-    summary,
-    [tabindex]:not([tabindex='-1']),
-    [role='button'],
-    [role='link'],
-    [role='tab'],
-    [role='menuitem'],
-    [role='menuitemcheckbox'],
-    [role='menuitemradio'],
-    [role='option'],
-    [role='checkbox'],
-    [role='radio'],
-    [role='switch'],
-    [role='slider'],
-    [contenteditable='true']
-  ):focus-visible {
+  a[href],
+  area[href],
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1']),
+  [role='button'],
+  [role='link'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='option'],
+  [role='checkbox'],
+  [role='radio'],
+  [role='switch'],
+  [role='slider'],
+  [contenteditable='true']
+):focus-visible {
   outline: 2px solid var(--ot-color-focus);
   outline-offset: 2px;
 }

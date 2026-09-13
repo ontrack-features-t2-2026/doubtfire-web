@@ -3,7 +3,8 @@
 }
 
 .project-dashboard-shell {
-  height: calc((var(--vh, 1vh) * 100) - 100px);
+  // The demo banner, when shown, sits above the header and publishes its height.
+  height: calc((var(--vh, 1vh) * 100) - 100px - var(--ot-demo-banner-height, 0px));
 }
 
 .desktop-task-dashboard > f-task-dashboard {
