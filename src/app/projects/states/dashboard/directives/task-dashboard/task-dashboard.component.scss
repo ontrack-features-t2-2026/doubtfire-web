@@ -10,9 +10,11 @@
   color: var(--ot-color-disabled-text);
 }
 
+// The tabs sit centred through the label container's auto margins, not
+// justify-content: centring an overflowing row pushed the first tabs off the left
+// edge where the scroll could not reach them, which staff, with more tabs, hit.
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
-    justify-content: center;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
