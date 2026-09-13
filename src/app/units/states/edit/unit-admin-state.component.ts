@@ -27,6 +27,7 @@ export interface UnitAdminTab {
 @Component({
   selector: 'f-unit-admin-state',
   templateUrl: './unit-admin-state.component.html',
+  host: {class: 'block'},
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
