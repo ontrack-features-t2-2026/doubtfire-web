@@ -213,6 +213,35 @@ export class FooterComponent implements OnInit {
     return this.actionButtonEnabled && !!this.selectedTask?.canMarkComplete;
   }
 
+  public readonly completeHintId = 'footer-complete-blocked-reason';
+
+  /** Why Complete is off for this task, or nothing when that is not the reason. */
+  public get completeBlockedReason(): string {
+    if (!this.selectedTask || this.selectedTask.canMarkComplete) {
+      return '';
+    }
+
+    return 'Discuss this task in class before marking it complete';
+  }
+
+  public get suggestedStatusLabel(): string {
+    const status = this.selectedTask?.suggestedTaskStatus;
+    if (!status) {
+      return '';
+    }
+
+    return `Recommended: Mark as ${this.taskService.statusData(status).label}`;
+  }
+
+  public get progressLabel(): string {
+    const stats = this.selectedTask?.project?.taskStats;
+    if (!stats || stats.length <= 4) {
+      return 'Progress unavailable';
+    }
+
+    return `${stats[4].value}% progress towards ${this.selectedTask.project.targetGradeWord}`;
+  }
+
   public get discussActionStatus(): TaskStatusEnum {
     return this.selectedTask?.status === 'discuss' ? 'rediscuss' : 'discuss';
   }

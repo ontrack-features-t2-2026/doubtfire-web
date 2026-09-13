@@ -110,4 +110,34 @@ describe('FooterComponent', () => {
 
     expect(component.actionButtonEnabled).toBe(false);
   });
+
+  // The "must be discussed in class" tooltip used to show with no task selected at all.
+  it('gives a reason for Complete being off only when discussion is the reason', () => {
+    component.selectedTask = null;
+    expect(component.completeBlockedReason).toBe('');
+
+    const task = taskIn(staffedUnit({id: 10, userId: 1}));
+    task.definition = {requiresDiscussion: true} as Task['definition'];
+    component.selectedTask = task;
+    expect(component.completeBlockedReason).toBe(
+      'Discuss this task in class before marking it complete',
+    );
+
+    task.definition = {requiresDiscussion: false} as Task['definition'];
+    expect(component.completeBlockedReason).toBe('');
+  });
+
+  it('describes the student’s progress, or says it is unavailable', () => {
+    component.selectedTask = null;
+    expect(component.progressLabel).toBe('Progress unavailable');
+
+    const task = taskIn(staffedUnit({id: 10, userId: 1}));
+    task.project = {
+      taskStats: [0, 1, 2, 3, 4].map((value) => ({key: 'complete', value: value * 10})),
+      targetGradeWord: 'Distinction',
+    } as unknown as Task['project'];
+    component.selectedTask = task;
+
+    expect(component.progressLabel).toBe('40% progress towards Distinction');
+  });
 });

@@ -1,13 +1,13 @@
+:host {
+  display: block;
+}
+
 .footer {
   min-height: 85px;
   background-color: var(--ot-color-page);
-
-  .spacer {
-    flex: 1 1 auto;
-  }
+  color: var(--ot-color-text);
 
   .center-buttons {
-    align-items: center;
     text-align: center;
 
     .button {
@@ -22,14 +22,13 @@
       border-radius: 100%;
     }
 
-    .button:not(.large-button):not(.extra-large-button) mat-icon,
-    .button:not(.large-button):not(.extra-large-button) i {
+    .button:not(.large-button):not(.extra-large-button) mat-icon {
       transform: scale(1.14);
     }
 
     .button:not(.large-button):not(.extra-large-button).status-chip:hover {
       background-color: var(--status-chip-bg);
-      color: #fff;
+      color: var(--status-chip-on);
     }
 
     .large-button {
@@ -50,7 +49,7 @@
 
     .large-button.status-chip:hover {
       background-color: var(--status-chip-bg);
-      color: #fff;
+      color: var(--status-chip-on);
     }
 
     .large-button.status-chip:disabled,
@@ -71,21 +70,12 @@
       color: var(--ot-color-text);
     }
 
-    .extra-large-button.status-chip.suggested-task-status {
-      background-color: var(--status-chip-bg);
-      color: #fff;
-      filter: none;
-    }
-
-    .extra-large-button.status-chip.suggested-task-status:hover {
-      background-color: var(--status-chip-bg);
-      color: #fff;
-      filter: none;
-    }
-
+    .extra-large-button.status-chip.suggested-task-status,
+    .extra-large-button.status-chip.suggested-task-status:hover,
     .extra-large-button.status-chip:hover {
       background-color: var(--status-chip-bg);
-      color: #fff;
+      color: var(--status-chip-on);
+      filter: none;
     }
 
     .extra-large-button:hover {
@@ -98,14 +88,10 @@
     margin: 0 -2px;
   }
 
-  .mat-mdc-icon-button {
-    margin: 0 -6px;
-  }
-
-  f-project-progress-bar {
+  .footer-progress {
     width: 15vw;
-    margin-left: 20px;
-    margin-right: 25px;
+    min-width: 96px;
+    margin: 0 12px 0 16px;
   }
 }
 
@@ -113,8 +99,9 @@
   // Drive the chip colour from the runtime status token so the footer chips and
   // their hover state flip with the theme instead of using the light-only map.
   // The glyph sits on the page, so it takes the -graphic colour; the hover fill
-  // takes the darker status fill with the white glyph.
+  // takes the darker status fill with its own foreground.
   --status-chip-bg: var(--ot-status-#{$status});
+  --status-chip-on: var(--ot-status-#{$status}-on);
   background-color: transparent;
   color: var(--ot-status-#{$status}-graphic);
 }
