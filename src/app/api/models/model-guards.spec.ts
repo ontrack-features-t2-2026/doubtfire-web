@@ -1,9 +1,8 @@
-import {beforeAll, describe, expect, it, vi} from 'vitest';
-import {Injector} from '@angular/core';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {Observable, throwError} from 'rxjs';
 import {ProjectService} from 'src/app/api/services/project.service';
-import {setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {provideAppInjectorForTests} from 'src/app/testing/app-injector-stub';
 import {Project} from './project';
 import {Tutorial} from './tutorial/tutorial';
 import {Unit} from './unit';
@@ -26,20 +25,16 @@ describe('Tutorial.description', () => {
   });
 });
 
-// AppInjector can only be set once per file, so the model specs that need services
-// share one injector whose stand-ins each test fills in.
+// The models look their services up through AppInjector. Each test registers its
+// stand-ins with the shared spec stub.
 const projectService: {loadStudents?: unknown; update?: unknown} = {};
 const alerts = {error: vi.fn(), success: vi.fn()};
 
-beforeAll(() => {
-  setAppInjector(
-    Injector.create({
-      providers: [
-        {provide: ProjectService, useValue: projectService},
-        {provide: AlertService, useValue: alerts},
-      ],
-    }),
-  );
+beforeEach(() => {
+  provideAppInjectorForTests([
+    [ProjectService, projectService],
+    [AlertService, alerts],
+  ]);
 });
 
 describe('Unit.refreshStudents', () => {
