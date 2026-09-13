@@ -77,3 +77,19 @@ export function restoreTaskDefinition(
     }
   }
 }
+
+// The saved values of each task, kept outside the Tasks tab so they outlive it.
+// The tab is built again each time it opens, and a copy taken then would hold
+// any edits left unsaved on the last visit, so Discard would keep them.
+const savedCopies: WeakMap<TaskDefinition, TaskDefinitionSnapshot> = new WeakMap();
+
+/** Record the task's current values as the ones Discard goes back to. */
+export function rememberSavedTaskDefinition(taskDefinition: TaskDefinition): void {
+  savedCopies.set(taskDefinition, snapshotTaskDefinition(taskDefinition));
+}
+
+export function savedTaskDefinitionCopy(
+  taskDefinition: TaskDefinition,
+): TaskDefinitionSnapshot | undefined {
+  return savedCopies.get(taskDefinition);
+}

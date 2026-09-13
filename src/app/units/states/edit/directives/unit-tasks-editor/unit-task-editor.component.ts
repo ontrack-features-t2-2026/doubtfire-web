@@ -23,9 +23,9 @@ import {
 import {CsvUploadModalService} from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {
-  TaskDefinitionSnapshot,
+  rememberSavedTaskDefinition,
   restoreTaskDefinition,
-  snapshotTaskDefinition,
+  savedTaskDefinitionCopy,
 } from './task-definition-snapshot';
 
 @Component({
@@ -46,9 +46,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
   public savingTaskDefinition: boolean = false;
 
   public manageDueDates: boolean = false;
-
-  // The saved values of the task being edited, so Discard can put them back.
-  private savedCopy: TaskDefinitionSnapshot | null = null;
 
   // One matcher per date cell, kept so the field is not handed a new object on
   // every check, which would make Material recompute its error state each time.
@@ -163,7 +160,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
         const selected = this.selectedTaskDefinition;
         if (selected && !selected.isNew && !taskDefinitions.includes(selected)) {
           this.selectedTaskDefinition = null;
-          this.savedCopy = null;
         }
       }),
     );
@@ -179,8 +175,8 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
       next: () => {
         this.alerts.success('Task saved');
         taskDefinition.setOriginalSaveData(this.taskDefinitionService.mapping);
+        rememberSavedTaskDefinition(taskDefinition);
         if (taskDefinition === this.selectedTaskDefinition) {
-          this.savedCopy = snapshotTaskDefinition(taskDefinition);
           this.savingTaskDefinition = false;
         }
       },
@@ -216,7 +212,11 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     if (!this.selectedTaskDefinition.hasOriginalSaveData) {
       this.selectedTaskDefinition.setOriginalSaveData(this.taskDefinitionService.mapping);
     }
-    this.savedCopy = snapshotTaskDefinition(taskDefinition);
+    // Only the first time: after that the copy is the last saved state, and this
+    // task may still carry edits from an earlier visit to the tab.
+    if (!savedTaskDefinitionCopy(taskDefinition)) {
+      rememberSavedTaskDefinition(taskDefinition);
+    }
 
     this.feedbackTemplateService
       .query({contextType: 'task_definitions', contextId: this.selectedTaskDefinition.id}, {})
@@ -273,11 +273,12 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
 
   private revertSelectedTaskDefinition() {
     const selected = this.selectedTaskDefinition;
-    if (!selected || selected.isNew || !this.savedCopy) {
+    const savedCopy = selected && !selected.isNew && savedTaskDefinitionCopy(selected);
+    if (!savedCopy) {
       return;
     }
 
-    restoreTaskDefinition(selected, this.savedCopy);
+    restoreTaskDefinition(selected, savedCopy);
     selected.setOriginalSaveData(this.taskDefinitionService.mapping);
   }
 
@@ -291,7 +292,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
     this.confirmDiscardingUnsavedTask(() => {
       if (selected.isNew) {
         this.selectedTaskDefinition = null;
-        this.savedCopy = null;
       }
     });
   }
@@ -416,7 +416,6 @@ export class UnitTaskEditorComponent implements OnInit, OnDestroy {
 
     this.selectedTaskDefinition = task;
     this.savingTaskDefinition = false;
-    this.savedCopy = null;
     this.revealEditorOnSmallScreens();
   }
 }

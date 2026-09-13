@@ -182,6 +182,25 @@ describe('UnitTaskEditorComponent discard', () => {
   });
 });
 
+describe('UnitTaskEditorComponent discard after leaving the tab', () => {
+  it('goes back to the saved values, not to edits left from the last visit', () => {
+    const task = editableTask();
+    const first = editorForRealTask();
+    first.component.selectTaskDefinition(task);
+    task.name = 'Changed name';
+    first.component.ngOnDestroy();
+
+    // The tab is built again when the convenor comes back to it.
+    const second = editorForRealTask();
+    second.component.selectTaskDefinition(task);
+    second.component.discardTaskDefinitionChanges();
+    (second.confirmationModal.show.mock.calls[0][2] as () => void)();
+
+    expect(task.name).toBe('Hello world');
+    expect(second.component.taskDefinitionHasChanges(task)).toBe(false);
+  });
+});
+
 describe('UnitTaskEditorComponent delete', () => {
   it('drops a task that was never saved without asking the server to delete it', () => {
     const {component, confirmationModal} = editorWith(unsavedTask());
