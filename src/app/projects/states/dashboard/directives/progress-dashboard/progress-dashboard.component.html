@@ -62,7 +62,7 @@
          read, and the status tiles run in a row underneath it. -->
     <div class="grid grid-cols-1 items-stretch gap-4 @3xl:col-span-2">
       <mat-card appearance="outlined" class="h-full min-w-0">
-        <mat-card-header>
+        <mat-card-header class="mb-4">
           <mat-card-title>Progress Burndown</mat-card-title>
           <mat-card-subtitle>
             How much work you have left to reach {{ targetGradeName }}.
@@ -86,7 +86,7 @@
       </mat-card>
 
       <mat-card appearance="outlined" class="h-full min-w-0">
-        <mat-card-header>
+        <mat-card-header class="mb-4">
           <mat-card-title>Task Statuses</mat-card-title>
           <mat-card-subtitle>
             The tasks you need for {{ targetGradeName }}, grouped by status.
