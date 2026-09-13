@@ -1,4 +1,24 @@
-@if (unit$ | async; as unit) {
+@if (loading) {
+  <div aria-busy="true" aria-label="Loading tasks" class="flex h-full gap-3 p-3" role="status">
+    <ngx-skeleton-loader
+      class="block h-full w-full max-w-[400px]"
+      [theme]="{height: '100%', width: '100%', 'border-radius': '12px', margin: '0'}"
+    ></ngx-skeleton-loader>
+    <ngx-skeleton-loader
+      class="hidden h-full flex-1 lg:block"
+      [theme]="{height: '100%', width: '100%', 'border-radius': '12px', margin: '0'}"
+    ></ngx-skeleton-loader>
+  </div>
+} @else if (loadFailed || !unit) {
+  <div class="flex flex-col items-center px-4">
+    <f-empty-state
+      hint="Check your connection, then try again."
+      icon="cloud_off"
+      message="The unit's tasks did not load"
+    ></f-empty-state>
+    <button mat-stroked-button type="button" (click)="retryLoad()">Try again</button>
+  </div>
+} @else {
   <div>
     <!-- Wide Window Display -->
     <div fxFill fxHide fxLayout="column" fxShow.gt-sm>
