@@ -183,7 +183,7 @@ describe('HomeComponent', () => {
     expect(content.querySelector('section a')?.getAttribute('href')).toBe('/view-all-units');
   });
 
-  it('keeps the staff header off the page for a student', () => {
+  it('gives a student the same unit cards, linked to their tasks and planner', () => {
     currentUser.role = 'Student';
     projects$.next([
       Object.assign(projectIn('Student', 1), {
@@ -200,8 +200,22 @@ describe('HomeComponent', () => {
     ]);
 
     const content = page();
-    expect(content.querySelector('h1')).toBeNull();
-    expect(content.textContent).toContain('Enrolled units');
-    expect(content.textContent).toContain('Capstone');
+    expect(content.querySelector('h1')?.textContent).toContain('My units');
+    expect(content.textContent).not.toContain('Units you teach');
+
+    const cards = content.querySelectorAll('ul[aria-label="Active units you study"] > li');
+    expect(cards).toHaveLength(1);
+    expect(cards[0].textContent).toContain('SIT374');
+    expect(cards[0].textContent).toContain('Capstone');
+    expect(cards[0].querySelector('h3 a')?.getAttribute('href')).toBe('/projects/1/dashboard');
+    // Straight under the page's h1, so the card title reads as a level 2 heading.
+    expect(cards[0].querySelector('h3')?.getAttribute('aria-level')).toBe('2');
+    expect(
+      cards[0].querySelector('[role="progressbar"]')?.getAttribute('aria-valuetext'),
+    ).toContain('Week');
+    const links = Array.from(cards[0].querySelectorAll('footer a')).map((link) =>
+      link.getAttribute('href'),
+    );
+    expect(links).toEqual(['/projects/1/dashboard', '/projects/1/plan']);
   });
 });

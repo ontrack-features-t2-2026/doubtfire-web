@@ -32,6 +32,19 @@ export interface StaffUnitCard {
   progressValueText: string;
 }
 
+// A unit the user studies, drawn the same way as a unit they teach.
+export interface StudyUnitCard {
+  projectId: number;
+  code: string;
+  name: string;
+  target: string | null;
+  periodLabel: string;
+  accent: string;
+  progress: number;
+  progressLabel: string;
+  progressValueText: string;
+}
+
 export interface StaffSummary {
   activeLabel: string;
   previousCount: number;
@@ -49,6 +62,7 @@ export class HomeComponent implements OnInit {
   projects: Project[] = [];
   unitRoles: UnitRole[] = [];
   staffUnits: StaffUnitCard[] = [];
+  studyUnits: StudyUnitCard[] = [];
 
   /** True until the global state has finished loading the user's units and projects. */
   loading = true;
@@ -131,6 +145,16 @@ export class HomeComponent implements OnInit {
 
   projectsLoaded(projects: Project[]): void {
     this.projects = projects;
+    this.studyUnits = projects
+      .filter((project) => project.unit.isActive)
+      .map((project, index) => this.buildStudyCard(project, index));
+  }
+
+  get studySummary(): string {
+    const active = this.studyUnits.length;
+    const previous = this.projects.length - active;
+    const activeLabel = `${active} active ${active === 1 ? 'unit' : 'units'}`;
+    return previous > 0 ? `${activeLabel} · ${previous} previous` : activeLabel;
   }
 
   unreadNotesLabel(count: number): string {
@@ -147,6 +171,23 @@ export class HomeComponent implements OnInit {
       code: unit.code,
       name: unit.name,
       role: unitRole.role,
+      periodLabel: unit.teachingPeriod?.name || this.showDate(unit.startDate),
+      accent: `var(--ot-unit-${(index % UNIT_ACCENT_COUNT) + 1})`,
+      progress: progress.value,
+      progressLabel: progress.label,
+      progressValueText: `${progress.label}, ${progress.value}% through the teaching period`,
+    };
+  }
+
+  private buildStudyCard(project: Project, index: number): StudyUnitCard {
+    const unit = project.unit;
+    const progress = this.teachingProgress(unit);
+
+    return {
+      projectId: project.id,
+      code: unit.code,
+      name: unit.name,
+      target: project.targetGrade != null ? project.targetGradeWord : null,
       periodLabel: unit.teachingPeriod?.name || this.showDate(unit.startDate),
       accent: `var(--ot-unit-${(index % UNIT_ACCENT_COUNT) + 1})`,
       progress: progress.value,
