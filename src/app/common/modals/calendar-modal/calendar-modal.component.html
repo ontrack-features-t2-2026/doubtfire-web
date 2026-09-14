@@ -12,7 +12,7 @@
       [matTooltip]="
         webcal && webcal.enabled ? 'Disable the web calendar' : 'Enable the web calendar'
       "
-      (click)="onWebcalToggle()"
+      (toggleChange)="onWebcalToggle()"
     >
     </mat-slide-toggle>
   </div>
@@ -53,6 +53,7 @@
                 <mat-chip-listbox>
                   @for (project of includedProjects; track project) {
                     <mat-chip-option
+                      [disabled]="working"
                       [removable]="true"
                       [selectable]="false"
                       (removed)="includeExclusion(project)"
@@ -62,11 +63,19 @@
                     </mat-chip-option>
                   }
                   @if (excludedProjects.length > 0) {
-                    <mat-chip-option [matMenuTriggerFor]="menu" [selectable]="false">
+                    <mat-chip-option
+                      [disabled]="working"
+                      [matMenuTriggerFor]="menu"
+                      [selectable]="false"
+                    >
                       <mat-icon class="mt-1">add</mat-icon>
                       <mat-menu #menu="matMenu">
                         @for (project of excludedProjects; track project) {
-                          <button mat-menu-item (click)="removeExclusion(project)">
+                          <button
+                            mat-menu-item
+                            [disabled]="working"
+                            (click)="removeExclusion(project)"
+                          >
                             {{ project.unit.code }} {{ project.unit.name }}
                           </button>
                         }
@@ -182,25 +191,27 @@
             <div class="mt-3 rounded border border-gray-300 bg-white px-4 py-2">
               <div class="flex items-center">
                 <div class="flex min-w-0 flex-1 items-center">
-                  <div
-                    class="flex cursor-pointer items-center gap-1 break-all text-blue-700 hover:text-blue-900"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                  <a
+                    class="flex items-center gap-1 break-all text-blue-700 hover:text-blue-900"
+                    [attr.aria-label]="'Subscribe to web calendar: ' + webcalUrl + '.ics'"
+                    [href]="webcalUrl + '.ics'"
                   >
-                    <mat-icon>link</mat-icon>{{ webcalUrl }}.ics
-                  </div>
+                    <mat-icon aria-hidden="true">link</mat-icon>{{ webcalUrl }}.ics
+                  </a>
                 </div>
                 <div class="flex shrink-0 items-center">
                   <button
+                    aria-label="Copy web calendar URL"
                     mat-icon-button
                     matTooltip="Copy URL"
                     matTooltipPosition="above"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                    [cdkCopyToClipboard]="webcalSubscriptionUrl"
+                    (cdkCopyToClipboardCopied)="onCopyResult($event)"
                   >
                     <mat-icon>{{ copying ? 'done' : 'content_copy' }}</mat-icon>
                   </button>
                   <button
+                    aria-label="Regenerate web calendar URL"
                     mat-icon-button
                     matTooltip="Regenerate URL"
                     matTooltipPosition="above"
@@ -211,6 +222,13 @@
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div class="mt-3">
+              <button mat-stroked-button [disabled]="working" (click)="downloadCalendar()">
+                <mat-icon aria-hidden="true">download</mat-icon>
+                Download a copy
+              </button>
             </div>
           </div>
         </div>

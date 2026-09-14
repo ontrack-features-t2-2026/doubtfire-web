@@ -8,6 +8,7 @@ import {Subject, of, throwError} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
 import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
@@ -38,6 +39,10 @@ describe('AuthenticationService', () => {
   let pushService: {unsubscribeQuietly: ReturnType<typeof vi.fn>};
   let notificationService: {reset: ReturnType<typeof vi.fn>};
   let demoMode: {reset: ReturnType<typeof vi.fn>};
+  let themeService: {
+    connectAccount: ReturnType<typeof vi.fn>;
+    disconnectAccount: ReturnType<typeof vi.fn>;
+  };
   let globalState: {
     clearUnitsAndProjects: ReturnType<typeof vi.fn>;
     hideHeader: ReturnType<typeof vi.fn>;
@@ -47,6 +52,7 @@ describe('AuthenticationService', () => {
   let userService: {
     currentUser: Partial<User>;
     anonymousUser: Partial<User>;
+    updateThemePreference: ReturnType<typeof vi.fn>;
     cache: {
       clear: ReturnType<typeof vi.fn>;
       getOrCreate: ReturnType<typeof vi.fn>;
@@ -95,6 +101,7 @@ describe('AuthenticationService', () => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
     notificationService = {reset: vi.fn()};
     demoMode = {reset: vi.fn()};
+    themeService = {connectAccount: vi.fn(), disconnectAccount: vi.fn()};
     globalState = {
       clearUnitsAndProjects: vi.fn(),
       hideHeader: vi.fn(),
@@ -106,6 +113,13 @@ describe('AuthenticationService', () => {
     userService = {
       currentUser: {id: 1, username: 'user-a', authenticationToken: 'token-for-user-a'},
       anonymousUser,
+      updateThemePreference: vi.fn((user: Partial<User>, preference: string) =>
+        of({
+          ...user,
+          themePreference: preference,
+          themePreferenceUpdatedAt: '2026-09-01T00:00:00Z',
+        }),
+      ),
       cache: {
         clear: vi.fn(),
         getOrCreate: vi.fn((id: number, _service: UserService, data: object) => ({
@@ -136,6 +150,7 @@ describe('AuthenticationService', () => {
         {provide: DoubtfireConstants, useValue: constants},
         {provide: DemoModeStore, useValue: demoMode},
         {provide: AuthReturnUrlService, useValue: authReturnUrl},
+        {provide: ThemeService, useValue: themeService},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -201,6 +216,7 @@ describe('AuthenticationService', () => {
     // count would otherwise survive into the next person's session.
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
     expect(demoMode.reset).toHaveBeenCalledTimes(1);
+    expect(themeService.disconnectAccount).toHaveBeenCalledTimes(1);
     expect(authReturnUrl.clear).toHaveBeenCalledTimes(1);
   });
 
@@ -275,6 +291,59 @@ describe('AuthenticationService', () => {
     );
     expect(afterAuth).toHaveBeenCalledWith(true);
     expect(signInNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('connects account theme sync on a real sign in', () => {
+    userService.currentUser = userService.anonymousUser;
+    const response = authResponse(1, 't1');
+    response.user['themePreference'] = 'dark';
+    response.user['themePreferenceUpdatedAt'] = '2026-08-31T12:00:00Z';
+
+    service.signIn({username: 'user-1', password: 'password', remember: false}).subscribe();
+
+    httpMock.expectOne((r) => r.url === AUTH_URL && r.method === 'POST').flush(response);
+    expect(themeService.connectAccount).toHaveBeenCalledOnce();
+    expect(themeService.connectAccount).toHaveBeenCalledWith(
+      1,
+      'dark',
+      '2026-08-31T12:00:00Z',
+      expect.any(Function),
+    );
+
+    httpMock.expectOne(`${API_URL}/settings`).flush(authenticatedSettings);
+  });
+
+  it('reconnects theme sync to the incoming account during overlapping sign ins', () => {
+    userService.currentUser = userService.anonymousUser;
+    const firstResponse = authResponse(1, 't1');
+    const secondResponse = authResponse(2, 't2');
+
+    service.signIn({username: 'user-1', password: 'password', remember: false}).subscribe();
+    const firstAuth = httpMock.expectOne(
+      (request) => request.url === AUTH_URL && request.body['username'] === 'user-1',
+    );
+    service.signIn({username: 'user-2', password: 'password', remember: false}).subscribe();
+    const secondAuth = httpMock.expectOne(
+      (request) => request.url === AUTH_URL && request.body['username'] === 'user-2',
+    );
+
+    firstAuth.flush(firstResponse);
+    const firstSettings = httpMock.expectOne(`${API_URL}/settings`);
+    secondAuth.flush(secondResponse);
+    const secondSettings = httpMock.expectOne(`${API_URL}/settings`);
+
+    expect(themeService.connectAccount).toHaveBeenCalledTimes(2);
+    expect(themeService.connectAccount.mock.calls[0][0]).toBe(1);
+    expect(themeService.connectAccount.mock.calls[1][0]).toBe(2);
+    const saveSecondAccount = themeService.connectAccount.mock.calls[1][3];
+    saveSecondAccount('dark').subscribe();
+    expect(userService.updateThemePreference).toHaveBeenCalledWith(
+      expect.objectContaining({id: 2}),
+      'dark',
+    );
+
+    firstSettings.flush(authenticatedSettings);
+    secondSettings.flush(authenticatedSettings);
   });
 
   it('waits for authenticated settings before reporting a restored session', () => {

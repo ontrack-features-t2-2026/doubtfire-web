@@ -229,6 +229,7 @@ import {HttpErrorInterceptor} from './common/services/http-error.interceptor';
 import {StatusIconComponent} from './common/status-icon/status-icon.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {ThemeToggleComponent} from './common/theme/theme-toggle.component';
 import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
 import {UserIconComponent} from './common/user-icon/user-icon.component';
@@ -257,6 +258,7 @@ import {EngagementDetailDialogComponent} from './projects/states/dashboard/direc
 import {EngagementPassportCardComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-passport-card.component';
 import {PeerProgressUnitSummaryComponent} from './projects/states/dashboard/directives/progress-dashboard/peer-progress-unit-summary/peer-progress-unit-summary.component';
 import {ProgressDashboardComponent} from './projects/states/dashboard/directives/progress-dashboard/progress-dashboard.component';
+import {DownloadFilterDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/download-filter-dialog/download-filter-dialog.component';
 import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/task-planner-card.component';
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
 import {TaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/task-list-item/task-list-item.component';
@@ -646,6 +648,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskPlannerComponent,
     DownloadStaffNotesComponent,
     TaskPlannerCardComponent,
+    DownloadFilterDialogComponent,
     TaskPlannerPrerequisitesModalComponent,
     TaskOverseerReportComponent,
     SubmissionFilesModalComponent,
@@ -805,6 +808,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    ThemeToggleComponent,
     FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,

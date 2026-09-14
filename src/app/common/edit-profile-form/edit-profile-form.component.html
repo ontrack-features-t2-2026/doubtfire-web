@@ -1,7 +1,6 @@
 <form
   #form="ngForm"
-  fxLayout="column"
-  fxLayoutAlign="center start"
+  class="flex flex-col items-start justify-center"
   [ngClass]="{'p-10': modal}"
   (ngSubmit)="submit()"
 >
@@ -21,8 +20,8 @@
         </div>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row">
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>Username</mat-label>
           <input
             autocomplete="username"
@@ -34,10 +33,11 @@
         </mat-form-field>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row">
+        <mat-form-field appearance="outline" class="max-w-[48%] shrink grow basis-full self-start">
           <mat-label>First Name</mat-label>
           <input
+            #firstModel="ngModel"
             autocomplete="given-name"
             class="outline-none"
             matInput
@@ -45,24 +45,31 @@
             required
             [(ngModel)]="user.firstName"
           />
+          @if (firstModel.hasError('required')) {
+            <mat-error>First name is required</mat-error>
+          }
         </mat-form-field>
 
-        <div fxFlex></div>
+        <div class="flex-1"></div>
 
-        <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="end">
+        <mat-form-field appearance="outline" class="max-w-[48%] shrink grow basis-full self-end">
           <mat-label>Second Name</mat-label>
           <input
+            #lastModel="ngModel"
             autocomplete="family-name"
             matInput
             name="last"
             required
             [(ngModel)]="user.lastName"
           />
+          @if (lastModel.hasError('required')) {
+            <mat-error>Second name is required</mat-error>
+          }
         </mat-form-field>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row">
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>Preferred Name</mat-label>
           <input
             autocomplete="nickname"
@@ -73,7 +80,11 @@
         </mat-form-field>
       </div>
 
-      <mat-form-field appearance="outline" fxFlexFill [hidden]="!customPronouns">
+      <mat-form-field
+        appearance="outline"
+        class="m-0 size-full min-h-full min-w-full"
+        [hidden]="!customPronouns"
+      >
         <mat-label>Custom Pronouns</mat-label>
         <input
           matInput
@@ -86,26 +97,43 @@
       </mat-form-field>
 
       @if (user.systemRole === 'Student') {
-        <mat-form-field appearance="outline" fxFlexFill>
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>Student ID</mat-label>
-          <input matInput name="student_id" required [(ngModel)]="user.studentId" />
+          <input
+            #studentIdModel="ngModel"
+            matInput
+            name="student_id"
+            required
+            [(ngModel)]="user.studentId"
+          />
+          @if (studentIdModel.hasError('required')) {
+            <mat-error>Student ID is required</mat-error>
+          }
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline" fxFlexFill>
+      <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
         <mat-label>Email</mat-label>
         <input
+          #emailModel="ngModel"
           autocomplete="email"
+          email
           matInput
           name="email"
           required
           type="email"
           [(ngModel)]="user.email"
         />
+        @if (emailModel.hasError('required')) {
+          <mat-error>Email is required</mat-error>
+        }
+        @if (emailModel.hasError('email')) {
+          <mat-error>Enter a valid email address</mat-error>
+        }
       </mat-form-field>
 
       @if (canSeeSystemRole) {
-        <mat-form-field appearance="outline" fxFlexFill>
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>System Role</mat-label>
           <mat-select
             name="systemRole"
@@ -121,13 +149,14 @@
         </mat-form-field>
       }
 
-      <f-notification-settings [user]="user"></f-notification-settings>
+      <f-notification-settings
+        [showNotificationsLink]="isOwnProfilePage"
+        [user]="user"
+      ></f-notification-settings>
 
       <section
         aria-labelledby="peer-progress-preference-title"
-        class="peer-progress-preference"
-        fxFlexFill
-        fxLayout="column"
+        class="peer-progress-preference m-0 flex size-full min-h-full min-w-full flex-col"
       >
         <h3 id="peer-progress-preference-title">Peer progress</h3>
         <mat-slide-toggle
@@ -149,7 +178,9 @@
         its permission prompt in response to a user gesture, and the service
         worker is not registered until six seconds after the page loads.
       -->
-      <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
+      <section
+        class="push-opt-in m-0 flex size-full min-h-full min-w-full flex-col items-start justify-center"
+      >
         <button
           color="primary"
           mat-stroked-button
@@ -177,14 +208,16 @@
           <small class="push-opt-in__hint">This device will receive push notifications.</small>
         }
       </section>
-      <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+      <section class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start">
         <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
           >Send anonymous research statistics
         </mat-checkbox>
       </section>
 
       @if (tiiEnabled) {
-        <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+        <section
+          class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start"
+        >
           <mat-checkbox
             color="primary"
             disabled
@@ -196,9 +229,9 @@
           </mat-checkbox>
         </section>
       }
-      <div fxFlexFill fxLayout="row" style="padding-top: 12px">
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row" style="padding-top: 12px">
         <button
-          fxFlexAlign="start"
+          class="self-start"
           mat-stroked-button
           type="button"
           [hidden]="mode === 'edit' || mode === 'new'"
@@ -206,25 +239,25 @@
         >
           Sign Out
         </button>
-        <div fxFlex></div>
+        <div class="flex-1"></div>
         @if (mode === 'create') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
             type="submit"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
           >
             Confirm Account
           </button>
         }
         @if (mode === 'edit') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
             type="button"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
             (click)="submit()"
           >
             Save Profile
