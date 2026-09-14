@@ -462,18 +462,6 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  openTaskDefs() {
-    // Automatically "open" the task definition select element if in task def mode
-    const selectEl = document.querySelector<HTMLSelectElement>(
-      'select[ng-model="filters.taskDefinitionIdSelected"]',
-    );
-    if (!selectEl) {
-      return;
-    }
-    selectEl.size = 10;
-    selectEl.focus();
-  }
-
   unitRoleIdChanged(attemptRefreshData: boolean = true): void {
     this.applyFilters();
 
@@ -714,8 +702,11 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   previousTask(): void {
+    if (!this.filteredTasks) {
+      return;
+    }
     const currentTaskIndex = this.filteredTasks.findIndex((task) => this.isSelectedTask(task));
-    if (currentTaskIndex === 0) {
+    if (currentTaskIndex <= 0) {
       return;
     }
     const newTask = this.filteredTasks[currentTaskIndex - 1];
