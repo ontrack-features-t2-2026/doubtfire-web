@@ -1,7 +1,7 @@
 @if (isPassed) {
   <mat-card appearance="outlined" [hidden]="!task.scormEnabled">
     @if (this.task.latestCompletedTestAttempt.scoreScaled === 1) {
-      <mat-card-header class="bg-ot-success text-white">
+      <mat-card-header class="bg-(--ot-status-complete) text-(--ot-status-complete-on)">
         <mat-card-title class="mb-2.5 flex items-center"
           ><mat-icon class="font-extrabold">check</mat-icon>
           <span class="ml-2.5">Knowledge Check Passed Without Mistakes</span></mat-card-title
@@ -9,7 +9,7 @@
       </mat-card-header>
     }
     @if (this.task.latestCompletedTestAttempt.scoreScaled !== 1) {
-      <mat-card-header class="bg-ot-success text-white">
+      <mat-card-header class="bg-(--ot-status-complete) text-(--ot-status-complete-on)">
         <mat-card-title class="mb-2.5 flex items-center"
           ><mat-icon class="font-extrabold">check</mat-icon>
           <span class="ml-2.5">Knowledge Check Passed</span></mat-card-title
