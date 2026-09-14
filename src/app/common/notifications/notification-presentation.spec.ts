@@ -29,6 +29,21 @@ describe('notification presentation', () => {
     ]);
   });
 
+  // Tutors are told when a student asks for help or for an extension. The request is
+  // a task notification so it can be switched off, and still reads as an extension.
+  it('names the tutor request events apart from the category they are filed under', () => {
+    expect(presentationFor(notification('task_help_requested'))).toMatchObject({
+      icon: 'help',
+      label: 'Help requested',
+      tone: 'task',
+    });
+    expect(presentationFor(notification('extension_requested', 'task'))).toMatchObject({
+      icon: 'more_time',
+      label: 'Extension request',
+      tone: 'extension',
+    });
+  });
+
   it('uses a category fallback for a new event and a generic fallback for a new category', () => {
     expect(presentationFor(notification('future_feedback_event', 'feedback'))).toMatchObject({
       icon: 'chat_bubble',

@@ -81,7 +81,8 @@ describe('NotificationSettingsComponent', () => {
   it('shows help text for each notification category', () => {
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Due dates, changed dates, and task status updates.');
+    expect(text).toContain('Due dates, changed dates and task status updates.');
+    expect(text).toContain('help requests and extension requests');
     expect(text).toContain('New comments, feedback, and review outcomes.');
     expect(text).toContain('Portfolio processing and assessment updates.');
   });

@@ -18,7 +18,11 @@ const EVENT_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = 
   },
   task_status_changed: {icon: 'published_with_changes', label: 'Status changed', tone: 'task'},
   task_submitted: {icon: 'upload_file', label: 'Task submitted', tone: 'task'},
+  task_help_requested: {icon: 'help', label: 'Help requested', tone: 'task'},
   extension_assessed: {icon: 'more_time', label: 'Extension', tone: 'extension'},
+  // Filed under task notifications so a tutor can switch it off, but still drawn as
+  // an extension so it reads as one in the list.
+  extension_requested: {icon: 'more_time', label: 'Extension request', tone: 'extension'},
   portfolio_received: {icon: 'collections_bookmark', label: 'Portfolio', tone: 'portfolio'},
   group_membership_changed: {icon: 'groups', label: 'Group update', tone: 'general'},
   tutorial_changed: {icon: 'event_repeat', label: 'Tutorial update', tone: 'general'},
