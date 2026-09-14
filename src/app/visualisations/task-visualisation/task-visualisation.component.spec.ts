@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {RouterModule} from '@angular/router';
-import {Project} from 'src/app/api/models/doubtfire-model';
+import {Project, TaskStatus} from 'src/app/api/models/doubtfire-model';
 import {TaskVisualisationComponent} from './task-visualisation.component';
 
 describe('TaskVisualisationComponent', () => {
@@ -67,30 +67,28 @@ describe('TaskVisualisationComponent', () => {
     ]);
   });
 
-  it('keeps every rendered status card above the 4.5:1 contrast floor', () => {
-    const host = fixture.nativeElement as HTMLElement;
-    const cards = Array.from(host.querySelectorAll<HTMLElement>('[role="listitem"]'));
+  // Each tile must paint its own status fill with that status's -on text: those are
+  // the pairs the theme contract measures at 4.5:1 or better, in both themes. jsdom
+  // cannot resolve custom properties, so the old check parsed var() strings as
+  // colours, got NaN, and passed without checking anything.
+  it('pairs every status tile fill with the text colour measured for it', () => {
+    fixture.componentInstance.project = {
+      id: 7,
+      activeTasks: () => TaskStatus.STATUS_KEYS.map((status) => ({status})),
+    } as unknown as Project;
+    fixture.componentInstance.updateData();
+    fixture.detectChanges();
 
-    const luminance = (color: string) => {
-      const [red, green, blue] = color
-        .replace(/[^\d,]/g, '')
-        .split(',')
-        .map((channel) => {
-          const value = Number(channel) / 255;
-          return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-        });
-      return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-    };
-    const contrast = (card: HTMLElement) => {
-      const text = luminance(card.style.color);
-      const background = luminance(card.style.backgroundColor);
-      return (Math.max(text, background) + 0.05) / (Math.min(text, background) + 0.05);
-    };
-
-    expect(cards.length).toBeGreaterThan(0);
-    expect(cards.filter((card) => contrast(card) < 4.5).map((card) => card.textContent)).toEqual(
-      [],
+    const cards = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="listitem"]'),
     );
+
+    expect(cards.length).toBeGreaterThan(4);
+    for (const card of cards) {
+      const key = card.dataset.status.replace(/_/g, '-');
+      expect(card.style.backgroundColor).toBe(`var(--ot-status-${key})`);
+      expect(card.style.color).toBe(`var(--ot-status-${key}-on)`);
+    }
   });
 });
 
