@@ -6,6 +6,7 @@ import {AttachmentUploadState, TaskCommentService} from 'src/app/api/services/ta
 import {
   FeedbackDraftContext,
   FeedbackDraftStore,
+  StagedFeedbackAttachment,
 } from 'src/app/common/services/feedback-draft-store.service';
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
@@ -99,6 +100,40 @@ function createComposer(taskValue = task(1), userId = 7): ComposerHarness {
 
 function fakeFile(name: string, type: string, size = 10): File {
   return {name, type, size} as File;
+}
+
+function stagedFile(name: string): StagedFeedbackAttachment {
+  return {
+    data: fakeFile(name, 'application/pdf'),
+    fileName: name,
+    mimeType: 'application/pdf',
+    byteSize: 10,
+    kind: 'file',
+    clientRequestId: `staged-${name}`,
+    status: 'staged',
+    progress: 0,
+  };
+}
+
+function switchTask(
+  harness: ComposerHarness,
+  from: ReturnType<typeof task>,
+  to: ReturnType<typeof task>,
+): void {
+  harness.component.task = to as never;
+  harness.component.ngOnChanges({
+    task: new SimpleChange(from, to, false),
+  });
+}
+
+// What ngDoCheck does once its differ sees editingComment or originalComment change.
+function syncSharedData(harness: ComposerHarness): void {
+  (harness.component as unknown as {syncComposerState(): void}).syncComposerState();
+}
+
+function startEditing(harness: ComposerHarness, comment: TaskComment): void {
+  harness.component.sharedData.editingComment = comment;
+  syncSharedData(harness);
 }
 
 describe('TaskCommentComposerComponent staged feedback', () => {
@@ -390,6 +425,109 @@ describe('TaskCommentComposerComponent staged feedback', () => {
 
     expect(harness.message.value).toBe('');
     expect(harness.component.stagedAttachments).toEqual([]);
+  });
+
+  it('finishes a text send on the task it was sent from, not the task open when it lands', () => {
+    const taskA = task(1);
+    const taskB = task(2);
+    const harness = createComposer(taskA);
+    const response: Subject<TaskComment> = new Subject();
+    harness.taskCommentService.addComment.mockReturnValueOnce(response.asObservable());
+    harness.draftStore.save(contextFor(taskB), 'B unsent draft', null);
+    harness.draftStore.stageAttachment(contextFor(taskB), stagedFile('b.pdf'));
+    harness.message.value = 'A feedback';
+
+    harness.component.addComment();
+    switchTask(harness, taskA, taskB);
+
+    expect(harness.message.value).toBe('B unsent draft');
+    expect(harness.component.isSending).toBe(false);
+
+    response.next({id: 3} as TaskComment);
+    response.complete();
+
+    expect(harness.taskCommentService.addComment).toHaveBeenCalledOnce();
+    expect(harness.draftStore.load(contextFor(taskA)).text).toBe('');
+    expect(harness.draftStore.load(contextFor(taskB)).text).toBe('B unsent draft');
+    expect(harness.draftStore.attachments(contextFor(taskB))).toHaveLength(1);
+    expect(harness.component.stagedAttachments).toHaveLength(1);
+    expect(harness.message.value).toBe('B unsent draft');
+  });
+
+  it('keeps the rest of an attachment queue and its text on the task it was sent from', () => {
+    const taskA = task(1);
+    const taskB = task(2);
+    const harness = createComposer(taskA);
+    const firstUpload: Subject<AttachmentUploadState> = new Subject();
+    harness.taskCommentService.uploadStagedAttachment.mockReturnValueOnce(
+      firstUpload.asObservable(),
+    );
+    harness.message.value = 'A feedback, see attached';
+    harness.component.uploadFiles([
+      fakeFile('a1.pdf', 'application/pdf'),
+      fakeFile('a2.pdf', 'application/pdf'),
+    ]);
+    harness.draftStore.save(contextFor(taskB), 'B half-written feedback', null);
+
+    harness.component.addComment();
+    switchTask(harness, taskA, taskB);
+    firstUpload.next({state: 'complete', progress: 100});
+    firstUpload.complete();
+
+    const uploads = harness.taskCommentService.uploadStagedAttachment.mock.calls;
+    expect(uploads).toHaveLength(2);
+    expect(uploads[0][0]).toBe(taskA);
+    expect(uploads[1][0]).toBe(taskA);
+    expect(harness.taskCommentService.addComment).toHaveBeenCalledOnce();
+    expect(harness.taskCommentService.addComment.mock.calls[0][0]).toBe(taskA);
+    expect(harness.taskCommentService.addComment.mock.calls[0][1]).toBe('A feedback, see attached');
+    expect(harness.draftStore.attachments(contextFor(taskA))).toEqual([]);
+    expect(harness.draftStore.load(contextFor(taskA)).text).toBe('');
+    expect(harness.draftStore.load(contextFor(taskB)).text).toBe('B half-written feedback');
+    expect(harness.message.value).toBe('B half-written feedback');
+    expect(harness.component.isSending).toBe(false);
+  });
+
+  it('shows a send still in flight as sending again after coming back to its task', () => {
+    const taskA = task(1);
+    const taskB = task(2);
+    const harness = createComposer(taskA);
+    const response: Subject<TaskComment> = new Subject();
+    harness.taskCommentService.addComment.mockReturnValueOnce(response.asObservable());
+    harness.message.value = 'A feedback';
+
+    harness.component.addComment();
+    switchTask(harness, taskA, taskB);
+    expect(harness.component.isSending).toBe(false);
+    switchTask(harness, taskB, taskA);
+    expect(harness.component.isSending).toBe(true);
+
+    response.next({id: 3} as TaskComment);
+    response.complete();
+
+    expect(harness.component.isSending).toBe(false);
+    expect(harness.message.value).toBe('');
+    expect(harness.draftStore.load(contextFor(taskA)).text).toBe('');
+  });
+
+  it('does not clear the task now open when an earlier edit finishes saving', () => {
+    const taskA = task(1);
+    const taskB = task(2);
+    const harness = createComposer(taskA);
+    const edit: Subject<TaskComment> = new Subject();
+    harness.taskCommentService.editComment.mockReturnValueOnce(edit.asObservable());
+    harness.draftStore.save(contextFor(taskB), 'B draft', null);
+    startEditing(harness, {id: 5, text: 'Please resubmit'} as TaskComment);
+    harness.message.value = 'Please resubmit by Friday';
+
+    harness.component.send();
+    switchTask(harness, taskA, taskB);
+    edit.next({id: 5} as TaskComment);
+    edit.complete();
+
+    expect(harness.taskCommentService.editComment).toHaveBeenCalledOnce();
+    expect(harness.message.value).toBe('B draft');
+    expect(harness.component.isSending).toBe(false);
   });
 });
 

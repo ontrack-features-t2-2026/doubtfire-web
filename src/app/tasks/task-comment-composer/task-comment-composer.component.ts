@@ -45,6 +45,18 @@ interface ApiError {
 }
 
 /**
+ * The draft a Send or Save was pressed on. The inbox and the project dashboard
+ * reuse one composer while the open task changes, so a response can arrive after
+ * another task is showing. It has to land on this draft, not on the open one.
+ */
+interface PendingSend {
+  task: Task;
+  context: FeedbackDraftContext | null;
+  key: string | null;
+  originalComment: TaskComment | null;
+}
+
+/**
  * The task comment viewer needs to share data with the Task Comment Composer. The data needed
  * id defined through this interface.
  */
@@ -98,6 +110,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private submittedTaskIds: Set<number | string> = new Set();
 
   public isSending: boolean = false;
+  // Drafts with a request still in flight, so returning to one shows it as sending.
+  private readonly sendingDraftKeys: Set<string> = new Set();
+  private destroyed = false;
   public stagedAttachments: StagedFeedbackAttachment[] = [];
   private draftClientRequestId: string | null = null;
   private draftReplyToId: number | null = null;
@@ -176,6 +191,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       this.draftClientRequestId = null;
       this.draftReplyToId = null;
       this.clearInput();
+      this.isSending = this.sendingDraftKeys.has(this.getDraftKey(newTask) ?? '');
 
       if (newTask) {
         this.loadDraftForTask(newTask);
@@ -194,6 +210,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   ngOnDestroy(): void {
     this.saveCurrentDraft();
+    this.destroyed = true;
     this.cancelDraftLoadTimers();
     this.draftLoadGeneration += 1;
     this.routeSubscription.unsubscribe();
@@ -656,57 +673,109 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     if (this.isSending) {
       return;
     }
-    const originalComment = this.sharedData.originalComment;
+    const send = this.pendingSend();
     if (this.stagedAttachments.length > 0) {
-      this.uploadAttachmentQueue([...this.stagedAttachments], 0, originalComment);
+      this.uploadAttachmentQueue(send, [...this.stagedAttachments], 0);
       return;
     }
 
-    this.postDraftText(originalComment);
+    this.postDraftText(send);
   }
 
-  private postDraftText(originalComment: TaskComment | null): void {
-    if (!this.hasContent(this.currentInputText)) {
-      this.finishSuccessfulDraft();
+  private pendingSend(): PendingSend {
+    const context = this.draftContext(this.task);
+    return {
+      task: this.task,
+      context,
+      key: context ? this.draftStore.key(context) : null,
+      originalComment: this.sharedData.originalComment,
+    };
+  }
+
+  // True while the composer still shows the draft this send was pressed on.
+  private isShowing(send: PendingSend): boolean {
+    if (this.destroyed) {
+      return false;
+    }
+    return (
+      this.task === send.task || (send.key !== null && this.getDraftKey(this.task) === send.key)
+    );
+  }
+
+  private setSending(send: PendingSend, sending: boolean): void {
+    if (send.key !== null) {
+      if (sending) {
+        this.sendingDraftKeys.add(send.key);
+      } else {
+        this.sendingDraftKeys.delete(send.key);
+      }
+    }
+    if (this.isShowing(send)) {
+      this.isSending = sending;
+    }
+  }
+
+  private attachmentsFor(send: PendingSend): StagedFeedbackAttachment[] {
+    if (send.context) {
+      return this.draftStore.attachments(send.context);
+    }
+    return this.isShowing(send) ? this.stagedAttachments : [];
+  }
+
+  private postDraftText(send: PendingSend): void {
+    const showing = this.isShowing(send);
+    // Once another task is open, the field belongs to that task. This draft's text
+    // was saved when the task changed, so post that.
+    const stored = showing || !send.context ? null : this.draftStore.load(send.context);
+    const raw = showing ? this.currentInputText : (stored?.text ?? '');
+    if (!this.hasContent(raw)) {
+      this.finishSuccessfulDraft(send);
       return;
     }
 
-    this.isSending = true;
-    this.draftClientRequestId ??= this.newClientRequestId();
-    this.saveCurrentDraft();
+    this.setSending(send, true);
+    let clientRequestId: string;
+    if (stored && send.context) {
+      clientRequestId = stored.clientRequestId ?? this.newClientRequestId();
+      this.draftStore.save(send.context, stored.text, stored.replyToId, clientRequestId);
+    } else {
+      this.draftClientRequestId ??= this.newClientRequestId();
+      clientRequestId = this.draftClientRequestId;
+      this.saveCurrentDraft();
+    }
 
-    const text = this.emojiService.nativeEmojiToColons(this.currentInputText);
+    const text = this.emojiService.nativeEmojiToColons(raw);
     this.taskCommentService
-      .addComment(this.task, text, 'text', originalComment, undefined, this.draftClientRequestId)
+      .addComment(send.task, text, 'text', send.originalComment, undefined, clientRequestId)
       .subscribe({
         next: (_tc: TaskComment) => {
-          this.finishSuccessfulDraft();
+          this.finishSuccessfulDraft(send);
         },
         error: (error: ApiError) => {
-          this.isSending = false;
+          this.setSending(send, false);
           this.alerts.error(this.uploadErrorMessage(error, 'Failed to send this message.'), 6000);
         },
       });
   }
 
   private uploadAttachmentQueue(
+    send: PendingSend,
     queue: StagedFeedbackAttachment[],
     index: number,
-    originalComment: TaskComment | null,
   ): void {
     if (index >= queue.length) {
-      this.isSending = false;
-      if (this.stagedAttachments.length === 0) {
-        this.postDraftText(originalComment);
+      this.setSending(send, false);
+      if (this.attachmentsFor(send).length === 0) {
+        this.postDraftText(send);
       } else {
         this.alerts.error('Some attachments could not be sent. Remove them or retry.', 6000);
       }
       return;
     }
 
-    this.isSending = true;
+    this.setSending(send, true);
     const attachment = queue[index];
-    this.updateStagedAttachment(attachment.clientRequestId, {
+    this.updateStagedAttachment(send, attachment.clientRequestId, {
       status: 'uploading',
       progress: 0,
       error: undefined,
@@ -714,47 +783,49 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     this.taskCommentService
       .uploadStagedAttachment(
-        this.task,
+        send.task,
         attachment.data,
         attachment.fileName,
         '',
-        originalComment,
+        send.originalComment,
         attachment.clientRequestId,
       )
       .subscribe({
         next: (state) => {
-          this.updateStagedAttachment(attachment.clientRequestId, {
+          this.updateStagedAttachment(send, attachment.clientRequestId, {
             status: 'uploading',
             progress: state.progress,
           });
           if (state.state === 'complete') {
-            this.removeStagedAttachment(attachment.clientRequestId, false, true);
+            this.removeSentAttachment(send, attachment.clientRequestId);
           }
         },
         error: (error: ApiError) => {
-          this.updateStagedAttachment(attachment.clientRequestId, {
+          this.updateStagedAttachment(send, attachment.clientRequestId, {
             status: 'failed',
             error: this.uploadErrorMessage(error, 'Upload failed. Retry or remove this file.'),
           });
-          this.uploadAttachmentQueue(queue, index + 1, originalComment);
+          this.uploadAttachmentQueue(send, queue, index + 1);
         },
-        complete: () => this.uploadAttachmentQueue(queue, index + 1, originalComment),
+        complete: () => this.uploadAttachmentQueue(send, queue, index + 1),
       });
   }
 
-  private finishSuccessfulDraft(): void {
-    this.isSending = false;
-    const taskKey =
-      this.task.id || `${this.task.projectId || this.task.project?.id}_${this.task.definition?.id}`;
+  private finishSuccessfulDraft(send: PendingSend): void {
+    this.setSending(send, false);
+    const task = send.task;
+    const taskKey = task.id || `${task.projectId || task.project?.id}_${task.definition?.id}`;
     this.submittedTaskIds.add(taskKey);
     const submittedKey = this.submittedKey();
     if (submittedKey) {
       sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
     }
 
-    const context = this.draftContext(this.task);
-    if (context) {
-      this.draftStore.clear(context);
+    if (send.context) {
+      this.draftStore.clear(send.context);
+    }
+    if (!this.isShowing(send)) {
+      return;
     }
     this.stagedAttachments = [];
     this.draftClientRequestId = null;
@@ -771,12 +842,19 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return;
     }
 
-    this.isSending = true;
+    const send = this.pendingSend();
+    const editing = this.editingComment;
+    this.setSending(send, true);
     const text = this.emojiService.nativeEmojiToColons(this.currentInputText);
 
-    this.taskCommentService.editComment(this.editingComment, text).subscribe({
+    this.taskCommentService.editComment(editing, text).subscribe({
       next: (_tc: TaskComment) => {
-        this.isSending = false;
+        this.setSending(send, false);
+        // Opening another task or cancelling ends the edit and puts that draft back
+        // before this lands, so there is nothing left here to clear.
+        if (!this.isShowing(send) || this.editingComment !== editing) {
+          return;
+        }
         this.sharedData.editingComment = null;
         this.draftBeforeEdit = '';
         this.emojiSearchMode = false;
@@ -784,7 +862,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         this.clearInput();
       },
       error: (error: ApiError) => {
-        this.isSending = false;
+        this.setSending(send, false);
         this.alerts.error(this.uploadErrorMessage(error, 'Failed to edit this comment.'), 6000);
       },
     });
@@ -861,11 +939,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.saveCurrentDraft();
   }
 
-  removeStagedAttachment(
-    clientRequestId: string,
-    save: boolean = true,
-    allowUploading: boolean = false,
-  ): void {
+  removeStagedAttachment(clientRequestId: string, save: boolean = true): void {
     const context = this.draftContext(this.task);
     if (!context) {
       return;
@@ -873,13 +947,23 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     const attachment = this.stagedAttachments.find(
       (item) => item.clientRequestId === clientRequestId,
     );
-    if (attachment?.status === 'uploading' && !allowUploading) {
+    if (attachment?.status === 'uploading') {
       return;
     }
     this.draftStore.removeAttachment(context, clientRequestId);
     this.stagedAttachments = this.draftStore.attachments(context);
     if (save) {
       this.saveCurrentDraft();
+    }
+  }
+
+  private removeSentAttachment(send: PendingSend, clientRequestId: string): void {
+    if (!send.context) {
+      return;
+    }
+    this.draftStore.removeAttachment(send.context, clientRequestId);
+    if (this.isShowing(send)) {
+      this.stagedAttachments = this.draftStore.attachments(send.context);
     }
   }
 
@@ -891,7 +975,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       (item) => item.clientRequestId === clientRequestId,
     );
     if (attachment) {
-      this.uploadAttachmentQueue([attachment], 0, this.originalComment);
+      this.uploadAttachmentQueue(this.pendingSend(), [attachment], 0);
     }
   }
 
@@ -929,16 +1013,18 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   private updateStagedAttachment(
+    send: PendingSend,
     clientRequestId: string,
     update: Partial<StagedFeedbackAttachment>,
   ): void {
-    const context = this.draftContext(this.task);
-    if (!context) {
+    if (!send.context) {
       return;
     }
-    this.draftStore.updateAttachment(context, clientRequestId, update);
-    this.stagedAttachments = this.draftStore.attachments(context);
-    this.cdRef.detectChanges();
+    this.draftStore.updateAttachment(send.context, clientRequestId, update);
+    if (this.isShowing(send)) {
+      this.stagedAttachments = this.draftStore.attachments(send.context);
+      this.cdRef.detectChanges();
+    }
   }
 
   private attachmentValidationError(file: File): string | null {
