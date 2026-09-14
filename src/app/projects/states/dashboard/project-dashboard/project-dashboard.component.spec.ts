@@ -4,7 +4,7 @@ import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
-import {BehaviorSubject, EMPTY, Subject, of, tap} from 'rxjs';
+import {BehaviorSubject, EMPTY, Subject, of, tap, throwError} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
@@ -198,6 +198,44 @@ describe('ProjectDashboardComponent route reuse', () => {
     expect(displayedProject.id).toBe(18);
     expect(component.selectedTaskDefinition$.value).toBeNull();
     expect(setView).toHaveBeenLastCalledWith(ViewType.PROJECT, secondProject);
+
+    component.ngOnDestroy();
+  });
+
+  // A wrong or stale link, or no access, left the page on its skeleton forever.
+  it('shows a failed load instead of the skeleton, and loads again on retry', () => {
+    const projectGet = vi
+      .fn()
+      .mockReturnValueOnce(throwError(() => new Error('404')))
+      .mockImplementation(
+        (params: {id: number}, options: {mappingCompleteCallback: (project: Project) => void}) => {
+          options.mappingCompleteCallback(firstProject);
+          return of(firstProject);
+        },
+      );
+    const component = new ProjectDashboardComponent(
+      {} as UserService,
+      {get: projectGet} as unknown as ProjectService,
+      {taskSubmissionCompleted$: new Subject<Task>()} as unknown as TaskService,
+      {get: vi.fn(() => of(firstUnit))} as unknown as UnitService,
+      {setView: vi.fn()} as unknown as GlobalStateService,
+      {
+        parent: {
+          data: of({project: firstProject}),
+          snapshot: {paramMap: convertToParamMap({projectId: firstProject.id})},
+        },
+      } as unknown as ActivatedRoute,
+      {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
+    );
+    component.project$ = new BehaviorSubject(firstProject).asObservable();
+
+    component.ngOnInit();
+    expect(component.projectLoadFailed).toBe(true);
+
+    component.retryProjectLoad();
+    expect(component.projectLoadFailed).toBe(false);
+    expect(projectGet).toHaveBeenCalledTimes(2);
 
     component.ngOnDestroy();
   });

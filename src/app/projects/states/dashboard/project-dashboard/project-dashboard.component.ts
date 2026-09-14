@@ -63,6 +63,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   private readonly destroy$: Subject<void> = new Subject();
   private readonly projectLoadCancel$: Subject<void> = new Subject();
   private projectReady = false;
+  // Set when the project itself could not be loaded (a wrong or stale link, no
+  // access, or no connection). Without it the page stayed on its skeleton forever.
+  public projectLoadFailed = false;
   private activeProjectId: number | null = null;
   private projectActivation = 0;
 
@@ -423,6 +426,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     const activation = ++this.projectActivation;
     this.activeProjectId = projectId;
     this.projectReady = false;
+    this.projectLoadFailed = false;
     this.selectedTaskDefinition$.next(null);
     this.projectSubject.next(project);
 
@@ -451,7 +455,23 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         },
       )
       .pipe(takeUntil(this.projectLoadCancel$), takeUntil(this.destroy$))
-      .subscribe();
+      .subscribe({
+        error: () => {
+          if (activation === this.projectActivation) {
+            this.projectLoadFailed = true;
+          }
+        },
+      });
+  }
+
+  public retryProjectLoad(): void {
+    if (!this.activeProjectId) {
+      return;
+    }
+
+    this.projectLoadCancel$.next();
+    this.projectLoadFailed = false;
+    this.loadProject(this.activeProjectId, ++this.projectActivation);
   }
 
   private loadUnit(project: Project, activation: number): void {
