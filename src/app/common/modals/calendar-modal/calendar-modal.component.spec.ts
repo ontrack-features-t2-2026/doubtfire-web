@@ -49,8 +49,8 @@ describe('CalendarModalComponent', () => {
   });
 
   it('restores saved settings and allows a retry after a failed save', () => {
-    const first = new Subject<Webcal>();
-    const retry = new Subject<Webcal>();
+    const first: Subject<Webcal> = new Subject();
+    const retry: Subject<Webcal> = new Subject();
     const update = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(retry);
     const error = vi.fn();
     const internals = component as unknown as {
