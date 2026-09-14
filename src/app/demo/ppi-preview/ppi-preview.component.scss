@@ -4,7 +4,7 @@
 }
 
 .ppi-preview {
-  border: 1px solid #dedee8;
+  border: 1px solid var(--ot-color-divider);
   border-radius: 0.75rem;
   display: grid;
   gap: 1rem;
@@ -29,7 +29,7 @@
 
   header p,
   .ppi-preview__advanced > div > p {
-    color: #555565;
+    color: var(--ot-color-text-muted);
     line-height: 1.45;
   }
 }
@@ -46,31 +46,31 @@
   }
 
   button[aria-pressed='true'] {
-    background: #efefff;
-    border-color: #3939ff;
-    color: #2e2ed7;
+    background: color-mix(in srgb, var(--ot-color-primary) 12%, transparent);
+    border-color: var(--ot-color-primary);
+    color: var(--ot-color-link);
   }
 
   button:focus-visible {
-    outline: 3px solid #3939ff;
+    outline: 3px solid var(--ot-color-focus);
     outline-offset: 2px;
   }
 }
 
 .ppi-preview__explanation {
-  background: #f7f7fa;
-  border-left: 4px solid #3939ff;
+  background: var(--ot-color-page);
+  border-left: 4px solid var(--ot-color-primary);
   border-radius: 0.35rem;
-  color: #41414f;
+  color: var(--ot-color-text);
   line-height: 1.45;
   padding: 0.75rem;
 }
 
 .ppi-preview__card {
-  background: #ffffff;
-  border: 1px solid #d8d8e5;
+  background: var(--ot-color-surface-raised);
+  border: 1px solid var(--ot-color-divider);
   border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgb(23 23 45 / 8%);
+  box-shadow: var(--ot-elevation-1);
   min-width: 0;
   overflow: hidden;
 }
@@ -95,17 +95,17 @@
   }
 
   small {
-    color: #555565;
+    color: var(--ot-color-text-muted);
     margin-top: 0.125rem;
   }
 }
 
 .ppi-preview__avatar {
   align-items: center;
-  background: #efefff;
-  border: 1px solid #b9b9ff;
+  background: color-mix(in srgb, var(--ot-color-link) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ot-color-link) 40%, transparent);
   border-radius: 50%;
-  color: #3939ff;
+  color: var(--ot-color-link);
   display: inline-flex;
   flex: 0 0 2.5rem;
   height: 2.5rem;
@@ -117,7 +117,7 @@
   background: transparent;
   border: 0;
   border-radius: 999px;
-  color: #33333e;
+  color: var(--ot-color-text);
   cursor: pointer;
   display: inline-flex;
   font: inherit;
@@ -129,7 +129,7 @@
   touch-action: manipulation;
 
   > span {
-    background: #737582;
+    background: var(--ot-color-text-muted);
     border-radius: 999px;
     display: inline-flex;
     height: 1.25rem;
@@ -138,7 +138,7 @@
   }
 
   i {
-    background: white;
+    background: var(--ot-color-surface-raised);
     border-radius: 50%;
     height: 1rem;
     transition: transform 160ms ease;
@@ -146,15 +146,16 @@
   }
 
   &[aria-checked='true'] > span {
-    background: #3939ff;
+    background: var(--ot-color-primary);
   }
 
   &[aria-checked='true'] i {
+    background: var(--ot-color-on-primary);
     transform: translateX(1rem);
   }
 
   &:focus-visible {
-    outline: 3px solid #3939ff;
+    outline: 3px solid var(--ot-color-focus);
     outline-offset: 2px;
   }
 }
@@ -173,7 +174,7 @@
   }
 
   > p strong {
-    color: #2e2ed7;
+    color: var(--ot-color-link);
     font-size: clamp(1.75rem, 7vw, 2.5rem);
     line-height: 1;
   }
@@ -184,7 +185,7 @@
   }
 
   > div > small {
-    color: #555565;
+    color: var(--ot-color-text-muted);
     display: flex;
     justify-content: space-between;
     margin-top: 0.25rem;
@@ -193,7 +194,7 @@
 
 .ppi-preview__track,
 .ppi-preview__status-track {
-  background: #e5e5eb;
+  background: var(--ot-meter-track);
   border-radius: 999px;
   display: block;
   height: 0.625rem;
@@ -206,13 +207,14 @@
   }
 }
 
+// The link blue: dark primary is under 2:1 on the dark track.
 .ppi-preview__track i {
-  background: #3939ff;
+  background: var(--ot-color-link);
 }
 
 .ppi-preview__advanced {
-  background: #f7f7fc;
-  border-top: 1px solid #e1e1ec;
+  background: var(--ot-color-page);
+  border-top: 1px solid var(--ot-color-divider);
   display: grid;
   gap: 1rem;
   padding: 1rem;
@@ -225,9 +227,9 @@
   }
 
   > dl > div {
-    background: white;
-    border: 1px solid #dddde7;
-    border-left: 4px solid #3939ff;
+    background: var(--ot-color-surface-raised);
+    border: 1px solid var(--ot-color-divider);
+    border-left: 4px solid var(--ot-color-primary);
     border-radius: 0.5rem;
     display: flex;
     justify-content: space-between;
@@ -240,7 +242,7 @@
   }
 
   dt {
-    color: #555565;
+    color: var(--ot-color-text-muted);
     font-weight: 600;
   }
 
@@ -251,10 +253,10 @@
 
 .ppi-preview__privacy {
   align-items: flex-start;
-  background: #fff9ea;
-  border: 1px solid #e2ca7d;
+  background: color-mix(in srgb, var(--ot-color-warning) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ot-color-warning) 45%, var(--ot-color-divider));
   border-radius: 0.5rem;
-  color: #5c4612;
+  color: var(--ot-color-text);
   display: flex;
   gap: 0.625rem;
   line-height: 1.45;
@@ -271,10 +273,10 @@
 }
 
 .ppi-preview__rounding {
-  background: white;
-  border-left: 4px solid #3939ff;
+  background: var(--ot-color-surface-raised);
+  border-left: 4px solid var(--ot-color-primary);
   border-radius: 0.35rem;
-  color: #555565;
+  color: var(--ot-color-text-muted);
   line-height: 1.45;
   padding: 0.75rem;
 }
@@ -302,7 +304,7 @@
   }
 
   li > span:first-child i {
-    border: 1px solid rgb(0 0 0 / 14%);
+    border: 1px solid color-mix(in srgb, var(--ot-color-text) 20%, transparent);
     border-radius: 50%;
     flex: 0 0 0.75rem;
     height: 0.75rem;

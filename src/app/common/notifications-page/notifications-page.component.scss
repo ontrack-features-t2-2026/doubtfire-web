@@ -101,9 +101,11 @@
     width: 20px;
   }
 
+  // The link blue, not primary. Dark primary is a fill colour and falls to about
+  // 2:1 as a glyph on its own wash. In light the two are the same colour.
   &.tone-feedback {
-    background: color-mix(in srgb, var(--ot-color-primary) 12%, transparent);
-    color: var(--ot-color-primary);
+    background: color-mix(in srgb, var(--ot-color-link) 12%, transparent);
+    color: var(--ot-color-link);
   }
 
   &.tone-task {

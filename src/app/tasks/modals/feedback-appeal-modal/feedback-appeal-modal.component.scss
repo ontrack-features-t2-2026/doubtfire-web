@@ -17,10 +17,10 @@
 }
 
 .feedback-review-error {
-  border-left: 4px solid #b42318;
-  background: #fef3f2;
+  border-left: 4px solid var(--ot-color-error);
+  background: color-mix(in srgb, var(--ot-color-error) 10%, transparent);
   padding: 0.75rem;
-  color: #7a271a;
+  color: var(--ot-color-text);
 }
 
 @media (max-width: 479.98px) {

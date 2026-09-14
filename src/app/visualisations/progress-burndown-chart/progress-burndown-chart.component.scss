@@ -60,8 +60,8 @@
   margin: 0;
 
   > div {
-    background: #f7f7fa;
-    border: 1px solid #dddde7;
+    background: var(--ot-color-page);
+    border: 1px solid var(--ot-color-divider);
     border-radius: 0.5rem;
     min-width: 0;
     padding: 0.65rem 0.75rem;
@@ -69,7 +69,7 @@
 
   dt {
     align-items: center;
-    color: #555565;
+    color: var(--ot-color-text-muted);
     display: flex;
     font-size: 0.75rem;
     font-weight: 600;
@@ -78,7 +78,7 @@
   }
 
   dd {
-    color: #25252f;
+    color: var(--ot-color-text);
     font-size: 1rem;
     font-weight: 700;
     margin: 0.25rem 0 0;

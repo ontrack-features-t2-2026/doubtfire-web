@@ -107,7 +107,7 @@
 
 .notification-meta {
   align-items: baseline;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--ot-color-text-muted);
   display: flex;
   flex-wrap: wrap;
   font-size: 12px;
@@ -151,30 +151,33 @@
 
   // One pair per category in Notification::TYPES. The tints are the same hue as
   // the glyph at low alpha, so the circle reads as a wash rather than a second
-  // colour to remember.
+  // colour to remember. Theme tokens, so the glyphs stay readable in dark mode.
+  //
+  // Feedback takes the link blue, not primary. Dark primary is a fill colour and
+  // falls to about 2:1 as a glyph on its own wash. In light the two are the same.
   &.tone-feedback {
-    background: rgba(57, 57, 255, 0.12);
-    color: #2a2ad6;
+    background: color-mix(in srgb, var(--ot-color-link) 12%, transparent);
+    color: var(--ot-color-link);
   }
 
   &.tone-task {
-    background: rgba(199, 119, 0, 0.12);
-    color: #b26a00;
+    background: color-mix(in srgb, var(--ot-color-warning) 12%, transparent);
+    color: var(--ot-color-warning);
   }
 
   &.tone-portfolio {
-    background: rgba(123, 63, 242, 0.12);
-    color: #7b3ff2;
+    background: color-mix(in srgb, var(--ot-color-info) 12%, transparent);
+    color: var(--ot-color-info);
   }
 
   &.tone-extension {
-    background: rgba(31, 138, 76, 0.12);
-    color: #1f8a4c;
+    background: color-mix(in srgb, var(--ot-color-success) 12%, transparent);
+    color: var(--ot-color-success);
   }
 
   &.tone-general {
-    background: rgba(95, 99, 104, 0.12);
-    color: #5f6368;
+    background: var(--ot-color-hover);
+    color: var(--ot-color-text-muted);
   }
 }
 

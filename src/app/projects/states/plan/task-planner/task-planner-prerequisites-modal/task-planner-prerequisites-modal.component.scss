@@ -20,7 +20,7 @@
 
 .task-connections-dialog__eyebrow {
   margin: 0 0 0.25rem;
-  color: #4b5563;
+  color: var(--ot-color-text-muted);
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -71,7 +71,7 @@
 
   .dependent-tasks__cards article {
     padding: 0.75rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--ot-color-divider);
     border-radius: 0.5rem;
   }
 
@@ -90,7 +90,7 @@
   }
 
   .dependent-tasks__cards dt {
-    color: #4b5563;
+    color: var(--ot-color-text-muted);
     font-size: 0.75rem;
     font-weight: 600;
   }

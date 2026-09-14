@@ -183,6 +183,18 @@ body.split-pane-resizing pdf-viewer {
   background-color: color-mix(in srgb, var(--ot-color-text) 20%, var(--ot-color-surface-raised));
 }
 
+// ngx-skeleton-loader sets a fixed light grey and a white shimmer on its own
+// element, in its encapsulated styles, so every loading placeholder stayed light
+// in dark mode. Restate them there with the divider token the hand-built
+// skeletons use. The :root prefix outweighs the library's attribute selector.
+:root ngx-skeleton-loader .skeleton-loader {
+  --ngx-skeleton-loader-base-color: var(--ot-color-divider);
+}
+
+:root[data-ot-theme='dark'] ngx-skeleton-loader .skeleton-loader {
+  --ngx-skeleton-loader-light-mode-color: rgba(255, 255, 255, 0.08);
+}
+
 // Gantt (ngx-gantt) dark theme. The library paints from var(--gantt-color-*,
 // <light-fallback>) AND sets those variables' light defaults INLINE on its own
 // <ngx-gantt-root> host, which beats a :root definition. So override them on the
