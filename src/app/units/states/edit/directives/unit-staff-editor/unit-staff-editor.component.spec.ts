@@ -227,3 +227,11 @@ describe('UnitStaffEditorComponent', () => {
     expect(confirmationModal.show.mock.calls[0][4]).toBe('Remove and give them to me');
   });
 });
+
+it('sets a selected mentor id without changing the unit role', () => {
+  const ada = role(1, 'Ada');
+  const {component, unitRoleService} = editorFor(unitWith([ada, role(2, 'Grace')]));
+  component.selectMentor(ada, {value: 2} as never);
+  expect(ada.mentorId).toBe(2);
+  expect(unitRoleService.update).toHaveBeenCalledWith(ada);
+});

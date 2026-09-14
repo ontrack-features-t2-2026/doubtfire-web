@@ -58,6 +58,7 @@ export class GroupSetManagerComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit(): void {
     this.loadStudentsForStaff();
+    this.selectCurrentProjectGroup();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -74,6 +75,9 @@ export class GroupSetManagerComponent implements OnInit, OnChanges, OnDestroy {
 
     if (unitChanged || (changes['unitRole'] && !changes['unitRole'].firstChange)) {
       this.loadStudentsForStaff();
+    }
+    if (changes['project'] || changes['selectedGroupSet']) {
+      this.selectCurrentProjectGroup();
     }
   }
 
@@ -122,8 +126,12 @@ export class GroupSetManagerComponent implements OnInit, OnChanges, OnDestroy {
     return project && project.student?.name ? project.student.name : '';
   }
 
-  onGroupSetChange(): void {
+  onGroupSetChange(groupSet?: GroupSet): void {
+    if (groupSet) {
+      this.selectedGroupSet = groupSet;
+    }
     this.newGroupSelected(null);
+    this.selectCurrentProjectGroup();
   }
 
   newGroupSelected(group: Group | null) {
@@ -214,5 +222,11 @@ export class GroupSetManagerComponent implements OnInit, OnChanges, OnDestroy {
           );
         },
       });
+  }
+  private selectCurrentProjectGroup(): void {
+    const currentGroup = this.project?.groupForGroupSet(this.selectedGroupSet);
+    if (currentGroup && currentGroup.id !== this.selectedGroup?.id) {
+      this.newGroupSelected(currentGroup);
+    }
   }
 }

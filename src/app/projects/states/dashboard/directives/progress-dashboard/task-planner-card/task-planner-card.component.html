@@ -19,39 +19,13 @@
           class="download-ics-link min-h-11 grow @lg:grow-0"
           mat-stroked-button
           type="button"
-          [disabled]="!hasAnyTasks"
-          [matMenuTriggerFor]="calendarMenu"
+          [disabled]="!hasDownloadableTasks"
+          (click)="openDownloadDialog()"
         >
           <mat-icon aria-hidden="true">download</mat-icon>
           Download calendar
           <mat-icon aria-hidden="true" iconPositionEnd>arrow_drop_down</mat-icon>
         </button>
-
-        <mat-menu #calendarMenu="matMenu">
-          @if (hasTargetGrade) {
-            <button
-              class="calendar-grade-option"
-              mat-menu-item
-              type="button"
-              [disabled]="!hasTasksFor(project.targetGrade)"
-              (click)="downloadIcs(project.targetGrade)"
-            >
-              Tasks for {{ gradeLabel(project.targetGrade) }} (your target)
-            </button>
-            <mat-divider></mat-divider>
-          }
-          @for (grade of otherGrades; track grade) {
-            <button
-              class="calendar-grade-option"
-              mat-menu-item
-              type="button"
-              [disabled]="!hasTasksFor(grade)"
-              (click)="downloadIcs(grade)"
-            >
-              Tasks for {{ gradeLabel(grade) }}
-            </button>
-          }
-        </mat-menu>
       </div>
     </div>
 

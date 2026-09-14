@@ -31,3 +31,37 @@
 .report-reminder {
   @include wizard.callout(warning);
 }
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.portfolio-step-footer button {
+  min-height: 44px;
+}
+
+@media (max-width: 639.98px) {
+  .portfolio-step-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+.portfolio-validation {
+  @include wizard.callout(error);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.portfolio-file-uploader {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 639.98px) {
+  .submitted {
+    flex-direction: column;
+    text-align: center;
+  }
+}

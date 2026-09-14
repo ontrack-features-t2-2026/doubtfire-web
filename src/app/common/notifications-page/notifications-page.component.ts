@@ -16,6 +16,7 @@ import {NotificationRouteService} from 'src/app/api/services/notification-route.
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ConfirmationModalService} from '../modals/confirmation-modal/confirmation-modal.service';
+import {presentationFor} from '../notifications/notification-presentation';
 
 /**
  * The whole notification list, on a page of its own.
@@ -38,28 +39,6 @@ import {ConfirmationModalService} from '../modals/confirmation-modal/confirmatio
 export class NotificationsPageComponent implements OnInit, OnDestroy {
   public readonly pageSizeOptions: number[] = [10, 20, 50];
 
-  /**
-   * The icon and colour for a notification's category.
-   *
-   * The same five as the header dropdown, deliberately, so a notification looks
-   * like itself wherever it is read. Duplicated rather than shared because the
-   * dropdown is on a sibling branch and neither can import from the other yet;
-   * this belongs in one place once both have merged, along with open().
-   *
-   * Keyed on notificationType because that is all NotificationEntity exposes.
-   * The event naming the specific thing that happened is not in the payload, so
-   * a new task, a due date change and a due soon reminder share the task icon.
-   */
-  private static readonly CATEGORIES: Record<string, {icon: string; tone: string}> = {
-    feedback: {icon: 'chat_bubble', tone: 'feedback'},
-    task: {icon: 'assignment', tone: 'task'},
-    portfolio: {icon: 'collections_bookmark', tone: 'portfolio'},
-    extension: {icon: 'more_time', tone: 'extension'},
-    general: {icon: 'campaign', tone: 'general'},
-  };
-
-  private static readonly UNKNOWN_CATEGORY = {icon: 'notifications', tone: 'general'};
-
   notifications: Notification[] = [];
 
   /**
@@ -80,6 +59,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
   private listSubscription: Subscription | null = null;
   private readonly deletingNotificationIds: Set<number> = new Set();
   markAllReadPending = false;
+  deleteAllPending = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -96,11 +76,10 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * Whether the mark all read button has anything to do.
    *
    * Worked out from the rows this page is holding, and deliberately not from
-   * NotificationService.unreadCount$. That subject seeds at zero and only moves
-   * when somebody calls refreshUnreadCount(), and the only thing in the app that
-   * calls it on a schedule is the bell, which the header does not render below
-   * xs. Reading it here would hide this button on a phone, which is the one size
-   * where this page is the only way to the notifications at all.
+   * NotificationService.unreadCount$. That subject seeds at zero and is updated
+   * independently by the bell. Reading it here would make a page action depend
+   * on whether another component's refresh has completed rather than on the rows
+   * the action will actually change.
    *
    * A getter rather than a field kept in step by hand. It has to answer after a
    * mark all read, after a delete, after a row is opened and after a reload, and
@@ -220,7 +199,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * ever come to disagree with it.
    */
   markAllRead(): void {
-    if (!this.hasUnread || this.markAllReadPending) {
+    if (!this.hasUnread || this.markAllReadPending || this.deleteAllPending) {
       return;
     }
 
@@ -256,7 +235,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
    * noise.
    */
   confirmDelete(notification: Notification): void {
-    if (this.isDeleting(notification)) {
+    if (this.isDeleting(notification) || this.deleteAllPending) {
       return;
     }
 
@@ -269,12 +248,43 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Confirm one bounded bulk delete.
+   *
+   * The count and highest id come from the same loaded snapshot. The API uses
+   * the id as an inclusive boundary, so a notification arriving while the
+   * confirmation is open is not silently deleted.
+   */
+  confirmDeleteAll(): void {
+    if (!this.notifications.length || this.deleteAllPending) {
+      return;
+    }
+
+    const throughId = Math.max(...this.notifications.map((notification) => notification.id));
+    const affectedCount = this.notifications.filter(
+      (notification) => notification.id <= throughId,
+    ).length;
+    const noun = affectedCount === 1 ? 'notification' : 'notifications';
+
+    this.confirmationModal.show(
+      'Delete all notifications',
+      `Delete all ${affectedCount} ${noun}? This cannot be undone. New notifications that arrive after this confirmation will be kept.`,
+      () => this.removeAll(throughId),
+      () => undefined,
+      'Delete all',
+    );
+  }
+
   iconFor(notification: Notification): string {
-    return this.categoryFor(notification).icon;
+    return presentationFor(notification).icon;
   }
 
   toneFor(notification: Notification): string {
-    return this.categoryFor(notification).tone;
+    return presentationFor(notification).tone;
+  }
+
+  labelFor(notification: Notification): string {
+    return presentationFor(notification).label;
   }
 
   /**
@@ -287,7 +297,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
   rowLabel(notification: Notification): string {
     const state = notification.isRead ? 'Read' : 'Unread';
 
-    return `${state}. ${notification.message}. ${this.timeAgo(notification)}`;
+    return `${state}. ${this.labelFor(notification)}. ${notification.message}. ${this.timeAgo(notification)}`;
   }
 
   /**
@@ -304,18 +314,11 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
   }
 
   isDeleting(notification: Notification): boolean {
-    return this.deletingNotificationIds.has(notification.id);
+    return this.deleteAllPending || this.deletingNotificationIds.has(notification.id);
   }
 
   timeAgo(notification: Notification): string {
     return moment(notification.createdAt).fromNow();
-  }
-
-  private categoryFor(notification: Notification): {icon: string; tone: string} {
-    return (
-      NotificationsPageComponent.CATEGORIES[notification.notificationType] ??
-      NotificationsPageComponent.UNKNOWN_CATEGORY
-    );
   }
 
   /**
@@ -377,6 +380,36 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  private removeAll(throughId: number): void {
+    if (this.deleteAllPending || !this.notifications.length) {
+      return;
+    }
+
+    this.deleteAllPending = true;
+    this.cancelPendingList();
+
+    this.notificationService.deleteAll(throughId).subscribe({
+      next: (deletedCount) => {
+        this.deleteAllPending = false;
+        this.notifications = this.notifications.filter(
+          (notification) => notification.id > throughId,
+        );
+        this.pageIndex = Math.min(this.pageIndex, this.lastPageIndex());
+        this.updateVisible();
+
+        const message =
+          deletedCount === 1 ? '1 notification deleted' : `${deletedCount} notifications deleted`;
+        this.alerts.success(message);
+        this.changeDetectorRef.detectChanges();
+        this.restoreFocusAfterDelete(0);
+      },
+      error: () => {
+        this.deleteAllPending = false;
+        this.alerts.error('Your notifications could not be deleted');
+      },
+    });
+  }
+
   private restoreFocusAfterDelete(previousIndex: number): void {
     if (document.activeElement !== document.body) {
       return;
@@ -387,7 +420,12 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     );
     const nextIndex = Math.min(Math.max(previousIndex, 0), rows.length - 1);
 
-    rows[nextIndex]?.focus();
+    if (rows[nextIndex]) {
+      rows[nextIndex].focus();
+      return;
+    }
+
+    this.elementRef.nativeElement.querySelector<HTMLElement>('.notifications-placeholder')?.focus();
   }
 
   private updateVisible(): void {

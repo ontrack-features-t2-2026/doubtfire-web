@@ -479,12 +479,13 @@ export class LearningOutcomeEditorComponent implements OnChanges, OnInit, AfterV
     const numbers = (this.outcomeSource.data ?? [])
       .map((outcome) => outcome.abbreviation ?? '')
       .filter((abbreviation) => abbreviation.startsWith(this.abbreviationPrefix))
-      .map((abbreviation) => Number(abbreviation.slice(this.abbreviationPrefix.length)))
-      .filter((value) => Number.isInteger(value));
+      .map((abbreviation) => abbreviation.slice(this.abbreviationPrefix.length))
+      .filter((suffix) => /^\d+$/.test(suffix))
+      .map((suffix) => Number(suffix));
 
     if (numbers.length > 0) {
       return Math.max(...numbers) + 1;
     }
-    return (this.outcomeSource.data?.length ?? 0) + 1;
+    return 1;
   }
 }

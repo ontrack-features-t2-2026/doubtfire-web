@@ -70,7 +70,9 @@
             @for (file of extraFiles; track file) {
               <li class="review-list__row">
                 <mat-icon aria-hidden="true">{{ getIcon(file.kind) }}</mat-icon>
-                <span class="min-w-0 truncate" [title]="file.name">{{ file.name }}</span>
+                <span class="portfolio-review-file-name min-w-0" [title]="file.name">{{
+                  file.name
+                }}</span>
               </li>
             }
           </ul>
@@ -126,7 +128,7 @@
             To update a task or add files, delete your portfolio and create it again before the
             submission deadline.
           </p>
-          <div class="mt-2 flex flex-wrap gap-2">
+          <div class="portfolio-download-actions mt-2 flex flex-wrap gap-2">
             <button color="primary" mat-flat-button type="button" (click)="downloadPortfolio()">
               <mat-icon aria-hidden="true">download</mat-icon>
               Download portfolio
@@ -141,7 +143,9 @@
     }
   </div>
 
-  <footer class="flex flex-wrap items-center gap-3 border-t border-ot-divider px-5 py-3 sm:px-6">
+  <footer
+    class="portfolio-step-footer flex flex-wrap items-center gap-3 border-t border-ot-divider px-5 py-3 sm:px-6"
+  >
     <button mat-stroked-button type="button" (click)="goBack()">Back</button>
   </footer>
 </section>

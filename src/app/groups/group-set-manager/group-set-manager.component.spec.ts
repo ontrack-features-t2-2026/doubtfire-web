@@ -164,6 +164,24 @@ describe('GroupSetManagerComponent', () => {
     expect(component.selectedGroup).toBeNull();
   });
 
+  it('opens the student group for the newly selected group set', () => {
+    const first = makeGroup(set, 1, 'First set group');
+    const secondSet = new GroupSet(unit);
+    secondSet.id = 200;
+    const second = makeGroup(secondSet, 2, 'Second set group');
+    ana.groupCache.add(first);
+    ana.groupCache.add(second);
+    const component = create();
+    component.project = ana;
+    component.ngOnChanges({project: new SimpleChange(undefined, ana, true)});
+    expect(component.selectedGroup).toBe(first);
+
+    component.onGroupSetChange(secondSet);
+
+    expect(component.selectedGroupSet).toBe(secondSet);
+    expect(component.selectedGroup).toBe(second);
+  });
+
   it('closes the open group when the page moves to another unit', () => {
     const group = makeGroup(set, 1, 'Team');
 
@@ -191,5 +209,55 @@ describe('GroupSetManagerComponent', () => {
   it('hands the selector the same select handler every time', () => {
     const component = create({} as UnitRole);
     expect(component.groupSelectHandler).toBe(component.groupSelectHandler);
+  });
+});
+
+describe('GroupSetManagerComponent group-name updates', () => {
+  let component: GroupSetManagerComponent;
+  let updateResult: Subject<Group>;
+  let originalGroup: Group;
+  let nextGroup: Group;
+
+  beforeEach(() => {
+    updateResult = new Subject<Group>();
+    component = new GroupSetManagerComponent(
+      {update: vi.fn(() => updateResult)} as never,
+      {success: vi.fn(), error: vi.fn()} as never,
+      {} as never,
+    );
+    component.unit = {id: 1, studentsForGroupTypeAhead: () => []} as never;
+    originalGroup = {
+      id: 10,
+      name: 'Original name',
+      groupSet: {id: 20},
+      projects: [],
+    } as never;
+    nextGroup = {
+      id: 11,
+      name: 'Next group',
+      groupSet: {id: 20},
+      projects: [],
+    } as never;
+    component.selectedGroup = originalGroup;
+    component.startEditingGroupName();
+    originalGroup.name = 'Saved name';
+  });
+
+  it('keeps the submitted name when another group is selected before the request resolves', () => {
+    component.updateGroup();
+
+    component.newGroupSelected(nextGroup);
+    updateResult.next(originalGroup);
+
+    expect(originalGroup.name).toBe('Saved name');
+  });
+
+  it('restores the previous name if the pending update fails after selection changes', () => {
+    component.updateGroup();
+    component.newGroupSelected(nextGroup);
+
+    updateResult.error('update failed');
+
+    expect(originalGroup.name).toBe('Original name');
   });
 });
