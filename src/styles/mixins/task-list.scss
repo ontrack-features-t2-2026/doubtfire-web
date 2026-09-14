@@ -177,16 +177,21 @@
             width: 12px;
           }
           &.grade-badge {
-            background-color: #000000;
+            // Invert against the list surface so the badge stays visible in
+            // both themes (dark chip/light text in light, light chip/dark text
+            // in dark), instead of a black circle that vanishes on the dark list.
+            background-color: var(--ot-color-inverse-surface);
+            color: var(--ot-color-inverse-text);
             font-size: 9px;
           }
           &.quality-badge {
-            background-color: #000000;
+            background-color: var(--ot-color-inverse-surface);
+            color: var(--ot-color-inverse-text);
             font-size: 9px;
           }
           &.soon-badge {
-            background-color: color.adjust(#eb8f06, $lightness: 15%);
-            color: black;
+            // The working-on-it amber is dark enough for the white clock in both themes.
+            background-color: var(--ot-status-working-on-it);
           }
           &.due-badge {
             background-color: $doubtfire-color;

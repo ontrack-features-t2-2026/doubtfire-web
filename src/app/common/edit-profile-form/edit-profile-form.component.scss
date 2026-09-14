@@ -1,7 +1,19 @@
 :host {
+  display: block;
   height: auto;
-  overflow-y: auto;
 }
+
+form,
+.main-container,
+.main {
+  max-width: 100%;
+}
+
+.main {
+  gap: 4px;
+  padding: 16px clamp(16px, 4vw, 28px) calc(3rem + env(safe-area-inset-bottom));
+}
+
 
 h1 {
   // THM-M01: was hardcoded black.
@@ -25,7 +37,60 @@ p {
 }
 
 section {
-  padding: 8px;
+  padding: 12px;
+}
+
+.account-information {
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+  border: 1px solid var(--ot-color-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  width: 100%;
+
+  h2,
+  p,
+  dl,
+  dd {
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 1.125rem;
+  }
+
+  p {
+    color: var(--ot-color-text-muted);
+    margin-top: 4px;
+  }
+
+  dl {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  dl > div {
+    min-width: 0;
+  }
+
+  dt {
+    color: var(--ot-color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  dd {
+    overflow-wrap: anywhere;
+  }
+
+  &__managed {
+    border-top: 1px solid var(--ot-color-divider);
+    padding-top: 10px;
+  }
 }
 
 /* checkbox */
@@ -57,7 +122,13 @@ section {
 }
 
 .peer-progress-preference {
-  border-block: 1px solid #e4e4e7;
+  // Divider token equals the raised surface in dark (#353c47), so this separator
+  // vanishes on the dialog. Use the border token in dark where it actually reads;
+  // keep the softer divider in light.
+  border-block: 1px solid var(--ot-color-divider);
+  :root[data-ot-theme='dark'] & {
+    border-block-color: var(--ot-color-border);
+  }
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;
@@ -67,7 +138,71 @@ section {
   }
 
   small {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     max-width: 42rem;
+  }
+}
+
+.profile-actions {
+  background: var(--ot-color-surface-raised);
+  border-top: 1px solid var(--ot-color-divider);
+  bottom: 0;
+  padding: 12px clamp(16px, 4vw, 28px) max(12px, env(safe-area-inset-bottom));
+  position: sticky;
+  width: 100%;
+  z-index: 2;
+
+  button {
+    min-height: 44px;
+  }
+}
+
+.profile-save-status {
+  min-height: 24px;
+  width: 100%;
+
+  p {
+    margin: 4px 0 0;
+  }
+
+  &__success {
+    color: var(--ot-color-success);
+  }
+
+  &__validation,
+  &__error {
+    color: var(--ot-color-error);
+    font-weight: 600;
+  }
+}
+
+.profile-name-fields {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+
+  mat-form-field {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-name-fields {
+    gap: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .main {
+    padding-inline: 16px;
+  }
+
+  .account-information dl {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-actions {
+    padding-inline: 16px;
   }
 }

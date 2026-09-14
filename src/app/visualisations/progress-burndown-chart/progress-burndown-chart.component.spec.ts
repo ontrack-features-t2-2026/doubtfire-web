@@ -7,6 +7,7 @@ import {
   PeerProgressState,
   Project,
 } from 'src/app/api/models/doubtfire-model';
+import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
 
@@ -99,6 +100,7 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
       } as unknown as PeerProgressService,
       {enabled: demoEnabled} as DemoModeStore,
       'en-US',
+      {token: (name: string) => name} as unknown as ThemeColorService,
     );
 
     component.project = project;
@@ -170,6 +172,25 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
     const peerSeries = component.data.find((series) => series.name === 'Peer median (demo)');
 
     expect(peerSeries?.series.map((point) => point.value)).toEqual([75, 25]);
+    expect(component.summaries).toEqual([
+      {name: 'Projected', remaining: 10, color: '--ot-chart-axis'},
+      {name: 'To Submit', remaining: 20, color: '--ot-chart-2'},
+      {name: 'To Complete', remaining: 30, color: '--ot-chart-5'},
+    ]);
+  });
+
+  it('derives every displayed summary from the same chart series', () => {
+    const getCohortMedian = vi.fn();
+    const {component, project} = makeHarness(getCohortMedian, false);
+
+    initialise(component);
+
+    for (const summary of component.summaries) {
+      const source = component.temp.find((series) => series.name === summary.name);
+      expect(summary.remaining).toBe(source?.series.at(-1)?.value);
+      expect(new Set(source?.series.map((point) => point.value)).size).toBeGreaterThan(1);
+    }
+    expect(project.refreshBurndownChartData).toHaveBeenCalledOnce();
   });
 
   it('withholds the median when the response is suppressed', () => {

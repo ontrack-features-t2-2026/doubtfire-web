@@ -1,0 +1,16 @@
+.task-status-pie-chart {
+  ::ng-deep .legend-label .legend-label-text {
+    color: var(--ot-color-text-muted);
+  }
+
+  ::ng-deep .legend-label:hover .legend-label-text,
+  ::ng-deep .legend-label.active .legend-label-text,
+  ::ng-deep .legend-label .active .legend-label-text,
+  ::ng-deep .legend-label-text.active {
+    color: var(--ot-color-text);
+  }
+
+  ::ng-deep .tick text {
+    fill: var(--ot-chart-axis);
+  }
+}

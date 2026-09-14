@@ -1,7 +1,12 @@
-<section class="notification-settings flex size-full flex-col">
-  <h3>Notification Settings</h3>
+<section
+  aria-describedby="notification-settings-intro"
+  aria-labelledby="notification-settings-title"
+  class="notification-settings flex size-full flex-col"
+  role="group"
+>
+  <h3 id="notification-settings-title">Notification Settings</h3>
 
-  <p class="notification-settings__intro">
+  <p class="notification-settings__intro" id="notification-settings-intro">
     Choose which notification categories you want to receive.
   </p>
 
@@ -21,7 +26,10 @@
     >
       Task notifications
     </mat-checkbox>
-    <small id="task-notification-description">Receive notifications for task-related events.</small>
+    <small class="notification-setting__help" id="task-notification-description">
+      Due dates, changed dates and task status updates. For staff, also submissions, help requests
+      and extension requests.
+    </small>
   </div>
 
   <div class="notification-setting">
@@ -33,8 +41,8 @@
     >
       Feedback notifications
     </mat-checkbox>
-    <small id="feedback-notification-description">
-      Receive notifications for feedback-related events.
+    <small class="notification-setting__help" id="feedback-notification-description">
+      New comments, feedback, and review outcomes.
     </small>
   </div>
 
@@ -47,8 +55,8 @@
     >
       Portfolio notifications
     </mat-checkbox>
-    <small id="portfolio-notification-description">
-      Receive notifications for portfolio-related events.
+    <small class="notification-setting__help" id="portfolio-notification-description">
+      Portfolio processing and assessment updates.
     </small>
   </div>
 </section>

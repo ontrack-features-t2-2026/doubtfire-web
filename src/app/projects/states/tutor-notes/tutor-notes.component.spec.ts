@@ -1,10 +1,13 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {EMPTY} from 'rxjs';
-import {UserService} from 'src/app/api/models/doubtfire-model';
+import {MatButtonModule} from '@angular/material/button';
+import {MatChipSelectionChange} from '@angular/material/chips';
+import {EMPTY, of, throwError} from 'rxjs';
+import {Task, UserService} from 'src/app/api/models/doubtfire-model';
 import {TutorNote} from 'src/app/api/models/tutor-note';
 import {TutorNoteService} from 'src/app/api/services/tutor-note.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {HumanizedDatePipe} from 'src/app/common/pipes/humanized-date.pipe';
 import {LocalizedDatePipe} from 'src/app/common/pipes/localized-date.pipe';
@@ -100,5 +103,139 @@ describe('TutorNotesComponent', () => {
 
     expect(component.editingNote).toBe(note);
     expect(card().querySelector('textarea')).toBeTruthy();
+  });
+
+  it('keeps Mark as read outside the note actions', () => {
+    const markAsRead = Array.from<HTMLButtonElement>(card().querySelectorAll('button')).find(
+      (button) => button.textContent.trim() === 'Mark as read',
+    );
+
+    expect(markAsRead).toBeDefined();
+    expect(markAsRead.closest('.note-actions')).toBeNull();
+  });
+});
+
+describe('TutorNotesComponent states', () => {
+  let component: TutorNotesComponent;
+  let fixture: ComponentFixture<TutorNotesComponent>;
+  let loadTutorNotes: ReturnType<typeof vi.fn>;
+  let addNote: ReturnType<typeof vi.fn>;
+
+  const otherTaskNote = {
+    id: 4,
+    replyToId: null,
+    note: 'a note on another task',
+    user: {},
+    authorIsMe: false,
+    taskDefinition: {abbreviation: 'T2', name: 'Second task'},
+  } as TutorNote;
+
+  beforeEach(async () => {
+    loadTutorNotes = vi.fn(() => of([]));
+    addNote = vi.fn(() => EMPTY);
+
+    await TestBed.configureTestingModule({
+      declarations: [TutorNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
+      // The real button, so disabledInteractive behaves as it does in the app.
+      imports: [EmptyStateComponent, MatButtonModule],
+      providers: [
+        {provide: UserService, useValue: emptyProvider},
+        {
+          provide: TutorNoteService,
+          useValue: {loadTutorNotes, addNote, updateTutorNoteReplies: () => undefined},
+        },
+        {provide: AlertService, useValue: emptyProvider},
+        {provide: ConfirmationModalService, useValue: emptyProvider},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  // Opened from a task, the list starts filtered to that task.
+  function render(notes: TutorNote[], task?: Task): void {
+    fixture = TestBed.createComponent(TutorNotesComponent);
+    component = fixture.componentInstance;
+    component.task = task;
+    component.unitRole = {tutorNotesCache: {currentValues: notes}} as never;
+    fixture.detectChanges();
+  }
+
+  function text(): string {
+    return fixture.nativeElement.textContent.replace(/\s+/g, ' ');
+  }
+
+  function filters(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('mat-chip-listbox');
+  }
+
+  function userChange(selected: boolean): MatChipSelectionChange {
+    return {isUserInput: true, selected} as MatChipSelectionChange;
+  }
+
+  it('says there are no moderation notes yet, without filters that would do nothing', () => {
+    render([]);
+
+    expect(text()).toContain('No moderation notes yet');
+    expect(filters()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.note-card')).toBeNull();
+  });
+
+  it('explains an empty filter and offers the filters to widen it', () => {
+    render([otherTaskNote], {definition: {abbreviation: 'T1'}} as Task);
+
+    expect(text()).toContain('No notes for the selected tasks');
+    expect(text()).not.toContain('No moderation notes yet');
+    expect(filters()).not.toBeNull();
+
+    component.onFilterChange('all', userChange(true));
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('No notes for the selected tasks');
+    expect(fixture.nativeElement.querySelectorAll('.note-card').length).toBe(1);
+  });
+
+  it('only follows filter changes the user made', () => {
+    render([otherTaskNote], {definition: {abbreviation: 'T1'}} as Task);
+
+    component.onFilterChange('T1', {isUserInput: false, selected: false} as MatChipSelectionChange);
+    expect(component.selectedTaskDefinitions.get('T1')).toBe(true);
+
+    component.onFilterChange('T1', userChange(false));
+    expect(component.selectedTaskDefinitions.get('T1')).toBe(false);
+  });
+
+  it('shows an error state with Try again when the notes fail to load', () => {
+    loadTutorNotes.mockReturnValueOnce(throwError(() => new Error('offline')));
+    render([]);
+
+    expect(text()).toContain('The notes did not load');
+
+    const tryAgain = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((button) => button.textContent.trim() === 'Try again');
+    tryAgain.click();
+    fixture.detectChanges();
+
+    expect(loadTutorNotes).toHaveBeenCalledTimes(2);
+    expect(text()).not.toContain('The notes did not load');
+    expect(text()).toContain('No moderation notes yet');
+  });
+
+  it('puts Submit outside the text field, focusable but inactive until there is text', () => {
+    render([]);
+    const submit = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((button) => button.textContent.trim() === 'Submit');
+
+    expect(submit.closest('mat-form-field')).toBeNull();
+    expect(submit.hasAttribute('disabled')).toBe(false);
+    expect(submit.getAttribute('aria-disabled')).toBe('true');
+
+    submit.click();
+    expect(addNote).not.toHaveBeenCalled();
+
+    component.noteText = 'Can we talk about this mark?';
+    fixture.detectChanges();
+    expect(submit.getAttribute('aria-disabled')).toBeNull();
   });
 });

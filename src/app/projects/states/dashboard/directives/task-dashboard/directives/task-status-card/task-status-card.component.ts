@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   Input,
@@ -28,9 +27,8 @@ import {SubmissionTypeModalService} from 'src/app/tasks/modals/submission-type-m
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskStatusCardComponent implements OnChanges, AfterViewInit, OnDestroy {
+export class TaskStatusCardComponent implements OnChanges, OnDestroy {
   triggers: TaskStatusUiData[];
-  textCss: string;
   private taskStatusSub: Subscription;
 
   constructor(
@@ -51,24 +49,21 @@ export class TaskStatusCardComponent implements OnChanges, AfterViewInit, OnDest
   }
 
   @Input() task: Task;
-  taskStatusColor: string;
 
   private project?: Project;
+
+  // Derived so the card's status-colour wrap (--tsc bindings) tracks live status
+  // transitions, which mutate the existing task rather than replacing the input.
+  get taskStatusColor(): string {
+    return this.task?.statusClass();
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.task) {
       this.task = changes.task.currentValue;
       this.reapplyTriggers();
-      this.taskStatusColor = this.taskService.statusColors.get(this.task.statusClass());
       this.project = this.task.project;
-      this.textCss = `::ng-deep f-task-status-card .mat-mdc-text-field-wrapper.mdc-text-field {
-        background-color: #${this.taskStatusColor} !important;
-      }`;
     }
-  }
-
-  ngAfterViewInit(): void {
-    document.getElementsByTagName('style')[0].append(this.textCss);
   }
 
   ngOnDestroy(): void {
@@ -115,6 +110,18 @@ export class TaskStatusCardComponent implements OnChanges, AfterViewInit, OnDest
 
   public isSubmittedForPortfolio(): boolean {
     return this.task.status === 'assess_in_portfolio';
+  }
+
+  public get showUploadSubmission(): boolean {
+    return !!this.task && !this.task.hasSubmissionHistory();
+  }
+
+  public get showUploadNewFiles(): boolean {
+    return !!this.task?.hasSubmissionHistory() && this.task.requiresFileUpload();
+  }
+
+  public get submissionActionPending(): boolean {
+    return !!(this.task?.processingPdf || this.task?.loadingSubmissionDetails);
   }
 
   triggerTransition(trigger: TaskStatusEnum): void {

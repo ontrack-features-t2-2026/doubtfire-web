@@ -45,6 +45,15 @@ export class TaskStatus {
     'rediscuss',
   ];
 
+  /**
+   * Keep URL, API and presentation filters on the persistence vocabulary above.
+   * Query parameters are untrusted strings, so every route consumer must pass
+   * through this guard before using one as a task status.
+   */
+  public static isStatus(value: unknown): value is TaskStatusEnum {
+    return typeof value === 'string' && this.STATUS_KEYS.includes(value as TaskStatusEnum);
+  }
+
   // Student-facing lifecycle order for an anonymous peer distribution. This
   // differs from persistence/API order, which is not intended as presentation.
   public static readonly PEER_PROGRESS_DISPLAY_ORDER: TaskStatusEnum[] = [
@@ -276,7 +285,7 @@ export class TaskStatus {
     ['ready_for_feedback', 'thumb_up'],
     ['not_started', 'pause'],
     ['working_on_it', 'bolt'],
-    ['need_help', 'help'],
+    ['need_help', 'question_mark'],
     ['redo', 'undo'],
     ['feedback_exceeded', 'visibility_off'],
     ['fix_and_resubmit', 'construction'],
@@ -295,7 +304,9 @@ export class TaskStatus {
     ['ready_for_feedback', 'thumb_up_off_alt'],
     ['not_started', 'pause'],
     ['working_on_it', 'bolt'],
-    ['need_help', 'help'],
+    // A bare question mark: the filled 'help' glyph drew a white disc inside the
+    // status circle, a circle within a circle.
+    ['need_help', 'question_mark'],
     ['redo', 'undo'],
     ['feedback_exceeded', 'visibility_off'],
     ['fix_and_resubmit', 'construction'],

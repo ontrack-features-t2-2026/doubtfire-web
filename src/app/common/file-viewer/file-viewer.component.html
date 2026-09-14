@@ -20,8 +20,12 @@
     ></pdf-viewer>
   }
   @if (fileType === 'html') {
-    <div>
-      <iframe height="100%" width="100%" [src]="blobUrl | safe"></iframe>
-    </div>
+    <!-- An iframe with no height of its own falls back to 150px, which cut a
+         similarity report off after its first lines. -->
+    <iframe
+      class="block h-[32rem] max-h-[70vh] w-full rounded-ot-md border border-ot-divider"
+      title="File preview"
+      [src]="blobUrl | safe"
+    ></iframe>
   }
 </div>

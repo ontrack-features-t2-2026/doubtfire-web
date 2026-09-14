@@ -25,6 +25,7 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskPrerequisite} from 'src/app/api/models/task-prerequisite';
+import {TaskStatus} from 'src/app/api/models/task-status';
 import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -39,6 +40,10 @@ interface TaskGanttItem extends GanttItem {
   task: Task;
   originalLinks: GanttLink[];
 }
+
+const GANTT_HEADER_HEIGHT = 52;
+const GANTT_ROW_HEIGHT = 44;
+const GANTT_SCROLL_ALLOWANCE = 18;
 
 @Component({
   selector: 'f-task-planner',
@@ -192,6 +197,49 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.taskPlannerPrerequisitesModal.show(this.project, td, prereqs);
   }
 
+  public statusLabel(item: TaskGanttItem): string {
+    return TaskStatus.STATUS_LABELS.get(item.task.status) ?? 'Not Started';
+  }
+
+  public prerequisitesFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.taskDefinitionId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.prerequisite ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.prerequisiteId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public dependentsFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.prerequisiteId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.taskDefinition ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.taskDefinitionId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public connectionSummary(item: TaskGanttItem): string {
+    const prerequisiteCount = this.prerequisitesFor(item).length;
+    const dependentCount = this.dependentsFor(item).length;
+
+    if (!prerequisiteCount && !dependentCount) {
+      return 'No prerequisite or dependent tasks';
+    }
+
+    const prerequisiteLabel = `${prerequisiteCount} prerequisite${prerequisiteCount === 1 ? '' : 's'}`;
+    const dependentLabel = `${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`;
+    return `${prerequisiteLabel}; ${dependentLabel}`;
+  }
+
   setShowTasksAboveTargetGrade(value: boolean) {
     this.showTasksAboveTargetGrade = value;
     this.preferenceStorage?.setItem(
@@ -266,26 +314,71 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     return false;
   }
 
+  private cssVar(name: string): string {
+    return getComputedStyle(this.elementRef.nativeElement).getPropertyValue(name).trim();
+  }
+
+  private cssVarRgba(name: string, alpha: number): string {
+    const value = this.cssVar(name);
+    const match = /^#?([0-9a-f]{6})$/i.exec(value);
+    if (!match) {
+      return value;
+    }
+    const int = parseInt(match[1], 16);
+    const r = (int >> 16) & 255;
+    const g = (int >> 8) & 255;
+    const b = int & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
   getItemClasses(item: TaskGanttItem): string[] {
     const classes: string[] = ['gantt-bar'];
     if (this.animateBackground) {
       classes.push('flash');
     }
     if (item.highlighted) {
-      classes.push('[--bar-bg:#03c6fc]');
+      classes.push('[--bar-bg:var(--ot-color-info)]', '[color:var(--ot-color-on-primary)]');
     } else if (this.isAboveTargetGrade(item)) {
-      classes.push('[--bar-bg:#9ca3af]', 'text-white');
+      classes.push(
+        '[--bar-bg:var(--ot-color-disabled-surface)]',
+        '[color:var(--ot-color-text-muted)]',
+      );
+    } else if (this.isComplete(item)) {
+      // A finished task has no deadline left to warn about, so it shows as done
+      // rather than keeping the planning colour it had while open.
+      classes.push('[--bar-bg:var(--ot-status-complete)]', '[color:var(--ot-status-complete-on)]');
     } else if (this.isPastFeedbackDeadline(item)) {
-      classes.push('[--bar-bg:#cd3704]', 'text-white');
+      classes.push(
+        '[--bar-bg:var(--ot-status-time-exceeded)]',
+        '[color:var(--ot-status-time-exceeded-on)]',
+      );
     } else if (this.isBlockedByPrerequisite(item)) {
-      classes.push('[--bar-bg:#e88307]', 'text-black');
+      classes.push(
+        '[--bar-bg:var(--ot-status-attention-required)]',
+        '[color:var(--ot-status-attention-required-on)]',
+      );
     } else if (this.isCloseToFeedbackDeadline(item)) {
-      classes.push('[--bar-bg:#ffc53d]', 'text-black');
+      classes.push(
+        '[--bar-bg:var(--ot-status-fix-and-resubmit)]',
+        '[color:var(--ot-status-fix-and-resubmit-on)]',
+      );
     } else {
-      classes.push('[--bar-bg:#0e467b]', 'text-white');
+      classes.push('[--bar-bg:var(--ot-color-primary)]', '[color:var(--ot-color-on-primary)]');
     }
 
     return classes;
+  }
+
+  // Measured from the rendered chart: a 52px date header, 44px rows, and room for
+  // the timeline's own horizontal scrollbar.
+  get ganttHeight(): number {
+    return (
+      GANTT_HEADER_HEIGHT + (this.items?.length ?? 0) * GANTT_ROW_HEIGHT + GANTT_SCROLL_ALLOWANCE
+    );
+  }
+
+  isComplete(item: TaskGanttItem): boolean {
+    return item.task?.status === 'complete';
   }
 
   isAboveTargetGrade(item: TaskGanttItem) {
@@ -726,7 +819,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         draggable: this.project.unit.allowFlexibleDates,
         // color: this.gradeService.gradeColors[td.targetGrade],
         expanded: false,
-        color: '#3333ff',
+        color: this.cssVar('--ot-color-primary'),
         taskDefinition: td,
         task: task,
         // progress: 0.5,
@@ -739,19 +832,19 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
             switch (p.taskStatus) {
               case 'ready_for_feedback':
-                color = 'rgba(0, 121, 216, 0.1)';
+                color = this.cssVarRgba('--ot-status-ready-for-feedback-graphic', 0.1);
                 break;
               case 'complete':
-                color = 'rgba(91, 183, 91, 0.1)';
+                color = this.cssVarRgba('--ot-status-complete-graphic', 0.1);
                 break;
               case 'discuss':
-                color = 'rgba(49, 176, 213, 0.1)';
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               case 'demonstrate':
-                color = 'rgba(49, 176, 213, 0.1)';
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               default:
-                color = 'gray';
+                color = this.cssVar('--ot-color-border');
             }
             const link: GanttLink = {
               type: GanttLinkType.fs,

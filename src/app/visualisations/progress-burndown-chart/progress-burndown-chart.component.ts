@@ -23,6 +23,7 @@ import {
   Unit,
 } from 'src/app/api/models/doubtfire-model';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
+import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 
 interface BurndownPoint {
@@ -33,6 +34,12 @@ interface BurndownPoint {
 interface BurndownSeries {
   name: string;
   series: BurndownPoint[];
+}
+
+interface BurndownSummary {
+  name: 'Projected' | 'To Submit' | 'To Complete';
+  remaining: number;
+  color: string;
 }
 
 type PeerMedianState = 'loading' | 'error' | PeerProgressState;
@@ -64,21 +71,24 @@ export class ProgressBurndownChartComponent
   showYAxisLabel: boolean = true;
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
-  yAxisLabel: string = 'Tasks Remaining';
+  yAxisLabel: string = 'Work Remaining';
   // ngx-charts hands the scheme domain to the series by position, so the full palette is
-  // kept here and the scheme is narrowed to whatever is on show.
+  // kept here and the scheme is narrowed to whatever is on show. These are token names,
+  // resolved to concrete colours at render time (seriesColor) so the lines flip with the
+  // theme; ngx-charts needs a real colour string, not a var().
   private readonly seriesPalette: string[] = [
-    '#AAAAAA',
-    '#777777',
-    '#0079d8',
-    '#E01B5D',
-    '#7C3AED',
+    '--ot-color-text-muted',
+    '--ot-chart-axis',
+    '--ot-chart-2',
+    '--ot-chart-5',
+    '--ot-chart-1',
   ];
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: [...this.seriesPalette],
+    // Light fallbacks; replaced with resolved tokens on the first applyVisibility().
+    domain: ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED'],
   };
 
   yScaleMin: number = 0;
@@ -98,6 +108,7 @@ export class ProgressBurndownChartComponent
     private peerProgressService: PeerProgressService,
     readonly demoMode: DemoModeStore,
     @Inject(LOCALE_ID) private locale: string,
+    private themeColor: ThemeColorService,
   ) {
     super(viewContainerRef);
     this.data = [];
@@ -344,6 +355,20 @@ export class ProgressBurndownChartComponent
     this.applyVisibility();
   }
 
+  get summaries(): BurndownSummary[] {
+    const names: BurndownSummary['name'][] = ['Projected', 'To Submit', 'To Complete'];
+
+    return names.flatMap((name) => {
+      const index = this.temp.findIndex((series) => series.name === name);
+      const series = index >= 0 ? this.temp[index] : undefined;
+      const latest = series?.series.at(-1)?.value;
+
+      return latest === undefined
+        ? []
+        : [{name, remaining: latest, color: this.seriesColor(index)}];
+    });
+  }
+
   // A hidden series is dropped from the chart data. Zeroing its points instead left the
   // line drawn flat along the x axis while its legend button said it was off.
   private applyVisibility(): void {
@@ -370,7 +395,7 @@ export class ProgressBurndownChartComponent
   }
 
   seriesColor(index: number): string {
-    return this.seriesPalette[index % this.seriesPalette.length];
+    return this.themeColor.token(this.seriesPalette[index % this.seriesPalette.length]);
   }
 
   public formatPerc(input: number): string {

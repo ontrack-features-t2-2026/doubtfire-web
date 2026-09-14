@@ -16,6 +16,16 @@ interface TaskStatusSummary {
   textColor: string;
 }
 
+// The four statuses every student moves through always show, so the card keeps its
+// shape. The rest show only while a task is in them: fifteen tiles, most of them 0,
+// made the card a wall of colour.
+const ALWAYS_SHOWN: TaskStatusEnum[] = [
+  'not_started',
+  'working_on_it',
+  'ready_for_feedback',
+  'complete',
+];
+
 @Component({
   selector: 'f-task-visualisation',
   templateUrl: './task-visualisation.component.html',
@@ -52,56 +62,20 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
         }
       });
 
-      const sortOrder: TaskStatusEnum[] = [
-        'complete',
-        'discuss',
-        'ready_for_feedback',
-        'working_on_it',
-        'not_started',
-      ];
-
-      this.data = Array.from(taskCounts)
-        .map(([status, count]) => {
-          const color = TaskStatus.STATUS_COLORS.get(status) ?? '#64748b';
-          return {
-            status,
-            name: TaskStatus.STATUS_LABELS.get(status) ?? status,
-            value: count,
-            color,
-            textColor: this.contrastingTextColor(color),
-          };
-        })
-        .filter((task) => task.value > 0 || sortOrder.includes(task.status))
-        .sort((a, b) => {
-          let aIndex = sortOrder.indexOf(a.status);
-          let bIndex = sortOrder.indexOf(b.status);
-
-          aIndex = aIndex === -1 ? sortOrder.length : aIndex;
-          bIndex = bIndex === -1 ? sortOrder.length : bIndex;
-
-          return aIndex - bIndex;
-        });
+      this.data = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status) => {
+        const count = taskCounts.get(status) ?? 0;
+        const key = status.replace(/_/g, '-');
+        return {
+          status,
+          name: TaskStatus.STATUS_LABELS.get(status) ?? status,
+          value: count,
+          color: `var(--ot-status-${key})`,
+          textColor: `var(--ot-status-${key}-on)`,
+        };
+      }).filter(
+        ({status, value}) =>
+          TaskStatus.isStatus(status) && (value > 0 || ALWAYS_SHOWN.includes(status)),
+      );
     }
-  }
-
-  private contrastingTextColor(color: string): string {
-    const hex = color.replace('#', '');
-    if (!/^[0-9a-f]{6}$/i.test(hex)) {
-      return '#ffffff';
-    }
-
-    const channels = [0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
-    const [red, green, blue] = channels.map((channel) =>
-      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
-    );
-    // #111827 was too light to be the dark option here. Against ready_for_feedback
-    // (#0079D8) it reached 3.99:1 and white only 4.44:1, so the card that always renders
-    // sat under the 4.5:1 AA floor for normal text. Black clears the floor on every
-    // status colour, and the divisor now matches the colour it is measuring.
-    const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-    const whiteContrast = 1.05 / (luminance + 0.05);
-    const darkContrast = (luminance + 0.05) / 0.05;
-
-    return whiteContrast >= darkContrast ? '#ffffff' : '#000000';
   }
 }

@@ -1,28 +1,93 @@
+// Theme tokens only. These screens show on every start, before any page, in
+// whichever theme the pre-boot script in index.html picked.
 .app-splash-screen {
-  background: #fff;
+  background: var(--ot-color-page);
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  z-index: 100;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
-  z-index: 100;
-}
-
-.app-label {
-  margin-top: 32px;
-  color: #fff;
-  font-size: 2.5em;
-  font-family: 'Grotesk';
 }
 
 .app-splash-inner {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+
+  p {
+    margin-top: 1rem;
+    color: var(--ot-color-text-muted);
+    font-size: 1rem;
+  }
+}
+
+.startup-progress {
+  position: fixed;
+  top: var(--header-height, 80px);
+  right: 0;
+  left: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ot-color-divider);
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+  box-shadow: var(--ot-elevation-1);
+  text-align: center;
+}
+
+.startup-recovery {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: var(--ot-color-page);
+  color: var(--ot-color-text);
+  text-align: left;
+
+  mat-icon {
+    width: 3rem;
+    height: 3rem;
+    color: var(--ot-color-text-muted);
+    font-size: 3rem;
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    max-width: 32rem;
+    margin: 0;
+    color: var(--ot-color-text-muted);
+  }
+}
+
+.startup-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (width <= 600px) {
+  .startup-progress {
+    top: var(--mobile-header-height, 64px);
+  }
+
+  .startup-recovery {
+    align-items: flex-start;
+    padding-top: max(7rem, env(safe-area-inset-top));
+  }
 }

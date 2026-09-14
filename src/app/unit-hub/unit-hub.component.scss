@@ -145,7 +145,8 @@ button:disabled {
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--ot-color-border);
+  // Muted text, not the border token: that is 1.6:1 in dark, too faint for a field edge.
+  border: 1px solid var(--ot-color-text-muted);
   border-radius: 8px;
   min-height: 46px;
   padding: 10px 12px;

@@ -1,3 +1,4 @@
+import {HttpErrorResponse} from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +8,7 @@ import {
   OnInit,
   Optional,
 } from '@angular/core';
+import {NgForm} from '@angular/forms';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
@@ -51,10 +53,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   @Input() modal: boolean = false;
 
   public user: User;
-  public saving = false;
   public externalName = this.constants.ExternalName;
   public initialFirstName: string;
   public formPronouns = {pronouns: ''};
+  public saving = false;
+  public saveMessage = '';
+  public saveError = '';
   public get customPronouns(): boolean {
     return this.formPronouns.pronouns === '__customPronouns';
   }
@@ -179,13 +183,21 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.mode === 'new';
   }
 
-  /**
-   * True only on the user's own profile page. The admin Users dialog opens this
-   * form in edit mode as a modal to change someone else's settings, and the
-   * welcome page uses create mode, so neither links to the notifications page.
-   */
+  /** True only on the current user's own profile page. */
   public get isOwnProfilePage(): boolean {
-    return this.mode === 'edit' && !this.modal;
+    return this.mode === 'edit' && !this.modal && this.managingOwnProfile;
+  }
+
+  public get managingOwnProfile(): boolean {
+    return this.user?.id === this.userService.currentUser?.id;
+  }
+
+  public get canEditEmail(): boolean {
+    return this.newUser || this.user.emailEditable === true;
+  }
+
+  public get canEditStudentId(): boolean {
+    return this.newUser || (!this.user.institutionalIdentityManaged && !this.managingOwnProfile);
   }
 
   public get canEditSystemRole(): boolean {
@@ -203,37 +215,45 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.constants.IsTiiEnabled.value;
   }
 
-  public submit(): void {
+  public submit(form?: NgForm): void {
+    if (this.saving || form?.invalid) {
+      return;
+    }
+
+    this.saving = true;
+    this.saveMessage = '';
+    this.saveError = '';
     this.user.pronouns = this.customPronouns ? this.user.pronouns : this.formPronouns.pronouns;
     this.user.hasRunFirstTimeSetup = true;
-    this.saving = true;
 
     if (this.newUser) {
       this.userService.create(this.user).subscribe({
         next: (updatedUser) => {
+          this.saving = false;
           this.user = updatedUser;
           this.initialFirstName = this.user.firstName;
+          form?.form.markAsPristine();
+          this.saveMessage = 'User created.';
 
           this._snackBar.open('User created', 'dismiss', {
             duration: 1500,
             horizontalPosition: 'end',
             verticalPosition: 'top',
           });
-          this.saving = false;
         },
-        error: (error) => {
-          this.alerts.error(error, 6000);
-          this.saving = false;
-        },
+        error: (error: unknown) => this.handleSaveError(error),
       });
     } else {
       this.userService.update(this.user).subscribe({
         next: (updatedUser) => {
+          this.saving = false;
           if (this.mode === 'create') {
             this.router.navigateByUrl('/home');
           } else {
             this.user = updatedUser;
             this.initialFirstName = this.user.firstName;
+            form?.form.markAsPristine();
+            this.saveMessage = 'Profile saved.';
 
             // TODO: refactor into new alertService
             // this is a new snackbar alert test
@@ -243,13 +263,20 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
               verticalPosition: 'top',
             });
           }
-          this.saving = false;
         },
-        error: (error) => {
-          this.alerts.error(error, 6000);
-          this.saving = false;
-        },
+        error: (error: unknown) => this.handleSaveError(error),
       });
     }
+  }
+
+  private handleSaveError(error: unknown): void {
+    this.saving = false;
+    const serverMessage = error instanceof HttpErrorResponse ? error.error?.error : null;
+    const message = typeof error === 'string' ? error : serverMessage;
+    this.saveError =
+      typeof message === 'string' && message.trim()
+        ? message
+        : 'Profile could not be saved. Check your connection and try again.';
+    this.alerts.error(this.saveError, 6000);
   }
 }

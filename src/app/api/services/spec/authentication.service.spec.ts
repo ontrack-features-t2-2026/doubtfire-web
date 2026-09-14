@@ -1,19 +1,21 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {provideHttpClient, withInterceptorsFromDi, withXhr} from '@angular/common/http';
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
-import {Injector} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
 import {Subject, of, throwError} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
-import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {FeedbackDraftStore} from 'src/app/common/services/feedback-draft-store.service';
 import {ThemeService} from 'src/app/common/theme/theme.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {DemoScenarioRegistryService} from 'src/app/demo/demo-scenario-registry.service';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
-import {AuthenticationService} from '../authentication.service';
+import {provideAppInjectorForTests} from 'src/app/testing/app-injector-stub';
+import {AuthenticationService, REFRESH_TOKEN_TIMEOUT_MS} from '../authentication.service';
+import {NotificationFeedbackRouteIntentService} from '../notification-feedback-route-intent.service';
 import {NotificationService} from '../notification.service';
 import {PushNotificationService} from '../push-notification.service';
 
@@ -38,10 +40,15 @@ describe('AuthenticationService', () => {
 
   let pushService: {unsubscribeQuietly: ReturnType<typeof vi.fn>};
   let notificationService: {reset: ReturnType<typeof vi.fn>};
+  let notificationFeedbackIntents: {clear: ReturnType<typeof vi.fn>};
   let demoMode: {reset: ReturnType<typeof vi.fn>};
   let themeService: {
     connectAccount: ReturnType<typeof vi.fn>;
     disconnectAccount: ReturnType<typeof vi.fn>;
+  };
+  let demoScenarioRegistry: {
+    loadForAuthenticatedUser: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
   };
   let globalState: {
     clearUnitsAndProjects: ReturnType<typeof vi.fn>;
@@ -72,36 +79,22 @@ describe('AuthenticationService', () => {
 
   // signOut resolves PushNotificationService, GlobalStateService and
   // NotificationService through AppInjector rather than the constructor (its
-  // comment explains this avoids a circular dependency). This stub injector
-  // hands back the mocks above. It is set once, and reads them through its
-  // closure so each test's fresh mocks flow through. setAppInjector is only ever
-  // called by the app module otherwise, so in a unit test AppInjector starts
-  // unset and this is the only writer.
-  //
-  // The throw at the end is deliberate. A token this stub does not know about
-  // means signOut grew a dependency nobody told these tests about, and a stub
-  // that quietly answered undefined would turn that into a confusing failure
-  // somewhere else.
-  const injectorStub = {
-    get: (token: unknown) => {
-      if (token === PushNotificationService) {
-        return pushService;
-      }
-      if (token === GlobalStateService) {
-        return globalState;
-      }
-      if (token === NotificationService) {
-        return notificationService;
-      }
-      throw new Error(`unexpected AppInjector token: ${String(token)}`);
-    },
-  } as unknown as Injector;
+  // comment explains this avoids a circular dependency). Each test registers its
+  // fresh mocks with the shared spec stand-in, which throws for any token it was
+  // not given: a token nobody registered means signOut grew a dependency these
+  // tests do not know about, and a stub that quietly answered undefined would turn
+  // that into a confusing failure somewhere else.
 
   beforeEach(() => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
     notificationService = {reset: vi.fn()};
+    notificationFeedbackIntents = {clear: vi.fn()};
     demoMode = {reset: vi.fn()};
     themeService = {connectAccount: vi.fn(), disconnectAccount: vi.fn()};
+    demoScenarioRegistry = {
+      loadForAuthenticatedUser: vi.fn().mockReturnValue(of(void 0)),
+      clear: vi.fn(),
+    };
     globalState = {
       clearUnitsAndProjects: vi.fn(),
       hideHeader: vi.fn(),
@@ -137,9 +130,12 @@ describe('AuthenticationService', () => {
       resetAuthenticatedSettings: vi.fn(),
     };
 
-    if (!AppInjector) {
-      setAppInjector(injectorStub);
-    }
+    provideAppInjectorForTests([
+      [PushNotificationService, pushService],
+      [GlobalStateService, globalState],
+      [NotificationService, notificationService],
+      [NotificationFeedbackRouteIntentService, notificationFeedbackIntents],
+    ]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -149,8 +145,10 @@ describe('AuthenticationService', () => {
         {provide: AlertService, useValue: {error: vi.fn()}},
         {provide: DoubtfireConstants, useValue: constants},
         {provide: DemoModeStore, useValue: demoMode},
+        {provide: DemoScenarioRegistryService, useValue: demoScenarioRegistry},
         {provide: AuthReturnUrlService, useValue: authReturnUrl},
         {provide: ThemeService, useValue: themeService},
+        {provide: FeedbackDraftStore, useValue: {clearUser: vi.fn()}},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -215,6 +213,7 @@ describe('AuthenticationService', () => {
     // gone but NotificationService is a root singleton, so its cache and unread
     // count would otherwise survive into the next person's session.
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
+    expect(notificationFeedbackIntents.clear).toHaveBeenCalledTimes(1);
     expect(demoMode.reset).toHaveBeenCalledTimes(1);
     expect(themeService.disconnectAccount).toHaveBeenCalledTimes(1);
     expect(authReturnUrl.clear).toHaveBeenCalledTimes(1);
@@ -363,6 +362,56 @@ describe('AuthenticationService', () => {
     expect(loginResult).toHaveBeenCalledWith(true);
   });
 
+  it('keeps a refresh cookie retryable when the auth service is unavailable', () => {
+    const loginResult = vi.fn();
+
+    service.attemptLoginUsingRefreshToken(loginResult);
+    httpMock
+      .expectOne(`${AUTH_URL}/access-token`)
+      .flush({error: 'unavailable'}, {status: 503, statusText: 'Service Unavailable'});
+
+    expect(loginResult).toHaveBeenCalledWith(false, 'unavailable');
+    expect(userService.currentUser).toBe(userService.anonymousUser);
+    expect(userService.cache.clear).toHaveBeenCalled();
+    expect(pushService.unsubscribeQuietly).not.toHaveBeenCalled();
+  });
+
+  it('times out the complete refresh hydration, including protected settings', async () => {
+    vi.useFakeTimers();
+    const loginResult = vi.fn();
+    try {
+      service.attemptLoginUsingRefreshToken(loginResult);
+      httpMock.expectOne(`${AUTH_URL}/access-token`).flush(authResponse(1, 'refreshed-token'));
+      const settingsRequest = httpMock.expectOne(`${API_URL}/settings`);
+
+      await vi.advanceTimersByTimeAsync(REFRESH_TOKEN_TIMEOUT_MS + 1);
+
+      expect(loginResult).toHaveBeenCalledWith(false, 'timeout');
+      expect(settingsRequest.cancelled).toBe(true);
+      expect(userService.currentUser).toBe(userService.anonymousUser);
+      expect(themeService.disconnectAccount).toHaveBeenCalledOnce();
+      expect(pushService.unsubscribeQuietly).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears a definitively expired refresh session', () => {
+    const loginResult = vi.fn();
+
+    service.attemptLoginUsingRefreshToken(loginResult);
+    httpMock
+      .expectOne(`${AUTH_URL}/access-token`)
+      .flush({error: 'expired'}, {status: 404, statusText: 'Not Found'});
+
+    expect(loginResult).toHaveBeenCalledWith(false, 'expired');
+    expect(pushService.unsubscribeQuietly).toHaveBeenCalledOnce();
+    httpMock
+      .expectOne((request) => request.url === AUTH_URL && request.method === 'DELETE')
+      .flush(null);
+    expect(userService.currentUser).toBe(userService.anonymousUser);
+  });
+
   it('fails settings closed without rejecting valid credentials', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const afterAuth = vi.fn();
@@ -417,6 +466,66 @@ describe('AuthenticationService', () => {
     expect(signInNext).not.toHaveBeenCalled();
 
     httpMock.expectOne((r) => r.url === AUTH_URL && r.method === 'DELETE').flush(null);
+  });
+
+  it('cancels pending demo hydration before sign-out can complete authentication', () => {
+    const demoResponse: Subject<void> = new Subject();
+    demoScenarioRegistry.loadForAuthenticatedUser.mockReturnValue(demoResponse.asObservable());
+    const signInNext = vi.fn();
+    const afterAuth = vi.fn();
+    service.afterAuthCall(afterAuth);
+    service
+      .signIn({username: 'user-1', password: 'password', remember: false})
+      .subscribe(signInNext);
+    httpMock
+      .expectOne((r) => r.url === AUTH_URL && r.method === 'POST')
+      .flush(authResponse(1, 't1'));
+    httpMock.expectOne(`${API_URL}/settings`).flush(authenticatedSettings);
+    expect(demoResponse.observed).toBe(true);
+
+    service.signOut(false);
+    expect(demoResponse.observed).toBe(false);
+    demoResponse.next();
+    demoResponse.complete();
+
+    expect(globalState.loadGlobals).not.toHaveBeenCalled();
+    expect(afterAuth).not.toHaveBeenCalled();
+    expect(signInNext).not.toHaveBeenCalled();
+    httpMock.expectOne((r) => r.url === AUTH_URL && r.method === 'DELETE').flush(null);
+  });
+
+  it('does not let an older account demo response complete a newer sign-in', () => {
+    const firstDemoResponse: Subject<void> = new Subject();
+    demoScenarioRegistry.loadForAuthenticatedUser.mockReturnValueOnce(
+      firstDemoResponse.asObservable(),
+    );
+    const firstSignInNext = vi.fn();
+    const secondSignInNext = vi.fn();
+    service
+      .signIn({username: 'user-1', password: 'password', remember: false})
+      .subscribe(firstSignInNext);
+    httpMock
+      .expectOne((r) => r.url === AUTH_URL && r.method === 'POST')
+      .flush(authResponse(1, 't1'));
+    httpMock.expectOne(`${API_URL}/settings`).flush(authenticatedSettings);
+    const mayPublishFirstScenario = demoScenarioRegistry.loadForAuthenticatedUser.mock.calls[0][1];
+    expect(mayPublishFirstScenario()).toBe(true);
+
+    service
+      .signIn({username: 'user-2', password: 'password', remember: false})
+      .subscribe(secondSignInNext);
+    httpMock
+      .expectOne((r) => r.url === AUTH_URL && r.method === 'POST')
+      .flush(authResponse(2, 't2'));
+    expect(mayPublishFirstScenario()).toBe(false);
+    firstDemoResponse.next();
+    firstDemoResponse.complete();
+    expect(firstSignInNext).not.toHaveBeenCalled();
+    expect(globalState.loadGlobals).not.toHaveBeenCalled();
+
+    httpMock.expectOne(`${API_URL}/settings`).flush(authenticatedSettings);
+    expect(secondSignInNext).toHaveBeenCalledOnce();
+    expect(globalState.loadGlobals).toHaveBeenCalledOnce();
   });
 
   it('does not complete from an older settings response for the same user', () => {

@@ -1,16 +1,16 @@
 .notification-list {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--ot-color-divider);
 }
 
 // The row and its delete button, side by side. The separator and the hover both
 // live out here rather than on the button, so they run the full width of the
 // list instead of stopping short of the delete column.
 .notification-item {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--ot-color-divider);
   padding-right: 4px;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--ot-color-hover);
   }
 }
 
@@ -31,7 +31,7 @@
   min-width: 0;
 
   &:focus-visible {
-    outline: 2px solid #3939ff;
+    outline: 2px solid var(--ot-color-focus);
     outline-offset: -2px;
   }
 }
@@ -56,6 +56,20 @@
   gap: 2px;
   min-width: 0;
   text-align: left;
+}
+
+.notification-meta {
+  align-items: baseline;
+  color: var(--ot-color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 4px;
+  line-height: 1.3;
+}
+
+.notification-kind {
+  font-weight: 600;
 }
 
 .notification-glyph {
@@ -87,34 +101,36 @@
     width: 20px;
   }
 
+  // The link blue, not primary. Dark primary is a fill colour and falls to about
+  // 2:1 as a glyph on its own wash. In light the two are the same colour.
   &.tone-feedback {
-    background: rgba(57, 57, 255, 0.12);
-    color: #2a2ad6;
+    background: color-mix(in srgb, var(--ot-color-link) 12%, transparent);
+    color: var(--ot-color-link);
   }
 
   &.tone-task {
-    background: rgba(199, 119, 0, 0.12);
-    color: #b26a00;
+    background: color-mix(in srgb, var(--ot-color-warning) 12%, transparent);
+    color: var(--ot-color-warning);
   }
 
   &.tone-portfolio {
-    background: rgba(123, 63, 242, 0.12);
-    color: #7b3ff2;
+    background: color-mix(in srgb, var(--ot-color-info) 12%, transparent);
+    color: var(--ot-color-info);
   }
 
   &.tone-extension {
-    background: rgba(31, 138, 76, 0.12);
-    color: #1f8a4c;
+    background: color-mix(in srgb, var(--ot-color-success) 12%, transparent);
+    color: var(--ot-color-success);
   }
 
   &.tone-general {
-    background: rgba(95, 99, 104, 0.12);
-    color: #5f6368;
+    background: var(--ot-color-hover);
+    color: var(--ot-color-text-muted);
   }
 }
 
 .notification-message {
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--ot-color-text);
   font-size: 14px;
   line-height: 1.35;
   white-space: normal;
@@ -125,7 +141,7 @@
 }
 
 .notification-unread-dot {
-  background: #3939ff;
+  background: var(--ot-color-primary);
   border-radius: 50%;
   flex: 0 0 7px;
   height: 7px;
@@ -137,19 +153,19 @@
 }
 
 .notification-time {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--ot-color-text-muted);
   font-size: 12px;
   line-height: 1.3;
 }
 
 .notifications-placeholder {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--ot-color-text-muted);
 }
 
 // The delete button competes with the message for attention on a list nobody
 // opened to delete things from, so it is drawn down to match the dropdown's.
 .notification-delete {
-  color: rgba(0, 0, 0, 0.54);
+  color: var(--ot-color-text-muted);
   flex: none;
 
   .mat-icon {
@@ -159,29 +175,45 @@
   }
 }
 
-// Never shrinks, and on a phone it drops its label and keeps the icon. It sits
-// beside an h1 in a flex row, and at 320px the heading and a full width button
-// do not both fit; letting the button squeeze instead wraps "Mark all read"
-// onto two lines inside itself.
-//
-// The aria-label on the button is what carries the wording once the span is
-// gone, since display: none takes it out of the accessibility tree too.
-.notification-mark-all {
+// Keep both destructive and non-destructive bulk actions visibly labelled.
+// They move below the heading on phones instead of collapsing to ambiguous
+// icon-only controls.
+.notification-actions {
+  display: flex;
   flex: none;
+  gap: 8px;
+
+  button {
+    min-height: 44px;
+  }
 
   .mat-icon {
     margin-right: 6px;
   }
+}
 
-  @media (max-width: 599px) {
-    min-width: 0;
+.notifications-placeholder:focus-visible {
+  outline: 2px solid var(--ot-color-focus);
+  outline-offset: 4px;
+}
 
-    .mat-icon {
-      margin-right: 0;
-    }
+@media (max-width: 599px) {
+  .notifications-page {
+    margin-top: 1rem;
+  }
 
-    .notification-mark-all-label {
-      display: none;
+  .notifications-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    button {
+      min-width: 0;
+      padding-inline: 10px;
     }
   }
 }

@@ -1,46 +1,36 @@
-.staff-task-list {
-}
-
-.task-comment-panel {
-  padding-left: 12px;
-  padding-bottom: 0px;
-
-  &.mobile {
-    padding-left: 0px;
-    padding-bottom: 0px;
-    margin-bottom: 10px;
-  }
-}
-
-.resizer {
-  background-color: #f5f5f5;
-  z-index: 200;
-  width: 3px;
-}
-
-.resizer:hover,
-.resizer.hovering {
-  cursor: col-resize;
-  background: linear-gradient(white, white) no-repeat center/2px 98%;
-}
-
-.inbox-panel {
-  border-radius: 10px;
-  background-color: white;
-  padding: 8px;
-  min-width: 60px;
+// The list and comments panels keep a width the resizers can drag; the task pane
+// between them takes whatever is left. They can still shrink, so a narrow window
+// squeezes the list rather than pushing the comments off the side.
+.inbox-panel--side {
   width: 350px;
+  min-width: 60px;
+}
 
-  &.mobile {
-    max-width: 100%;
-    width: 100%;
-    padding: 0px;
+// A gap between two panels that can be dragged. The line in the middle is only a
+// hint, so it takes the divider colour until it is hovered or dragged.
+.resizer {
+  position: relative;
+  z-index: 200;
+  width: 12px;
+  flex: none;
+  cursor: col-resize;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 25%;
+    bottom: 25%;
+    left: 5px;
+    width: 2px;
+    border-radius: 1px;
+    background-color: transparent;
+    transition: background-color 120ms ease;
   }
 }
 
-.task-comment-panel.inbox-panel {
-  border-radius: 0;
-  // padding: 0px 0px 0px 5px !important;
+.resizer:hover::after,
+.resizer.hovering::after {
+  background-color: var(--ot-color-primary);
 }
 
 .comments-floating-toggle {
@@ -90,38 +80,21 @@
   opacity: 1;
 }
 
-.comments-sidebar {
-  position: relative;
-}
-
+// Below 1000px the comments panel keeps a fixed width and folds away behind the
+// floating button.
 .comments-sidebar--narrow {
-  flex-basis: 375px !important;
-  min-width: 375px;
   width: 375px !important;
-  border-radius: 0 !important;
-  box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
+  min-width: 375px;
   z-index: 250;
 }
 
+// On a phone the comments slide over the task from the right, no wider than the screen.
 .comments-sidebar--mobile {
   position: fixed;
   top: 56px;
   right: 0;
   bottom: 0;
-  min-width: 375px;
-  width: 375px !important;
-  border-radius: 0 !important;
-  padding: 8px;
-  box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
+  width: min(375px, 100vw);
+  box-shadow: var(--ot-elevation-1);
   z-index: 250;
-}
-
-.comments-sidebar__collapse {
-  position: absolute;
-  top: 50%;
-  left: -20px;
-  z-index: 260;
-  transform: translateY(-50%);
-  background: white;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
 }

@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {SafePipe} from '../pipes/safe.pipe';
 import {FileViewerComponent} from './file-viewer.component';
 
 describe('FileViewerComponent', () => {
@@ -8,7 +9,7 @@ describe('FileViewerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [FileViewerComponent],
+      declarations: [FileViewerComponent, SafePipe],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FileViewerComponent);
@@ -45,5 +46,19 @@ describe('FileViewerComponent', () => {
 
     expect(c.pdfLoadingProgressPercentage).toBe(0);
     expect(c.pdfLoadingTotalKnown).toBe(false);
+  });
+
+  // An iframe with no height of its own is 150px tall, which cut a similarity report
+  // off after its first lines, and an untitled iframe has no accessible name.
+  it('gives an HTML preview a title and a height of its own', () => {
+    const c = component as never as {fileType: string; blobUrl: string};
+    c.fileType = 'html';
+    c.blobUrl = 'blob:http://localhost/preview';
+    fixture.detectChanges();
+
+    const frame: HTMLIFrameElement = fixture.nativeElement.querySelector('iframe');
+    expect(frame.getAttribute('title')).toBe('File preview');
+    expect(frame.hasAttribute('height')).toBe(false);
+    expect(frame.className).toContain('h-[32rem]');
   });
 });

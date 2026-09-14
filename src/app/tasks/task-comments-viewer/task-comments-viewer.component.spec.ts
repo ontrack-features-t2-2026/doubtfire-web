@@ -1,7 +1,7 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {ElementRef, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {EMPTY, of} from 'rxjs';
+import {EMPTY, Subject} from 'rxjs';
 import {
   Project,
   Task,
@@ -19,6 +19,7 @@ import {MarkedPipe} from 'src/app/common/pipes/marked.pipe';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {CommentBubbleActionComponent} from './comment-bubble-action/comment-bubble-action.component';
+import {ConversationLandingService} from './conversation-landing.service';
 import {TaskCommentsViewerComponent} from './task-comments-viewer.component';
 
 const taskCommentServiceStub = {
@@ -60,58 +61,54 @@ describe('TaskCommentsViewerComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-  it('removes cached comments missing from the latest response', () => {
-    const keptComment = {
-      id: 1,
-      text: 'keep',
-      recipientReadTime: null,
-      recipientIsMe: false,
-    } as unknown as TaskComment;
 
-    const staleComment = {
-      id: 2,
-      text: 'remove',
-      recipientReadTime: null,
-      recipientIsMe: false,
-    } as unknown as TaskComment;
+  it('releases phone feedback scrolling without dropping attachment-card sizing', () => {
+    const styles = (
+      TaskCommentsViewerComponent as unknown as {
+        ɵcmp: {styles: string[]};
+      }
+    ).ɵcmp.styles.join('\n');
 
-    const latestComment = {
-      ...keptComment,
-    } as TaskComment;
-
-    const deleteFromCache = vi.fn();
-
-    const task = {
-      comments: [keptComment, staleComment],
-      commentCache: {
-        get: vi.fn((id: number) => (id === 1 ? keptComment : undefined)),
-        add: vi.fn(),
-        set: vi.fn(),
-        delete: deleteFromCache,
-      },
-      definition: {id: 1},
-      numNewComments: 2,
-      refreshCommentData: vi.fn(),
-    } as unknown as Task;
-
-    component.project = {
-      id: 1,
-      unit: {currentUserIsStaff: false},
-    } as unknown as Project;
-
-    component.scrollDown = vi.fn();
-    taskCommentServiceStub.fetchAll.mockReturnValue(of([latestComment]));
-
-    component.fetchComments(task, false);
-
-    expect(deleteFromCache).toHaveBeenCalledTimes(1);
-    expect(deleteFromCache).toHaveBeenCalledWith(2);
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.comments-body[^{]*\{[^}]*overflow-y:\s*visible/,
+    );
+    expect(styles).toMatch(/\.comment[^{]*\.document-bubble[^{]*\{[^}]*max-width:/);
   });
 
-  // Regression: clicking the reply banner of a deleted comment used to pass an
-  // undefined id and throw when scrollIntoView was called on a null element.
-  it('scrollToComment does not throw when the comment id is missing', () => {
+  it('routes dropped files to the composer for staging instead of posting them', () => {
+    const uploadFiles = vi.fn();
+    const files = [
+      new File(['document'], 'feedback.DOCX', {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      }),
+    ];
+    component.commentComposer = {uploadFiles};
+
+    component.uploadFiles(files);
+
+    expect(uploadFiles).toHaveBeenCalledOnce();
+    expect(uploadFiles).toHaveBeenCalledWith(files);
+    expect(taskCommentServiceStub).not.toHaveProperty('addComment');
+  });
+
+  it('does not throw when a reply target has already been deleted', () => {
     expect(() => component.scrollToComment(undefined)).not.toThrow();
+    expect(() => component.scrollToComment(404)).not.toThrow();
+  });
+
+  it('removes every stale cached comment while reconciling a response', () => {
+    const task = new Task();
+    const comments = [1, 2, 3].map((id) => ({id}) as TaskComment);
+    comments.forEach((comment) => task.commentCache.add(comment));
+    vi.spyOn(task, 'refreshCommentData').mockImplementation(() => {});
+
+    (
+      component as unknown as {
+        mapComments(task: Task, comments: TaskComment[]): void;
+      }
+    ).mapComments(task, [comments[2]]);
+
+    expect(task.comments.map((comment) => comment.id)).toEqual([3]);
   });
 });
 
@@ -212,20 +209,220 @@ describe('TaskCommentsViewerComponent bubble actions', () => {
   });
 });
 
-describe('TaskCommentsViewerComponent uploadFiles', () => {
-  it('does not write placeholder debug logging when a file is uploaded', () => {
-    const component = Object.create(TaskCommentsViewerComponent.prototype) as {
-      alerts: {error: ReturnType<typeof vi.fn>};
-      uploadFiles(event: unknown): void;
-    };
-    component.alerts = {error: vi.fn()};
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+describe('TaskCommentsViewerComponent latest-message landing', () => {
+  let frameCallbacks: FrameRequestCallback[];
 
-    // A rejected file type takes the alerts.error path and does not upload,
-    // which is enough to reach the end of uploadFiles where the log used to be.
-    component.uploadFiles([{type: 'text/plain'}]);
-
-    expect(logSpy).not.toHaveBeenCalled();
-    logSpy.mockRestore();
+  beforeEach(() => {
+    frameCallbacks = [];
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        frameCallbacks.push(callback);
+        return frameCallbacks.length;
+      }),
+    );
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function flushFrames(): void {
+    while (frameCallbacks.length) {
+      frameCallbacks.shift()?.(performance.now());
+    }
+  }
+
+  function taskFor(taskDefinitionId: number): Task {
+    const project = {
+      id: 7,
+      unit: {currentUserIsStaff: false},
+    } as unknown as Project;
+    // The production constructor receives a real Project instance. This focused
+    // test uses a minimal structural project, so attach it explicitly rather
+    // than relying on Task's instanceof guard.
+    const task = new Task();
+    task.project = project;
+    task.definition = {id: taskDefinitionId} as never;
+    return task;
+  }
+
+  function createViewer(
+    fetchAll: ReturnType<typeof vi.fn>,
+    conversationLanding: ConversationLandingService,
+    query: ReturnType<typeof vi.fn> = vi.fn(),
+  ): {
+    viewer: TaskCommentsViewerComponent;
+    commentsBody: HTMLElement;
+    conversationEnd: HTMLElement;
+    commentsFooter: HTMLElement;
+  } {
+    const taskCommentService = {
+      commentAdded$: new Subject<TaskComment>(),
+      fetchAll,
+      query,
+    };
+    const taskService = {taskStatusUpdated$: new Subject<Task>()};
+    const viewer = new TaskCommentsViewerComponent(
+      taskCommentService as unknown as TaskCommentService,
+      {} as FeedbackTemplateService,
+      {} as UserService,
+      taskService as unknown as TaskService,
+      {IsOverseerEnabled: {value: false}} as DoubtfireConstants,
+      {} as CommentsModalService,
+      {} as AlertService,
+      conversationLanding,
+    );
+
+    const commentsBody = {scrollTop: 0, scrollHeight: 960} as HTMLElement;
+    const conversationEnd = {scrollIntoView: vi.fn()} as unknown as HTMLElement;
+    const commentsFooter = {scrollIntoView: vi.fn()} as unknown as HTMLElement;
+    viewer.commentsBody = new ElementRef(commentsBody);
+    viewer.conversationEnd = new ElementRef(conversationEnd);
+    viewer.commentsFooter = new ElementRef(commentsFooter);
+    viewer.ngAfterViewInit();
+
+    return {viewer, commentsBody, conversationEnd, commentsFooter};
+  }
+
+  function loadTask(viewer: TaskCommentsViewerComponent, task: Task): void {
+    viewer.task = task;
+    viewer.project = task.project;
+    viewer.ngOnChanges({
+      task: {
+        currentValue: task,
+        previousValue: null,
+        firstChange: true,
+        isFirstChange: () => true,
+      },
+    });
+  }
+
+  it('retains an early request until fresh history is rendered, then reveals without focusing', () => {
+    const history$: Subject<TaskComment[]> = new Subject();
+    const landing = new ConversationLandingService();
+    const task = taskFor(11);
+    const request = landing.requestLatestMessages({projectId: 7, taskDefinitionId: 11});
+    const {viewer, commentsBody, conversationEnd, commentsFooter} = createViewer(
+      vi.fn(() => history$),
+      landing,
+    );
+    const focusKeeper = document.createElement('button');
+    document.body.appendChild(focusKeeper);
+    focusKeeper.focus();
+
+    loadTask(viewer, task);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(0);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).toBe(request);
+
+    history$.next([]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(960);
+    expect(conversationEnd.scrollIntoView).toHaveBeenCalledWith({
+      block: 'end',
+      inline: 'nearest',
+    });
+    expect(commentsFooter.scrollIntoView).toHaveBeenCalledWith({
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    expect(document.activeElement).toBe(focusKeeper);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).toBeNull();
+
+    focusKeeper.remove();
+    viewer.ngOnDestroy();
+  });
+
+  it('waits for the authoritative response instead of fulfilling from a stale cache', () => {
+    const cached$: Subject<TaskComment[]> = new Subject();
+    const fresh$: Subject<TaskComment[]> = new Subject();
+    const landing = new ConversationLandingService();
+    const task = taskFor(11);
+    task.commentCache.add({id: 1} as TaskComment);
+    landing.requestLatestMessages(taskDefinitionTarget(task));
+    const {viewer, commentsBody} = createViewer(
+      vi.fn(() => fresh$),
+      landing,
+      vi.fn(() => cached$),
+    );
+    Reflect.set(viewer, 'mapComments', vi.fn());
+
+    loadTask(viewer, task);
+    cached$.next([{id: 1} as TaskComment]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(0);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).not.toBeNull();
+
+    fresh$.next([{id: 1} as TaskComment]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(960);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).toBeNull();
+
+    viewer.ngOnDestroy();
+  });
+
+  it('refreshes an already-mounted conversation before answering a same-route landing request', () => {
+    const history$: Subject<TaskComment[]> = new Subject();
+    const landing = new ConversationLandingService();
+    const task = taskFor(11);
+    const fetchAll = vi.fn(() => history$);
+    const {viewer, commentsBody} = createViewer(fetchAll, landing);
+
+    loadTask(viewer, task);
+    history$.next([]);
+    flushFrames();
+    commentsBody.scrollTop = 0;
+
+    landing.requestLatestMessages(taskDefinitionTarget(task));
+    flushFrames();
+
+    expect(fetchAll).toHaveBeenCalledTimes(2);
+    expect(commentsBody.scrollTop).toBe(0);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).not.toBeNull();
+
+    history$.next([]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(960);
+    expect(landing.pendingFor(taskDefinitionTarget(task))).toBeNull();
+
+    viewer.ngOnDestroy();
+  });
+
+  it('does not let a cancelled task request reveal the next task', () => {
+    const firstHistory$: Subject<TaskComment[]> = new Subject();
+    const secondHistory$: Subject<TaskComment[]> = new Subject();
+    const landing = new ConversationLandingService();
+    const firstTask = taskFor(11);
+    const secondTask = taskFor(12);
+    const fetchAll = vi
+      .fn()
+      .mockImplementationOnce(() => firstHistory$)
+      .mockImplementationOnce(() => secondHistory$);
+    const {viewer, commentsBody} = createViewer(fetchAll, landing);
+
+    loadTask(viewer, firstTask);
+    loadTask(viewer, secondTask);
+    firstHistory$.next([]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(0);
+
+    secondHistory$.next([]);
+    flushFrames();
+
+    expect(commentsBody.scrollTop).toBe(960);
+
+    viewer.ngOnDestroy();
+  });
+
+  function taskDefinitionTarget(task: Task): {projectId: number; taskDefinitionId: number} {
+    return {projectId: task.project.id, taskDefinitionId: task.definition.id};
+  }
 });

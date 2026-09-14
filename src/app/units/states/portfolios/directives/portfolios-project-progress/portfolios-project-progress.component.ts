@@ -10,10 +10,6 @@ import {
 import {BehaviorSubject} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Unit} from 'src/app/api/models/unit';
-import {ProjectService} from 'src/app/api/services/project.service';
-import {TaskService} from 'src/app/api/services/task.service';
-import {AlertService} from 'src/app/common/services/alert.service';
-import {GradeService} from 'src/app/common/services/grade.service';
 
 @Component({
   selector: 'f-portfolios-project-progress',
@@ -31,18 +27,7 @@ export class PortfoliosProjectProgressComponent implements OnChanges {
   @Input()
   public project$: BehaviorSubject<Project> = new BehaviorSubject(null);
 
-  public taskStats: {numberOfTasksCompleted: number; numberOfTasksRemaining: number} = {
-    numberOfTasksCompleted: 0,
-    numberOfTasksRemaining: 0,
-  };
-
-  constructor(
-    private elementRef: ElementRef<HTMLElement>,
-    private gradeService: GradeService,
-    private projectService: ProjectService,
-    private alertService: AlertService,
-    private taskService: TaskService,
-  ) {}
+  constructor(private elementRef: ElementRef<HTMLElement>) {}
 
   @HostListener('wheel', ['$event'])
   public prioritisePageScroll(event: WheelEvent): void {
@@ -81,61 +66,6 @@ export class PortfoliosProjectProgressComponent implements OnChanges {
     if (changes.project && this.project) {
       this.project$.next(this.project);
     }
-  }
-
-  public get gradeValues() {
-    return this.gradeService.gradeValuesFor(this.unit);
-  }
-  public get grades() {
-    return Object.fromEntries(
-      this.unit.gradeDefinitions.map((definition) => [definition.value, definition.label]),
-    );
-  }
-
-  public gradeWord(grade) {
-    return this.gradeService.gradeLabel(grade, this.unit);
-  }
-
-  updateTaskCompletionStats() {
-    this.taskStats.numberOfTasksCompleted = this.project.tasksByStatus(
-      this.taskService.completeStatus,
-    ).length;
-    this.taskStats.numberOfTasksRemaining =
-      this.project.activeTasks().length - this.taskStats.numberOfTasksCompleted;
-  }
-
-  updateSubmittedGrade(newGrade: number): void {
-    const previousSubmittedGrade = this.project.submittedGrade;
-    this.project.submittedGrade = newGrade;
-
-    this.projectService.update(this.project).subscribe({
-      next: (project) => {
-        project.refreshBurndownChartData?.();
-        this.alertService.success(`Updated project's submitted grade`);
-        this.updateTaskCompletionStats();
-      },
-      error: (error) => {
-        this.project.submittedGrade = previousSubmittedGrade;
-        this.alertService.error(`Failed to update submitted grade: ${error}`);
-      },
-    });
-  }
-
-  updatedTargetGrade(newGrade: number): void {
-    const previousTargetGrade = this.project.targetGrade;
-    this.project.targetGrade = newGrade;
-
-    this.projectService.update(this.project).subscribe({
-      next: (project) => {
-        project.refreshBurndownChartData?.();
-        this.alertService.success(`Updated project's target grade`);
-        this.updateTaskCompletionStats();
-      },
-      error: (error) => {
-        this.project.targetGrade = previousTargetGrade;
-        this.alertService.error(`Failed to update target grade: ${error}`);
-      },
-    });
   }
 
   private findInnerScrollContainer(target: HTMLElement, root: Element): HTMLElement | null {

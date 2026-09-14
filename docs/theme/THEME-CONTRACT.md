@@ -312,11 +312,11 @@ semantic token layer on top now, and move Material onto tokens per component gro
 
 ### The three options
 
-| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                                             |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose hexes outside the three palette files, and locks us further into an API Angular is winding down. |
-| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                          |
-| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                   |
+| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                                                |
+| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                                         |
 
 ### Why B is rejected
 
@@ -590,12 +590,12 @@ is the rule that decides the migration, so it is written as a table rather than 
 "has a preference" as "holds one of the three allowlisted strings"; anything else is treated as
 absent, per 6.1.
 
-| Local preference | Account preference | Outcome                                                                        |
-| ---------------- | ------------------ | ------------------------------------------------------------------------------ |
-| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.     |
-| absent           | present            | Adopt the account value and write it locally. Rule 4.                          |
+| Local preference | Account preference | Outcome                                                                                 |
+| ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.              |
+| absent           | present            | Adopt the account value and write it locally. Rule 4.                                   |
 | **present**      | **absent**         | **Keep the local value, upload it, and stamp `updatedAt` at the moment of the upload.** |
-| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                        |
+| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                                |
 
 Only the fourth row consults a timestamp. So "a local timestamp that is missing, unparseable or
 in the future counts as older, and the account value is taken" applies **inside that row only**,
@@ -629,7 +629,7 @@ Two consequences that follow from the third row and are intended:
 `localStorage` means nothing to compare, so the account value is adopted, written locally, and
 the next boot on that device is flash-free. Until the response lands, that first session follows
 `system`. One repaint, on the first session on a new device, is the accepted cost of rule 1. It
-is stated behaviour, not a defect for THM-Q01 to raise. Where the account is *also* empty, row
+is stated behaviour, not a defect for THM-Q01 to raise. Where the account is _also_ empty, row
 one of the table applies and nothing is written at all — a brand-new user is not given a stored
 preference they never chose.
 
@@ -683,7 +683,9 @@ where needed. Ratios were computed, not estimated. Appendix A has the script.
 | `--ot-color-on-primary`      | Text and icons on a primary fill                          | `#ffffff` | `#131316` | 6.56 / 10.87          |
 | `--ot-color-success`         | Success text and icons                                    | `#398239` | `#5bb75b` | 4.55 on light page    |
 | `--ot-color-warning`         | Warning text and icons                                    | `#a56504` | `#eb8f06` | 4.51 on light page    |
+| `--ot-color-on-warning`      | Text and icons on a filled warning header                 | `#ffffff` | `#161b22` | 4.71 / 8.89 on fill   |
 | `--ot-color-error`           | Error text, invalid fields, destructive actions           | `#d73613` | `#ef6445` | 4.53 on dark raised   |
+| `--ot-color-on-error`        | Text and icons on a filled error header                   | `#ffffff` | `#161b22` | 4.74 / 6.86 on fill   |
 | `--ot-color-info`            | Informational text and icons                              | `#0075d0` | `#0792ff` | 4.52 on light page    |
 | `--ot-color-inverse-surface` | Snackbars, tooltips, anything inverted                    | `#212121` | `#e5e1e6` | —                     |
 | `--ot-color-inverse-text`    | Text on an inverse surface                                | `#fafafa` | `#201f23` | 15.43 / 12.67         |
@@ -707,40 +709,42 @@ Three notes that are part of the contract, not commentary.
 
 ### 8.1 Task status
 
-Fifteen statuses. The method, applied in order: keep the shipped fill if white text on it already
-clears 4.5:1; otherwise keep the shipped fill and use `--ot-color-text` (`#212121`) if that
-clears 4.5:1; only if neither works, darken the fill in 0.5% HSL lightness steps, hue and
-saturation held, until white text reaches 4.5:1. **Thirteen of fifteen fills come through
-unchanged.** The dark fill is a container: same hue, same saturation, lightness pinned to 22%.
-The dark on-fill is the same hue lifted until it clears 4.5:1 on that container.
+Fifteen statuses. Every status fill carries white icons and white text, so `-on` is `#ffffff`
+for all fifteen in both themes. The method: keep the fill if white already clears 4.5:1;
+otherwise darken it in 0.5% HSL lightness steps, hue and saturation held, until white reaches
+4.5:1. The dark theme's fills go through the same method. Ratios below are white on the fill.
 
-| Status                | Shipped fill | `--ot-status-*` light | `-on` light | Ratio | `--ot-status-*` dark | `-on` dark | Ratio |
-| --------------------- | ------------ | --------------------- | ----------- | ----- | -------------------- | ---------- | ----- |
-| `ready-for-feedback`  | `#0079d8`    | `#0078d5`             | `#ffffff`   | 4.52  | `#003f70`            | `#47aeff`  | 4.51  |
-| `not-started`         | `#cccccc`    | `#cccccc`             | `#212121`   | 10.03 | `#383838`            | `#a1a1a1`  | 4.54  |
-| `working-on-it`       | `#eb8f06`    | `#eb8f06`             | `#212121`   | 6.49  | `#6d4303`            | `#fab042`  | 4.63  |
-| `need-help`           | `#a48fce`    | `#a48fce`             | `#212121`   | 5.67  | `#31224e`            | `#9d86ca`  | 4.56  |
-| `fix-and-resubmit`    | `#f2d85c`    | `#f2d85c`             | `#212121`   | 11.31 | `#685708`            | `#f1d44c`  | 4.83  |
-| `feedback-exceeded`   | `#d46b54`    | `#d46b54`             | `#212121`   | 4.62  | `#5a2317`            | `#dc8572`  | 4.53  |
-| `redo`                | `#804000`    | `#804000`             | `#ffffff`   | 7.92  | `#703800`            | `#ff9e3d`  | 4.53  |
-| `discuss`             | `#31b0d5`    | `#31b0d5`             | `#212121`   | 6.37  | `#134c5d`            | `#5ec1de`  | 4.58  |
-| `rediscuss`           | `#126352`    | `#126352`             | `#ffffff`   | 7.16  | `#115f4f`            | `#5be1c5`  | 4.69  |
-| `demonstrate`         | `#428bca`    | `#337ab7`             | `#ffffff`   | 4.56  | `#193a58`            | `#6ea6d6`  | 4.53  |
-| `complete`            | `#5bb75b`    | `#5bb75b`             | `#212121`   | 6.42  | `#224e22`            | `#78c478`  | 4.57  |
-| `fail`                | `#d93713`    | `#d93713`             | `#ffffff`   | 4.66  | `#671a09`            | `#f17c62`  | 4.51  |
-| `time-exceeded`       | `#d93713`    | `#d93713`             | `#ffffff`   | 4.66  | `#671a09`            | `#f17c62`  | 4.51  |
-| `assess-in-portfolio` | `#f2d85c`    | `#f2d85c`             | `#212121`   | 11.31 | `#685708`            | `#f1d44c`  | 4.83  |
-| `attention-required`  | `#f1814d`    | `#f1814d`             | `#212121`   | 6.12  | `#682708`            | `#f28a5a`  | 4.55  |
+| Status                | Shipped fill | `--ot-status-*` light | Ratio | `--ot-status-*` dark | Ratio |
+| --------------------- | ------------ | --------------------- | ----- | -------------------- | ----- |
+| `ready-for-feedback`  | `#0079d8`    | `#0078d5`             | 4.52  | `#0071f1`            | 4.53  |
+| `not-started`         | `#cccccc`    | `#757575`             | 4.61  | `#6f7782`            | 4.53  |
+| `working-on-it`       | `#eb8f06`    | `#a86604`             | 4.60  | `#a4690c`            | 4.56  |
+| `need-help`           | `#a48fce`    | `#8366bc`             | 4.57  | `#9447ff`            | 4.56  |
+| `fix-and-resubmit`    | `#f2d85c`    | `#8b750b`             | 4.52  | `#877613`            | 4.53  |
+| `feedback-exceeded`   | `#d46b54`    | `#ca4e33`             | 4.52  | `#cb4e00`            | 4.54  |
+| `redo`                | `#804000`    | `#804000`             | 7.92  | `#bb5b1f`            | 4.54  |
+| `discuss`             | `#31b0d5`    | `#20809c`             | 4.54  | `#1c8189`            | 4.61  |
+| `rediscuss`           | `#126352`    | `#126352`             | 7.16  | `#1b8376`            | 4.61  |
+| `demonstrate`         | `#428bca`    | `#337ab7`             | 4.56  | `#0074e6`            | 4.53  |
+| `complete`            | `#5bb75b`    | `#3b863b`             | 4.51  | `#2e863a`            | 4.58  |
+| `fail`                | `#d93713`    | `#d93713`             | 4.66  | `#eb1309`            | 4.54  |
+| `time-exceeded`       | `#d93713`    | `#d93713`             | 4.66  | `#eb1309`            | 4.54  |
+| `assess-in-portfolio` | `#f2d85c`    | `#8b750b`             | 4.52  | `#877613`            | 4.53  |
+| `attention-required`  | `#f1814d`    | `#cd4c10`             | 4.53  | `#be580f`            | 4.57  |
 
 Token names are `--ot-status-<key>` and `--ot-status-<key>-on`, where `<key>` is the existing
 kebab-case class from `TaskStatus.statusClass()`.
 
-Only two light fills move: `ready-for-feedback` (`#0079d8` → `#0078d5`) and `demonstrate`
-(`#428bca` → `#337ab7`). Six flip their foreground from `#ffffff` to `--ot-color-text` with the
-fill untouched — `working-on-it`, `need-help`, `feedback-exceeded`, `discuss`, `complete`,
-`attention-required`. Three keep their fill and move their foreground off the shipped `#444444`
-onto the same token — `not-started`, `fix-and-resubmit`, `assess-in-portfolio`. That leaves four
-untouched in both fill and foreground: `redo`, `rediscuss`, `fail`, `time-exceeded`.
+A status drawn as a mark on the page, not as a fill under white content, uses
+`--ot-status-<key>-graphic`: chart slices and legends, peer-progress bars, list accents and the
+footer glyphs. Marks need 3:1 against the surface. In light the fills already clear that, so
+`-graphic` equals the fill. In dark the darkened fills do not, so `-graphic` keeps the vivid
+colours the dark theme used before, all of which clear 3:1 on `--ot-color-surface`.
+
+In light, 4 fills keep their value: `redo`, `rediscuss`, `fail`, `time-exceeded`. The rest
+darken. The biggest shift is the yellow pair, `fix-and-resubmit` and `assess-in-portfolio`,
+which becomes an olive gold. A white glyph cannot clear 3:1 on any yellow light enough to
+still read as yellow, so the hue survives and the lightness does not.
 
 Thirteen of fifteen dark fills are distinct. The two collisions are `fail`/`time-exceeded` and
 `fix-and-resubmit`/`assess-in-portfolio`, which already share a base colour today. No **new**
@@ -771,6 +775,11 @@ One source of truth, in CSS.
 |           | `--ot-chart-6`                | `#d07e05`                    | `#eb8f06`                    |                                                                  |
 |           | `--ot-chart-grid`             | `#e0e0e0`                    | `#353438`                    | gridlines, decorative                                            |
 |           | `--ot-chart-axis`             | `#616161`                    | `#adaaaf`                    | axis labels are text, 4.5:1                                      |
+| Meters    | `--ot-meter-track`            | `#e0e0e0`                    | `#4a5361`                    | empty part of a progress bar; 1.43 on dark raised, decorative    |
+| Comments  | `--ot-comment-bubble`         | `#e6e9ee`                    | `#353c47`                    | other people's chat bubbles; 1.18 on the surface, text 13.2/8.6  |
+| Units     | `--ot-unit-1` … `-6`          | see below                    | see below                    | cross-unit dashboard header bands; white text ≥4.5:1             |
+|           | `--ot-unit-previous`          | `#475569`                    | `#3c4757`                    | band for units that have finished                                |
+|           | `--ot-unit-on`                | `#ffffff`                    | `#ffffff`                    | text and icons on every unit band                                |
 | Code      | `--ot-code-surface`           | `#f5f5f5`                    | `#0e0e11`                    | `<pre>`, ANSI output, diff panes                                 |
 |           | `--ot-code-text`              | `#212121`                    | `#e5e1e6`                    | 14.77 / 14.91 on their own surface                               |
 |           | Monaco theme name             | `vs`                         | `vs-dark`                    | not a CSS var; set in TS from the resolved theme                 |
@@ -781,6 +790,21 @@ One source of truth, in CSS.
 | Selection | `--ot-color-selected`         | `#e7e7ff`                    | `#2e2e5c`                    | selected row or chip fill                                        |
 |           | `--ot-color-selected-text`    | `#212121`                    | `#e5e1e6`                    | 13.24 / 9.78                                                     |
 |           | `--ot-color-hover`            | `rgba(0, 0, 0, 0.04)`        | `rgba(255, 255, 255, 0.06)`  | matches the M2 `hover` slot already in use                       |
+
+The unit accents give each column on the cross-unit dashboard its own colour, handed out in
+display order. They are identity, not data, so they stay apart from the status and chart
+palettes.
+
+| Token         | Light     | White on it | Dark      | White on it |
+| ------------- | --------- | ----------- | --------- | ----------- |
+| `--ot-unit-1` | `#3939ff` | 6.56        | `#3233c0` | 8.86        |
+| `--ot-unit-2` | `#0f766e` | 5.47        | `#145e5a` | 7.56        |
+| `--ot-unit-3` | `#7c3aed` | 5.70        | `#6134b3` | 7.92        |
+| `--ot-unit-4` | `#be123c` | 6.29        | `#8f1838` | 8.91        |
+| `--ot-unit-5` | `#0369a1` | 5.93        | `#0c557e` | 8.03        |
+| `--ot-unit-6` | `#b45309` | 5.02        | `#884614` | 7.16        |
+
+The dark values are each light accent mixed 70% into the dark page (`#21262d`).
 
 `--ot-color-selected` light is `#e7e7ff`, which is `formatif-blue-lighter` from
 `tailwind.config.js` and `$md-formatif.50` from `theme.scss`. It is already the app's selection
@@ -796,13 +820,13 @@ tint, it just had no name.
 | The status **identity**, meaning which hue means `complete`                                | Green means complete in both themes. Teaching staff read these chips daily and re-learning them in dark mode is a real cost. |
 | `#da532c`, `$doubtfire-color` in `variables.scss`                                          | Legacy brand colour. Keep or retire it, do not theme it.                                                                     |
 
-| Theme-aware                                                 | Why                                                                                                                                |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Theme-aware                                                 | Why                                                                                                                                                                                                                               |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--ot-color-primary`, `--ot-color-link`, `--ot-color-focus` | `#3939ff` is 6.28:1 on the light page, 2.83:1 on the dark page and 2.20:1 on the worst-case dark raised surface. It misses 4.5:1 for text and 3:1 for a focus ring, so the brand blue cannot be the dark-mode interactive colour. |
-| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                      |
-| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                    |
-| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                      |
-| The `theme-color` meta tag                                  | Section 12.                                                                                                                        |
+| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                                                                                                                     |
+| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                                                                                                                   |
+| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                                                                                                                     |
+| The `theme-color` meta tag                                  | Section 12.                                                                                                                                                                                                                       |
 
 The distinction in one sentence: **the brand mark is fixed, the brand as an interface colour is
 theme-aware.**
@@ -1318,6 +1342,7 @@ Visual regression
   reporting it is a fingerprinting signal and this feature does not do it. If analytics is added
   to OnTrack later, the theme preference stays out of it, and that is a review gate rather than a
   preference.
+
 - **Not an authorisation or identity control.** `data-ot-theme` and
   `ontrack.theme.preference` are presentation state. They are attacker-controlled by definition,
   since any user can edit `localStorage`. **No permission check, no role check, no route guard,
