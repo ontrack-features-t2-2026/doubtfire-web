@@ -60,13 +60,32 @@ describe('TaskDashboardComponent', () => {
     const project = new Project();
     project.id = 1;
     const task = new Task(project);
-    task.definition = {id: 2} as Task['definition'];
+    task.definition = {
+      id: 2,
+      uploadRequirements: [{key: 'file0'}],
+    } as unknown as Task['definition'];
     component.task = task;
     fixture.detectChanges();
 
+    task.status = 'ready_for_feedback';
+    task.submissionProcessingState = 'queued';
     taskServiceStub.taskSubmissionCompleted$.next(task);
 
     expect(component.currentView).toBe(DashboardViews.submission);
+  });
+
+  it('stays on Task Details when a task that takes no uploads is set Ready for Feedback', () => {
+    const project = new Project();
+    project.id = 1;
+    const task = new Task(project);
+    task.definition = {id: 2, uploadRequirements: []} as unknown as Task['definition'];
+    component.task = task;
+    fixture.detectChanges();
+
+    task.status = 'ready_for_feedback';
+    taskServiceStub.taskSubmissionCompleted$.next(task);
+
+    expect(component.currentView).toBe(DashboardViews.details);
   });
 
   it('allows the project owner to view peer progress', () => {

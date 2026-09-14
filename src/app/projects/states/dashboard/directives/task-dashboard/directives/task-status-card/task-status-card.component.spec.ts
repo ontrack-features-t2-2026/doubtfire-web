@@ -1,9 +1,11 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute} from '@angular/router';
 import {EMPTY} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
+import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {TaskStatusEnum} from 'src/app/api/models/task-status';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {ExtensionModalService} from 'src/app/common/modals/extension-modal/extension-modal.service';
@@ -50,22 +52,74 @@ describe('TaskStatusCardComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  function buildTask(status: TaskStatusEnum, requiresFiles: boolean, submissionDate?: Date): Task {
+    const task = new Task();
+    task.status = status;
+    task.definition = {
+      uploadRequirements: requiresFiles ? [{key: 'file0'}] : [],
+    } as unknown as TaskDefinition;
+    task.submissionDate = submissionDate;
+    return task;
+  }
+
+  const previousSubmission = new Date('2026-08-31T00:00:00Z');
+
   it.each([
-    {history: false, requiresFiles: true, first: true, replacement: false},
-    {history: true, requiresFiles: true, first: false, replacement: true},
-    {history: true, requiresFiles: false, first: false, replacement: false},
-  ])(
-    'shows exactly one appropriate upload action for $history/$requiresFiles',
-    ({history, requiresFiles, first, replacement}) => {
-      component.task = {
-        hasSubmissionHistory: () => history,
-        requiresFileUpload: () => requiresFiles,
-      } as unknown as Task;
+    {status: 'not_started', requiresFiles: true, submitted: undefined, first: true, again: false},
+    {status: 'not_started', requiresFiles: false, submitted: undefined, first: true, again: false},
+    {
+      status: 'fix_and_resubmit',
+      requiresFiles: true,
+      submitted: previousSubmission,
+      first: true,
+      again: false,
+    },
+    {status: 'redo', requiresFiles: true, submitted: previousSubmission, first: true, again: false},
+    {status: 'redo', requiresFiles: false, submitted: undefined, first: true, again: false},
+    {
+      status: 'working_on_it',
+      requiresFiles: true,
+      submitted: previousSubmission,
+      first: true,
+      again: false,
+    },
+    {
+      status: 'ready_for_feedback',
+      requiresFiles: true,
+      submitted: previousSubmission,
+      first: false,
+      again: true,
+    },
+    {
+      status: 'complete',
+      requiresFiles: true,
+      submitted: previousSubmission,
+      first: false,
+      again: true,
+    },
+    {status: 'complete', requiresFiles: false, submitted: undefined, first: false, again: false},
+  ] as const)(
+    'shows exactly one appropriate upload action for $status (uploads: $requiresFiles)',
+    ({status, requiresFiles, submitted, first, again}) => {
+      component.task = buildTask(status, requiresFiles, submitted);
 
       expect(component.showUploadSubmission).toBe(first);
-      expect(component.showUploadNewFiles).toBe(replacement);
+      expect(component.showUploadNewFiles).toBe(again);
     },
   );
+
+  it('offers the full submission flow again for a task returned for resubmission', () => {
+    const task = buildTask('fix_and_resubmit', true, previousSubmission);
+    task.definition.assessInPortfolioOnly = false;
+    const triggerTransition = vi.spyOn(task, 'triggerTransition').mockResolvedValue();
+    component.task = task;
+
+    expect(component.showUploadSubmission).toBe(true);
+    expect(component.showUploadNewFiles).toBe(false);
+    component.uploadSubmission();
+
+    expect(triggerTransition).toHaveBeenCalledWith('ready_for_feedback');
+  });
 
   it('marks the replacement action pending while details or PDF processing is unresolved', () => {
     component.task = {processingPdf: true, loadingSubmissionDetails: false} as Task;

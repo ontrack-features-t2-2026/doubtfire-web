@@ -730,13 +730,22 @@ export class Task extends Entity {
   }
 
   /**
-   * Submission actions must follow evidence history, not only the task's current
-   * status. A tutor can return a submitted task to Redo/Resubmit, and the
-   * submission timestamp/artifacts remain authoritative in that state.
+   * Whether the Your Submission tab and card have anything to show. A tutor can
+   * return a submitted task to Redo/Resubmit, and the submission timestamp and
+   * artifacts remain authoritative in that state. A task that takes no uploads
+   * never has files to show, whatever its status.
+   *
+   * This is not the rule for which upload action to offer. The status card
+   * follows inSubmittedState() for that, so a returned task goes back through
+   * the full Ready for Feedback flow.
    */
   public hasSubmissionHistory(): boolean {
+    if (!this.requiresFileUpload()) {
+      return false;
+    }
+
     return !!(
-      this.submissionDate ||
+      this.hasValidSubmissionDate() ||
       this.hasPdf ||
       this.processingPdf ||
       this.submissionPdfReady ||
@@ -745,6 +754,11 @@ export class Task extends Entity {
       this.inSubmittedState() ||
       TaskStatus.MARKED_STATUSES.includes(this.status)
     );
+  }
+
+  // An Invalid Date is still a truthy object, so check the time value itself.
+  private hasValidSubmissionDate(): boolean {
+    return !!this.submissionDate && !Number.isNaN(new Date(this.submissionDate).getTime());
   }
 
   public inAwaitingFeedbackState(): boolean {
@@ -830,7 +844,12 @@ export class Task extends Entity {
     this.submissionProcessingAttempts = response.processing_attempts ?? 0;
     this.submissionRetryable = response.retryable === true;
     this.submissionPollAfterSeconds = response.poll_after_seconds ?? null;
-    this.submissionDate = MappingFunctions.mapDate(response, 'submission_date', this);
+    // The API sends submission_date: null for a task that was never submitted,
+    // and leaves the key out when the task takes no uploads. mapDate would turn
+    // those into the 1970 epoch and an Invalid Date, both truthy.
+    if ('submission_date' in response) {
+      this.submissionDate = this.parseApiDate(response.submission_date) ?? undefined;
+    }
 
     if (response.task_status && TaskStatus.STATUS_KEYS.includes(response.task_status)) {
       this.status = response.task_status;
