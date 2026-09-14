@@ -38,6 +38,7 @@
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="start">
           <mat-label>First Name</mat-label>
           <input
+            #firstModel="ngModel"
             autocomplete="given-name"
             class="outline-none"
             matInput
@@ -45,6 +46,9 @@
             required
             [(ngModel)]="user.firstName"
           />
+          @if (firstModel.hasError('required')) {
+            <mat-error>First name is required</mat-error>
+          }
         </mat-form-field>
 
         <div fxFlex></div>
@@ -52,12 +56,16 @@
         <mat-form-field appearance="outline" fxFlex="48" fxFlexAlign="end">
           <mat-label>Second Name</mat-label>
           <input
+            #lastModel="ngModel"
             autocomplete="family-name"
             matInput
             name="last"
             required
             [(ngModel)]="user.lastName"
           />
+          @if (lastModel.hasError('required')) {
+            <mat-error>Second name is required</mat-error>
+          }
         </mat-form-field>
       </div>
 
@@ -88,20 +96,37 @@
       @if (user.systemRole === 'Student') {
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Student ID</mat-label>
-          <input matInput name="student_id" required [(ngModel)]="user.studentId" />
+          <input
+            #studentIdModel="ngModel"
+            matInput
+            name="student_id"
+            required
+            [(ngModel)]="user.studentId"
+          />
+          @if (studentIdModel.hasError('required')) {
+            <mat-error>Student ID is required</mat-error>
+          }
         </mat-form-field>
       }
 
       <mat-form-field appearance="outline" fxFlexFill>
         <mat-label>Email</mat-label>
         <input
+          #emailModel="ngModel"
           autocomplete="email"
+          email
           matInput
           name="email"
           required
           type="email"
           [(ngModel)]="user.email"
         />
+        @if (emailModel.hasError('required')) {
+          <mat-error>Email is required</mat-error>
+        }
+        @if (emailModel.hasError('email')) {
+          <mat-error>Enter a valid email address</mat-error>
+        }
       </mat-form-field>
 
       @if (canSeeSystemRole) {
@@ -213,7 +238,7 @@
             fxFlexAlign="end"
             mat-flat-button
             type="submit"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
           >
             Confirm Account
           </button>
@@ -224,7 +249,7 @@
             fxFlexAlign="end"
             mat-flat-button
             type="button"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
             (click)="submit()"
           >
             Save Profile

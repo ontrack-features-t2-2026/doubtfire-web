@@ -7,6 +7,7 @@ import {
   OnInit,
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {ActivatedRoute, Router} from '@angular/router';
 import {catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Grade} from '../api/models/grade';
@@ -123,10 +124,21 @@ export class CrossDashboardComponent implements OnInit {
     private taskService: TaskService,
     private changeDetectorRef: ChangeDetectorRef,
     private destroyRef: DestroyRef,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
     this.globalStateService.onLoad(() => {
+      this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+        const requested = params.get('scope');
+        const scope: UnitScope =
+          requested === 'previous' || requested === 'all' ? requested : 'active';
+        if (scope !== this.unitScope) {
+          this.applyUnitScope(scope);
+        }
+      });
+
       const projectChanges = this.globalStateService.currentUserProjects.values.pipe(
         tap((projects) => this.refreshActiveUnits(projects)),
         map(() => undefined),
@@ -207,6 +219,17 @@ export class CrossDashboardComponent implements OnInit {
   }
 
   setUnitScope(scope: UnitScope): void {
+    this.applyUnitScope(scope);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {scope: scope === 'active' ? null : scope},
+      queryParamsHandling: 'merge',
+      preserveFragment: true,
+      replaceUrl: true,
+    });
+  }
+
+  private applyUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
     this.expandedMobileProjectId = null;
     this.processTasks();

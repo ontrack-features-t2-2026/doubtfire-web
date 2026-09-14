@@ -204,6 +204,17 @@ class StubNgFormProfile {
   public invalid = false;
 }
 
+// The identity fields now carry #model="ngModel" refs for the required/email
+// validation messages, so the real template needs something exporting ngModel to
+// render. Stub it, in the same spirit as StubNgFormProfile, and report no errors so
+// the autocomplete assertions below are all that this spec turns on.
+@Directive({selector: '[ngModel]', exportAs: 'ngModel', standalone: false})
+class StubNgModelProfile {
+  public hasError(): boolean {
+    return false;
+  }
+}
+
 describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
   let fixture: ComponentFixture<EditProfileFormComponent>;
 
@@ -211,7 +222,7 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
     const user = makeUser({systemRole: 'Student'});
 
     await TestBed.configureTestingModule({
-      declarations: [EditProfileFormComponent, StubNgFormProfile],
+      declarations: [EditProfileFormComponent, StubNgFormProfile, StubNgModelProfile],
       providers: [
         {
           provide: DoubtfireConstants,
