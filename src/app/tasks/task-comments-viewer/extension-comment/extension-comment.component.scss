@@ -27,7 +27,7 @@ hr {
   position: relative;
   outline: 0;
   border: 0;
-  color: black;
+  color: var(--ot-color-text);
   text-align: center;
   height: 1.5em;
   opacity: 0.8;
@@ -44,7 +44,7 @@ hr {
     content: attr(data-content);
     position: relative;
     display: inline-block;
-    color: black;
+    color: var(--ot-color-text);
 
     padding: 0 0.5em;
     line-height: 1.5em;

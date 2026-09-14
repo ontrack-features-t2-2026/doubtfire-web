@@ -182,7 +182,7 @@ $comment-inner-border-radius: 4px;
       position: relative;
       outline: 0;
       border: 0;
-      color: black;
+      color: var(--ot-color-text);
       text-align: center;
       height: 1.5em;
       opacity: 0.8;
@@ -201,7 +201,7 @@ $comment-inner-border-radius: 4px;
         content: attr(data-content);
         position: relative;
         display: inline-block;
-        color: black;
+        color: var(--ot-color-text);
         padding: 0 0.5em;
         line-height: 1.5em;
         color: color-mix(in srgb, var(--ot-color-text-muted) 62%, transparent);
@@ -277,7 +277,7 @@ $comment-inner-border-radius: 4px;
       $comment-bubble-color-other-user-darker
     );
     // color: $text-color;
-    color: black;
+    color: var(--ot-color-text);
   }
 
   .comment.comment-by-other-user .user-icon {
@@ -456,19 +456,19 @@ $comment-inner-border-radius: 4px;
 
   .comment.comment-by-other-user .text-bubble {
     background: $comment-bubble-color-other-user;
-    color: black;
+    color: var(--ot-color-text);
     margin-left: 0;
   }
 
   .comment.comment-by-other-user .pdf-bubble {
     background: $comment-bubble-color-other-user;
-    color: black;
-    color: black;
+    color: var(--ot-color-text);
+    color: var(--ot-color-text);
     margin-right: 50px;
     margin-left: 0;
 
     a p {
-      color: black;
+      color: var(--ot-color-text);
       margin-bottom: 0;
     }
   }

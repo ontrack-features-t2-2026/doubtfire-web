@@ -36,10 +36,24 @@ surfaces students use.
 
 ## What changed
 
-Every migrated file had hardcoded colour values replaced with the shared M01
-semantic tokens from `src/styles/tokens/_light.scss` and `_dark.scss`, so the same
+Colour was locked to light in three ways, and all three were migrated so the same
 markup now flips correctly in Light, Dark and System. No layout, logic, status,
-submission, extension or feedback behaviour was changed. Examples of the mapping:
+submission, extension or feedback behaviour was changed.
+
+1. **Hardcoded colour values in component SCSS** (hex, rgb) replaced with the
+   shared M01 tokens.
+2. **Named CSS colours in SCSS** (`black`, `grey`) that a hex scan missed, for
+   example the discussion status label `.hr-text { color: black }`, replaced with
+   tokens so the text is readable in Dark.
+3. **Hardcoded Tailwind light utility classes in templates**
+   (`bg-white`, `bg-gray-100`, `bg-neutral-100`, `text-black`, `text-gray-500`,
+   `text-slate-500`, `border-gray-200`, and the striped `odd:bg-gray-100 even:bg-white`
+   rows on the Learning Outcomes table) replaced with token arbitrary values such
+   as `bg-[var(--ot-color-surface)]` and `text-[color:var(--ot-color-text-muted)]`.
+   These flip automatically because the token flips, so no per-class `dark:`
+   variant was needed.
+
+Examples of the mapping:
 
 - Text and muted text -> `--ot-color-text`, `--ot-color-text-muted`.
 - Surfaces and page backgrounds -> `--ot-color-surface`, `--ot-color-page`.
@@ -65,6 +79,21 @@ submission, extension or feedback behaviour was changed. Examples of the mapping
 - `src/app/tasks/task-comments-viewer/scorm-comment/scorm-comment.component.scss`
 - `src/app/tasks/task-comments-viewer/scorm-extension-comment/scorm-extension-comment.component.scss`
 - `src/app/common/header/task-dropdown/task-dropdown.component.scss`
+
+### Templates migrated (Tailwind light classes to tokens)
+
+- `task-ilos-card.component.html` (the Unit and Task Learning Outcomes card, the
+  striped rows that stayed light in Dark)
+- `progress-dashboard.component.html` (the Progress Dashboard header strip)
+- `task-dashboard.component.html`, `project-dashboard.component.html`
+- `project-tasks-list.component.html`
+- `engagement-passport-card.component.html`, `engagement-detail-dialog.component.html`,
+  `add-engagement-dialog.component.html`, `peer-progress-unit-summary.component.html`,
+  `download-filter-dialog.component.html`
+- `create-portfolio-task-list-item.component.html`, `task-planner-prerequisites-modal.component.html`
+- `portfolio-grade-select-step.component.html`, `portfolio-learning-summary-report-step.component.html`,
+  `portfolio-included-tasks.component.html`
+- `task-assessment-comment.component.html`
 
 ## Non-colour cues
 
@@ -104,6 +133,16 @@ the minify step. It is an environment constraint, not a code error: the same
 sources compile cleanly under the test builder above, which produced a complete
 application bundle. Re-run `ng build` on a machine with more memory to capture the
 production build log for the PR.
+
+### Visual verification
+
+The running dev server (`ng serve`) recompiled all SCSS and template changes
+without error, and the student unit dashboard at `/projects/:id/dashboard` was
+checked in Light and Dark. Confirmed fixed in Dark: the Unit and Task Learning
+Outcomes striped rows, the Progress Dashboard header strip, and the discussion
+status labels. Known residual: a small chart cell in the Engagement Passport still
+renders light in Dark, likely an SVG element rather than a CSS class; it is
+recorded as a follow-up.
 
 ## Evidence to attach to the PR
 

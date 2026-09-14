@@ -36,7 +36,7 @@
           Learning Summary Report Submitted
         </div>
         @if (draftTaskDefinitionWasUsed()) {
-          <div class="w-full max-w-2xl py-1 text-center text-xs text-gray-400">
+          <div class="w-full max-w-2xl py-1 text-center text-xs text-[color:var(--ot-color-text-muted)]">
             Your learning summary report was automatically submitted from your
             {{ unit.draftTaskDefinition.abbreviation }} {{ unit.draftTaskDefinition.name }}
             submission.
@@ -74,7 +74,7 @@
     <button mat-raised-button (click)="advanceActiveTab(-1)">Back</button>
     <div class="flex items-center justify-center gap-3">
       @if (!projectHasDraftLearningSummaryReport) {
-        <div class="text-gray-400">
+        <div class="text-[color:var(--ot-color-text-muted)]">
           You're missing a Learning Summary Report. Upload one to continue.
         </div>
       }

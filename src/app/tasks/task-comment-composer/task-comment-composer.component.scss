@@ -180,7 +180,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
 }
 
 .markdown-editor-action {
-  color: grey;
+  color: var(--ot-color-text-muted);
   font-size: 1em;
   cursor: pointer;
 }
