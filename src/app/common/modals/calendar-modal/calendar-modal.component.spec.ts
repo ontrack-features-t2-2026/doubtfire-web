@@ -9,6 +9,7 @@ import {By} from '@angular/platform-browser';
 import {Subject, of} from 'rxjs';
 import {ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DEMO_TOOLS_AVAILABLE} from 'src/app/demo/demo-mode.store';
 import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
@@ -27,6 +28,7 @@ describe('CalendarModalComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [CalendarModalComponent],
       providers: [
+        {provide: DEMO_TOOLS_AVAILABLE, useValue: true},
         {provide: WebcalService, useValue: emptyProvider},
         {provide: DoubtfireConstants, useValue: {API_URL: 'https://doubtfire.test/api'}},
         {provide: AlertService, useValue: emptyProvider},
@@ -79,6 +81,50 @@ describe('CalendarModalComponent', () => {
     component.includeExclusion({unit: {id: 7}});
     expect(update).toHaveBeenCalledTimes(2);
     expect(component.working).toBe(true);
+  });
+
+  it('keeps learning sessions opt-in and restores the saved preference after a failed update', () => {
+    const response: Subject<Webcal> = new Subject();
+    const update = vi.fn().mockReturnValue(response);
+    const internals = component as unknown as {
+      webcalService: {update: typeof update};
+      alerts: {error: ReturnType<typeof vi.fn>};
+      loadWebcal: (value: Webcal) => void;
+    };
+    internals.webcalService = {update};
+    internals.alerts = {error: vi.fn()};
+    const webcal = Object.assign(new Webcal(), {
+      enabled: true,
+      guid: 'saved-guid',
+      unitExclusions: [],
+    });
+    expect(webcal.includeLearningSessions).toBe(false);
+    internals.loadWebcal(webcal);
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({includeLearningSessions: true}));
+    expect(component.working).toBe(true);
+    response.error(new Error('offline'));
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(component.working).toBe(false);
+  });
+
+  it('blocks the new session subscription preference even when demo users open Calendar from the account menu', () => {
+    const update = vi.fn();
+    const internals = component as unknown as {
+      webcalService: {update: typeof update};
+      loadWebcal: (value: Webcal) => void;
+    };
+    internals.webcalService = {update};
+    internals.loadWebcal(
+      Object.assign(new Webcal(), {enabled: true, guid: 'saved-guid', unitExclusions: []}),
+    );
+    component.demoMode.setEnabled(true);
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+    expect(update).not.toHaveBeenCalled();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    component.demoMode.reset();
   });
 
   it('downloads the feed as an .ics file when the webcal is enabled', () => {

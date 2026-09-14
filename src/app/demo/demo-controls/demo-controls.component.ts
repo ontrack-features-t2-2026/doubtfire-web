@@ -1,7 +1,11 @@
 import {ChangeDetectionStrategy, Component, Inject, InjectionToken} from '@angular/core';
+import {FormControl, FormGroup} from '@angular/forms';
 import {MatSlideToggleChange} from '@angular/material/slide-toggle';
 import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
 import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
+import {TeamsMeetingDraft} from '../../unit-hub/teams-meeting-draft';
+import {unitHubDemo} from '../../unit-hub/unit-hub-demo.fixtures';
+import {DemoMeetingLinksStore} from '../demo-meeting-links.store';
 import {DemoModeStore} from '../demo-mode.store';
 import {
   DETAIL_PROTECTED_STATE,
@@ -34,6 +38,18 @@ export const DEMO_RELOAD: InjectionToken<() => void> = new InjectionToken('DEMO_
   standalone: false,
 })
 export class DemoControlsComponent {
+  readonly demoMeetingDraft: TeamsMeetingDraft = {
+    ...unitHubDemo().sessions[0],
+    title: 'DEMO · HelpHub meeting draft',
+    description:
+      'Fictional OnTrack demonstration. Review the example date and time before sending any invitation.',
+  };
+  readonly meetingLinksForm = new FormGroup({
+    helpHub: new FormControl('', {nonNullable: true}),
+    extraHelpHub: new FormControl('', {nonNullable: true}),
+  });
+  meetingLinksError = '';
+  meetingLinksStatus = '';
   readonly pushPreview = DEMO_PUSH_PREVIEW;
   readonly ppiPreviewOptions: {kind: PpiPreviewKind; label: string}[] = [
     {kind: 'full', label: 'Full status data'},
@@ -50,6 +66,7 @@ export class DemoControlsComponent {
   );
 
   readonly affectedSurfaces = [
+    'Unit Hub: fictional SIT111 announcements and sessions, with SIT102 excluded and API writes disabled',
     'All live local project cards, tasks, deadline warnings, filters, and recommendation scores',
     'The live notification bell, unread count, and notification history',
     'Live task-level peer comparison data returned by the local API',
@@ -59,7 +76,30 @@ export class DemoControlsComponent {
   constructor(
     readonly demoMode: DemoModeStore,
     @Inject(DEMO_RELOAD) private reload: () => void,
-  ) {}
+    private meetingLinks: DemoMeetingLinksStore,
+  ) {
+    this.meetingLinksForm.setValue(this.meetingLinks.links);
+  }
+
+  saveMeetingLinks(): void {
+    this.meetingLinksError = '';
+    this.meetingLinksStatus = '';
+    try {
+      this.meetingLinks.save(this.meetingLinksForm.getRawValue());
+      this.meetingLinksStatus =
+        'Saved for this browser tab. Open Unit Hub to use the links in demo mode.';
+    } catch (error) {
+      this.meetingLinksError =
+        error instanceof Error ? error.message : 'The links could not be saved.';
+    }
+  }
+
+  clearMeetingLinks(): void {
+    this.meetingLinks.clear();
+    this.meetingLinksForm.reset();
+    this.meetingLinksError = '';
+    this.meetingLinksStatus = 'Hosted links removed. Sample meetings will be disabled.';
+  }
 
   setDemoMode(change: MatSlideToggleChange): void {
     if (change.checked === this.demoMode.enabled) {

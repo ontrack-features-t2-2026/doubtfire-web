@@ -30,7 +30,8 @@
         <div>
           <p>
             The web calendar displays due dates of your tasks as calendar events in an iCalendar
-            that can be added to any iCalendar client (e.g. Outlook/Google/iCloud calendar).
+            that can be added to any iCalendar client (e.g. Outlook/Google/iCloud calendar). Once
+            enabled, you can also include your unit HelpHubs and classes.
           </p>
         </div>
       }
@@ -39,7 +40,8 @@
         <div>
           <p>
             The web calendar displays due dates of your tasks as calendar events. Use the following
-            URL to subscribe to your web calendar from your iCalendar client.
+            URL to subscribe to your web calendar from your iCalendar client. You can also opt in to
+            HelpHubs and classes below. Calendar providers decide how often to refresh changes.
           </p>
 
           <mat-card appearance="outlined">
@@ -156,6 +158,21 @@
               >
                 Include task start dates in web calendar
               </mat-checkbox>
+              <br />
+              <mat-checkbox
+                [disabled]="working || demoMode.enabled"
+                [(ngModel)]="webcal.includeLearningSessions"
+                (change)="toggleIncludeLearningSessions()"
+              >
+                Include unit HelpHubs, lectures and classes
+              </mat-checkbox>
+              @if (demoMode.enabled) {
+                <p class="text-sm">Session subscription changes are disabled in demo mode.</p>
+              }
+              <p class="text-sm">
+                This shares session times and joining links with your calendar provider. Your unit
+                exclusions apply to sessions too. Keep your subscription URL private.
+              </p>
             </mat-card-content>
           </mat-card>
           <div
@@ -175,7 +192,8 @@
               @switch (selectedCalendarProviderIndex) {
                 @case (0) {
                   In Google Calendar, choose <strong>Add other calendars</strong>, choose
-                  <strong>From URL</strong>, then paste the URL below.
+                  <strong>From URL</strong>, then paste the URL below. Use a desktop browser for
+                  this setup; the subscribed calendar will then also appear on mobile.
                 }
                 @case (1) {
                   In Apple Calendar, choose <strong>File</strong>,

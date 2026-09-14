@@ -68,6 +68,15 @@ export const routes: Routes = [
   {path: 'edit_profile', component: EditProfileComponent},
   {path: 'notifications', component: NotificationsPageComponent},
   {
+    path: 'unit-hub',
+    loadComponent: () => import('./unit-hub/unit-hub.component').then((m) => m.UnitHubComponent),
+    canActivate: [roleWhitelistGuard],
+    data: {
+      pageTitle: 'Unit Hub',
+      roleWhitelist: ['Student', 'Tutor', 'Convenor', 'Admin', 'Auditor'],
+    },
+  },
+  {
     path: 'theme-demo',
     loadComponent: () =>
       import('./common/theme/theme-demo.component').then((m) => m.ThemeDemoComponent),
