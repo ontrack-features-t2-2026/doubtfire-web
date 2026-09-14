@@ -9,7 +9,7 @@
     </aside>
   }
 
-  @if (hasConfiguredGroupWork && hasPublishedGroups) {
+  @if (hasConfiguredGroupWork && (hasPublishedGroups || studentsCanCreateGroups)) {
     <f-group-set-manager [project]="project" [selectedGroupSet]="selectedGroupSet" [unit]="unit">
     </f-group-set-manager>
   } @else if (hasConfiguredGroupWork) {

@@ -33,6 +33,14 @@ export class ProjectGroupsComponent {
     return Boolean(this.selectedGroupSet?.groups?.length);
   }
 
+  // A new group set starts with no groups. When students may create their own,
+  // the create form in the group manager is the only way the first group gets made.
+  public get studentsCanCreateGroups(): boolean {
+    return Boolean(
+      this.selectedGroupSet?.allowStudentsToCreateGroups && !this.selectedGroupSet.locked,
+    );
+  }
+
   public get demoGroupHook(): DemoScenarioContract['group_hook'] | null {
     const hook = this.demoMode.enabled ? this.demoRegistry.scenario?.group_hook : null;
     if (
