@@ -144,11 +144,21 @@ status labels. Known residual: a small chart cell in the Engagement Passport sti
 renders light in Dark, likely an SVG element rather than a CSS class; it is
 recorded as a follow-up.
 
+## Evidence screenshots
+
+Captured on a student account with mock data. Stored in
+`docs/theme/screenshots/`.
+
+| File | View |
+|---|---|
+| `home-light.png`, `home-dark.png` | Enrolled units home in Light and Dark |
+| `dashboard-light.png`, `dashboard-dark.png` | Student unit dashboard with task list, progress panels and Unit Learning Outcomes |
+| `task-detail-dark.png` | Task details, learning outcomes and the discussion panel in Dark |
+| `calendar-web-dark.png` | Web calendar dialog in Dark |
+
 ## Evidence to attach to the PR
 
 - This coverage list.
-- Before and after Light and Dark screenshots of the dashboard, a task, the
-  comments panel and the composer.
-- Normal, empty, loading and error-state evidence.
+- The Light and Dark screenshots above.
 - The check output above.
 - The residual follow-up tickets.
