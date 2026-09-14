@@ -117,6 +117,8 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private draftClientRequestId: string | null = null;
   private draftReplyToId: number | null = null;
   private draftBeforeEdit: string = '';
+  // The comment whose text is in the field, or null when the field holds the draft.
+  private editedComment: TaskComment | null = null;
 
   comment = {
     text: '',
@@ -178,7 +180,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       if (previousTask) {
         this.saveDraftForTask(
           previousTask,
-          this.currentInputText,
+          this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText,
           this.sharedData?.originalComment?.id ?? this.draftReplyToId,
         );
       }
@@ -319,7 +321,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     try {
       let raw: string;
-      if (this.task?.id === task.id && this.input?.first) {
+      if (_rawFromDom === undefined && this.editedComment !== null) {
+        // While editing, the field holds the comment being edited and the draft is set aside.
+        raw = this.draftBeforeEdit;
+      } else if (this.task?.id === task.id && this.input?.first) {
         raw = _rawFromDom ?? this.input.first.nativeElement.value;
       } else {
         raw = _rawFromDom ?? '';
@@ -856,10 +861,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
           return;
         }
         this.sharedData.editingComment = null;
-        this.draftBeforeEdit = '';
         this.emojiSearchMode = false;
         this.dismissEmojiPicker();
-        this.clearInput();
+        this.restoreDraftAfterEdit();
       },
       error: (error: ApiError) => {
         this.setSending(send, false);
@@ -1148,6 +1152,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return;
     }
 
+    // Reply ends an edit without cancelling it, so the draft has to come back first.
+    if (this.editedComment !== null) {
+      this.restoreDraftAfterEdit();
+    }
     this.draftReplyToId = this.originalComment?.id ?? null;
     this.saveCurrentDraft();
     setTimeout(() => {
@@ -1156,16 +1164,20 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   private beginEditingComment() {
-    const currentText = this.currentInputText;
-    const nextText = this.editingComment?.text ?? '';
+    const editing = this.editingComment;
 
     if (this.sharedData.originalComment != null) {
       this.sharedData.originalComment = null;
     }
 
-    if (currentText !== nextText) {
-      this.draftBeforeEdit = currentText;
-      this.setComposerText(nextText);
+    if (this.editedComment !== editing) {
+      // Set the draft aside only when editing starts. Moving on to edit another
+      // comment must not replace it with the first comment's text.
+      if (this.editedComment === null) {
+        this.draftBeforeEdit = this.currentInputText;
+      }
+      this.editedComment = editing;
+      this.setComposerText(editing?.text ?? '');
     }
 
     setTimeout(() => {
@@ -1176,6 +1188,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private restoreDraftAfterEdit() {
     const draft = this.draftBeforeEdit;
     this.draftBeforeEdit = '';
+    this.editedComment = null;
     this.setComposerText(draft);
   }
 

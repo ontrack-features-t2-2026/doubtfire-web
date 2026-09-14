@@ -126,6 +126,11 @@ function switchTask(
   });
 }
 
+function typeDraft(harness: ComposerHarness, text: string): void {
+  harness.message.value = text;
+  harness.component.onInputChange({target: harness.message} as unknown as Event);
+}
+
 // What ngDoCheck does once its differ sees editingComment or originalComment change.
 function syncSharedData(harness: ComposerHarness): void {
   (harness.component as unknown as {syncComposerState(): void}).syncComposerState();
@@ -528,6 +533,103 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     expect(harness.taskCommentService.editComment).toHaveBeenCalledOnce();
     expect(harness.message.value).toBe('B draft');
     expect(harness.component.isSending).toBe(false);
+  });
+});
+
+describe('TaskCommentComposerComponent editing keeps the unsent draft', () => {
+  const earlierComment = {id: 5, text: 'Please resubmit'} as TaskComment;
+
+  beforeEach(() => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+  });
+
+  it('when another task is opened during the edit', () => {
+    const taskA = task(1);
+    const taskB = task(2);
+    const harness = createComposer(taskA);
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+    expect(harness.message.value).toBe('Please resubmit');
+
+    switchTask(harness, taskA, taskB);
+
+    expect(harness.draftStore.load(contextFor(taskA)).text).toBe('Good start, but fix X');
+  });
+
+  it('when an emoji is added during the edit', () => {
+    const harness = createComposer();
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+
+    harness.component.addEmoji('👍');
+
+    expect(harness.message.value).toContain('👍');
+    expect(harness.draftStore.load(contextFor(task(1))).text).toBe('Good start, but fix X');
+  });
+
+  it('when the composer is destroyed during the edit', () => {
+    const harness = createComposer();
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+
+    harness.component.ngOnDestroy();
+
+    expect(harness.draftStore.load(contextFor(task(1))).text).toBe('Good start, but fix X');
+  });
+
+  it('and puts it back in the field after the edit is saved', () => {
+    const harness = createComposer();
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+    harness.message.value = 'Please resubmit by Friday';
+
+    harness.component.send();
+    syncSharedData(harness);
+
+    expect(harness.taskCommentService.editComment).toHaveBeenCalledWith(
+      earlierComment,
+      'Please resubmit by Friday',
+    );
+    expect(harness.message.value).toBe('Good start, but fix X');
+    expect(harness.draftStore.load(contextFor(task(1))).text).toBe('Good start, but fix X');
+  });
+
+  it('when Reply is chosen during the edit', () => {
+    const harness = createComposer();
+    const replyTarget = {id: 812} as TaskComment;
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+
+    // The Reply bubble action drops the edit and sets a reply target.
+    harness.component.sharedData.editingComment = null;
+    harness.component.sharedData.originalComment = replyTarget;
+    syncSharedData(harness);
+
+    expect(harness.message.value).toBe('Good start, but fix X');
+    expect(harness.draftStore.load(contextFor(task(1)))).toMatchObject({
+      text: 'Good start, but fix X',
+      replyToId: 812,
+    });
+  });
+
+  it('when a second comment is edited before the first edit ends', () => {
+    const harness = createComposer();
+    typeDraft(harness, 'Good start, but fix X');
+    startEditing(harness, earlierComment);
+    harness.message.value = 'Please resubmit by Friday';
+
+    startEditing(harness, {id: 6, text: 'See the rubric'} as TaskComment);
+    expect(harness.message.value).toBe('See the rubric');
+    harness.component.cancelEdit();
+
+    expect(harness.message.value).toBe('Good start, but fix X');
   });
 });
 
