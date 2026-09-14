@@ -214,6 +214,8 @@ import {NotificationSettingsComponent} from './common/notification-settings/noti
 import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
 import {PageContainerComponent} from './common/page-container/page-container.component';
+import {PanelLayoutComponent} from './common/panel-layout/panel-layout.component';
+import {PanelComponent} from './common/panel-layout/panel.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
 import {HumanizedDatePipe} from './common/pipes/humanized-date.pipe';
@@ -815,6 +817,8 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    PanelLayoutComponent,
+    PanelComponent,
     ThemeToggleComponent,
     EmptyStateComponent,
     FlexLayoutModule,

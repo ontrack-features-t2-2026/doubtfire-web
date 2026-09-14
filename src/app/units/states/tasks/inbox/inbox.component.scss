@@ -1,38 +1,4 @@
-// The list and comments panels keep a width the resizers can drag; the task pane
-// between them takes whatever is left. They can still shrink, so a narrow window
-// squeezes the list rather than pushing the comments off the side.
-.inbox-panel--side {
-  width: 350px;
-  min-width: 60px;
-}
-
-// A gap between two panels that can be dragged. The line in the middle is only a
-// hint, so it takes the divider colour until it is hovered or dragged.
-.resizer {
-  position: relative;
-  z-index: 200;
-  width: 12px;
-  flex: none;
-  cursor: col-resize;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 25%;
-    bottom: 25%;
-    left: 5px;
-    width: 2px;
-    border-radius: 1px;
-    background-color: transparent;
-    transition: background-color 120ms ease;
-  }
-}
-
-.resizer:hover::after,
-.resizer.hovering::after {
-  background-color: var(--ot-color-primary);
-}
-
+// On a phone the comments slide over the task from the right, behind a floating button.
 .comments-floating-toggle {
   position: fixed;
   top: 50%;
@@ -80,15 +46,6 @@
   opacity: 1;
 }
 
-// Below 1000px the comments panel keeps a fixed width and folds away behind the
-// floating button.
-.comments-sidebar--narrow {
-  width: 375px !important;
-  min-width: 375px;
-  z-index: 250;
-}
-
-// On a phone the comments slide over the task from the right, no wider than the screen.
 .comments-sidebar--mobile {
   position: fixed;
   top: 56px;
@@ -99,20 +56,8 @@
   z-index: 250;
 }
 
-// Full-screen chat, the same behaviour as the student task page: the comments
-// panel covers the list and task pane inside the inbox frame.
-.inbox-layout {
-  position: relative;
-}
-
-.comments-sidebar.comments-sidebar--fullscreen {
-  position: absolute;
-  inset: 0.75rem;
-  z-index: 270;
-  width: auto !important;
-  min-width: 0;
-  max-width: none;
-  flex-basis: auto !important;
+// A full-screen chat gets wider bubbles and gutters.
+.inbox-comments.app-panel--fullscreen {
   --comment-bubble-max-width: min(42rem, 75%);
   --comments-gutter: 1.5rem;
 }
