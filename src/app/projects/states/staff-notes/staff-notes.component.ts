@@ -8,6 +8,7 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
+import {Subscription} from 'rxjs';
 import {Project, UserService} from 'src/app/api/models/doubtfire-model';
 import {StaffNote} from 'src/app/api/models/staff-note';
 import {StaffNoteService} from 'src/app/api/services/staff-note.service';
@@ -38,6 +39,8 @@ export class StaffNotesComponent implements OnInit, OnChanges {
 
   replyingToNote?: StaffNote;
 
+  private notesSub?: Subscription;
+
   constructor(
     private userService: UserService,
     private staffNoteService: StaffNoteService,
@@ -49,9 +52,14 @@ export class StaffNotesComponent implements OnInit, OnChanges {
   }
 
   // The list reads the project's note cache, so a new project needs its notes loaded
-  // or it would claim there are none.
+  // or it would claim there are none. A reply, an edit or a draft belongs to the old
+  // student, so none of them may carry over to the new one.
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.project && !changes.project.firstChange && this.project) {
+      this.replyingToNote = null;
+      this.editingNote = null;
+      this.editingNoteText = '';
+      this.noteText = '';
       this.loadNotes();
     }
   }
@@ -63,7 +71,10 @@ export class StaffNotesComponent implements OnInit, OnChanges {
   public loadNotes(): void {
     this.loadingStaffNotes = true;
     this.loadError = false;
-    this.staffNoteService.loadStaffNotes(this.project).subscribe({
+    // Drop a load still running for an earlier project, or it could land late and
+    // show that project's result over this one.
+    this.notesSub?.unsubscribe();
+    this.notesSub = this.staffNoteService.loadStaffNotes(this.project).subscribe({
       next: (_notes) => {
         this.loadingStaffNotes = false;
         this.staffNoteService.updateStaffNoteReplies(this.project?.staffNoteCache.currentValues);

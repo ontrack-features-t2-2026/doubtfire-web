@@ -1,7 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {EMPTY, of, throwError} from 'rxjs';
+import {MatButtonModule} from '@angular/material/button';
+import {EMPTY, Subject, of, throwError} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {StaffNote} from 'src/app/api/models/staff-note';
 import {StaffNoteService} from 'src/app/api/services/staff-note.service';
@@ -128,18 +129,21 @@ describe('StaffNotesComponent states', () => {
   let component: StaffNotesComponent;
   let fixture: ComponentFixture<StaffNotesComponent>;
   let loadStaffNotes: ReturnType<typeof vi.fn>;
+  let addNote: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     loadStaffNotes = vi.fn(() => of([]));
+    addNote = vi.fn(() => EMPTY);
 
     await TestBed.configureTestingModule({
       declarations: [StaffNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
-      imports: [EmptyStateComponent],
+      // The real button, so disabledInteractive behaves as it does in the app.
+      imports: [EmptyStateComponent, MatButtonModule],
       providers: [
         {provide: UserService, useValue: emptyProvider},
         {
           provide: StaffNoteService,
-          useValue: {loadStaffNotes, updateStaffNoteReplies: () => undefined},
+          useValue: {loadStaffNotes, addNote, updateStaffNoteReplies: () => undefined},
         },
         {provide: AlertService, useValue: emptyProvider},
         {provide: ConfirmationModalService, useValue: emptyProvider},
@@ -148,13 +152,14 @@ describe('StaffNotesComponent states', () => {
     }).compileComponents();
   });
 
+  function projectFor(name: string): never {
+    return {student: {name}, staffNoteCache: {currentValues: []}} as never;
+  }
+
   function render(): void {
     fixture = TestBed.createComponent(StaffNotesComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('project', {
-      student: {name: 'Ada Lovelace'},
-      staffNoteCache: {currentValues: []},
-    } as never);
+    fixture.componentRef.setInput('project', projectFor('Ada Lovelace'));
     fixture.detectChanges();
   }
 
@@ -191,19 +196,51 @@ describe('StaffNotesComponent states', () => {
     expect(text()).toContain('No notes yet');
   });
 
-  it('keeps Save note off until there is something to save', () => {
+  it('keeps Save note focusable but inactive until there is something to save', () => {
     render();
     const save = buttonLabelled('Save note');
 
     expect(save.getAttribute('type')).toBe('button');
-    expect(save.disabled).toBe(true);
+    expect(save.hasAttribute('disabled')).toBe(false);
+    expect(save.getAttribute('aria-disabled')).toBe('true');
 
     component.noteText = '   ';
     fixture.detectChanges();
-    expect(save.disabled).toBe(true);
+    save.click();
+    expect(save.getAttribute('aria-disabled')).toBe('true');
+    expect(addNote).not.toHaveBeenCalled();
 
     component.noteText = 'Talked about the extension';
     fixture.detectChanges();
-    expect(save.disabled).toBe(false);
+    expect(save.getAttribute('aria-disabled')).toBeNull();
+  });
+
+  it('drops a reply, an edit and a draft meant for the previous student', () => {
+    render();
+    component.replyingToNote = {id: 1} as StaffNote;
+    component.editingNote = {id: 2} as StaffNote;
+    component.noteText = 'A draft about Ada';
+
+    fixture.componentRef.setInput('project', projectFor('Grace Hopper'));
+    fixture.detectChanges();
+
+    expect(component.replyingToNote).toBeNull();
+    expect(component.editingNote).toBeNull();
+    expect(component.noteText).toBe('');
+    expect(loadStaffNotes).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a load for the previous student that finishes late', () => {
+    const late: Subject<StaffNote[]> = new Subject();
+    loadStaffNotes.mockReturnValueOnce(late);
+    render();
+
+    fixture.componentRef.setInput('project', projectFor('Grace Hopper'));
+    fixture.detectChanges();
+    late.error(new Error('offline'));
+    fixture.detectChanges();
+
+    expect(text()).not.toContain('The notes did not load');
+    expect(text()).toContain('No notes yet');
   });
 });
