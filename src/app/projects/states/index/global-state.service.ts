@@ -1,5 +1,5 @@
-import {MediaObserver} from 'ng-flex-layout';
 import {EntityCache} from 'ngx-entity-service';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, find} from 'rxjs';
@@ -114,7 +114,7 @@ export class GlobalStateService implements OnDestroy {
     private feedbackTemplateService: FeedbackTemplateService,
     private router: Router,
     private alerts: AlertService,
-    private mediaObserver: MediaObserver,
+    private breakpointObserver: BreakpointObserver,
     private authReturnUrl: AuthReturnUrlService,
   ) {
     this.loadedUnitRoles = this.unitRoleService.cache;
@@ -159,7 +159,7 @@ export class GlobalStateService implements OnDestroy {
 
       if (this._isInboxState) {
         document.body.style.setProperty('--vh', `${vh}px`);
-      } else if (!this.mediaObserver.isActive('gt-sm') || !this._showFooter) {
+      } else if (!this.breakpointObserver.isMatched('(min-width: 960px)') || !this._showFooter) {
         document.body.style.setProperty('--vh', `${vh - 0.2}px`);
       } else {
         if (this._showFooter && !this._showFooterWarning) {
