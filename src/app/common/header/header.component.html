@@ -4,7 +4,7 @@
     style="min-height: 85px"
     [ngClass]="{inbox: globalState.isInboxState}"
   >
-    @if (!media.isActive('xs')) {
+    @if (!isExtraSmall) {
       @if (logoSettings.hasLogo) {
         <a class="mx-3.5" [href]="logoSettings.logoLinkUrl">
           <img style="height: 32px" [alt]="externalName + 'logo'" [src]="logoSettings.logoUrl" />
@@ -45,7 +45,7 @@
       hiding it with css, so the component is never created and does not sit
       there asking for an unread count nobody can see.
     -->
-    @if (!media.isActive('xs')) {
+    @if (!isExtraSmall) {
       <app-theme-toggle class="mx-1"></app-theme-toggle>
       <notification-bell></notification-bell>
     }
@@ -73,7 +73,7 @@
         <mat-icon>qr_code_scanner</mat-icon>
       </button>
     }
-    @if (!media.isActive('xs')) {
+    @if (!isExtraSmall) {
       <button
         aria-label="Open your calendar subscription settings"
         mat-icon-button
@@ -86,9 +86,7 @@
     @if (currentUser.role === 'Admin' || currentUser.role === 'Convenor') {
       <button
         #menuState="matMenuTrigger"
-        fxShow="true"
-        fxShow.gt-md="true"
-        fxShow.lt-sm="false"
+        class="max-[599.98px]:hidden"
         mat-icon-button
         [matMenuTriggerFor]="menu"
       >
@@ -131,7 +129,7 @@
         the count for the same reason a badge does: an entry that never looks
         different is one nobody taps.
       -->
-      @if (media.isActive('xs')) {
+      @if (isExtraSmall) {
         <button mat-menu-item routerLink="/notifications">
           <mat-icon aria-label="Notifications" matListItemIcon>notifications</mat-icon>
           Notifications
