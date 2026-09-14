@@ -6,10 +6,15 @@
 }
 
 .composer-container {
+  // Measured by its own width, so the comments panel beside a task (about 300px)
+  // gets the narrow layout below even on a wide screen.
+  container-type: inline-size;
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   align-items: flex-end;
   gap: 4px;
+  row-gap: 6px;
   box-sizing: border-box;
   padding: 8px max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
     max(8px, env(safe-area-inset-left));
@@ -90,9 +95,8 @@
 
 .composer-staff-tools {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 2px;
-  padding: 4px max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
 }
 
 .staged-attachments {
@@ -439,5 +443,19 @@ button.btn-no-outline:focus-visible,
     min-width: 52px;
     padding-right: 8px;
     padding-left: 8px;
+  }
+}
+
+// Too narrow for the message and four controls on one row: the attach, record, emoji
+// and Send buttons squeezed the message box to a few letters a line. The message
+// takes the whole first row and the controls sit under it, Send on the right.
+@container (max-width: 26rem) {
+  .composer-container #textFieldContainer {
+    order: -1;
+    flex-basis: 100%;
+  }
+
+  .composer-container .composer-trailing-actions {
+    margin-left: auto;
   }
 }

@@ -91,32 +91,6 @@
       (templateSelected)="addFeedback($event)"
     ></f-task-feedback-templates>
   }
-  @if (isStaff && !isEditing && !recording) {
-    <div aria-label="Staff feedback tools" class="composer-staff-tools">
-      <button
-        aria-label="Create a Real Talk discussion"
-        class="btn-no-outline composer-icon-action"
-        mat-icon-button
-        matTooltip="Create a Real Talk discussion"
-        matTooltipShowDelay="400"
-        type="button"
-        (click)="openDiscussionComposer()"
-      >
-        <mat-icon class="message-inbox-icon">mark_chat_read</mat-icon>
-      </button>
-      <button
-        aria-label="Choose feedback templates"
-        class="btn-no-outline composer-icon-action"
-        mat-icon-button
-        matTooltip="Choose feedback templates"
-        matTooltipShowDelay="400"
-        type="button"
-        (click)="showFeedbackPicker()"
-      >
-        <mat-icon class="message-inbox-icon">task</mat-icon>
-      </button>
-    </div>
-  }
   @if (stagedAttachments.length > 0) {
     <div aria-label="Staged attachments" class="staged-attachments">
       @for (attachment of stagedAttachments; track attachment.clientRequestId) {
@@ -199,6 +173,34 @@
             (change)="uploadFiles($event.target.files)"
           />
         </button>
+      }
+      <!-- The tutor tools sit with the other controls rather than on a row of their own
+           above the message. -->
+      @if (isStaff && !isEditing && !recording) {
+        <div aria-label="Staff feedback tools" class="composer-staff-tools" role="group">
+          <button
+            aria-label="Create a Real Talk discussion"
+            class="btn-no-outline composer-icon-action"
+            mat-icon-button
+            matTooltip="Create a Real Talk discussion"
+            matTooltipShowDelay="400"
+            type="button"
+            (click)="openDiscussionComposer()"
+          >
+            <mat-icon class="message-inbox-icon">mark_chat_read</mat-icon>
+          </button>
+          <button
+            aria-label="Choose feedback templates"
+            class="btn-no-outline composer-icon-action"
+            mat-icon-button
+            matTooltip="Choose feedback templates"
+            matTooltipShowDelay="400"
+            type="button"
+            (click)="showFeedbackPicker()"
+          >
+            <mat-icon class="message-inbox-icon">task</mat-icon>
+          </button>
+        </div>
       }
     </div>
 
