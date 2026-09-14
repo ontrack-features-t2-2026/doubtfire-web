@@ -123,7 +123,9 @@ describe('TaskOverseerReportComponent', () => {
     render();
 
     expect(text()).toContain('No earlier submissions');
-    expect(text()).toContain('Earlier submissions of this task will show here.');
+    expect(text()).toContain(
+      'A copy is kept each time the student submits, for files the task marks Keep in history.',
+    );
     expect(fixture.nativeElement.querySelector('mat-accordion')).toBeNull();
   });
 

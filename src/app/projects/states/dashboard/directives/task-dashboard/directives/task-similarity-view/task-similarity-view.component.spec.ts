@@ -78,7 +78,7 @@ describe('TaskSimilarityViewComponent', () => {
 
     expect(fixture.nativeElement.querySelector('h2').textContent).toContain('Similarities');
     expect(text()).toContain('No similarities found');
-    expect(text()).toContain("Matches from the unit's similarity checks will show here.");
+    expect(text()).toContain("Matches from the unit's JPlag and Turnitin checks show here.");
     expect(collapseAll()).toBeNull();
   });
 
