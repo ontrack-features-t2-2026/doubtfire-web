@@ -17,7 +17,8 @@
 
     @if (!task || task.comments.length === 0) {
       <div fxFlexFill fxLayout="column" fxLayoutAlign="center center">
-        <mat-icon id="noView">forum</mat-icon>
+        <mat-icon id="noView" aria-hidden="true">forum</mat-icon>
+        <p>No comments on this task yet.</p>
       </div>
     }
 

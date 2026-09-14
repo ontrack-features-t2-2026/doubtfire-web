@@ -17,6 +17,17 @@ const taskServiceStub = {
 };
 const emptyProvider = {};
 
+const EMPTY_STATE_TEMPLATE = `
+  <div>
+    @if (!task || task.comments.length === 0) {
+      <div fxFlexFill fxLayout="column" fxLayoutAlign="center center">
+        <mat-icon id="noView" aria-hidden="true">forum</mat-icon>
+        <p>No comments on this task yet.</p>
+      </div>
+    }
+  </div>
+`;
+
 describe('TaskCommentsViewerComponent', () => {
   let component: TaskCommentsViewerComponent;
   let fixture: ComponentFixture<TaskCommentsViewerComponent>;
@@ -39,12 +50,36 @@ describe('TaskCommentsViewerComponent', () => {
       .compileComponents();
   });
 
-  beforeEach(() => {
+  it('should create', () => {
     fixture = TestBed.createComponent(TaskCommentsViewerComponent);
     component = fixture.componentInstance;
+    expect(component).toBeTruthy();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('renders empty-state text when there is no task or no comments', () => {
+    TestBed.overrideComponent(TaskCommentsViewerComponent, {
+      set: {template: EMPTY_STATE_TEMPLATE},
+    });
+    fixture = TestBed.createComponent(TaskCommentsViewerComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const emptyIcon = fixture.nativeElement.querySelector('#noView');
+    const emptyText = fixture.nativeElement.querySelector('p');
+    expect(emptyIcon).toBeTruthy();
+    expect(emptyText.textContent).toContain('No comments on this task yet.');
+  });
+
+  it('does not render empty-state text when task has comments', () => {
+    TestBed.overrideComponent(TaskCommentsViewerComponent, {
+      set: {template: EMPTY_STATE_TEMPLATE},
+    });
+    fixture = TestBed.createComponent(TaskCommentsViewerComponent);
+    component = fixture.componentInstance;
+    component.task = {comments: [{}]} as any;
+    fixture.detectChanges();
+
+    const emptyIcon = fixture.nativeElement.querySelector('#noView');
+    expect(emptyIcon).toBeFalsy();
   });
 });
