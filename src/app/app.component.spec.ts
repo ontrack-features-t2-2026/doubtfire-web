@@ -6,6 +6,7 @@ import {Subject} from 'rxjs';
 import {PushNotificationClickService} from 'src/app/api/services/push-notification-click.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppComponent} from './app.component';
+import {ThemeService} from './common/theme/theme.service';
 
 describe('AppComponent push lifecycle', () => {
   it('starts push listeners at app startup and stops them at teardown', () => {
@@ -26,7 +27,11 @@ describe('AppComponent push lifecycle', () => {
       stop: vi.fn(),
     } as unknown as PushNotificationService;
 
-    const component = new AppComponent(router, renderer, clickRouting, pushNotifications);
+    // Only held so the root constructs it (it stamps the theme marker); this test
+    // does not exercise it, so a bare stub is enough.
+    const theme = {} as unknown as ThemeService;
+
+    const component = new AppComponent(router, renderer, clickRouting, pushNotifications, theme);
     component.ngOnInit();
 
     expect(clickRouting.start).toHaveBeenCalledOnce();

@@ -9,6 +9,7 @@ import {User} from 'src/app/api/models/user/user';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {NotificationSettingsComponent} from 'src/app/common/notification-settings/notification-settings.component';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {EditProfileFormComponent} from './edit-profile-form.component';
 
@@ -204,6 +205,17 @@ class StubNgFormProfile {
   public invalid = false;
 }
 
+// The identity fields now carry #model="ngModel" refs for the required/email
+// validation messages, so the real template needs something exporting ngModel to
+// render. Stub it, in the same spirit as StubNgFormProfile, and report no errors so
+// the autocomplete assertions below are all that this spec turns on.
+@Directive({selector: '[ngModel]', exportAs: 'ngModel', standalone: false})
+class StubNgModelProfile {
+  public hasError(): boolean {
+    return false;
+  }
+}
+
 describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
   let fixture: ComponentFixture<EditProfileFormComponent>;
 
@@ -211,7 +223,7 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
     const user = makeUser({systemRole: 'Student'});
 
     await TestBed.configureTestingModule({
-      declarations: [EditProfileFormComponent, StubNgFormProfile],
+      declarations: [EditProfileFormComponent, StubNgFormProfile, StubNgModelProfile],
       providers: [
         {
           provide: DoubtfireConstants,
@@ -255,5 +267,89 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
   it('does not put a purpose token on fields outside the mapped set', () => {
     expect(purpose('student_id')).toBeNull();
     expect(purpose('custom_pronouns')).toBeNull();
+  });
+});
+
+// The notification settings link to the viewer's own notifications page, so the
+// link belongs on the profile page only. The admin Users dialog opens this form
+// as a modal on someone else's account, and /welcome opens it in create mode.
+// Renders the real form and the real notification settings so the input is
+// checked end to end.
+// Keep the real template renderable when identity validation adds ngModel refs.
+@Directive({selector: '[ngModel]', exportAs: 'ngModel', standalone: false})
+class StubNotificationNgModel {
+  public hasError(): boolean {
+    return false;
+  }
+}
+
+describe('EditProfileFormComponent notifications page link', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+
+  // The profile page and /welcome set mode as a template input. The dialog sets
+  // no inputs, and ngOnInit copies mode and modal across from the dialog data.
+  const render = async (
+    inputMode: 'edit' | 'create' | null,
+    dialogData: {user: User; mode: 'edit' | 'create' | 'new'; modal: boolean} | null,
+  ): Promise<void> => {
+    const currentUser = makeUser({id: 1, systemRole: 'Admin'});
+
+    await TestBed.configureTestingModule({
+      declarations: [
+        EditProfileFormComponent,
+        NotificationSettingsComponent,
+        StubNgFormProfile,
+        StubNotificationNgModel,
+      ],
+      providers: [
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: {currentUser}},
+        {provide: Router, useValue: {}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: dialogData},
+        {provide: MatSnackBar, useValue: {}},
+        {
+          provide: PushNotificationService,
+          useValue: {
+            subscription$: of(null),
+            blocker: () => 'no-service-worker',
+            permissionDeniedInstructions: () => [],
+          },
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    if (inputMode) {
+      fixture.componentRef.setInput('mode', inputMode);
+    }
+    fixture.detectChanges();
+  };
+
+  const notificationsLink = (): HTMLAnchorElement | null =>
+    fixture.nativeElement.querySelector('f-notification-settings a');
+
+  it("shows the link on the user's own profile page", async () => {
+    await render('edit', null);
+
+    expect(notificationsLink()?.textContent.trim()).toBe('Notifications page');
+  });
+
+  it("hides the link in the admin Users dialog for another user's account", async () => {
+    await render(null, {user: makeUser({id: 2}), mode: 'edit', modal: true});
+
+    expect(fixture.nativeElement.querySelector('f-notification-settings')).not.toBeNull();
+    expect(notificationsLink()).toBeNull();
+  });
+
+  it('hides the link on the first-login setup form', async () => {
+    await render('create', null);
+
+    expect(fixture.nativeElement.querySelector('f-notification-settings')).not.toBeNull();
+    expect(notificationsLink()).toBeNull();
   });
 });

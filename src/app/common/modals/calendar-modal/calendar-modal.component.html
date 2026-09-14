@@ -205,8 +205,8 @@
                     mat-icon-button
                     matTooltip="Copy URL"
                     matTooltipPosition="above"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                    [cdkCopyToClipboard]="webcalSubscriptionUrl"
+                    (cdkCopyToClipboardCopied)="onCopyResult($event)"
                   >
                     <mat-icon>{{ copying ? 'done' : 'content_copy' }}</mat-icon>
                   </button>
