@@ -4,7 +4,7 @@ import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {MatMenuTrigger} from '@angular/material/menu';
 import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
-import {forkJoin} from 'rxjs';
+import {Subscription, forkJoin} from 'rxjs';
 import {OverseerAssessment, UnitRole, UserService} from 'src/app/api/models/doubtfire-model';
 import {SubmissionHistory} from 'src/app/api/models/submission-history';
 import {Task} from 'src/app/api/models/task';
@@ -18,6 +18,8 @@ import {SubmissionFilesModalComponent} from './submission-files-modal/submission
   selector: 'f-task-overseer-report',
   templateUrl: './task-overseer-report.component.html',
   styleUrl: './task-overseer-report.component.scss',
+  // The tab owns its scroll: the header stays put and only the list moves.
+  host: {class: 'flex h-full min-h-0 flex-col'},
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -28,6 +30,9 @@ export class TaskOverseerReportComponent implements OnInit {
   public overseerAssessments: OverseerAssessment[] = [];
   public comparisonSourceHistoryId: number | null = null;
   public loading = false;
+  /** The last load failed, so the tab offers a retry instead of an empty list. */
+  public loadError = false;
+  private historySub?: Subscription;
 
   constructor(
     private alerts: AlertService,
@@ -152,13 +157,29 @@ export class TaskOverseerReportComponent implements OnInit {
     this.loadHistory();
   }
 
+  public get historySummary(): string {
+    const count = this.histories.length;
+    if (this.loading || this.loadError || count === 0) {
+      return 'Past submissions of this task, newest first.';
+    }
+
+    return `${count} ${count === 1 ? 'submission' : 'submissions'} kept, newest first.`;
+  }
+
+  overseerResultLabel(assessment: OverseerAssessment): string {
+    return `Overseer: ${assessment.passedSteps} of ${assessment.totalSteps} steps passed`;
+  }
+
   loadHistory(isRefresh: boolean = false) {
     if (isRefresh) {
       this.loadOverseerAssessmentId = null;
     }
     this.loading = true;
+    this.loadError = false;
 
-    forkJoin({
+    // A refresh can start before the previous load returns, so drop the older one.
+    this.historySub?.unsubscribe();
+    this.historySub = forkJoin({
       histories: this.submissionHistoryService.queryForTask(this.task),
       assessments: this.overseerAssessmentService.queryForTask(this.task),
     }).subscribe({
@@ -184,6 +205,7 @@ export class TaskOverseerReportComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
+        this.loadError = true;
         this.alerts.error(`Failed to load submission history: ${error}`, 6000);
       },
     });
