@@ -11,9 +11,8 @@
         </a>
       }
 
-      <a class="pt-2.5" routerLink="/home">
+      <a aria-label="OnTrack home" class="pt-2.5" routerLink="/home">
         <mat-icon
-          aria-label="Formatif logo"
           class="formatif-icon"
           style="margin-right: 20px; margin-left: 20px"
           svgIcon="formatif-logo"
@@ -43,7 +42,7 @@
     }
     <notification-bell></notification-bell>
     @if (sidekiqJobs.length) {
-      <button mat-icon-button (click)="showSidekiqJob()">
+      <button aria-label="Background jobs" mat-icon-button (click)="showSidekiqJob()">
         <div class="z-50" matBadgeSize="small" [matBadge]="sidekiqJobs.length"></div>
         <mat-icon>cloud_sync_outline</mat-icon>
       </button>
@@ -59,6 +58,7 @@
     @if (currentUser.role === 'Admin' || currentUser.role === 'Convenor') {
       <button
         #menuState="matMenuTrigger"
+        aria-label="Administration menu"
         class="max-[599.98px]:hidden"
         mat-icon-button
         [matMenuTriggerFor]="menu"
