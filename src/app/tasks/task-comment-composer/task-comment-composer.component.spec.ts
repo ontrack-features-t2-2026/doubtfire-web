@@ -534,6 +534,30 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     expect(harness.message.value).toBe('B draft');
     expect(harness.component.isSending).toBe(false);
   });
+
+  it('does not upload an attachment removed while an earlier one is still uploading', () => {
+    const harness = createComposer();
+    const firstUpload: Subject<AttachmentUploadState> = new Subject();
+    harness.taskCommentService.uploadStagedAttachment.mockReturnValueOnce(
+      firstUpload.asObservable(),
+    );
+    harness.component.uploadFiles([
+      fakeFile('one.pdf', 'application/pdf'),
+      fakeFile('wrong-student.pdf', 'application/pdf'),
+    ]);
+    const [first, second] = harness.component.stagedAttachments;
+
+    harness.component.addComment();
+    harness.component.removeStagedAttachment(second.clientRequestId);
+    firstUpload.next({state: 'complete', progress: 100});
+    firstUpload.complete();
+
+    expect(harness.taskCommentService.uploadStagedAttachment).toHaveBeenCalledOnce();
+    expect(harness.taskCommentService.uploadStagedAttachment.mock.calls[0][5]).toBe(
+      first.clientRequestId,
+    );
+    expect(harness.component.stagedAttachments).toEqual([]);
+  });
 });
 
 describe('TaskCommentComposerComponent editing keeps the unsent draft', () => {

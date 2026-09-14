@@ -778,8 +778,17 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return;
     }
 
+    // The queue is a copy taken when Send was pressed. Upload the live item so a file
+    // removed while earlier ones were uploading is skipped.
+    const attachment = this.attachmentsFor(send).find(
+      (item) => item.clientRequestId === queue[index].clientRequestId,
+    );
+    if (!attachment) {
+      this.uploadAttachmentQueue(send, queue, index + 1);
+      return;
+    }
+
     this.setSending(send, true);
-    const attachment = queue[index];
     this.updateStagedAttachment(send, attachment.clientRequestId, {
       status: 'uploading',
       progress: 0,
