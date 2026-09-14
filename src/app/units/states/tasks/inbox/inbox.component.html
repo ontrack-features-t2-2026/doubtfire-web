@@ -22,7 +22,7 @@
         </div>
         <ngx-skeleton-loader
           appearance="circle"
-          [theme]="{width: '30px', height: '30px', margin: '0'}"
+          [theme]="{width: '36px', height: '36px', margin: '0'}"
         ></ngx-skeleton-loader>
       </div>
     }
@@ -40,7 +40,9 @@
 <!-- The heading row of the comments panel, the height of the task tabs beside it. -->
 <ng-template #CommentsHeader>
   <div class="flex h-12 shrink-0 items-center gap-2 border-b border-ot-divider pr-1 pl-3">
-    <mat-icon aria-hidden="true" class="!size-5 shrink-0 !text-xl text-ot-muted">forum</mat-icon>
+    <mat-icon aria-hidden="true" class="!size-5 shrink-0 !text-xl !leading-none text-ot-muted"
+      >forum</mat-icon
+    >
     <h2 class="m-0 min-w-0 flex-1 truncate text-base font-semibold text-ot-text">Comments</h2>
     @if (isCommentsNarrow && !commentsCollapsed) {
       <button
@@ -78,8 +80,10 @@
 </ng-template>
 
 @if (!isMobileView) {
-  <div class="flex size-full min-h-0 flex-col gap-3 px-3 pt-1">
-    <div class="flex min-h-0 flex-1">
+  <!-- The panels sit in an even 12px frame, the same as the gap between them, and the
+       marking bar below runs edge to edge. -->
+  <div class="flex size-full min-h-0 flex-col">
+    <div class="flex min-h-0 flex-1 p-3">
       <section
         #inboxpanel
         aria-label="Task list"

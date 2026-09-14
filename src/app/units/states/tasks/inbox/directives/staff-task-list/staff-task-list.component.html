@@ -237,7 +237,7 @@
             </div>
             <ngx-skeleton-loader
               appearance="circle"
-              [theme]="{width: '30px', height: '30px', margin: '0'}"
+              [theme]="{width: '36px', height: '36px', margin: '0'}"
             ></ngx-skeleton-loader>
           }
         </div>
@@ -323,7 +323,10 @@
                           matTooltip="Escalated by the student"
                           role="img"
                         >
-                          <mat-icon aria-hidden="true" class="!size-4 !text-base text-ot-warning">
+                          <mat-icon
+                            aria-hidden="true"
+                            class="!size-4 !text-base !leading-none text-ot-warning"
+                          >
                             gavel
                           </mat-icon>
                         </span>
@@ -336,7 +339,10 @@
                             [attr.aria-label]="waitingLabel(task)"
                             [matTooltip]="waitingLabel(task)"
                           >
-                            <mat-icon aria-hidden="true" class="!size-4 !text-base text-ot-warning">
+                            <mat-icon
+                              aria-hidden="true"
+                              class="!size-4 !text-base !leading-none text-ot-warning"
+                            >
                               warning
                             </mat-icon>
                           </span>
@@ -348,7 +354,10 @@
                             [attr.aria-label]="waitingLabel(task)"
                             [matTooltip]="waitingLabel(task)"
                           >
-                            <mat-icon aria-hidden="true" class="!size-4 !text-base text-ot-error">
+                            <mat-icon
+                              aria-hidden="true"
+                              class="!size-4 !text-base !leading-none text-ot-error"
+                            >
                               watch_later
                             </mat-icon>
                           </span>
@@ -419,7 +428,7 @@
                         >
                           <mat-icon
                             aria-hidden="true"
-                            class="!size-[10px] !text-[10px] text-(--ot-color-on-error)"
+                            class="!size-[10px] !text-[10px] !leading-none text-(--ot-color-on-error)"
                           >
                             visibility
                           </mat-icon>
@@ -444,7 +453,9 @@
                       role="img"
                       [ngClass]="rowActionsShown(task) ? 'hidden' : 'flex'"
                     >
-                      <mat-icon aria-hidden="true" class="!size-5 !text-xl">push_pin</mat-icon>
+                      <mat-icon aria-hidden="true" class="!size-5 !text-xl !leading-none"
+                        >push_pin</mat-icon
+                      >
                     </div>
                   }
                   <button

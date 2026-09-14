@@ -25,10 +25,13 @@
 // put it out of reach of the keyboard. It always sits in the tab order, stacked over
 // the pin indicator, and only shows while the row is hovered, the button has focus or
 // its menu is open.
+// The icon button is 48px and its slot is 40px, so it is centred on the slot rather
+// than pinned to its corner, which left the dots low and to the right.
 .task-options {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
   opacity: 0;
   pointer-events: none;
 }

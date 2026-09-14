@@ -2,9 +2,12 @@
   display: block;
 }
 
+// The bar runs the full width of the window under the inbox panels, so it takes the
+// panel surface with a divider on top and reads as one bar from corner to corner.
 .footer {
   min-height: 85px;
-  background-color: var(--ot-color-page);
+  border-top: 1px solid var(--ot-color-divider);
+  background-color: var(--ot-color-surface);
   color: var(--ot-color-text);
 
   .center-buttons {
