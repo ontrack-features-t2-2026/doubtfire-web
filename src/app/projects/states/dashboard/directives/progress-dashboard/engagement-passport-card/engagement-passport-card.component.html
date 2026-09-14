@@ -30,7 +30,7 @@
             class="inline-flex size-6 shrink-0 items-center justify-center rounded-full border"
             [ngClass]="item.classes"
           >
-            <mat-icon aria-hidden="true" class="!size-[15px] !text-[15px]">
+            <mat-icon aria-hidden="true" class="!size-[15px] !text-[15px] !leading-none">
               {{ item.icon }}
             </mat-icon>
           </span>
@@ -77,7 +77,10 @@
                         [ngClass]="stamp.classes"
                         (click)="openEngagement(stamp.engagement)"
                       >
-                        <mat-icon aria-hidden="true" class="!size-[18px] !text-[18px]">
+                        <mat-icon
+                          aria-hidden="true"
+                          class="!size-[18px] !text-[18px] !leading-none"
+                        >
                           {{ stamp.icon }}
                         </mat-icon>
                       </button>
