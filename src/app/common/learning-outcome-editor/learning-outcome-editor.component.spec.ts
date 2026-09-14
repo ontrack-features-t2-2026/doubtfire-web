@@ -112,6 +112,15 @@ describe('LearningOutcomeEditorComponent', () => {
   it('still numbers a new outcome when no code ends in a number', () => {
     const {component} = editorFor(unitWith(outcome(1, 'Intro'), outcome(2, 'Core')));
 
+    expect(component.getNextOutcomeNumber()).toBe(1);
+    component.ngOnDestroy();
+  });
+
+  it('ignores non-decimal suffixes when numbering outcomes', () => {
+    const {component} = editorFor(
+      unitWith(outcome(1, 'ULO2'), outcome(2, 'ULO0x10'), outcome(3, 'ULO1e3')),
+    );
+
     expect(component.getNextOutcomeNumber()).toBe(3);
     component.ngOnDestroy();
   });
