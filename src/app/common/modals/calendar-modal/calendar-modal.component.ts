@@ -11,6 +11,7 @@ import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 
@@ -46,6 +47,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     @Inject(MAT_DIALOG_DATA) public data: object,
     private confirmationModal: ConfirmationModalService,
     private fileDownloader: FileDownloaderService,
+    readonly demoMode: DemoModeStore,
   ) {}
 
   ngOnInit() {
@@ -268,6 +270,16 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
    */
   toggleIncludeTaskStartDates() {
     // The checkbox has already changed the model through ngModel, so there is nothing to apply.
+    this.saveWebcal(() => undefined);
+  }
+
+  toggleIncludeLearningSessions() {
+    if (this.demoMode.enabled) {
+      if (this.savedWebcal) {
+        this.loadWebcal(this.copyWebcal(this.savedWebcal));
+      }
+      return;
+    }
     this.saveWebcal(() => undefined);
   }
 

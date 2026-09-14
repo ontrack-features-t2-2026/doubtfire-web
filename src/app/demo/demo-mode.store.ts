@@ -3,6 +3,7 @@ import {Inject, Injectable, InjectionToken} from '@angular/core';
 import {BehaviorSubject, Observable, distinctUntilChanged} from 'rxjs';
 
 export const DEMO_MODE_STORAGE_KEY = 'ontrack_demo_mode_enabled';
+export const DEMO_MEETING_LINKS_KEY = 'ontrack_demo_meeting_links';
 
 export const DEMO_TOOLS_AVAILABLE: InjectionToken<boolean> = new InjectionToken(
   'DEMO_TOOLS_AVAILABLE',
@@ -60,6 +61,11 @@ export class DemoModeStore {
 
   reset(): void {
     this.removeStoredValue();
+    try {
+      globalThis.sessionStorage?.removeItem(DEMO_MEETING_LINKS_KEY);
+    } catch {
+      // Hosted demo links are unavailable unless demo tools and mode are both enabled.
+    }
     this.enabledSubject.next(false);
   }
 

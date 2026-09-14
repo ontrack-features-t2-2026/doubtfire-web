@@ -1,4 +1,12 @@
 <f-page-container id="home">
+  <a class="home-hub-entry" routerLink="/unit-hub">
+    <mat-icon aria-hidden="true">campaign</mat-icon>
+    <span
+      ><strong>Unit Hub</strong
+      ><span>Your unit announcements, HelpHubs and upcoming classes, together.</span></span
+    >
+    <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+  </a>
   @if (projects?.length === 0 && unitRoles?.length === 0) {
     <div class="text-center">
       <h1 class="mat-headline-5">You are not enrolled in any {{ externalName.value }} units.</h1>

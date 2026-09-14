@@ -156,6 +156,25 @@ describe('HeaderComponent', () => {
       expect(button).toBeNull();
     });
 
+    it('keeps the theme toggle and notification bell together as the toolbar changes size', () => {
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+    });
+
     it('clicking the calendar button invokes the same handler the avatar menu Calendar item uses', () => {
       const openCalendarSpy = vi.spyOn(component, 'openCalendar');
       fixture.detectChanges();

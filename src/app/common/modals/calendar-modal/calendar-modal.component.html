@@ -49,14 +49,16 @@
       @if (!webcal.enabled) {
         <p>
           Enable the web calendar to subscribe to your task due dates from Google Calendar, Apple
-          Calendar, Outlook, or another iCalendar app.
+          Calendar, Outlook, or another iCalendar app. Once it is on, you can also include your unit
+          HelpHubs and classes.
         </p>
       }
 
       @if (webcal.enabled) {
         <p>
           Your task due dates are published as calendar events. Choose which units and dates to
-          include, then follow the instructions for your calendar app.
+          include, and whether to add HelpHubs and classes, then follow the instructions for your
+          calendar app. Your calendar app decides how often it picks up changes.
         </p>
 
         <mat-card appearance="outlined" class="calendar-options-card">
@@ -190,13 +192,30 @@
             </fieldset>
 
             <mat-checkbox
-              class="calendar-start-date-option"
+              class="calendar-option"
               [disabled]="working"
               [(ngModel)]="webcal.includeStartDates"
               (change)="toggleIncludeTaskStartDates()"
             >
               Include task start dates in web calendar
             </mat-checkbox>
+
+            <mat-checkbox
+              aria-describedby="calendar-sessions-hint"
+              class="calendar-option"
+              [disabled]="working || demoMode.enabled"
+              [(ngModel)]="webcal.includeLearningSessions"
+              (change)="toggleIncludeLearningSessions()"
+            >
+              Include unit HelpHubs, lectures and classes
+            </mat-checkbox>
+            <p class="calendar-options-card__hint" id="calendar-sessions-hint">
+              @if (demoMode.enabled) {
+                Session subscription changes are turned off in demo mode.
+              }
+              This shares session times and joining links with your calendar provider. Your unit
+              exclusions apply to sessions too. Keep your subscription URL private.
+            </p>
           </mat-card-content>
         </mat-card>
 
@@ -216,7 +235,8 @@
             @switch (selectedCalendarProviderIndex) {
               @case (0) {
                 In Google Calendar, choose <strong>Add other calendars</strong>, then
-                <strong>From URL</strong>, and paste the subscription URL below.
+                <strong>From URL</strong>, and paste the subscription URL below. Do this in a
+                desktop browser. The calendar then shows on your phone too.
               }
               @case (1) {
                 In Apple Calendar, choose <strong>File</strong>, then
