@@ -14,9 +14,14 @@ import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatSelectModule} from '@angular/material/select';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {
+  MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS,
+  MatSlideToggle,
+  MatSlideToggleModule,
+} from '@angular/material/slide-toggle';
 import {MatTabsModule} from '@angular/material/tabs';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {By} from '@angular/platform-browser';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Subject, of, throwError} from 'rxjs';
 import {Project, Webcal} from 'src/app/api/models/doubtfire-model';
@@ -234,5 +239,14 @@ describe('CalendarModalComponent', () => {
 
     expect(webcalService.update).not.toHaveBeenCalled();
     expect(component.webcal.includeLearningSessions).toBe(false);
+  });
+
+  it('keeps its switch from flipping itself without changing other slide toggles', async () => {
+    await render();
+
+    const webcalSwitch = fixture.debugElement.query(By.directive(MatSlideToggle))
+      .componentInstance as MatSlideToggle;
+    expect(webcalSwitch.defaults.disableToggleValue).toBe(true);
+    expect(TestBed.inject(MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS).disableToggleValue).not.toBe(true);
   });
 });
