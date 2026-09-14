@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
+import {MatDialog} from '@angular/material/dialog';
 import {provideRouter} from '@angular/router';
 import {RouterTestingHarness} from '@angular/router/testing';
 import {of, throwError} from 'rxjs';
@@ -8,6 +9,7 @@ import {roleWhitelistGuard} from 'src/app/common/guards/role-whitelist.guard';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
 import {DEMO_TOOLS_AVAILABLE, DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {unitHubDemo} from './unit-hub-demo.fixtures';
+import {UnitHubDetailsComponent} from './unit-hub-details.component';
 import {UnitHubComponent} from './unit-hub.component';
 import {UnitHubService, scopeHubFeed} from './unit-hub.service';
 
@@ -46,6 +48,7 @@ describe('Unit Hub route, forms and rendered content', () => {
     demo = TestBed.inject(DemoModeStore);
   });
   afterEach(() => {
+    TestBed.inject(MatDialog).closeAll();
     sessionStorage.clear();
     vi.restoreAllMocks();
   });
@@ -277,5 +280,124 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(component.formError).toContain('Could not save');
     expect(component.announcementForm.controls.body.value).toBe('Keep my work');
     expect(component.saving).toBe(false);
+  });
+  it('opens full plain announcement details from its title and restores focus on close', async () => {
+    const data = feed();
+    data.announcements[0].body = 'Full announcement\n<img src=x onerror=alert(1)>\nLast paragraph';
+    service.feed.mockReturnValue(of(data));
+    const {harness, element} = await open();
+    const title = element.querySelector('.announcement-card .details-title') as HTMLButtonElement;
+    title.focus();
+    title.click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    const dialog = TestBed.inject(MatDialog).openDialogs[0];
+    const details = dialog.componentInstance as UnitHubDetailsComponent;
+    expect(details.content.announcement.body).toContain('Last paragraph');
+    const overlay = document.querySelector('mat-dialog-container');
+    expect(overlay.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(overlay.querySelector('img')).toBeNull();
+    expect(overlay.querySelector('a a, button a, a button, button button')).toBeNull();
+    expect(overlay.getAttribute('aria-labelledby')).toBe('unit-hub-detail-title');
+    expect(document.activeElement?.id).toBe('unit-hub-detail-title');
+    (overlay.querySelector('button[aria-label="Close details"]') as HTMLButtonElement).click();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
+    expect(document.activeElement).toBe(title);
+  });
+
+  it('only opens details from the current permitted feed and clears them on unit or demo changes', async () => {
+    const {component, harness} = await open();
+    const dialogs = TestBed.inject(MatDialog);
+    component.openSession({...component.sessions[0], unit_id: 102});
+    component.openAnnouncement({...component.announcements[0], unit_id: 102});
+    expect(dialogs.openDialogs).toHaveLength(0);
+    component.openSession(component.sessions[0]);
+    const previous = dialogs.openDialogs[0].componentInstance as UnitHubDetailsComponent;
+    await harness.navigateByUrl('/unit-hub?unit=102', UnitHubComponent);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(previous.content).toBeNull();
+    await vi.waitFor(() => expect(dialogs.openDialogs).toHaveLength(0));
+    await harness.navigateByUrl('/unit-hub', UnitHubComponent);
+    component.openAnnouncement(component.announcements[0]);
+    const beforeMode = dialogs.openDialogs[0].componentInstance as UnitHubDetailsComponent;
+    demo.setEnabled(true);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(beforeMode.content).toBeNull();
+    await vi.waitFor(() => expect(dialogs.openDialogs).toHaveLength(0));
+  });
+
+  it('closes details on Escape and hides cancelled meeting actions', async () => {
+    const data = feed();
+    data.sessions[0].cancelled = true;
+    service.feed.mockReturnValue(of(data));
+    const {component, harness} = await open();
+    component.openSession(component.sessions[0]);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    const overlay = document.querySelector('mat-dialog-container');
+    expect(overlay.textContent).toContain('Cancelled');
+    expect(overlay.querySelector('a[href^="https://calendar.google.com"]')).toBeNull();
+    expect(overlay.querySelector('f-teams-meeting-composer')).toBeNull();
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', {key: 'Escape', keyCode: 27, bubbles: true}),
+    );
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
+  });
+
+  it('keeps Teams meeting preparation staff-only and derives instants without saving', async () => {
+    const {component, harness} = await openManager();
+    component.editSession();
+    expect(component.teamsDraft).toBeNull();
+    component.sessionForm.patchValue({
+      title: 'HelpHub',
+      start_at: '2026-10-08T17:00',
+      end_at: '2026-10-08T18:00',
+    });
+    expect(component.teamsDraft.start_at).toBe('2026-10-08T06:00:00.000Z');
+    expect(service.saveSession).not.toHaveBeenCalled();
+    component.openSession(component.sessions[0]);
+    harness.detectChanges();
+    expect(document.querySelector('mat-dialog-container f-teams-meeting-composer')).not.toBeNull();
+    TestBed.inject(MatDialog).closeAll();
+    await vi.waitFor(() => expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0));
+    component.feed.units[0].can_manage = false;
+    component.openSession(component.sessions[0]);
+    harness.detectChanges();
+    expect(component.teamsDraft).toBeNull();
+    expect(document.querySelector('mat-dialog-container f-teams-meeting-composer')).toBeNull();
+  });
+
+  it('uses only explicitly hosted demo links in joining and calendar details', async () => {
+    demo.setEnabled(true);
+    const data = feed();
+    const hosted = {
+      ...data.sessions[0],
+      demo_hosted_join: true,
+      join_url: 'https://teams.microsoft.com/l/meetup-join/hosted-demo',
+    };
+    data.sessions = [hosted];
+    service.feed.mockReturnValue(of(data));
+    const {component, harness, element} = await open();
+    expect(element.textContent).toContain('Join hosted demo');
+    const url = new URL(component.googleUrl(component.sessions[0], 'SIT111'));
+    expect(url.searchParams.get('details')).toContain(hosted.join_url);
+    expect(url.searchParams.get('details')).toContain(
+      'Fictional schedule; uses a real host-provided meeting link.',
+    );
+    component.openSession(component.sessions[0]);
+    harness.detectChanges();
+    const details = TestBed.inject(MatDialog).openDialogs[0]
+      .componentInstance as UnitHubDetailsComponent;
+    expect(details.content.joinUrl).toBe(hosted.join_url);
+    expect(details.content.canManage).toBe(false);
+    expect(component.joinUrl({...hosted, demo_hosted_join: false})).toBeNull();
+    expect(component.joinUrl({...hosted, join_url: 'javascript:alert(1)'})).toBeNull();
+    expect(component.joinUrl({...hosted, cancelled: true})).toBeNull();
   });
 });

@@ -25,6 +25,8 @@ export interface UnitAnnouncement {
 export type SessionKind = 'helphub' | 'lecture' | 'seminar' | 'workshop' | 'other';
 
 export interface LearningSession {
+  /** Browser-local demo fixture only; never persisted or returned by the API. */
+  demo_hosted_join?: boolean;
   id: number;
   unit_id: number;
   unit_code?: string;

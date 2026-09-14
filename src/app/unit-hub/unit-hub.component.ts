@@ -2,11 +2,15 @@ import {CommonModule} from '@angular/common';
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {ActivatedRoute, NavigationStart, Router, RouterLink} from '@angular/router';
 import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
+import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
+import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
   dateTimeInZone,
   dateTimeToIso,
@@ -14,6 +18,7 @@ import {
   safeHttpsUrl,
   sessionIcs,
 } from './unit-hub-calendar';
+import {UnitHubDetailsComponent, UnitHubDetailsData} from './unit-hub-details.component';
 import {
   HubUnit,
   LearningSession,
@@ -27,7 +32,16 @@ import {UnitHubService} from './unit-hub.service';
 @Component({
   selector: 'f-unit-hub',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, RouterLink],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    RouterLink,
+    StudyEssentialsComponent,
+    TeamsMeetingComposerComponent,
+  ],
   templateUrl: './unit-hub.component.html',
   styleUrl: './unit-hub.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -59,6 +73,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   private feedRequest?: Subscription;
   private staffRequest?: Subscription;
   private mutationRequest?: Subscription;
+  private detailsRef?: MatDialogRef<UnitHubDetailsComponent>;
 
   readonly announcementForm;
   readonly sessionForm;
@@ -70,6 +85,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     formBuilder: FormBuilder,
+    private dialogs: MatDialog,
   ) {
     this.announcementForm = formBuilder.nonNullable.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -98,6 +114,13 @@ export class UnitHubComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.add(
+      this.router.events.subscribe((event) => {
+        if (event instanceof NavigationStart) {
+          this.closeDetails();
+        }
+      }),
+    );
+    this.subscriptions.add(
       combineLatest([this.demo.enabled$, this.route.queryParamMap]).subscribe(([, params]) => {
         this.mutationRequest?.unsubscribe();
         this.saving = false;
@@ -109,6 +132,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.closeDetails();
     this.subscriptions.unsubscribe();
     this.feedRequest?.unsubscribe();
     this.staffRequest?.unsubscribe();
@@ -157,6 +181,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
 
   reload(): void {
+    this.closeDetails();
     this.feedRequest?.unsubscribe();
     this.staffRequest?.unsubscribe();
     this.feed = {units: [], announcements: [], sessions: []};
@@ -198,6 +223,106 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     }
   }
 
+  joinUrl(session: LearningSession): string | null {
+    if (session.cancelled || (this.demo.enabled && !session.demo_hosted_join)) {
+      return null;
+    }
+    return safeHttpsUrl(session.join_url);
+  }
+
+  openAnnouncement(announcement: UnitAnnouncement): void {
+    const unit = this.units.find((item) => item.id === announcement.unit_id);
+    if (!unit || !this.announcements.includes(announcement)) {
+      return;
+    }
+    this.showDetails({
+      unitCode: unit.code,
+      unitName: unit.name,
+      demo: this.demo.enabled,
+      canManage: !this.demo.enabled && unit.can_manage,
+      announcement: Object.freeze({...announcement}),
+    });
+  }
+
+  openSession(session: LearningSession): void {
+    const unit = this.units.find((item) => item.id === session.unit_id);
+    if (!unit || !this.sessions.includes(session)) {
+      return;
+    }
+    this.showDetails({
+      unitCode: unit.code,
+      unitName: unit.name,
+      demo: this.demo.enabled,
+      canManage: !this.demo.enabled && unit.can_manage,
+      session: Object.freeze({...session}),
+      joinUrl: this.joinUrl(session),
+      googleCalendarUrl: session.cancelled ? null : this.googleUrl(session, unit.code),
+      download: () => this.downloadSession(session),
+      calendarSettings: () => this.openCalendar(),
+    });
+  }
+
+  private showDetails(data: UnitHubDetailsData): void {
+    this.closeDetails();
+    const ref = this.dialogs.open(UnitHubDetailsComponent, {
+      data,
+      width: '760px',
+      maxWidth: 'calc(100vw - 24px)',
+      maxHeight: '90dvh',
+      ariaLabelledBy: 'unit-hub-detail-title',
+      autoFocus: '#unit-hub-detail-title',
+      restoreFocus: true,
+      disableClose: false,
+      closeOnNavigation: true,
+      exitAnimationDuration: 0,
+    });
+    this.detailsRef = ref;
+    this.subscriptions.add(
+      ref.afterClosed().subscribe(() => {
+        ref.componentInstance?.clear();
+        if (this.detailsRef === ref) {
+          this.detailsRef = undefined;
+        }
+      }),
+    );
+  }
+
+  private closeDetails(): void {
+    this.detailsRef?.componentInstance?.clear();
+    this.detailsRef?.close();
+    this.detailsRef = undefined;
+  }
+
+  get teamsDraft(): TeamsMeetingDraft | null {
+    if (!this.canManageSelected || this.editor !== 'session') {
+      return null;
+    }
+    const values = this.sessionForm.getRawValue();
+    if (!values.title.trim() || !values.start_at || !values.end_at || !values.timezone) {
+      return null;
+    }
+    try {
+      const start_at = dateTimeToIso(values.start_at, values.timezone);
+      const end_at = dateTimeToIso(values.end_at, values.timezone);
+      if (Date.parse(end_at) <= Date.parse(start_at)) {
+        return null;
+      }
+      return {
+        title: values.title.trim(),
+        description: values.description,
+        start_at,
+        end_at,
+        timezone: values.timezone,
+        location: values.location,
+        recurrence: values.recurrence,
+        recurrence_until: values.recurrence_until || undefined,
+        cancelled: values.cancelled,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   downloadSession(session: LearningSession): void {
     if (session.cancelled || !this.sessions.includes(session)) {
       return;
@@ -228,8 +353,8 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       ? {
           ...session,
           title: `DEMO · ${session.title}`,
-          description: `FICTIONAL ONTRACK DEMO. This is not a real university class or meeting.\n\n${session.description}`,
-          join_url: null,
+          description: `FICTIONAL ONTRACK DEMO. Fictional schedule and sample content.${session.demo_hosted_join ? ' Fictional schedule; uses a real host-provided meeting link.' : ''}\n\n${session.description}`,
+          join_url: session.demo_hosted_join ? safeHttpsUrl(session.join_url) : null,
           source_url: null,
           location: 'Fictional demo only',
         }
@@ -252,6 +377,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
 
   loadStaff(id: number): void {
+    this.closeDetails();
     this.staffRequest?.unsubscribe();
     this.editor = null;
     this.deleteCandidate = null;

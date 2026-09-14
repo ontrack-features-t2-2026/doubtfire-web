@@ -4,6 +4,33 @@
   padding: 2rem 1rem 4rem;
 }
 
+.hub-meeting-links {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--ot-color-border, #d4d4d8);
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: var(--ot-color-surface, #fff);
+    color: var(--ot-color-text, #202124);
+  }
+}
+
+.hub-meeting-links__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 mat-card-content {
   display: grid;
   gap: 1rem;

@@ -2,6 +2,7 @@ import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable, defer, map, of, skip, takeUntil, throwError} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
+import {DemoMeetingLinksStore} from 'src/app/demo/demo-meeting-links.store';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {safeHttpsUrl} from './unit-hub-calendar';
 import {unitHubDemo} from './unit-hub-demo.fixtures';
@@ -48,11 +49,14 @@ export class UnitHubService {
   constructor(
     private http: HttpClient,
     private demo: DemoModeStore,
+    private demoLinks: DemoMeetingLinksStore,
   ) {}
 
   feed(): Observable<UnitHubFeed> {
     return defer(() =>
-      this.demo.enabled ? of(unitHubDemo()) : this.http.get<UnitHubFeed>(`${API_URL}/unit_hub`),
+      this.demo.enabled
+        ? of(unitHubDemo(new Date(), this.demoLinks.links))
+        : this.http.get<UnitHubFeed>(`${API_URL}/unit_hub`),
     ).pipe(map(scopeHubFeed), takeUntil(this.modeChanged()));
   }
 

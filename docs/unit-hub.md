@@ -8,6 +8,14 @@ The normal version reads the signed-in user's authorised `/api/unit_hub` respons
 
 The feed displays published, unexpired announcements and a bounded window of published session occurrences. The page shows the server's window end and warns when the announcement list is truncated. Content is plain text. Original-post links and meeting links open in a separate tab and must use HTTPS. A Teams meeting can still require the student's university sign-in.
 
+Click an announcement title or **Read full announcement** to open the complete post. Click a session title or **View full details** to see its full description, dates, time zone, recurrence, source and joining/calendar choices. The dialog opens only records in the current authorised feed and clears its selected content when the route, unit, feed or demo mode changes. It supports keyboard focus, Escape and a visible close button. It does not create a public sharing URL.
+
+## Study essentials
+
+Unit Hub includes public university entry points under **Study essentials**. The home-page card links to Unit Hub. This fork explicitly selects `'deakin'` in `src/app/study-essentials/study-essentials.config.ts`, shared by development, production and the demo. Operators at another institution should set `studyEssentialsProfile` to `''` before building to hide the panel, or supply a reviewed profile. Institution membership is never inferred from an email address, unit code or product name.
+
+The panel links to DeakinSync, CloudDeakin, StudentConnect, timetable guidance, the library and Student Central. Each destination handles its own sign-in and permissions. The links append no account, enrolment or course data. Unit-specific meeting and course links remain in the scoped unit content. See the [Study essentials handover](../src/app/study-essentials/README.md) for the reviewed destinations and configuration.
+
 ## Publishing content
 
 A staff member with the unit's `can_manage` permission sees **Manage updates**. Choose the unit, then **New announcement** or **New session**. Leave **Publish to this unit** unchecked to save a draft. Staff can edit drafts and published records, remove announcements, and cancel sessions.
@@ -17,6 +25,14 @@ For a session, enter the local start and end times and the IANA time zone, such 
 Content can be published in OnTrack by the teaching team or imported through the companion API's optional Microsoft Teams announcement synchronisation. The university administrator must configure tenant-approved Microsoft Graph access and explicitly map each unit offering to its channel. Microsoft SSO alone does not enable this connection; students do not connect a separate personal account. It is off by default.
 
 When a unit's connection is configured, the management page explains that posts appear after successful updates. “Configured” describes the presence of settings, not proof of working tenant permissions or a successful import. Imported announcements are labelled **From Teams**, are read-only in OnTrack, and provide **Manage in Teams** through their original-post link. Staff should change them at their source. No timetable is inferred from announcement text. Session schedules remain staff-maintained in OnTrack.
+
+## Make a Teams meeting
+
+Assigned teaching staff can prepare a meeting below the session editor or from a session detail view. Enter the session title, dates and time zone, then use **Open Teams draft**. The draft carries the subject, description, resolved start/end instants and any optional attendee sign-in email addresses. The composer has a separate details field, so shortening an invitation leaves the unsaved OnTrack session intact. It does not automatically copy an existing joining or source URL into a new invitation.
+
+Opening the draft sends nothing. Review the invitation and press **Send** in Teams. Copy the newly created meeting's join URL back into the OnTrack session, then save/publish it. OnTrack does not obtain the new URL automatically. This flow does not require the optional Graph announcement connection; Microsoft may ask for a Teams sign-in. It follows Microsoft's [documented meeting-draft integration](https://learn.microsoft.com/en-us/power-apps/teams/integrate-calls-and-meetings).
+
+One occurrence is opened. For a weekly session, set the repeat pattern and final date in Teams before sending, and keep them aligned with OnTrack. Location is included in the description. The helper uses explicit UTC instants and bounds the URL to 8,000 characters and the local attendee list to 20 unique addresses. If the draft is too long, shorten its details or add more attendees in Teams; content is never silently truncated. The HTTPS link lets Microsoft offer its app or browser. If the scheduling form does not open on a phone, use a desktop browser or copy the displayed details into Teams. No invitation is sent by the test suite.
 
 ## Calendar choices
 
@@ -30,9 +46,17 @@ One-off Google drafts and imported files do not receive schedule changes. Subscr
 
 In a local build with demo tools enabled, open **Demo controls**, turn **Demo mode on**, then open **Unit Hub**. The existing switch reloads the application; accounts without a remembered session may need to sign in again.
 
-The Unit Hub demo is a fictional student enrolled only in SIT111. It shows two announcements, a HelpHub and a lecture. The raw fixture contains SIT102 records specifically to exercise filtering; these do not appear. The fixture includes no names, account details or copied posts from real students or staff.
+The Unit Hub demo is a fictional student enrolled only in SIT111. It shows two announcements, two HelpHubs and a lecture, including their clickable detail views. The raw fixture contains SIT102 records specifically to exercise filtering; these do not appear. The fixture includes no names, account details or copied posts from real students or staff. Its dates are fictional and generated relative to the browser's local date.
 
-Demo mode does not read the Unit Hub API and blocks staff reads and writes. The joining button is a disabled sample. Google drafts and .ics downloads are available only through an explicit user action, are labelled **DEMO**, and omit the placeholder meeting link. Demo .ics filenames and event UIDs have their own namespace. Session-subscription changes remain disabled even when Calendar is opened from the account menu. Turn demo mode off to return to the real authorised endpoint, including in development builds; the unrelated development quiet-data mask does not hide real Unit Hub records.
+Demo mode does not read the Unit Hub API and blocks staff reads and writes. Samples have no joining action unless the presenter explicitly configures a hosted link. In **Demo controls → Use your own HelpHub links**, add a real Teams joining URL for either or both HelpHubs, choose **Save demo links**, then reopen Unit Hub. **Join hosted demo** opens that real meeting with a notice that the sample schedule is fictional. The lecture has no fabricated joining URL.
+
+Hosted links accept only supported HTTPS joining paths on `teams.microsoft.com`. They stay in session storage for the current browser tab, are cleared by **Clear demo links**, sign-out or the end of the tab session, and are never written to the OnTrack API or committed to fixtures. Turning demo mode off hides them while retaining them for another walkthrough in the same tab. Production cannot use the hosted-link store.
+
+Google drafts and .ics downloads require an explicit user action and are labelled **DEMO**. When a host provides a joining link, the calendar copy includes that link with fictional dates and a demo notice. Opening a Google draft shares its chosen details with Google. Without a hosted link, no joining URL is included. Demo .ics filenames and event UIDs have their own namespace. Session-subscription changes remain disabled even when Calendar is opened from the account menu.
+
+The optional **Try the Teams meeting draft** section in Demo controls opens a real Teams invitation draft with a **DEMO** title and fictional details. It sends nothing automatically. Review the example date and attendees before deliberately pressing **Send** in Teams. No actual meeting URLs should appear in committed fixtures, environment examples, public screenshots or handover text.
+
+Turn demo mode off to return to the real authorised endpoint, including in development builds; the unrelated development quiet-data mask does not hide real Unit Hub records. See the [demo guide](../src/app/demo/README.md) for local setup and removal notes.
 
 Production builds disable demo tools and cannot activate the Unit Hub fixtures. This release supports the installed web app, not a separately implemented native iOS or Android application.
 
@@ -55,14 +79,14 @@ Calendar exports use explicit UTC instants. Local-time entry rejects daylight-sa
 
 ## Verification
 
-The implementation passed Angular template/type checking, the production build, deployment configuration verification and 117 targeted Vitest tests across the Unit Hub, calendar dialog, demo controls, header and role-guard suites. The 36 Unit Hub tests cover enrolled-unit filtering, no fallback data on failure, demo/live isolation, blocked demo writes, cancellation of in-flight operations, staff wrappers, route reachability, plain-text rendering, draft forms, time-zone conversion, safe links, Google encoding, ICS injection/folding separate demo event identities, configured Teams wording and read-only imported posts.
+Release checks include Angular template/type checking, the production build and deployment configuration verification. Targeted Vitest suites cover enrolled-unit filtering, no fallback data on failure, demo/live isolation, blocked demo writes, cancellation of in-flight operations, staff wrappers, route reachability, plain-text detail views and clearing stale dialogs. Calendar checks cover time-zone conversion, safe links, Google encoding, ICS injection/folding and separate demo event identities. Further checks cover imported-post ownership, Teams draft parameter encoding and form preservation, hosted-link validation and sign-out clearing, and the explicit Study essentials profile. Tests inspect generated links without joining or sending a real meeting.
 
 Run the relevant checks:
 
 ```sh
 npm run typecheck
 npm run lint
-npm run test:ci -- --include='src/app/unit-hub/**/*.spec.ts' --include='src/app/common/modals/calendar-modal/calendar-modal.component.spec.ts' --include='src/app/demo/demo-controls/demo-controls.component.spec.ts' --include='src/app/common/header/header.component.spec.ts' --include='src/app/common/guards/spec/role-whitelist.guard.spec.ts'
+npm run test:ci -- --include='src/app/unit-hub/**/*.spec.ts' --include='src/app/study-essentials/**/*.spec.ts' --include='src/app/common/modals/calendar-modal/calendar-modal.component.spec.ts' --include='src/app/demo/**/*.spec.ts' --include='src/app/common/header/header.component.spec.ts' --include='src/app/common/guards/spec/role-whitelist.guard.spec.ts'
 npm run build -- --configuration production
 ```
 

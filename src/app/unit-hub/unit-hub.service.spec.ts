@@ -4,6 +4,7 @@ import {HttpTestingController, provideHttpClientTesting} from '@angular/common/h
 import {TestBed} from '@angular/core/testing';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DEMO_TOOLS_AVAILABLE, DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {DemoMeetingLinksStore} from '../demo/demo-meeting-links.store';
 import {unitHubDemo} from './unit-hub-demo.fixtures';
 import {AnnouncementInput, SessionInput, UnitHubFeed} from './unit-hub.models';
 import {UnitHubService, scopeHubFeed} from './unit-hub.service';
@@ -54,7 +55,7 @@ describe('Unit Hub API and demo isolation', () => {
     service.feed().subscribe((feed) => {
       expect(feed.units.map((unit) => unit.code)).toEqual(['SIT111']);
       expect(feed.announcements.length).toBe(2);
-      expect(feed.sessions.length).toBe(2);
+      expect(feed.sessions.length).toBe(3);
       expect(feed.announcements.some((row) => row.unit_id === 102)).toBe(false);
     });
     http.expectNone(`${API_URL}/unit_hub`);
@@ -67,6 +68,25 @@ describe('Unit Hub API and demo isolation', () => {
     pending.subscribe({error: errors});
     expect(errors).toHaveBeenCalledOnce();
     http.expectNone(`${API_URL}/units/111/announcements`);
+  });
+
+  it('uses hosted links only in opted-in demo HelpHubs, without API reads or altering live rows', () => {
+    const link = 'https://teams.microsoft.com/meet/12345?p=demo';
+    TestBed.inject(DemoMeetingLinksStore).save({helpHub: link, extraHelpHub: ''});
+    demo.setEnabled(true);
+    service.feed().subscribe((feed) => {
+      expect(feed.sessions[0].join_url).toBe(link);
+      expect(feed.sessions[0].demo_hosted_join).toBe(true);
+      expect(feed.sessions.filter((row) => row.demo_hosted_join)).toHaveLength(1);
+      expect(feed.sessions.find((row) => row.kind === 'lecture').join_url).toBeNull();
+    });
+    http.expectNone(`${API_URL}/unit_hub`);
+    demo.setEnabled(false);
+    service.feed().subscribe((feed) => {
+      expect(feed.sessions[0].join_url).toBeNull();
+      expect(feed.sessions[0].demo_hosted_join).toBe(false);
+    });
+    http.expectOne(`${API_URL}/unit_hub`).flush(unitHubDemo());
   });
 
   it('blocks every staff read and write in demo mode', () => {
@@ -143,7 +163,7 @@ describe('Unit Hub API and demo isolation', () => {
       announcements_truncated: true,
       window_end: '2026-12-01',
     });
-    expect(result.sessions).toHaveLength(1);
+    expect(result.sessions).toHaveLength(2);
     expect(result.sessions[0].join_url).toBeNull();
     expect(result.sessions[0].source_url).toBeNull();
     expect(result.announcements_truncated).toBe(true);

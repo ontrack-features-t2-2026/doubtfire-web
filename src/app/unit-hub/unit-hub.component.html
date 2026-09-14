@@ -20,6 +20,7 @@
       }
     </div>
   </header>
+  <f-study-essentials />
 
   @if (demo.enabled) {
     <aside aria-label="Demonstration content" class="notice demo-notice">
@@ -27,8 +28,9 @@
       <div>
         <strong>Demo: a student enrolled in SIT111</strong>
         <p>
-          Fictional announcements and sessions. SIT102 content is excluded. Meeting links,
-          subscriptions and editing are disabled. Calendar copies are clearly marked DEMO and are
+          Fictional announcements and schedules. SIT102 content is excluded. A host can add real
+          meeting links in demo controls; the sample times are not an official timetable.
+          Subscriptions and editing are disabled. Calendar copies are clearly marked DEMO and are
           only added if you choose.
         </p>
         <a routerLink="/demo-controls">Open demo controls to return to real data</a>
@@ -268,6 +270,11 @@
                 </fieldset>
                 <ng-container *ngTemplateOutlet="editorActions"></ng-container>
               </form>
+              <f-teams-meeting-composer
+                unavailableReason="Enter a title and valid start, end and time zone above to prepare a Teams meeting."
+                [draft]="teamsDraft"
+                [unitCode]="unitCode(managedUnitId)"
+              />
             }
             <ng-template #editorActions>
               @if (formError) {
@@ -485,10 +492,30 @@
                   announcement.published_at | date: 'd MMM'
                 }}</time>
               </div>
-              <h3>{{ announcement.title }}</h3>
-              <p class="preserve-lines">{{ announcement.body }}</p>
-              @if (announcement.source_url) {
-                <a rel="noopener noreferrer" target="_blank" [href]="announcement.source_url"
+              <h3>
+                <button
+                  class="details-title"
+                  type="button"
+                  (click)="openAnnouncement(announcement)"
+                >
+                  {{ announcement.title }}
+                </button>
+              </h3>
+              <p class="preserve-lines card-preview">{{ announcement.body }}</p>
+              <button
+                class="details-link"
+                mat-button
+                type="button"
+                [attr.aria-label]="'Read announcement: ' + announcement.title"
+                (click)="openAnnouncement(announcement)"
+              >
+                Read full announcement <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </button>
+              @if (safeUrl(announcement.source_url)) {
+                <a
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  [href]="safeUrl(announcement.source_url)"
                   >Open original post <mat-icon aria-hidden="true">open_in_new</mat-icon></a
                 >
               }
@@ -525,7 +552,11 @@
                     <span class="unit-badge">{{ unitCode(session.unit_id) }}</span
                     ><span>{{ kindLabel(session.kind) }}</span>
                   </div>
-                  <h3>{{ session.title }}</h3>
+                  <h3>
+                    <button class="details-title" type="button" (click)="openSession(session)">
+                      {{ session.title }}
+                    </button>
+                  </h3>
                 </div>
               </div>
               <div class="session-time">
@@ -549,7 +580,7 @@
                 <p class="cancelled-label">Cancelled · this session will not run</p>
               }
               @if (session.description) {
-                <p class="preserve-lines">{{ session.description }}</p>
+                <p class="preserve-lines card-preview">{{ session.description }}</p>
               }
               @if (session.location) {
                 <p class="location">
@@ -559,10 +590,31 @@
               @if (session.recurrence === 'weekly') {
                 <p class="help-text">Part of a weekly series</p>
               }
+              <button
+                class="details-link"
+                mat-button
+                type="button"
+                [attr.aria-label]="'View session details: ' + session.title"
+                (click)="openSession(session)"
+              >
+                View full details <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+              </button>
               @if (!session.cancelled) {
                 <div class="session-actions">
                   @if (demo.enabled) {
-                    <button disabled mat-flat-button type="button">Sample meeting</button>
+                    @if (joinUrl(session)) {
+                      <a
+                        mat-flat-button
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        [href]="joinUrl(session)"
+                        ><mat-icon aria-hidden="true">videocam</mat-icon>Join hosted demo</a
+                      >
+                    } @else {
+                      <span class="help-text"
+                        >No host meeting linked. Add a meeting in demo controls.</span
+                      >
+                    }
                     <a
                       mat-stroked-button
                       rel="noopener noreferrer"
@@ -574,12 +626,12 @@
                       Download DEMO .ics
                     </button>
                   } @else {
-                    @if (session.join_url) {
+                    @if (joinUrl(session)) {
                       <a
                         mat-flat-button
                         rel="noopener noreferrer"
                         target="_blank"
-                        [href]="session.join_url"
+                        [href]="joinUrl(session)"
                         ><mat-icon aria-hidden="true">videocam</mat-icon>Join session</a
                       >
                     } @else {
@@ -602,12 +654,12 @@
                   }
                 </div>
               }
-              @if (session.source_url) {
+              @if (safeUrl(session.source_url)) {
                 <a
                   class="source-link"
                   rel="noopener noreferrer"
                   target="_blank"
-                  [href]="session.source_url"
+                  [href]="safeUrl(session.source_url)"
                   >View original details <mat-icon aria-hidden="true">open_in_new</mat-icon></a
                 >
               }
