@@ -114,6 +114,40 @@ describe('TaskCommentComposerComponent phone actions', () => {
     fixture.detectChanges();
   };
 
+  // jsdom has no implicit submission, so this does what a browser does when Enter
+  // is pressed in a single-line field: click the form's default button if it has
+  // one, otherwise submit only when no other field blocks it.
+  const pressEnterIn = (field: HTMLInputElement): void => {
+    const enter = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'Enter'});
+    field.dispatchEvent(enter);
+    const form = field.form;
+    if (enter.defaultPrevented || !form) {
+      return;
+    }
+
+    const controls = Array.from(form.elements);
+    const defaultButton = controls.find(
+      (control) =>
+        (control instanceof HTMLButtonElement || control instanceof HTMLInputElement) &&
+        control.type === 'submit',
+    ) as HTMLButtonElement | HTMLInputElement | undefined;
+    if (defaultButton) {
+      if (!defaultButton.disabled) {
+        defaultButton.click();
+      }
+      return;
+    }
+
+    const blockingFields = controls.filter(
+      (control) =>
+        control instanceof HTMLInputElement &&
+        ['text', 'search', 'url', 'tel', 'email', 'password', 'number'].includes(control.type),
+    );
+    if (blockingFields.length === 1) {
+      form.requestSubmit();
+    }
+  };
+
   it('keeps clear accessible names on the attachment and microphone controls', () => {
     const attach = fixture.nativeElement.querySelector(
       'button[aria-label="Attach a file"]',
@@ -166,6 +200,39 @@ describe('TaskCommentComposerComponent phone actions', () => {
     textarea().dispatchEvent(enter);
 
     expect(enter.defaultPrevented).toBe(false);
+    expect(taskCommentService.addComment).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['emoji search', '#feedback-emoji-picker', 'search'],
+    ['feedback template search', 'f-task-feedback-templates', 'text'],
+  ])(
+    'does not send a half-written message on Enter in the %s box',
+    (_name, hostSelector, inputType) => {
+      enterText('Half-written feedback');
+      const host = fixture.nativeElement.querySelector(hostSelector) as HTMLElement;
+      // Stands in for the search field the picker renders inside the composer form.
+      const search = document.createElement('input');
+      search.type = inputType;
+      host.appendChild(search);
+
+      pressEnterIn(search);
+      fixture.detectChanges();
+
+      expect(taskCommentService.addComment).not.toHaveBeenCalled();
+      expect(textarea().value).toBe('Half-written feedback');
+    },
+  );
+
+  it('does not send when a button without a type inside the composer is clicked', () => {
+    enterText('Half-written feedback');
+    // The audio recorder renders its start, stop and play buttons with no type.
+    const recorderButton = document.createElement('button');
+    fixture.nativeElement.querySelector('#textFieldContainer').appendChild(recorderButton);
+
+    recorderButton.click();
+    fixture.detectChanges();
+
     expect(taskCommentService.addComment).not.toHaveBeenCalled();
   });
 
