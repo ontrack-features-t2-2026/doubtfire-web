@@ -5,12 +5,12 @@
   <div>
     <!--Only show this if it matters... not in final or waiting for tutor input-->
     @if (task?.isDueSoon() && !task?.isPastDueDate()) {
-      <mat-card appearance="outlined">
+      <mat-card appearance="outlined" class="task-due-card task-due-card--soon">
         <!--Due soon-->
         <mat-card-header>
-          <mat-card-title
-            >Aim To Complete Soon - Due in {{ task?.timeUntilDueDateDescription() }}</mat-card-title
-          >
+          <mat-card-title>
+            Aim to complete soon – due in {{ task?.timeUntilDueDateDescription() }}
+          </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <!--Due and not in discuss-->

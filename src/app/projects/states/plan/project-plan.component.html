@@ -15,9 +15,13 @@
             See when each task starts and is due, so you can plan your work and submit on time.
           }
         </p>
+        <p class="m-0 mt-1.5 text-sm text-ot-muted">
+          Select a task to see its prerequisites and dependent tasks. Larger screens also show these
+          connections on the timeline.
+        </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <section aria-label="Task planner controls" class="flex flex-wrap items-center gap-3">
         <mat-form-field
           appearance="outline"
           class="plan-grade-field w-44"
@@ -45,23 +49,18 @@
           <mat-icon aria-hidden="true">calendar_month</mat-icon>
           Subscribe to calendar
         </button>
-      </div>
+      </section>
     </header>
   </f-page-container>
 
   <f-page-container [fullWidth]="true">
-    <!-- The card clips and contains the chart: the gantt draws overlays wider than the
-         page, and without this they could make the whole page scroll sideways. The
-         inner strip scrolls the chart on its own; its minimum width keeps the timeline
-         readable beside the fixed task column on a phone. -->
+    <!-- Contain the desktop timeline while allowing the phone task cards to grow naturally. -->
     <section
       aria-label="Task timeline"
       class="plan-card relative isolate mb-6 overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
     >
-      <div class="w-full overflow-x-auto">
-        <div class="min-w-[820px]">
-          <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
-        </div>
+      <div class="task-planner-surface">
+        <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
       </div>
     </section>
   </f-page-container>

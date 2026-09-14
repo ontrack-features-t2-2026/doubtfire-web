@@ -123,6 +123,7 @@ export class TaskDefinitionService extends CachedEntityService<TaskDefinition> {
         },
       },
       'hasTaskSheet',
+      'taskSheetFilename',
       'hasTaskResources',
       'hasTaskAssessmentResources',
       'hasTaskAssessmentScript',

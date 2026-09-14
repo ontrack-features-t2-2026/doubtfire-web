@@ -164,6 +164,24 @@ describe('GroupSetManagerComponent', () => {
     expect(component.selectedGroup).toBeNull();
   });
 
+  it('opens the student group for the newly selected group set', () => {
+    const first = makeGroup(set, 1, 'First set group');
+    const secondSet = new GroupSet(unit);
+    secondSet.id = 200;
+    const second = makeGroup(secondSet, 2, 'Second set group');
+    ana.groupCache.add(first);
+    ana.groupCache.add(second);
+    const component = create();
+    component.project = ana;
+    component.ngOnChanges({project: new SimpleChange(undefined, ana, true)});
+    expect(component.selectedGroup).toBe(first);
+
+    component.onGroupSetChange(secondSet);
+
+    expect(component.selectedGroupSet).toBe(secondSet);
+    expect(component.selectedGroup).toBe(second);
+  });
+
   it('closes the open group when the page moves to another unit', () => {
     const group = makeGroup(set, 1, 'Team');
 

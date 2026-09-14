@@ -11,7 +11,34 @@
         </p>
       </header>
 
-      <nav aria-label="Portfolio steps" class="mb-6">
+      <nav aria-label="Portfolio steps" class="portfolio-mobile-stepper">
+        <button
+          aria-label="Previous portfolio step"
+          mat-icon-button
+          type="button"
+          [disabled]="!canAdvanceActiveTab(-1)"
+          (click)="advanceActiveTab(-1)"
+        >
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+        </button>
+
+        <div aria-live="polite" class="portfolio-mobile-stepper__current">
+          <span>Step {{ selectedTabIndex + 1 }} of {{ orderedTabs.length }}</span>
+          <strong>{{ activeTab.title }}</strong>
+        </div>
+
+        <button
+          aria-label="Next portfolio step"
+          mat-icon-button
+          type="button"
+          [disabled]="!canAdvanceActiveTab(1)"
+          (click)="advanceActiveTab(1)"
+        >
+          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </button>
+      </nav>
+
+      <nav aria-label="Portfolio steps" class="portfolio-desktop-stepper mb-6">
         <ol class="portfolio-steps">
           @for (tab of orderedTabs; track tab.seq) {
             @let state = stepState(tab);
@@ -56,7 +83,7 @@
 
       <div
         #stepPanel
-        class="rounded-ot-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ot-focus"
+        class="portfolio-step-content rounded-ot-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ot-focus"
         role="region"
         tabindex="-1"
         [attr.aria-label]="

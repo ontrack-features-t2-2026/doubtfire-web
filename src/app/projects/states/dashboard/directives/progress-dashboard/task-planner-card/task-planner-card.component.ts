@@ -167,7 +167,7 @@ export class TaskPlannerCardComponent {
     const completedSuffix = this.excludeCompleted ? '-outstanding' : '';
     const filename = `${this.project.unit.code}-tasks-${this.unit.gradeAbbreviation(this.selectedDownloadGrade)}${directionSuffix}${completedSuffix}.ics`;
 
-    this.fileDownloader.downloadBlobToFile(url, filename);
+    this.fileDownloader.downloadBlobToFileWithFeedback(url, filename);
     this.fileDownloader.releaseBlob(url);
   }
 }

@@ -1,136 +1,301 @@
-@use 'styles/mixins/scrollable' as *;
-
-#pdfContainer {
-  flex-direction: column;
+:host {
+  display: block;
   height: 100%;
-  min-height: 100%;
-  min-width: 100%;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
+}
+
+.pdf-viewer {
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.625rem;
   box-sizing: border-box;
   display: flex;
-  place-content: center;
-  align-items: center;
-}
-
-// Wraps on a phone, so the search pill drops under the viewer buttons instead of
-// pushing the toolbar wider than the screen.
-#actionBar {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-object {
+  flex-direction: column;
   height: 100%;
-  min-width: 100%;
+  min-height: 18rem;
+  min-width: 0;
+  overflow: hidden;
   width: 100%;
 }
 
-#pdfViewActions {
-  padding-top: 1rem;
-  padding-left: 1rem;
-  margin-right: auto;
+.pdf-viewer__toolbar {
+  background: var(--ot-color-surface-raised);
+  border-bottom: 1px solid var(--ot-color-divider);
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  padding: 0.625rem;
 }
 
-.pdf-actions-end {
-  display: flex;
+.pdf-viewer__file-heading {
   align-items: center;
-  gap: 0.5rem;
-  margin-left: auto;
-  padding-top: 1rem;
-  padding-right: 1rem;
-}
-
-.pdf-search {
-  display: flex;
-  height: 44px;
-  align-items: center;
-  gap: 2px;
-  padding: 0 4px 0 12px;
-  border: 1px solid var(--ot-color-border);
-  border-radius: 999px;
-  background: var(--ot-color-surface);
   color: var(--ot-color-text);
+  display: flex;
+  flex: 1 1 16rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  min-width: 0;
+
+  span {
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.pdf-viewer__toolbar-row {
+  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.pdf-viewer__primary-actions {
+  justify-content: flex-end;
+}
+
+.pdf-viewer__document-actions {
+  flex: 1 0 100%;
+}
+
+.pdf-viewer__control,
+.pdf-viewer__icon-control,
+.pdf-viewer__state-actions button {
+  align-items: center;
+  background: var(--ot-color-surface-raised);
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.5rem;
+  color: var(--ot-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 600;
+  gap: 0.375rem;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.625rem;
+
+  &:hover:not(:disabled) {
+    background: var(--ot-color-hover);
+    border-color: var(--ot-color-focus);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--ot-color-focus);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.pdf-viewer__icon-control {
+  min-width: 2.75rem;
+  padding: 0.25rem;
+}
+
+.pdf-viewer__search {
+  align-items: center;
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.5rem;
+  display: flex;
+  flex: 1 1 15rem;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  min-width: 8rem;
+  padding-inline: 0.625rem;
 
   &:focus-within {
-    border-color: var(--ot-color-focus);
-    box-shadow: 0 0 0 1px var(--ot-color-focus);
+    outline: 3px solid var(--ot-color-focus);
+    outline-offset: 2px;
   }
 
-  &[hidden] {
-    display: none;
+  input {
+    background: transparent;
+    border: 0;
+    color: var(--ot-color-text);
+    flex: 1 1 auto;
+    font: inherit;
+    min-width: 0;
+    outline: 0;
+    width: 100%;
+
+    &::placeholder {
+      color: var(--ot-color-text-muted);
+      opacity: 1;
+    }
   }
 }
 
-.pdf-search__icon {
-  flex: none;
-  color: var(--ot-color-text-muted);
+.pdf-viewer__zoom {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+
+  output {
+    color: var(--ot-color-text);
+    font-variant-numeric: tabular-nums;
+    min-width: 3.25rem;
+    text-align: center;
+  }
 }
 
-.pdf-search__input {
-  width: 11rem;
-  max-width: 40vw;
+.pdf-viewer__content {
+  background: var(--ot-color-page);
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   min-width: 0;
-  height: 100%;
-  padding: 0 4px 0 8px;
-  border: 0;
-  appearance: none;
-  outline: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.9375rem;
+  overflow: auto;
+  position: relative;
+}
 
-  &::placeholder {
-    color: var(--ot-color-text-muted);
-    opacity: 1;
+.pdf-viewer__document,
+.pdf-viewer__native-document {
+  border: 0;
+  display: block;
+  height: 100%;
+  min-height: 18rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.pdf-viewer__document--loading {
+  opacity: 0;
+}
+
+pdf-viewer {
+  ::ng-deep .ng2-pdf-viewer-container {
+    overflow: auto;
   }
 }
 
-.pdf-search__divider {
+.pdf-viewer__state {
+  align-items: center;
+  color: var(--ot-color-text);
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.625rem;
+  justify-content: center;
+  min-height: 16rem;
+  padding: 1.25rem;
+  text-align: center;
+
+  h3,
+  p {
+    margin: 0;
+    max-width: 34rem;
+    overflow-wrap: anywhere;
+  }
+
+  > mat-icon {
+    font-size: 2.5rem;
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
+
+.pdf-viewer__state--overlay {
+  background: var(--ot-color-surface);
+  inset: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.pdf-viewer__state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.sr-only {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
   width: 1px;
-  height: 24px;
-  margin-inline: 2px;
-  background: var(--ot-color-divider);
 }
 
-.pdf-toolbar-button {
-  --mat-icon-button-state-layer-size: 36px;
-  color: var(--ot-color-text-muted);
+@media (max-width: 720px) {
+  .pdf-viewer {
+    border-radius: 0.375rem;
+  }
+
+  .pdf-viewer__toolbar {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .pdf-viewer__file-heading,
+  .pdf-viewer__primary-actions,
+  .pdf-viewer__document-actions,
+  .pdf-viewer__search {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .pdf-viewer__file-heading span {
+    white-space: normal;
+  }
+
+  .pdf-viewer__primary-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    .pdf-viewer__control {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      padding-inline: 0.375rem;
+    }
+  }
+
+  .pdf-viewer__document-actions {
+    align-items: center;
+  }
+
+  .pdf-viewer__zoom {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
-.pdf-fullscreen-button {
-  color: var(--ot-color-text-muted);
+@media (max-width: 359px) {
+  .pdf-viewer__primary-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf-viewer__control {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }
 
-// Full screen: the browser shows only this container, so it paints its own page
-// colour, and the pages stop at a comfortable reading width instead of filling a
-// wide monitor edge to edge.
+// The browser presents only this element in full screen. Keep its page colour
+// and constrain the document to the theme's comfortable reading width.
 #pdfContainer:fullscreen {
   background: var(--ot-color-page);
   color: var(--ot-color-text);
+  border-radius: 0;
+
+  .pdf-viewer__content {
+    justify-content: center;
+  }
 
   pdf-viewer,
   object {
     min-width: 0;
     max-width: 64rem;
   }
-}
-
-pdf-viewer {
-  width: 100%;
-  height: 100%;
-
-  .ng2-pdf-viewer-container {
-    overflow-x: hidden;
-    overflow-y: visible;
-  }
-}
-
-.ng2-pdf-viewer-container {
-  overflow-x: hidden;
-  overflow-y: visible;
 }

@@ -17,3 +17,18 @@
 .welcome-note {
   @include wizard.callout(info);
 }
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.portfolio-step-footer button {
+  min-height: 44px;
+}
+
+@media (max-width: 639.98px) {
+  .portfolio-step-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
