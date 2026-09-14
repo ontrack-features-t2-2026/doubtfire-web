@@ -11,6 +11,21 @@
   color: var(--ot-status-#{$status}-on);
 }
 
+// The glyph size lives here rather than in important utilities, so a host that
+// deliberately shows a bigger glyph (the task status card header) can still override it.
+.status-chip mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.status-chip.status-chip--large mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
 .status-chip {
   &.ready-for-feedback {
     @include status-icon('ready-for-feedback');
