@@ -232,12 +232,35 @@ $dark-theme: mat.m2-define-dark-theme(
     color: var(--ot-color-text);
   }
 
+  // M2's dark theme gives every other Material surface the same neutral #424242,
+  // which showed as grey tables and grey toggle buttons on the slate cards (unit
+  // admin Staff and Learning outcomes). Point them at the theme tokens once here, so
+  // a page no longer has to override them one by one. A page that sets its own
+  // value still wins inside its own subtree.
+  --mat-table-background-color: var(--ot-color-surface);
+  --mat-expansion-container-background-color: var(--ot-color-surface-raised);
+  --mat-button-toggle-background-color: var(--ot-color-surface);
+  --mat-button-toggle-disabled-state-background-color: var(--ot-color-surface);
+  --mat-button-toggle-selected-state-background-color: var(--ot-color-selected);
+  --mat-button-toggle-selected-state-text-color: var(--ot-color-selected-text);
+  --mat-button-toggle-divider-color: var(--ot-color-border);
+  --mat-datepicker-calendar-container-background-color: var(--ot-color-surface-raised);
+  --mat-timepicker-container-background-color: var(--ot-color-surface-raised);
+  --mat-autocomplete-background-color: var(--ot-color-surface-raised);
+  --mat-bottom-sheet-container-background-color: var(--ot-color-surface-raised);
+  --mat-stepper-container-color: var(--ot-color-surface);
+  --mat-sidenav-container-background-color: var(--ot-color-surface);
+  --mat-sidenav-content-background-color: var(--ot-color-page);
+  --mat-toolbar-container-background-color: var(--ot-color-surface);
+  --mat-tree-container-background-color: var(--ot-color-surface);
+
   // M2's dark paginator keeps a warm-grey container that reads as a stray band on
-  // the slate ground (seen under the units tables and the View-all list). Sit it on
-  // the page token so it matches the rest of the design.
+  // the slate ground (seen under the units tables and the View-all list). It is
+  // transparent so it takes whatever it sits on: the page, or the card that holds
+  // the table (a page-coloured band under a card's table read as a second band).
   .mat-mdc-paginator {
-    --mat-paginator-container-background-color: var(--ot-color-page);
-    background-color: var(--ot-color-page);
+    --mat-paginator-container-background-color: transparent;
+    background-color: transparent;
   }
 
   // M2's dark theme paints every raised surface a neutral warm #424242, which
