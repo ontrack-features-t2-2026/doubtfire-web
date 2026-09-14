@@ -1,0 +1,115 @@
+# THM-M02 - Core student workflow theme migration
+
+**Ticket:** THM-M02 - Migrate the core student workflows to Light, Dark, and System themes
+**Repository:** doubtfire-web
+**Branch:** `theme/student-workflows`, based on `origin/11.0.x`
+**Depends on:** THM-M01 merged
+
+## Dependency status
+
+- **THM-M01 (shell and shared components): merged.** PR #136 merged THM-M01 into
+  `feat/theme-foundation`, and PR #188 merged `feat/theme-foundation` into
+  `11.0.x` on 2026-09-14. All the M01 token files and the `ThemeService` are
+  present in `11.0.x`, so this branch is based on `11.0.x` and reuses those shared
+  tokens rather than adding a new palette.
+- **THM-D01 (theme audit and final student route list): not started.** The card's
+  item 1 asks to confirm the final student route list from THM-D01, but that card
+  has not produced a list. Following the THEME-MVP-VALIDATION-PLAN, which says the
+  route list can be enumerated from the router, the student routes below were read
+  from `src/app/app.routes.ts`. This list must be reconciled with THM-D01 when it
+  is delivered.
+
+## Student route coverage
+
+Enumerated from the router, restricted to student-facing routes and the shared
+surfaces students use.
+
+| Student surface | Route or component | Migrated |
+|---|---|---|
+| Project and task dashboard | `dashboard` -> `CrossDashboardComponent`, `projects/.../dashboard` -> `project-dashboard` | Yes |
+| Task dashboard and status card | `task-dashboard`, `task-status-card` | Yes |
+| Task list | `project-tasks-list` | Yes |
+| Feedback, comments, discussion | `task-comments-viewer` and its comment, extension and SCORM comment children, `comment-bubble-action` | Yes |
+| Comment composer | `task-comment-composer` | Yes |
+| Progress widgets | `progress-dashboard` directives, `engagement-detail-dialog` | Yes for the files that carried colour; the rest already use tokens |
+| Unit and task navigation dropdown | `task-dropdown` | Yes |
+
+## What changed
+
+Every migrated file had hardcoded colour values replaced with the shared M01
+semantic tokens from `src/styles/tokens/_light.scss` and `_dark.scss`, so the same
+markup now flips correctly in Light, Dark and System. No layout, logic, status,
+submission, extension or feedback behaviour was changed. Examples of the mapping:
+
+- Text and muted text -> `--ot-color-text`, `--ot-color-text-muted`.
+- Surfaces and page backgrounds -> `--ot-color-surface`, `--ot-color-page`.
+- Borders and dividers -> `--ot-color-border`, `--ot-color-divider`.
+- Focus outlines -> `--ot-color-focus`.
+- Primary and selected states -> `--ot-color-primary`, `--ot-color-selected`.
+- Disabled states -> `--ot-color-disabled-text`.
+- Translucent highlights and glows -> `color-mix(in srgb, var(--ot-color-...) N%, transparent)`.
+- Neutral drop shadows using `rgba(0,0,0,...)` were left as they read correctly on
+  both grounds.
+
+### Files migrated
+
+- `src/app/projects/states/dashboard/project-dashboard/project-dashboard.component.scss`
+- `src/app/projects/states/dashboard/directives/task-dashboard/task-dashboard.component.scss`
+- `src/app/projects/states/dashboard/directives/task-dashboard/directives/task-status-card/task-status-card.component.scss`
+- `src/app/projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-detail-dialog/engagement-detail-dialog.component.scss`
+- `src/app/tasks/project-tasks-list/project-tasks-list.component.scss`
+- `src/app/tasks/task-comment-composer/task-comment-composer.component.scss`
+- `src/app/tasks/task-comments-viewer/task-comments-viewer.component.scss`
+- `src/app/tasks/task-comments-viewer/comment-bubble-action/comment-bubble-action.component.scss`
+- `src/app/tasks/task-comments-viewer/extension-comment/extension-comment.component.scss`
+- `src/app/tasks/task-comments-viewer/scorm-comment/scorm-comment.component.scss`
+- `src/app/tasks/task-comments-viewer/scorm-extension-comment/scorm-extension-comment.component.scss`
+- `src/app/common/header/task-dropdown/task-dropdown.component.scss`
+
+## Non-colour cues
+
+- Task status is shown by a `status-icon` and the `statusLabel()` text in the
+  status card, not by colour alone.
+- Due-date urgency uses the `--ot-urgency-*` tokens, and the surrounding wording
+  states the date, so meaning does not depend on colour.
+
+## Deferred, with suggested follow-up tickets
+
+These carried colour but are out of THM-M02 scope or owned by an active ticket, so
+they are recorded here rather than changed, as the card requires.
+
+| File or area | Reason | Suggested follow-up |
+|---|---|---|
+| `task-description-card/ppi-widget` | Owned by the active PPI feature | THM-M02-R1: theme the PPI widget with the feature owner |
+| `common/header/header.component.scss`, `notification-bell` | Header shell is THM-M01, the bell is the notifications feature | THM-M02-R2: finish the header badge and bell with M01 and notifications owners |
+| `tasks/.../task-upload-requirements` and the upload modal | Upload is named in the cross-objective boundary and is feature-owned | THM-M02-R3: theme the upload surfaces with the upload owner |
+| Staff surfaces under `units/states/edit`, `units/states/tasks/inbox`, `projects/states/tutor-*`, `staff-notes`, `analytics` | Staff-only pages, out of scope | THM-M03 (tutor, unit chair and admin surfaces) |
+| `units/task-viewer` | Needs confirmation whether it is a student or tutor surface | Confirm role, then THM-M02 or THM-M03 |
+
+## Checks
+
+Run inside the Docker web container on 2026-09-14. Node 22.23.2, Angular CLI
+22.0.9, vitest 4.1.9.
+
+| Check | Command | Result |
+|---|---|---|
+| SCSS compiles | `sass --no-source-map --load-path=src <each changed file>` | 12 of 12 pass |
+| App bundle | produced by the test builder while running the targeted test | Application bundle generation complete |
+| Targeted test | `ng test --watch=false --include='.../task-status-card.component.spec.ts'` | 1 file, 1 test passed |
+| Typecheck | `ngc -p src/tsconfig.app.json --noEmit` | exit 0, no errors |
+| Lint | `ng lint --max-warnings 0` | All files pass linting |
+
+The full production `ng build` was killed by the Docker VM memory limit during
+the minify step. It is an environment constraint, not a code error: the same
+sources compile cleanly under the test builder above, which produced a complete
+application bundle. Re-run `ng build` on a machine with more memory to capture the
+production build log for the PR.
+
+## Evidence to attach to the PR
+
+- This coverage list.
+- Before and after Light and Dark screenshots of the dashboard, a task, the
+  comments panel and the composer.
+- Normal, empty, loading and error-state evidence.
+- The check output above.
+- The residual follow-up tickets.
