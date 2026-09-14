@@ -279,6 +279,13 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     return `Start in ${days} ${days === 1 ? 'day' : 'days'}`;
   }
 
+  // The badge only shows the count, so its accessible name carries the unit.
+  public newCommentsLabel(task: Task): string {
+    const count = task.numNewComments;
+
+    return `${count} new ${count === 1 ? 'comment' : 'comments'}`;
+  }
+
   public taskOngoing(task: Task): boolean {
     if (!task || task.inFinalState()) {
       return false;

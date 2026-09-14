@@ -59,7 +59,7 @@
           }
           @case ('past-due') {
             <span
-              aria-label="Past the due date"
+              aria-label="Due, deadline not yet passed"
               class="flex size-[18px] items-center justify-center rounded-full bg-(--ot-status-feedback-exceeded) text-(--ot-status-feedback-exceeded-on)"
               matTooltip="Past the due date"
               role="img"
@@ -69,13 +69,13 @@
           }
           @case ('past-deadline') {
             <span
-              aria-label="Past the feedback deadline"
+              aria-label="Past deadline"
               class="flex h-[18px] items-center justify-center gap-px rounded-full bg-(--ot-status-feedback-exceeded) px-1 text-(--ot-status-feedback-exceeded-on)"
               matTooltip="Past the feedback deadline"
               role="img"
             >
-              <mat-icon aria-hidden="true" class="!size-[12px] !text-[12px]">schedule</mat-icon>
-              <span aria-hidden="true">!</span>
+              <mat-icon aria-hidden="true" class="!size-[12px] !text-[12px]">event_busy</mat-icon>
+              <strong aria-hidden="true">!</strong>
             </span>
           }
         }
@@ -97,9 +97,9 @@
       }
       @if (task.similaritiesDetected) {
         <span
-          aria-label="Similarities detected"
+          aria-label="Similarities Detected"
           class="absolute -top-1.5 -left-1.5 flex size-4 items-center justify-center rounded-full bg-ot-error ring-2 ring-ot-surface"
-          matTooltip="Similarities detected"
+          matTooltip="Similarities Detected"
           role="img"
         >
           <mat-icon aria-hidden="true" class="!size-[10px] !text-[10px] text-(--ot-color-on-error)">

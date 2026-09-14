@@ -1,5 +1,5 @@
-import {MediaObserver} from 'ng-flex-layout';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
@@ -38,8 +38,9 @@ describe('HeaderComponent', () => {
     isAuthenticated: ReturnType<typeof vi.fn>;
   };
 
-  let mediaObserver: {
-    isActive: ReturnType<typeof vi.fn>;
+  let breakpointObserver: {
+    isMatched: ReturnType<typeof vi.fn>;
+    observe: ReturnType<typeof vi.fn>;
   };
 
   let notificationService: {
@@ -54,8 +55,9 @@ describe('HeaderComponent', () => {
       isAuthenticated: vi.fn().mockReturnValue(true),
     };
 
-    mediaObserver = {
-      isActive: vi.fn().mockImplementation((alias: string) => alias === 'xs'),
+    breakpointObserver = {
+      isMatched: vi.fn().mockReturnValue(true),
+      observe: vi.fn().mockReturnValue(of({matches: false, breakpoints: {}})),
     };
 
     notificationService = {
@@ -78,7 +80,7 @@ describe('HeaderComponent', () => {
         {provide: GlobalStateService, useValue: emptyProvider},
         {provide: UserService, useValue: emptyProvider},
         {provide: AuthenticationService, useValue: authenticationService},
-        {provide: MediaObserver, useValue: mediaObserver},
+        {provide: BreakpointObserver, useValue: breakpointObserver},
         {provide: DoubtfireConstants, useValue: emptyProvider},
         {provide: NotificationService, useValue: notificationService},
         {provide: SidekiqJobService, useValue: emptyProvider},
@@ -110,7 +112,7 @@ describe('HeaderComponent', () => {
   });
 
   it('does not refresh the mobile count on larger screens', () => {
-    mediaObserver.isActive.mockReturnValue(false);
+    breakpointObserver.isMatched.mockReturnValue(false);
 
     component.refreshMobileUnreadCount();
 
@@ -128,12 +130,18 @@ describe('HeaderComponent', () => {
   describe('calendar entry point', () => {
     const calendarButtonSelector = 'button[aria-label="Open your calendar subscription settings"]';
     let calendarModalServiceStub: {show: ReturnType<typeof vi.fn>};
-    let mediaObserverStub: {isActive: ReturnType<typeof vi.fn>};
+    let breakpointObserverStub: {
+      isMatched: ReturnType<typeof vi.fn>;
+      observe: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(async () => {
       TestBed.resetTestingModule();
       calendarModalServiceStub = {show: vi.fn()};
-      mediaObserverStub = {isActive: vi.fn().mockReturnValue(false)};
+      breakpointObserverStub = {
+        isMatched: vi.fn().mockReturnValue(false),
+        observe: vi.fn().mockReturnValue(of({matches: false, breakpoints: {}})),
+      };
 
       await TestBed.configureTestingModule({
         declarations: [HeaderComponent],
@@ -161,7 +169,7 @@ describe('HeaderComponent', () => {
           },
           {provide: UserService, useValue: {currentUser: {role: 'Student', username: 'student_1'}}},
           {provide: AuthenticationService, useValue: emptyProvider},
-          {provide: MediaObserver, useValue: mediaObserverStub},
+          {provide: BreakpointObserver, useValue: breakpointObserverStub},
           {
             provide: NotificationService,
             useValue: {unreadCount$: of(0), refreshUnreadCount: vi.fn(() => of(0))},
@@ -195,7 +203,7 @@ describe('HeaderComponent', () => {
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector(calendarButtonSelector)).toBeNull();
 
-      mediaObserverStub.isActive.mockImplementation((alias: string) => alias === 'xs');
+      breakpointObserverStub.isMatched.mockReturnValue(true);
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector(calendarButtonSelector)).toBeNull();
     });
@@ -246,6 +254,40 @@ describe('HeaderComponent', () => {
 
       menuAction.click();
       expect(showMyQrSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('uniqueUnitRoles', () => {
+    // Treat every role as active so the test targets the dedup logic only.
+    beforeEach(() => {
+      component['isActiveUnitRole'] = {transform: (roles: unknown[]) => roles} as never;
+    });
+
+    const roleFor = (unitId: number, role = 'Student') => ({unit: {id: unitId}, role}) as never;
+
+    it('keeps a role when its unit appears once', () => {
+      const roles = [roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('drops both non-tutor roles when a unit appears more than once', () => {
+      const roles = [roleFor(1), roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles).map((r: {unit: {id: number}}) => r.unit.id);
+
+      expect(result).toEqual([2]);
+    });
+
+    it('always keeps a tutor role even when the unit is duplicated', () => {
+      const roles = [roleFor(1, 'Tutor'), roleFor(1)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as {role: string}).role).toBe('Tutor');
     });
   });
 });

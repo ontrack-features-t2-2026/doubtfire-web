@@ -190,10 +190,18 @@ export class TaskDescriptionCardComponent implements DoCheck {
   public feedbackDate(): Date {
     // The task's deadline adds the project's special consideration days, so it needs
     // the project; without one, fall back to the definition's own deadline.
-    if (this.task?.project) {
-      return this.task.localDeadlineDate();
+    if (this.task) {
+      try {
+        return this.task.localDeadlineDate();
+      } catch {
+        // An incompletely mapped task can still use its definition's deadline.
+      }
     }
-    return this.taskDef?.localDeadlineDate();
+    try {
+      return this.taskDef?.localDeadlineDate();
+    } catch {
+      return undefined;
+    }
   }
 
   public get allowsFlexibleDates(): boolean {

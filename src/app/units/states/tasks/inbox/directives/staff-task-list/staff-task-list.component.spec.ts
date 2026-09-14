@@ -1,5 +1,5 @@
 import {HotkeysService} from '@ngneat/hotkeys';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
@@ -384,6 +384,16 @@ describe('StaffTaskListComponent', () => {
   });
 
   describe('waiting label', () => {
+    it('selects nothing when the previous-task shortcut has no selected task', () => {
+      vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
+      const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+      component.filteredTasks = [{}, {}] as unknown as Task[];
+
+      component.previousTask();
+
+      expect(setSelected).not.toHaveBeenCalled();
+    });
+
     // The tooltip used to call the days since submission "overdue by", which is not
     // what the number measures.
     it('says how long the task has waited, and whether feedback is overdue', () => {

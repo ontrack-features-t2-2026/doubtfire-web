@@ -155,13 +155,14 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
         }
       }
 
-      for (const cachedComment of task.comments) {
-        if (!comments.find((c) => c.id === cachedComment.id)) {
+      const commentIds = new Set(comments.map((comment) => comment.id));
+
+      for (const cachedComment of [...task.comments]) {
+        if (!commentIds.has(cachedComment.id)) {
           // This comment is in cache but not in the latest comments list
           task.commentCache.delete(cachedComment.id);
         }
       }
-
       task.refreshCommentData();
 
       const lastReadComment: TaskComment = task.comments
@@ -241,8 +242,6 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
         this.alerts.error('I cannot upload that file - only images, audio, and PDFs.', 4000);
       }
     });
-    console.log('implement - check map comments');
-    // this.task.comments = this.ts.mapComments(this.task.comments);
   }
 
   // # Upload image files as comments to a given task
@@ -254,8 +253,11 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
     });
   }
 
-  scrollToComment(commentID) {
-    document.querySelector(`#comment-${commentID}`).scrollIntoView();
+  scrollToComment(commentID?: number) {
+    if (!commentID) {
+      return;
+    }
+    document.querySelector(`#comment-${commentID}`)?.scrollIntoView();
   }
 
   openCommentsModal(comment: TaskComment) {

@@ -1,7 +1,6 @@
 <form
   #form="ngForm"
-  fxLayout="column"
-  fxLayoutAlign="center start"
+  class="flex flex-col items-start justify-center"
   [ngClass]="{'p-10': modal}"
   (ngSubmit)="submit()"
 >
@@ -67,7 +66,11 @@
       <!-- Preferred Name dropped: profile identity is university-managed and not
            customisable by the student. The nickname value stays on `user` untouched. -->
 
-      <mat-form-field appearance="outline" fxFlexFill [hidden]="!customPronouns">
+      <mat-form-field
+        appearance="outline"
+        class="m-0 size-full min-h-full min-w-full"
+        [hidden]="!customPronouns"
+      >
         <mat-label>Custom Pronouns</mat-label>
         <input
           matInput
@@ -85,7 +88,16 @@
       @if (user.systemRole === 'Student' && newUser) {
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Student ID</mat-label>
-          <input matInput name="student_id" required [(ngModel)]="user.studentId" />
+          <input
+            #studentIdModel="ngModel"
+            matInput
+            name="student_id"
+            required
+            [(ngModel)]="user.studentId"
+          />
+          @if (studentIdModel.hasError('required')) {
+            <mat-error>Student ID is required</mat-error>
+          }
         </mat-form-field>
       }
 
@@ -107,7 +119,7 @@
       }
 
       @if (canSeeSystemRole) {
-        <mat-form-field appearance="outline" fxFlexFill>
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>System Role</mat-label>
           <mat-select
             name="systemRole"
@@ -123,13 +135,14 @@
         </mat-form-field>
       }
 
-      <f-notification-settings [user]="user"></f-notification-settings>
+      <f-notification-settings
+        [showNotificationsLink]="isOwnProfilePage"
+        [user]="user"
+      ></f-notification-settings>
 
       <section
         aria-labelledby="peer-progress-preference-title"
-        class="peer-progress-preference"
-        fxFlexFill
-        fxLayout="column"
+        class="peer-progress-preference m-0 flex size-full min-h-full min-w-full flex-col"
       >
         <h3 id="peer-progress-preference-title">Peer progress</h3>
         <mat-slide-toggle
@@ -181,14 +194,16 @@
           <small class="push-opt-in__hint">This device will receive push notifications.</small>
         }
       </section>
-      <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+      <section class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start">
         <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
           >Send anonymous research statistics
         </mat-checkbox>
       </section>
 
       @if (tiiEnabled) {
-        <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+        <section
+          class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start"
+        >
           <mat-checkbox
             color="primary"
             disabled
@@ -200,9 +215,9 @@
           </mat-checkbox>
         </section>
       }
-      <div fxFlexFill fxLayout="row" style="padding-top: 12px">
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row" style="padding-top: 12px">
         <button
-          fxFlexAlign="start"
+          class="self-start"
           mat-stroked-button
           type="button"
           [hidden]="mode === 'edit' || mode === 'new'"
@@ -210,25 +225,25 @@
         >
           Sign Out
         </button>
-        <div fxFlex></div>
+        <div class="flex-1"></div>
         @if (mode === 'create') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
             type="submit"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
           >
             Confirm Account
           </button>
         }
         @if (mode === 'edit') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
             type="button"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
             (click)="submit()"
           >
             Save Profile
