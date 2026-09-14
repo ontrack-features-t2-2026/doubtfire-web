@@ -3,7 +3,9 @@ import {
   Component,
   ElementRef,
   Input,
+  OnChanges,
   OnInit,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import {Project, UserService} from 'src/app/api/models/doubtfire-model';
@@ -19,13 +21,15 @@ import {AlertService} from 'src/app/common/services/alert.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class StaffNotesComponent implements OnInit {
+export class StaffNotesComponent implements OnInit, OnChanges {
   @ViewChild('staffNotesContainer') staffNotesContainer!: ElementRef;
   @ViewChild('staffNoteEditor', {static: false}) staffNoteEditor!: ElementRef<HTMLTextAreaElement>;
 
   @Input() project: Project;
 
   loadingStaffNotes: boolean = true;
+  /** The last load failed, so the list offers a retry instead of saying there are none. */
+  loadError = false;
 
   noteText: string = '';
 
@@ -41,11 +45,34 @@ export class StaffNotesComponent implements OnInit {
     private confirmationModalService: ConfirmationModalService,
   ) {}
   ngOnInit(): void {
+    this.loadNotes();
+  }
+
+  // The list reads the project's note cache, so a new project needs its notes loaded
+  // or it would claim there are none.
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.project && !changes.project.firstChange && this.project) {
+      this.loadNotes();
+    }
+  }
+
+  public get notes(): readonly StaffNote[] {
+    return this.project?.staffNoteCache?.currentValues ?? [];
+  }
+
+  public loadNotes(): void {
     this.loadingStaffNotes = true;
-    this.staffNoteService.loadStaffNotes(this.project).subscribe((_notes) => {
-      this.loadingStaffNotes = false;
-      this.staffNoteService.updateStaffNoteReplies(this.project?.staffNoteCache.currentValues);
-      this.scrollDown();
+    this.loadError = false;
+    this.staffNoteService.loadStaffNotes(this.project).subscribe({
+      next: (_notes) => {
+        this.loadingStaffNotes = false;
+        this.staffNoteService.updateStaffNoteReplies(this.project?.staffNoteCache.currentValues);
+        this.scrollDown();
+      },
+      error: () => {
+        this.loadingStaffNotes = false;
+        this.loadError = true;
+      },
     });
   }
 

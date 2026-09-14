@@ -1,10 +1,11 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {EMPTY} from 'rxjs';
+import {EMPTY, of, throwError} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {StaffNote} from 'src/app/api/models/staff-note';
 import {StaffNoteService} from 'src/app/api/services/staff-note.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {HumanizedDatePipe} from 'src/app/common/pipes/humanized-date.pipe';
 import {LocalizedDatePipe} from 'src/app/common/pipes/localized-date.pipe';
@@ -120,5 +121,89 @@ describe('StaffNotesComponent note actions', () => {
 
     expect(component.editingNote).toBe(note);
     expect(card().querySelector('textarea')).toBeTruthy();
+  });
+});
+
+describe('StaffNotesComponent states', () => {
+  let component: StaffNotesComponent;
+  let fixture: ComponentFixture<StaffNotesComponent>;
+  let loadStaffNotes: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    loadStaffNotes = vi.fn(() => of([]));
+
+    await TestBed.configureTestingModule({
+      declarations: [StaffNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
+      imports: [EmptyStateComponent],
+      providers: [
+        {provide: UserService, useValue: emptyProvider},
+        {
+          provide: StaffNoteService,
+          useValue: {loadStaffNotes, updateStaffNoteReplies: () => undefined},
+        },
+        {provide: AlertService, useValue: emptyProvider},
+        {provide: ConfirmationModalService, useValue: emptyProvider},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  function render(): void {
+    fixture = TestBed.createComponent(StaffNotesComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('project', {
+      student: {name: 'Ada Lovelace'},
+      staffNoteCache: {currentValues: []},
+    } as never);
+    fixture.detectChanges();
+  }
+
+  function text(): string {
+    return fixture.nativeElement.textContent.replace(/\s+/g, ' ');
+  }
+
+  function buttonLabelled(label: string): HTMLButtonElement | undefined {
+    return Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).find(
+      (button) => button.textContent.trim() === label,
+    );
+  }
+
+  it('says there are no notes yet once an empty list loads', () => {
+    render();
+
+    expect(text()).toContain('No notes yet');
+    expect(text()).toContain('Notes you add below are only seen by staff.');
+    expect(fixture.nativeElement.querySelector('.note-card')).toBeNull();
+  });
+
+  it('shows an error state with Try again when the notes fail to load', () => {
+    loadStaffNotes.mockReturnValueOnce(throwError(() => new Error('offline')));
+    render();
+
+    expect(text()).toContain('The notes did not load');
+    expect(text()).not.toContain('No notes yet');
+
+    buttonLabelled('Try again').click();
+    fixture.detectChanges();
+
+    expect(loadStaffNotes).toHaveBeenCalledTimes(2);
+    expect(text()).not.toContain('The notes did not load');
+    expect(text()).toContain('No notes yet');
+  });
+
+  it('keeps Save note off until there is something to save', () => {
+    render();
+    const save = buttonLabelled('Save note');
+
+    expect(save.getAttribute('type')).toBe('button');
+    expect(save.disabled).toBe(true);
+
+    component.noteText = '   ';
+    fixture.detectChanges();
+    expect(save.disabled).toBe(true);
+
+    component.noteText = 'Talked about the extension';
+    fixture.detectChanges();
+    expect(save.disabled).toBe(false);
   });
 });
