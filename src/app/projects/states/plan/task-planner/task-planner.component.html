@@ -1,5 +1,5 @@
-<div class="flex items-center justify-between p-3">
-  <div class="flex items-center gap-2">
+<div class="planner-toolbar flex flex-wrap items-center justify-between gap-3 p-3">
+  <div class="flex flex-wrap items-center gap-3">
     <mat-slide-toggle [(ngModel)]="showDatesColumn">Show Task Dates</mat-slide-toggle>
     <mat-slide-toggle
       [ngModel]="showTasksAboveTargetGrade"
@@ -9,7 +9,7 @@
     </mat-slide-toggle>
   </div>
   @if (unit.allowFlexibleDates) {
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <button color="primary" mat-button (click)="saveImage()">
         <mat-icon>save_alt</mat-icon> Download Chart
       </button>
@@ -27,7 +27,7 @@
 </div>
 <ngx-gantt
   #gantt
-  class="h-full overflow-hidden"
+  class="planner-chart overflow-hidden"
   [async]="false"
   [baselineItems]="unit.allowFlexibleDates ? baselineItems : []"
   [class.flexible-dates]="overlayLines"
@@ -41,6 +41,9 @@
   [virtualScrollEnabled]="false"
 >
   <ngx-gantt-table>
+    <ng-template #tableEmpty>
+      <p class="planner-empty">No tasks to show for this target grade.</p>
+    </ng-template>
     <ngx-gantt-column name="Tasks" width="350px">
       <ng-template #cell let-item="item">
         <!-- TODO: redirect to new project dashboard -->

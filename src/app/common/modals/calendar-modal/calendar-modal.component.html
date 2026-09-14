@@ -175,9 +175,7 @@
               </p>
             </mat-card-content>
           </mat-card>
-          <div
-            class="my-3 rounded border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-gray-700"
-          >
+          <div class="calendar-provider-panel">
             <mat-tab-group
               animationDuration="0ms"
               [selectedIndex]="selectedCalendarProviderIndex"
@@ -206,11 +204,11 @@
               }
             </div>
 
-            <div class="mt-3 rounded border border-gray-300 bg-white px-4 py-2">
-              <div class="flex items-center">
-                <div class="flex min-w-0 flex-1 items-center">
+            <div class="calendar-url-box">
+              <div class="calendar-url-row">
+                <div class="calendar-url-link">
                   <a
-                    class="flex items-center gap-1 break-all text-blue-700 hover:text-blue-900"
+                    class="flex items-center gap-1 break-all"
                     [attr.aria-label]="'Subscribe to web calendar: ' + webcalUrl + '.ics'"
                     [href]="webcalUrl + '.ics'"
                   >

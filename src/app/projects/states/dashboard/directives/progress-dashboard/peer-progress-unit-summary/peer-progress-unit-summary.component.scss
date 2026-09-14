@@ -1,3 +1,12 @@
 :host {
   display: block;
+  color: var(--ot-color-text);
+}
+
+.peer-progress-muted {
+  color: var(--ot-color-text-muted);
+}
+
+.peer-progress-border {
+  border-color: var(--ot-color-divider);
 }

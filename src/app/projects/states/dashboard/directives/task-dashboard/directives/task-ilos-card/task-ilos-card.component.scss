@@ -1,0 +1,20 @@
+:host {
+  color: var(--ot-color-text);
+}
+
+.learning-outcome-row {
+  border-color: var(--ot-color-divider);
+  background: var(--ot-color-surface);
+
+  &:nth-child(odd) {
+    background: var(--ot-color-surface-raised);
+  }
+}
+
+.learning-outcome-code {
+  color: var(--ot-color-text);
+}
+
+.learning-outcome-detail {
+  color: var(--ot-color-text-muted);
+}

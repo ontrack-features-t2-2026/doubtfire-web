@@ -38,7 +38,13 @@
       </div>
       <p>
         Subscribe to your unit calendar to be reminded about your due dates.
-        <button color="primary" mat-stroked-button type="button" (click)="openCalendar()">
+        <button
+          class="planner-calendar-button"
+          color="primary"
+          mat-stroked-button
+          type="button"
+          (click)="openCalendar()"
+        >
           Open calendar
         </button>
       </p>
@@ -46,7 +52,7 @@
   </f-page-container>
 
   <f-page-container [fullWidth]="true">
-    <div [style.height.px]="(planner?.items.length + 2) * 43">
+    <div class="planner-container" [style.height.px]="(planner?.items.length + 2) * 43">
       <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
     </div>
   </f-page-container>

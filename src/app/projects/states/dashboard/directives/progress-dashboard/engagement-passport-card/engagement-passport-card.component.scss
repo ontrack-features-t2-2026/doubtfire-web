@@ -1,0 +1,23 @@
+:host {
+  color: var(--ot-color-text);
+}
+
+.engagement-muted {
+  color: var(--ot-color-text-muted);
+}
+
+.engagement-border {
+  border-color: var(--ot-color-divider);
+}
+
+.engagement-current-week {
+  background: var(--ot-color-selected);
+}
+
+.engagement-current-label {
+  color: var(--ot-color-selected-text);
+}
+
+.engagement-error {
+  color: var(--ot-color-error);
+}

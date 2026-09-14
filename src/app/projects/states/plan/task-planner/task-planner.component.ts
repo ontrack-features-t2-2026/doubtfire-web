@@ -1,5 +1,8 @@
 import {
+  GANTT_GLOBAL_CONFIG,
+  GANTT_I18N_LOCALE_TOKEN,
   GanttBaselineItem,
+  GanttConfigService,
   GanttDate,
   GanttItem,
   GanttLink,
@@ -8,6 +11,7 @@ import {
   GanttViewOptions,
   GanttViewType,
   NgxGanttComponent,
+  enUsLocale,
 } from '@worktile/gantt';
 import {
   AfterViewInit,
@@ -29,6 +33,7 @@ import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.se
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {taskPlannerGanttConfig} from './task-planner-gantt.config';
 import {TaskPlannerPrerequisitesModalService} from './task-planner-prerequisites-modal/task-planner-prerequisites-modal.service';
 
 interface TaskGanttItem extends GanttItem {
@@ -44,7 +49,12 @@ interface TaskGanttItem extends GanttItem {
   selector: 'f-task-planner',
   templateUrl: './task-planner.component.html',
   styleUrl: './task-planner.component.scss',
-  providers: [GanttPrintService],
+  providers: [
+    GanttPrintService,
+    GanttConfigService,
+    {provide: GANTT_GLOBAL_CONFIG, useValue: taskPlannerGanttConfig},
+    {provide: GANTT_I18N_LOCALE_TOKEN, useValue: [enUsLocale]},
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })

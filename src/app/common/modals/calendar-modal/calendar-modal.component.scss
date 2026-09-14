@@ -1,0 +1,127 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: block;
+  min-width: 0;
+  color: var(--ot-color-text);
+  background-color: var(--ot-color-surface);
+
+  @include mat.dialog-overrides(
+    (
+      subhead-color: var(--ot-color-text),
+      supporting-text-color: var(--ot-color-text),
+    )
+  );
+}
+
+mat-card {
+  @include mat.card-overrides(
+    (
+      outlined-container-color: var(--ot-color-surface-raised),
+      outlined-outline-color: var(--ot-color-border),
+      subtitle-text-color: var(--ot-color-text-muted),
+    )
+  );
+  color: var(--ot-color-text);
+}
+
+.calendar-provider-panel {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.25rem;
+  background-color: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
+  font-size: 0.875rem;
+}
+
+// The M2 dark palette sets these tokens on :root[data-ot-theme] .mat-mdc-tab-group.
+// Include the local panel and host so those global declarations cannot win.
+:host .calendar-provider-panel mat-tab-group {
+  @include mat.tabs-overrides(
+    (
+      active-label-text-color: var(--ot-color-link),
+      active-focus-label-text-color: var(--ot-color-link),
+      active-hover-label-text-color: var(--ot-color-link),
+      active-indicator-color: var(--ot-color-link),
+      active-focus-indicator-color: var(--ot-color-link),
+      active-hover-indicator-color: var(--ot-color-link),
+      inactive-label-text-color: var(--ot-color-text-muted),
+      inactive-focus-label-text-color: var(--ot-color-text),
+      inactive-hover-label-text-color: var(--ot-color-text),
+      pagination-icon-color: var(--ot-color-text),
+      divider-color: var(--ot-color-divider),
+    )
+  );
+}
+
+.calendar-url-box {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.25rem;
+  background-color: var(--ot-color-surface);
+  color: var(--ot-color-text);
+}
+
+.calendar-url-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.calendar-url-link {
+  flex: 1 1 12rem;
+  min-width: 0;
+
+  a {
+    color: var(--ot-color-link);
+    overflow-wrap: anywhere;
+  }
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 3px;
+  }
+}
+
+button[mat-stroked-button] {
+  @include mat.button-overrides(
+    (
+      outlined-label-text-color: var(--ot-color-link),
+      outlined-outline-color: var(--ot-color-border),
+      outlined-state-layer-color: var(--ot-color-link),
+      outlined-disabled-label-text-color: var(--ot-color-disabled-text),
+      outlined-disabled-outline-color: var(--ot-color-divider),
+    )
+  );
+  background-color: var(--ot-color-surface);
+
+  &[color='warn'] {
+    @include mat.button-overrides(
+      (
+        outlined-label-text-color: var(--ot-color-error),
+        outlined-state-layer-color: var(--ot-color-error),
+      )
+    );
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-provider-panel {
+    padding: 0.5rem;
+  }
+
+  .calendar-url-row > :last-child {
+    margin-left: auto;
+  }
+}
