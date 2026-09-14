@@ -3,7 +3,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
 import {ActivatedRoute} from '@angular/router';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 import {Project, Task, User} from 'src/app/api/models/doubtfire-model';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -19,6 +19,7 @@ const taskServiceStub = {
   statusLabels: new Map(),
   statusClass: new Map(),
   statusSeq: new Map(),
+  taskSubmissionCompleted$: new Subject<Task>(),
 };
 const selectedTaskServiceStub = {
   currentView$: new BehaviorSubject(DashboardViews.details),
@@ -53,6 +54,19 @@ describe('TaskDashboardComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('opens Your Submission without losing the selected task after upload', () => {
+    const project = new Project();
+    project.id = 1;
+    const task = new Task(project);
+    task.definition = {id: 2} as Task['definition'];
+    component.task = task;
+    fixture.detectChanges();
+
+    taskServiceStub.taskSubmissionCompleted$.next(task);
+
+    expect(component.currentView).toBe(DashboardViews.submission);
   });
 
   it('allows the project owner to view peer progress', () => {
@@ -200,6 +214,10 @@ describe('TaskDashboardComponent', () => {
       definition: {hasTaskSheet: false, hasTaskResources: false},
       hasPdf: false,
       processingPdf: false,
+      submissionProcessingActive: false,
+      submissionPdfReady: false,
+      submissionFilesReady: false,
+      hasSubmissionHistory: () => false,
     } as unknown as Task;
     component.currentView = DashboardViews.details;
     component.currentIndex = 0;
@@ -208,6 +226,8 @@ describe('TaskDashboardComponent', () => {
     fixture.detectChanges();
 
     const details = fixture.nativeElement.querySelector('.flex.flex-col.gap-3.p-3');
+    const shell = fixture.nativeElement.querySelector('.task-dashboard-shell');
+    const body = fixture.nativeElement.querySelector('.task-dashboard-body');
     const children = Array.from(details.children) as HTMLElement[];
     const submissionIndex = children.findIndex(
       (element) => element.tagName.toLowerCase() === 'f-task-submission-card',
@@ -218,5 +238,36 @@ describe('TaskDashboardComponent', () => {
 
     expect(submissionIndex).toBeGreaterThan(-1);
     expect(peerProgressIndex).toBe(submissionIndex + 1);
+    expect(shell.classList).toContain('task-dashboard-shell--document');
+    expect(body.classList).toContain('task-dashboard-body--document');
   });
+
+  it.each([DashboardViews.task, DashboardViews.submission])(
+    'keeps bounded feature view %s out of phone document-flow flattening',
+    (view) => {
+      const project = new Project();
+      component.task = {
+        project,
+        unit: {staff: []},
+        definition: {hasTaskSheet: false},
+        hasPdf: false,
+        processingPdf: false,
+        submissionProcessingActive: false,
+        submissionPdfReady: false,
+        submissionFilesReady: false,
+        hasSubmissionHistory: () => false,
+        blockedByPrerequisiteTasks: () => false,
+      } as unknown as Task;
+      fixture.detectChanges();
+
+      component.setSelectedDashboardView(view);
+      fixture.detectChanges();
+
+      const shell = fixture.nativeElement.querySelector('.task-dashboard-shell');
+      const body = fixture.nativeElement.querySelector('.task-dashboard-body');
+
+      expect(shell.classList).not.toContain('task-dashboard-shell--document');
+      expect(body.classList).not.toContain('task-dashboard-body--document');
+    },
+  );
 });

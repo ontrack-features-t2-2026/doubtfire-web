@@ -15,6 +15,7 @@ import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
+import {PeerProgressDisplayPreferenceService} from 'src/app/common/services/peer-progress-display-preference.service';
 
 interface PeerProgressDisplaySegment {
   status: TaskStatusEnum;
@@ -44,12 +45,13 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
 
   constructor(
     private ppiService: PeerProgressIndicatorService,
+    private displayPreference: PeerProgressDisplayPreferenceService,
     private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.task || changes.taskDef) {
-      this.advanced = false;
+      this.advanced = this.displayPreference.enabled;
       this.load();
     }
   }
@@ -63,7 +65,7 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   }
 
   setAdvanced(enabled: boolean): void {
-    this.advanced = enabled;
+    this.advanced = this.displayPreference.setEnabled(enabled);
     this.cdr.markForCheck();
   }
 

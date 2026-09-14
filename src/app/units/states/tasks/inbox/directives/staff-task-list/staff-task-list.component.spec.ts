@@ -77,6 +77,22 @@ describe('StaffTaskListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('does not navigate before the task queue has loaded', () => {
+    component.filteredTasks = null;
+
+    expect(() => component.previousTask()).not.toThrow();
+  });
+
+  it('does not select a task when there is no current selection', () => {
+    vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
+    const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    component.filteredTasks = [{}, {}] as unknown as Task[];
+
+    component.previousTask();
+
+    expect(setSelected).not.toHaveBeenCalled();
+  });
+
   // The screen the header dropdown can actually leave stale. This ran only in task
   // definition mode before, so the inbox kept the previous unit's list and tutors.
   it('rebuilds its tasks and its student filter in inbox mode when the unit changes', () => {

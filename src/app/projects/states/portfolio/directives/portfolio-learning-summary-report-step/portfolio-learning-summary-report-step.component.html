@@ -4,8 +4,8 @@
   </mat-card-header>
   <mat-card-content>
     <p class="pt-3">
-      Upload the Learning Summary Report, the primary porfolio document which justifies your desired
-      grade.
+      Upload the Learning Summary Report, the primary portfolio document which justifies your
+      desired grade.
     </p>
     <p>
       Your Learning Summary Report is a
@@ -30,24 +30,24 @@
     @if (
       projectHasDraftLearningSummaryReport && !forceLSRSubmit && !acceptUploadNewLearningSummary
     ) {
-      <div class="mx-auto flex max-w-4xl flex-col items-center justify-center py-3 text-center">
-        <div class="submitted flex items-center justify-center gap-3 py-3 text-center text-2xl">
-          <mat-icon color="primary">check_circle</mat-icon>
-          Learning Summary Report Submitted
-        </div>
+      <section aria-labelledby="learning-summary-submitted-title" class="submitted" role="status">
+        <mat-icon aria-hidden="true" color="primary">check_circle</mat-icon>
+        <h2 id="learning-summary-submitted-title">Learning Summary Report submitted</h2>
         @if (draftTaskDefinitionWasUsed()) {
-          <div class="w-full max-w-2xl py-1 text-center text-xs text-gray-400">
+          <p class="submitted__source">
             Your learning summary report was automatically submitted from your
             {{ unit.draftTaskDefinition.abbreviation }} {{ unit.draftTaskDefinition.name }}
             submission.
-          </div>
+          </p>
         }
 
         <!-- <button mat-button (click)="downloadLearningSummaryReport()" color="primary">
           View Learning Summary Report
         </button> -->
-        <button color="primary" mat-button (click)="forceLSRSubmit = true">Upload a new one</button>
-      </div>
+        <button color="primary" mat-button (click)="forceLSRSubmit = true">
+          Upload a new report
+        </button>
+      </section>
     }
     <div
       [hidden]="
@@ -63,6 +63,7 @@
         {{ targetGradeLabel }} in {{ unit.code }} {{ unit.name }}.
       </div>
       <f-file-uploader
+        class="portfolio-file-uploader"
         [files]="learningSummaryReportFileUploadData.type"
         [onSuccess]="addNewFile.bind(this)"
         [payload]="learningSummaryReportFileUploadData.payload"
@@ -70,17 +71,22 @@
       ></f-file-uploader>
     </div>
   </mat-card-content>
-  <mat-card-footer class="flex w-full justify-between p-3">
-    <button mat-raised-button (click)="advanceActiveTab(-1)">Back</button>
-    <div class="flex items-center justify-center gap-3">
-      @if (!projectHasDraftLearningSummaryReport) {
-        <div class="text-gray-400">
-          You're missing a Learning Summary Report. Upload one to continue.
-        </div>
-      }
+  <mat-card-footer class="portfolio-step-footer">
+    @if (!projectHasDraftLearningSummaryReport) {
+      <p class="portfolio-validation" id="learning-summary-validation" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <span>You're missing a Learning Summary Report. Upload one to continue.</span>
+      </p>
+    }
+
+    <div class="portfolio-step-actions">
+      <button mat-raised-button (click)="advanceActiveTab(-1)">Back</button>
       <button
         color="primary"
         mat-raised-button
+        [attr.aria-describedby]="
+          projectHasDraftLearningSummaryReport ? null : 'learning-summary-validation'
+        "
         [disabled]="!projectHasDraftLearningSummaryReport"
         (click)="advanceActiveTab(1)"
       >

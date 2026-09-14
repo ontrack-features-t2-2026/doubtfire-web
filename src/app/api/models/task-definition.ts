@@ -52,6 +52,7 @@ export class TaskDefinition extends Entity {
   // groupSetId: number;
   groupSet: GroupSet = null;
   hasTaskSheet: boolean;
+  taskSheetFilename: string;
   hasTaskResources: boolean;
   scormEnabled: boolean;
   hasScormData: boolean;
@@ -255,6 +256,15 @@ export class TaskDefinition extends Entity {
     return `${constants.API_URL}/units/${this.unit.id}/task_definitions/${this.id}/task_pdf.json${
       asAttachment ? '?as_attachment=true' : ''
     }`;
+  }
+
+  public get effectiveTaskSheetFilename(): string {
+    const authoritativeName = this.taskSheetFilename?.trim();
+    if (authoritativeName) {
+      return authoritativeName;
+    }
+
+    return `${this.unit?.code ?? 'OnTrack'}-${this.abbreviation}-TaskSheet.pdf`;
   }
 
   public getTaskResourcesUrl(asAttachment: boolean = false) {

@@ -44,9 +44,11 @@ One-off Google drafts and imported files do not receive schedule changes. Subscr
 
 ## Demonstration
 
-In a local build with demo tools enabled, open **Demo controls**, turn **Demo mode on**, then open **Unit Hub**. The existing switch reloads the application; accounts without a remembered session may need to sign in again.
+Use a non-production build with demo tools enabled and sign in to the guarded synthetic account in the isolated demo API. After authentication, `DemoScenarioRegistryService` requests `/api/demo/scenario`; only a successful contract makes **Demo controls** available. A build flag alone is insufficient. Ordinary accounts, an unconfigured API and production cannot activate the walkthrough.
 
-The Unit Hub demo is a fictional student enrolled only in SIT111. It shows two announcements, two HelpHubs and a lecture, including their clickable detail views. The raw fixture contains SIT102 records specifically to exercise filtering; these do not appear. The fixture includes no names, account details or copied posts from real students or staff. Its dates are fictional and generated relative to the browser's local date.
+Open **Demo controls**, turn **Demo mode on**, then open **Unit Hub**. The switch updates the page without reloading or signing the user out. Its state belongs to the current scenario and signed-in user in the browser tab. Sign-out or an account change clears that state and the hosted meeting links.
+
+Once the guarded walkthrough is enabled, Unit Hub uses its separate browser-only sample of a fictional student enrolled only in SIT111. It shows two announcements, two HelpHubs and a lecture, including their clickable detail views. The raw fixture contains SIT102 records specifically to exercise filtering; these do not appear. The fixture includes no names, account details or copied posts from real students or staff. Its dates are fictional and generated relative to the browser's local date.
 
 Demo mode does not read the Unit Hub API and blocks staff reads and writes. Samples have no joining action unless the presenter explicitly configures a hosted link. In **Demo controls → Use your own HelpHub links**, add a real Teams joining URL for either or both HelpHubs, choose **Save demo links**, then reopen Unit Hub. **Join hosted demo** opens that real meeting with a notice that the sample schedule is fictional. The lecture has no fabricated joining URL.
 
@@ -56,7 +58,7 @@ Google drafts and .ics downloads require an explicit user action and are labelle
 
 The optional **Try the Teams meeting draft** section in Demo controls opens a real Teams invitation draft with a **DEMO** title and fictional details. It sends nothing automatically. Review the example date and attendees before deliberately pressing **Send** in Teams. No actual meeting URLs should appear in committed fixtures, environment examples, public screenshots or handover text.
 
-Turn demo mode off to return to the real authorised endpoint, including in development builds; the unrelated development quiet-data mask does not hide real Unit Hub records. See the [demo guide](../src/app/demo/README.md) for local setup and removal notes.
+Turn demo mode off to return to the real authorised endpoint, including in development builds. The combined runtime has no quiet-data mask or HTTP masking interceptor. See the [demo guide](../src/app/demo/README.md) for local setup and removal notes.
 
 Production builds disable demo tools and cannot activate the Unit Hub fixtures. This release supports the installed web app, not a separately implemented native iOS or Android application.
 

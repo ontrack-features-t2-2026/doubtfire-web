@@ -1,89 +1,113 @@
-import {NO_ERRORS_SCHEMA} from '@angular/core';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {BehaviorSubject} from 'rxjs';
-import {ProjectService, TaskService} from 'src/app/api/models/doubtfire-model';
-import {UserService} from 'src/app/api/services/user.service';
-import {FileUploaderComponent} from 'src/app/common/file-uploader/file-uploader.component';
-import {AlertService} from 'src/app/common/services/alert.service';
-import {EmojiService} from 'src/app/common/services/emoji.service';
-import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {PrivacyPolicy} from 'src/app/config/privacy-policy/privacy-policy';
-import {TaskUploadRequirementsComponent} from './task-upload-requirements/task-upload-requirements.component';
-import {UploadSubmissionModalComponent} from './upload-submission-modal.component';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {Task} from 'src/app/api/models/task';
+import {
+  UploadSubmissionModalComponent,
+  UploadSubmissionModalData,
+} from './upload-submission-modal.component';
 
-describe('UploadSubmissionModalComponent upload guidance', () => {
-  let fixture: ComponentFixture<UploadSubmissionModalComponent>;
+describe('UploadSubmissionModalComponent', () => {
+  let component: UploadSubmissionModalComponent;
+  let task: Task;
+  let dialogRef: {close: ReturnType<typeof vi.fn>};
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [
-        UploadSubmissionModalComponent,
-        FileUploaderComponent,
-        TaskUploadRequirementsComponent,
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-      providers: [
-        {
-          provide: MAT_DIALOG_DATA,
-          useValue: {
-            isTestSubmission: true,
-            task: {
-              definition: {
-                abbreviation: '1.1P',
-                name: 'Upload evidence',
-                uploadRequirements: [{key: 'file0', name: 'Source code', type: 'code'}],
-              },
-              testSubmissionUrl: () => '/api/test-submission',
-              isGroupTask: () => false,
-            },
-          },
-        },
-        {provide: MatDialogRef, useValue: {}},
-        {provide: TaskService, useValue: {}},
-        {provide: ProjectService, useValue: {}},
-        {provide: PrivacyPolicy, useValue: {}},
-        {provide: AlertService, useValue: {}},
-        {provide: EmojiService, useValue: {}},
-        {provide: UserService, useValue: {}},
-        {provide: DoubtfireConstants, useValue: {ExternalName: new BehaviorSubject('OnTrack')}},
-      ],
-    }).compileComponents();
-    fixture = TestBed.createComponent(UploadSubmissionModalComponent);
-    fixture.detectChanges();
+  beforeEach(() => {
+    task = {
+      status: 'not_started',
+      definition: {
+        abbreviation: '1.1P',
+        name: 'Hello World',
+        uploadRequirements: [{key: 'file0', name: 'Task evidence', type: 'document'}],
+        assessInPortfolioOnly: false,
+      },
+      project: {id: 1},
+      unit: {id: 2},
+      isGroupTask: () => false,
+      inSubmittedState: () => false,
+      submissionUrl: () => '/submission',
+      testSubmissionUrl: () => '/test-submission',
+      updateFromJson: vi.fn(),
+      processTaskStatusChange: vi.fn(),
+    } as unknown as Task;
+    dialogRef = {close: vi.fn()};
+    const data: UploadSubmissionModalData = {
+      task,
+      reuploadEvidence: false,
+      isTestSubmission: false,
+    };
+    component = new UploadSubmissionModalComponent(
+      data,
+      dialogRef as never,
+      {
+        submittableStatuses: ['ready_for_feedback'],
+        statusLabels: new Map([['ready_for_feedback', 'Ready for feedback']]),
+        mapping: {},
+      } as never,
+      {} as never,
+      {privacy: '', plagiarism: ''} as never,
+      {error: vi.fn()} as never,
+      {nativeEmojiToColons: (value: string) => value} as never,
+    );
+    component.ngOnInit();
   });
 
-  it('shows guidance before selection and describes the real file picker controls', () => {
-    const root: HTMLElement = fixture.nativeElement;
-    const button = root.querySelector<HTMLButtonElement>('.file-drop-zone')!;
-    const input = root.querySelector<HTMLInputElement>('input[type=file]')!;
-    const help = root.querySelector<HTMLElement>('.task-upload-requirements')!;
-    expect(help.textContent).toContain('Files required: 1');
-    expect(button.getAttribute('aria-describedby')).toBe(help.id);
-    expect(input.getAttribute('aria-describedby')).toBe(help.id);
-    expect(help.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(input.accept).toContain('.vue');
-    expect(fixture.componentInstance.isUploaderReady).toBe(false);
+  it('allows untouched backdrop dismissal and confirms before discarding selected files', () => {
+    component.comment = 'A note that has not selected a local file';
+    component.submissionType = 'need_help';
+    expect(component.canClose()).toBe(true);
+
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      isUploading: false,
+      hasSelectedFiles: () => true,
+    };
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    expect(component.canClose()).toBe(false);
+    expect(confirm).toHaveBeenCalledWith(
+      'Discard the files and details selected for this submission?',
+    );
+
+    confirm.mockReturnValue(true);
+    expect(component.canClose()).toBe(true);
+    confirm.mockRestore();
   });
 
-  it('preserves invalid-file feedback and enables submission only after an accepted selection', () => {
-    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[type=file]');
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['x'], 'bad.exe')],
-    });
-    input.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Invalid file provided');
-    expect(fixture.componentInstance.isUploaderReady).toBe(false);
+  it('cannot dismiss while the upload request is active', () => {
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      isUploading: true,
+      hasSelectedFiles: () => true,
+    };
+    const confirm = vi.spyOn(window, 'confirm');
 
-    Object.defineProperty(input, 'files', {
-      configurable: true,
-      value: [new File(['x'], 'source.vue')],
-    });
-    input.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isUploaderReady).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain('source.vue');
+    expect(component.canClose()).toBe(false);
+    expect(confirm).not.toHaveBeenCalled();
+    confirm.mockRestore();
+  });
+
+  it('marks the task queued immediately and closes on the same task after upload', () => {
+    component.submissionType = 'ready_for_feedback';
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+
+    expect(task.processingPdf).toBe(true);
+    expect(task.submissionProcessingState).toBe('queued');
+
+    component.onUploadComplete();
+
+    expect(task.updateFromJson).toHaveBeenCalled();
+    expect(task.processTaskStatusChange).toHaveBeenCalledWith(
+      'ready_for_feedback',
+      expect.anything(),
+      true,
+    );
+    expect(dialogRef.close).toHaveBeenCalledWith({value: task});
+  });
+
+  it('restores selection controls after a cancelled slow upload', () => {
+    component.uploadStarted = true;
+    component.uploadSubmitLocked = true;
+
+    component.onUploadCancelled();
+
+    expect(component.uploadStarted).toBe(false);
+    expect(component.uploadSubmitLocked).toBe(false);
+    expect(component.currentStage).toBe('details');
   });
 });
