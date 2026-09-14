@@ -156,7 +156,9 @@ describe('HeaderComponent', () => {
       expect(button).toBeNull();
     });
 
-    it('keeps the theme toggle and notification bell together as the toolbar changes size', () => {
+    // The phone toolbar has no room for the theme toggle, but the notification bell
+    // stays so a student sees new feedback without opening the account menu.
+    it('keeps the notification bell on a phone toolbar and the theme toggle off it', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
@@ -166,7 +168,7 @@ describe('HeaderComponent', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('app-theme-toggle')).toBeNull();
-      expect(fixture.nativeElement.querySelector('notification-bell')).toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
 
       breakpointObserverStub.isMatched.mockReturnValue(false);
       fixture.detectChanges();
