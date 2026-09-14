@@ -9,8 +9,8 @@ import {
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
+import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 
@@ -27,6 +27,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   webcal: Webcal | null;
   private savedWebcal: Webcal | null = null;
   working: boolean = true;
+  loadError: boolean = false;
   copying: boolean = false;
   selectedCalendarProviderIndex: number = 0;
   projects: Project[] = [];
@@ -48,32 +49,57 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    // Retrieve current webcal.
-    this.working = true;
-    this.webcalService.get({}).subscribe((webcal) => {
-      this.loadWebcal(webcal);
-      this.working = false;
-    });
+    this.loadWebCalendar();
 
     // Allow selection of units with active projects.
-    this.projectService
-      .query(undefined, {params: {include_in_active: false}})
-      .subscribe((projects) => {
+    this.projectService.query(undefined, {params: {include_in_active: false}}).subscribe({
+      next: (projects) => {
         this.projects = projects.filter((p) => p.unit.teachingPeriod?.active ?? true);
-      });
+      },
+      error: () => {
+        this.projects = [];
+        this.alerts.error('Unable to load the units available for your web calendar.');
+      },
+    });
   }
 
   ngAfterViewInit() {
     // Disallow the value of the slide toggle being changed by the user. Instead, its value is bound to the presence of
     // `this.webcal`.
-    this.webcalToggle.defaults.disableToggleValue = true;
+    if (this.webcalToggle) {
+      this.webcalToggle.defaults.disableToggleValue = true;
+    }
+  }
+
+  loadWebCalendar(): void {
+    this.working = true;
+    this.loadError = false;
+    this.webcalService.get({}).subscribe({
+      next: (webcal) => {
+        this.loadWebcal(webcal);
+        this.working = false;
+      },
+      error: () => {
+        this.webcal = null;
+        this.working = false;
+        this.loadError = true;
+      },
+    });
   }
 
   /**
    * Retrieves the URL of the webcal relative to current API URL.
    */
   get webcalUrl(): string | null {
-    return this.webcal?.getUrl(this.constants.API_URL).toString();
+    return this.webcal?.guid ? this.webcal.getUrl(this.constants.API_URL).toString() : null;
+  }
+
+  get webcalDownloadUrl(): string | null {
+    if (!this.webcal?.guid) {
+      return null;
+    }
+
+    return new URL(`${this.constants.API_URL}/webcal/${this.webcal.guid}`).toString();
   }
 
   /**
@@ -89,7 +115,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
    * Invoked when the user toggles the webcal.
    */
   onWebcalToggle() {
-    if (this.working) {
+    if (this.working || !this.webcal) {
       return;
     }
     if (this.webcal.enabled) {
@@ -116,7 +142,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
    * Returns false when a save was already running and nothing changed.
    */
   private saveWebcal(apply: () => void): boolean {
-    if (this.working) {
+    if (this.working || !this.webcal) {
       return false;
     }
     const previous = this.savedWebcal ?? this.copyWebcal(this.webcal);
@@ -147,7 +173,9 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     }
 
     const feedUrl = `${this.constants.API_URL}/webcal/${this.webcal.guid}`;
-    this.fileDownloader.downloadFile(feedUrl, 'ontrack-calendar.ics');
+    this.fileDownloader.downloadFileWithFeedback(feedUrl, 'ontrack-calendar.ics', {
+      requestKey: 'web-calendar-ics',
+    });
   }
 
   /**

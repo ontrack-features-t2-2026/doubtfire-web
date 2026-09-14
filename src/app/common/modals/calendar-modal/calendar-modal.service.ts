@@ -11,10 +11,12 @@ export class CalendarModalService {
 
   public show(_task?: Task) {
     this.dialog.open(CalendarModalComponent, {
-      height: 'h-min',
-      maxHeight: '90vh',
-      width: '800px',
-      maxWidth: '95vw',
+      width: 'calc(100vw - 2rem)',
+      maxWidth: '900px',
+      maxHeight: 'calc(100dvh - 2rem)',
+      autoFocus: 'dialog',
+      restoreFocus: true,
+      panelClass: 'calendar-modal-dialog',
     });
   }
 }

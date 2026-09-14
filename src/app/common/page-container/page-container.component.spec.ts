@@ -30,7 +30,15 @@ describe('PageContainerComponent', () => {
     expect(host.classList.contains('block')).toBe(true);
     expect(host.classList.contains('w-full')).toBe(true);
     expect(new Set(container.classList)).toEqual(
-      new Set(['mx-auto', 'w-full', 'px-4', 'sm:px-6', 'lg:px-8', 'max-w-screen-xl']),
+      new Set([
+        'page-container',
+        'mx-auto',
+        'w-full',
+        'px-4',
+        'sm:px-6',
+        'lg:px-8',
+        'max-w-screen-xl',
+      ]),
     );
     expect(container.querySelector('[data-testid="projected-content"]')?.textContent).toContain(
       'Projected content',
@@ -45,7 +53,7 @@ describe('PageContainerComponent', () => {
     const container: HTMLElement = pageContainerFixture.nativeElement.querySelector('div');
 
     expect(new Set(container.classList)).toEqual(
-      new Set(['mx-auto', 'w-full', 'px-4', 'sm:px-6', 'lg:px-8']),
+      new Set(['page-container', 'mx-auto', 'w-full', 'px-4', 'sm:px-6', 'lg:px-8']),
     );
   });
 });

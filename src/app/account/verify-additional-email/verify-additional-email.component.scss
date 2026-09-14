@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  padding: clamp(16px, 5vw, 48px);
+}
+
+.verification {
+  align-items: center;
+  border: 1px solid #d4d4d8;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: min(15vh, 96px) auto 0;
+  max-width: 36rem;
+  padding: clamp(24px, 7vw, 48px);
+  text-align: center;
+
+  mat-icon {
+    color: #3838ff;
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+  }
+
+  h1,
+  p {
+    margin: 0;
+  }
+
+  a {
+    margin-top: 8px;
+    min-height: 44px;
+  }
+}

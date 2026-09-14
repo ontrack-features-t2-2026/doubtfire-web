@@ -1,0 +1,73 @@
+.submission-state-card {
+  min-width: 0;
+}
+
+.submission-state-card mat-card-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.submission-state {
+  background: #eef0ff;
+  border: 1px solid #b9beff;
+  border-radius: 999px;
+  color: #2727a3;
+  flex: 0 0 auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+}
+
+.submission-state[data-state='ready'] {
+  background: #e4f6ec;
+  border-color: #7ac79b;
+  color: #145d32;
+}
+
+.submission-state[data-state='failed'],
+.submission-state[data-state='timed_out'] {
+  background: #fff0ed;
+  border-color: #e69a8b;
+  color: #8a2618;
+}
+
+.status-detail {
+  color: #5d6575;
+  overflow-wrap: anywhere;
+}
+
+.status-error {
+  color: #9c2518;
+}
+
+.recovery-row,
+.submission-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.submission-actions button {
+  min-height: 44px;
+  white-space: normal;
+}
+
+@media (max-width: 639.98px) {
+  .submission-state-card mat-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .submission-actions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .submission-actions button {
+    width: 100%;
+  }
+}

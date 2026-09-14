@@ -1,8 +1,8 @@
-<mat-card appearance="outlined" class="h-full">
+<mat-card appearance="outlined" class="peer-summary h-full">
   <mat-card-header>
     <mat-card-title>Peer Progress Summary</mat-card-title>
     <mat-card-subtitle class="mb-2.5">
-      Your unit progress and anonymous cohort progress.
+      Your overall unit completion and the selected anonymous task checkpoint are separate metrics.
     </mat-card-subtitle>
   </mat-card-header>
 
@@ -31,15 +31,15 @@
 
       @default {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <section aria-label="Your unit progress" class="rounded-md border border-gray-200 p-4">
-            <h5 class="mb-2 font-semibold">Your progress</h5>
+          <section aria-label="Your unit completion" class="peer-summary__metric">
+            <h5>Your unit completion</h5>
 
             @if (studentPercentage !== null) {
-              <p class="mb-2 text-2xl font-semibold">{{ studentPercentage }}%</p>
+              <p class="peer-summary__value">{{ studentPercentage }}%</p>
 
               <mat-progress-bar
                 mode="determinate"
-                [attr.aria-label]="'Your unit progress: ' + studentPercentage + ' percent'"
+                [attr.aria-label]="'Your unit completion: ' + studentPercentage + ' percent'"
                 [value]="studentPercentage"
               ></mat-progress-bar>
             } @else {
@@ -47,20 +47,15 @@
             }
           </section>
 
-          <section
-            aria-label="Anonymous cohort unit progress"
-            class="rounded-md border border-gray-200 p-4"
-          >
-            <h5 class="mb-2 font-semibold">Anonymous cohort</h5>
+          <section class="peer-summary__metric" [attr.aria-label]="cohortLabel">
+            <h5>{{ cohortLabel }}</h5>
 
             @if (canShowCohortPercentage) {
-              <p class="mb-2 text-2xl font-semibold">{{ cohortPercentage }}%</p>
+              <p class="peer-summary__value">{{ cohortPercentage }}%</p>
 
               <mat-progress-bar
                 mode="determinate"
-                [attr.aria-label]="
-                  'Anonymous cohort unit progress: ' + cohortPercentage + ' percent'
-                "
+                [attr.aria-label]="cohortLabel + ': ' + cohortPercentage + ' percent'"
                 [value]="cohortPercentage ?? 0"
               ></mat-progress-bar>
             } @else {

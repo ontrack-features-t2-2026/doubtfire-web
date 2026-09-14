@@ -25,6 +25,7 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskPrerequisite} from 'src/app/api/models/task-prerequisite';
+import {TaskStatus} from 'src/app/api/models/task-status';
 import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -190,6 +191,49 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     const td = item.taskDefinition;
     const prereqs = this.taskPrerequisites.filter((p) => p.prerequisiteId === td.id);
     this.taskPlannerPrerequisitesModal.show(this.project, td, prereqs);
+  }
+
+  public statusLabel(item: TaskGanttItem): string {
+    return TaskStatus.STATUS_LABELS.get(item.task.status) ?? 'Not Started';
+  }
+
+  public prerequisitesFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.taskDefinitionId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.prerequisite ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.prerequisiteId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public dependentsFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.prerequisiteId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.taskDefinition ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.taskDefinitionId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public connectionSummary(item: TaskGanttItem): string {
+    const prerequisiteCount = this.prerequisitesFor(item).length;
+    const dependentCount = this.dependentsFor(item).length;
+
+    if (!prerequisiteCount && !dependentCount) {
+      return 'No prerequisite or dependent tasks';
+    }
+
+    const prerequisiteLabel = `${prerequisiteCount} prerequisite${prerequisiteCount === 1 ? '' : 's'}`;
+    const dependentLabel = `${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`;
+    return `${prerequisiteLabel}; ${dependentLabel}`;
   }
 
   setShowTasksAboveTargetGrade(value: boolean) {

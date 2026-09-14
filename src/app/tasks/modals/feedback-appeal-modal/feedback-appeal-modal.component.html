@@ -1,5 +1,5 @@
-<h2 mat-dialog-title>Request Feedback Review</h2>
-<mat-dialog-content>
+<h2 mat-dialog-title>Request feedback review</h2>
+<mat-dialog-content class="feedback-review-content">
   <p>
     If you believe the feedback or marking on this task does not accurately reflect your work, you
     may request a review. This allows another tutor to reassess the feedback and determine whether
@@ -20,6 +20,7 @@
   <mat-form-field appearance="outline" class="mt-2.5 w-full">
     <mat-label>Reason for review request</mat-label>
     <textarea
+      aria-label="Reason for feedback review"
       matInput
       maxlength="1000"
       placeholder="Briefly explain why you believe this feedback should be reviewed. Refer to specific criteria if relevant."
@@ -32,15 +33,20 @@
   </mat-form-field>
   <p class="opacity-70">Review decisions are final once resolved.</p>
 
-  <mat-dialog-actions class="flex justify-between">
-    <button mat-raised-button (click)="dismissModal()">Cancel</button>
-    <button
-      color="primary"
-      mat-raised-button
-      [disabled]="!reviewComment || submitting"
-      (click)="submit()"
-    >
-      Submit
-    </button>
-  </mat-dialog-actions>
+  @if (errorMessage) {
+    <p class="feedback-review-error" role="alert">{{ errorMessage }}</p>
+  }
 </mat-dialog-content>
+
+<mat-dialog-actions class="feedback-review-actions">
+  <button mat-stroked-button type="button" (click)="dismissModal()">Cancel</button>
+  <button
+    color="primary"
+    mat-raised-button
+    type="button"
+    [disabled]="!reviewComment.trim() || submitting"
+    (click)="submit()"
+  >
+    {{ submitting ? 'Sending…' : 'Submit review request' }}
+  </button>
+</mat-dialog-actions>
