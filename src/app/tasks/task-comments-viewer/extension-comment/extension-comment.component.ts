@@ -13,6 +13,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
 export class ExtensionCommentComponent {
   @Input() comment: ExtensionComment;
   @Input() task: Task;
+  public busy = false;
 
   constructor(private alerts: AlertService) {}
 
@@ -41,22 +42,28 @@ export class ExtensionCommentComponent {
   }
 
   denyExtension() {
+    this.busy = true;
     this.comment.deny().subscribe({
       next: (_tc: TaskComment) => {
+        this.busy = false;
         this.alerts.success('Extension updated', 2000);
       },
       error: (response) => {
+        this.busy = false;
         this.handleError(response);
       },
     });
   }
 
   grantExtension() {
+    this.busy = true;
     this.comment.grant().subscribe({
       next: (_tc: TaskComment) => {
+        this.busy = false;
         this.alerts.success('Extension updated', 2000);
       },
       error: (response) => {
+        this.busy = false;
         this.handleError(response);
       },
     });

@@ -98,3 +98,21 @@
   box-shadow: var(--ot-elevation-1);
   z-index: 250;
 }
+
+// Full-screen chat, the same behaviour as the student task page: the comments
+// panel covers the list and task pane inside the inbox frame.
+.inbox-layout {
+  position: relative;
+}
+
+.comments-sidebar.comments-sidebar--fullscreen {
+  position: absolute;
+  inset: 0.75rem;
+  z-index: 270;
+  width: auto !important;
+  min-width: 0;
+  max-width: none;
+  flex-basis: auto !important;
+  --comment-bubble-max-width: min(42rem, 75%);
+  --comments-gutter: 1.5rem;
+}

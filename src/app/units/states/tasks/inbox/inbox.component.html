@@ -43,8 +43,30 @@
     <mat-icon aria-hidden="true" class="!size-5 shrink-0 !text-xl !leading-none text-ot-muted"
       >forum</mat-icon
     >
-    <h2 class="m-0 min-w-0 flex-1 truncate text-base font-semibold text-ot-text">Comments</h2>
-    @if (isCommentsNarrow && !commentsCollapsed) {
+    <h2 class="m-0 min-w-0 flex-1 truncate text-base font-semibold text-ot-text">
+      Comments
+      @if (commentsFullscreen && taskData?.selectedTask) {
+        <span class="ml-1.5 font-normal text-ot-muted">
+          {{ taskData.selectedTask.definition?.abbreviation }} ·
+          {{ taskData.selectedTask.project?.student?.name }}
+        </span>
+      }
+    </h2>
+    @if (!isMobileView && taskData?.selectedTask) {
+      <button
+        aria-label="Full-screen chat"
+        mat-icon-button
+        type="button"
+        [attr.aria-pressed]="commentsFullscreen"
+        [matTooltip]="commentsFullscreen ? 'Exit full screen (Esc)' : 'Full-screen chat'"
+        (click)="toggleCommentsFullscreen()"
+      >
+        <mat-icon aria-hidden="true">{{
+          commentsFullscreen ? 'close_fullscreen' : 'open_in_full'
+        }}</mat-icon>
+      </button>
+    }
+    @if (isCommentsNarrow && !commentsCollapsed && !commentsFullscreen) {
       <button
         aria-label="Hide comments"
         mat-icon-button
@@ -83,7 +105,7 @@
   <!-- The panels sit in an even 12px frame, the same as the gap between them, and the
        marking bar below runs edge to edge. -->
   <div class="flex size-full min-h-0 flex-col">
-    <div class="flex min-h-0 flex-1 p-3">
+    <div class="inbox-layout flex min-h-0 flex-1 p-3">
       <section
         #inboxpanel
         aria-label="Task list"
@@ -165,8 +187,10 @@
         #commentspanel
         aria-label="Comments"
         class="inbox-panel inbox-panel--side comments-sidebar flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
+        [class.comments-sidebar--fullscreen]="commentsFullscreen"
         [class.comments-sidebar--narrow]="isCommentsNarrow"
-        [ngClass]="commentsPanelCollapsed ? 'hidden' : 'flex'"
+        [ngClass]="commentsPanelCollapsed && !commentsFullscreen ? 'hidden' : 'flex'"
+        (keydown.escape)="commentsFullscreen && toggleCommentsFullscreen()"
       >
         <ng-container *ngTemplateOutlet="CommentsHeader"></ng-container>
         <ng-container *ngTemplateOutlet="CommentsBody"></ng-container>

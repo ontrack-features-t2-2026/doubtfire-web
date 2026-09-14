@@ -77,6 +77,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   public taskSelected = false;
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
+  public commentsFullscreen = false;
 
   visiblePdfUrl: string;
 
@@ -108,6 +109,9 @@ export class InboxComponent implements OnInit, OnDestroy {
 
     this.selectedTask.selectedTask$.subscribe((task) => {
       this.taskSelected = task != null;
+      if (!task) {
+        this.commentsFullscreen = false;
+      }
     });
   }
 
@@ -213,6 +217,11 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.hotkeys.removeShortcuts('control.shift.f');
     this.hotkeys.removeShortcuts('control.shift.c');
     this.hotkeys.removeShortcuts('shift.?');
+  }
+
+  public toggleCommentsFullscreen(): void {
+    this.commentsFullscreen = !this.commentsFullscreen;
+    window.dispatchEvent(new Event('resize'));
   }
 
   public toggleCommentsPanel(): void {
