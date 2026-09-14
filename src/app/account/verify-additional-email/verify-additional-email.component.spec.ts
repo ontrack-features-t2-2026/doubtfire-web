@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
@@ -10,7 +10,6 @@ import {
   captureAndScrubAdditionalEmailVerification,
   consumeAdditionalEmailVerificationToken,
 } from 'src/app/security/additional-email-verification-callback';
-import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 import {VerifyAdditionalEmailComponent} from './verify-additional-email.component';
 
 describe('VerifyAdditionalEmailComponent', () => {
@@ -19,7 +18,6 @@ describe('VerifyAdditionalEmailComponent', () => {
   const service = {verify: vi.fn()};
   const authentication = {isAuthenticated: vi.fn()};
   const router = {navigateByUrl: vi.fn()};
-  const authReturnUrl = {remember: vi.fn()};
   let token: string | null = 'private-token';
 
   const create = async (): Promise<void> => {
@@ -30,7 +28,6 @@ describe('VerifyAdditionalEmailComponent', () => {
         {provide: AdditionalNotificationEmailService, useValue: service},
         {provide: AuthenticationService, useValue: authentication},
         {provide: Router, useValue: router},
-        {provide: AuthReturnUrlService, useValue: authReturnUrl},
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(VerifyAdditionalEmailComponent);
@@ -54,6 +51,10 @@ describe('VerifyAdditionalEmailComponent', () => {
     token = 'private-token';
     service.verify.mockReturnValue(of(undefined));
     authentication.isAuthenticated.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('consumes the pre-bootstrap token once and reports success', async () => {
@@ -91,19 +92,27 @@ describe('VerifyAdditionalEmailComponent', () => {
     expect(rendered('button')?.textContent).toContain('Request a new verification link');
   });
 
-  it('takes a signed-out verifier through sign-in with the profile saved as the destination', async () => {
+  it('reloads the profile for a signed-out verifier so startup can restore a saved session', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', {assign});
     await create();
-    component.openProfile();
-    expect(authReturnUrl.remember).toHaveBeenCalledWith('/edit_profile');
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/sign_in');
+
+    rendered('button')?.click();
+
+    expect(assign).toHaveBeenCalledWith('/edit_profile');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('opens the profile directly for an already authenticated user', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', {assign});
     authentication.isAuthenticated.mockReturnValue(true);
     await create();
-    component.openProfile();
+
+    rendered('button')?.click();
+
     expect(router.navigateByUrl).toHaveBeenCalledWith('/edit_profile');
-    expect(authReturnUrl.remember).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
   });
 
   it('does not call the API for an incomplete link', async () => {

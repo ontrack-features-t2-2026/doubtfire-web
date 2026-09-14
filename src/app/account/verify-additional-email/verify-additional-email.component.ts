@@ -3,7 +3,6 @@ import {Router} from '@angular/router';
 import {AdditionalNotificationEmailService} from 'src/app/api/services/additional-notification-email.service';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {consumeAdditionalEmailVerificationToken} from 'src/app/security/additional-email-verification-callback';
-import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 type VerificationState = 'verifying' | 'verified' | 'error';
 
@@ -21,7 +20,6 @@ export class VerifyAdditionalEmailComponent implements OnInit {
     private additionalEmailService: AdditionalNotificationEmailService,
     private authentication: AuthenticationService,
     private router: Router,
-    private authReturnUrl: AuthReturnUrlService,
     private changeDetector: ChangeDetectorRef,
   ) {}
 
@@ -29,8 +27,11 @@ export class VerifyAdditionalEmailComponent implements OnInit {
     if (this.authentication.isAuthenticated()) {
       void this.router.navigateByUrl('/edit_profile');
     } else {
-      this.authReturnUrl.remember('/edit_profile');
-      void this.router.navigateByUrl('/sign_in');
+      // Startup skips the refresh-token login on this route, so a saved session
+      // is never restored here. A full load of the profile page runs the normal
+      // startup, which restores that session or saves the profile as the return
+      // URL and sends the user to sign in.
+      window.location.assign('/edit_profile');
     }
   }
 
