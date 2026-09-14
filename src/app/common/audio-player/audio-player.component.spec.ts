@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {HttpResponse} from '@angular/common/http';
 import {Subject} from 'rxjs';
 import {FileDownloaderService} from '../file-downloader/file-downloader.service';
 import {AlertService} from '../services/alert.service';
@@ -106,6 +107,29 @@ describe('AudioPlayerComponent', () => {
     expect(play).toHaveBeenCalledOnce();
     component.ngOnDestroy();
     expect(unregister).toHaveBeenCalledOnce();
+  });
+
+  it('drops a play queued behind a download when a lifecycle pause arrives', async () => {
+    const {component, pauseEvents, play, fileDownloader} = createPlayer(coordinator);
+    component.audioSrc = {src: '/audio/slow-download'};
+
+    component.play();
+    expect(fileDownloader.downloadBlob).toHaveBeenCalledOnce();
+    const onDownloaded = fileDownloader.downloadBlob.mock.calls[0][1] as (
+      blobUrl: string,
+      response: HttpResponse<Blob>,
+    ) => void;
+
+    pauseEvents.next({reason: 'app-hidden', occurredAt: Date.now()});
+    onDownloaded('blob:late-audio', {} as HttpResponse<Blob>);
+    await flushPromises();
+
+    expect(play).not.toHaveBeenCalled();
+    expect(component.isPlaying).toBe(false);
+
+    component.play();
+    await flushPromises();
+    expect(play).toHaveBeenCalledOnce();
   });
 
   it('releases object URLs on replacement and destruction', () => {
