@@ -18,6 +18,18 @@
   width: 380px;
 }
 
+// on a phone the panel is wider than the space left of the bell, so the overlay
+// pushes it back on screen. the open animation still grew from where it would
+// have been, which read as the menu flying in from the wrong spot. grow it from
+// the top right, under the bell, instead
+@media (max-width: 599px) {
+  ::ng-deep .notification-dropdown-menu.mat-mdc-menu-panel {
+    transform-origin: top right !important;
+    max-width: calc(100vw - 16px);
+    width: calc(100vw - 16px);
+  }
+}
+
 // Put the count on the bell.
 //
 // Material anchors the badge at the host's outside top right corner, with

@@ -11,7 +11,12 @@
   <mat-icon class="notification-bell-icon">notifications</mat-icon>
 </button>
 
-<mat-menu #notificationMenu="matMenu" class="notification-dropdown-menu">
+<mat-menu
+  #notificationMenu="matMenu"
+  class="notification-dropdown-menu"
+  xPosition="before"
+  yPosition="below"
+>
   <div class="flex items-center justify-between pr-2">
     <h2 class="my-2 ml-3.5" mat-subheader>Notifications</h2>
     @if (unreadCount) {
