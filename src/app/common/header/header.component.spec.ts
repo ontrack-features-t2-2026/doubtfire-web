@@ -148,6 +148,26 @@ describe('HeaderComponent', () => {
       expect(fixture.nativeElement.querySelector(calendarButtonSelector)).toBeNull();
     });
 
+    // The phone toolbar has no room for the theme toggle, which moves to the account
+    // menu there, but the notification bell stays so a student sees new feedback.
+    it('keeps the notification bell on a phone toolbar and the theme toggle off it', () => {
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+    });
+
     it('opens the calendar from the account menu', async () => {
       const openCalendarSpy = vi.spyOn(component, 'openCalendar');
       fixture.detectChanges();
