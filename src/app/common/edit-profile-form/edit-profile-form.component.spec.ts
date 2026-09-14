@@ -275,6 +275,14 @@ describe('EditProfileFormComponent autocomplete purpose (A11Y-FORM06)', () => {
 // as a modal on someone else's account, and /welcome opens it in create mode.
 // Renders the real form and the real notification settings so the input is
 // checked end to end.
+// Keep the real template renderable when identity validation adds ngModel refs.
+@Directive({selector: '[ngModel]', exportAs: 'ngModel', standalone: false})
+class StubNotificationNgModel {
+  public hasError(): boolean {
+    return false;
+  }
+}
+
 describe('EditProfileFormComponent notifications page link', () => {
   let fixture: ComponentFixture<EditProfileFormComponent>;
 
@@ -287,7 +295,12 @@ describe('EditProfileFormComponent notifications page link', () => {
     const currentUser = makeUser({id: 1, systemRole: 'Admin'});
 
     await TestBed.configureTestingModule({
-      declarations: [EditProfileFormComponent, NotificationSettingsComponent, StubNgFormProfile],
+      declarations: [
+        EditProfileFormComponent,
+        NotificationSettingsComponent,
+        StubNgFormProfile,
+        StubNotificationNgModel,
+      ],
       providers: [
         {
           provide: DoubtfireConstants,
