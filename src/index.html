@@ -4,6 +4,29 @@
     <base href="/" />
     <meta content="no-referrer" name="referrer" />
 
+    <!-- THM-F04 pre-boot theme marker. Runs synchronously before any stylesheet
+         so the resolved theme is painted before Angular boots and there is no
+         incorrect-theme flash. Mirrors ThemeService.applyResolved and reads the
+         same storage key ('ontrack.theme.preference' / THEME_STORAGE_KEY). -->
+    <script>
+      // Only the storage read can throw (private mode, quota). Guard it alone so a
+      // throw still falls through to the system value, exactly like
+      // ThemeService.readThemePreference, instead of skipping the paint entirely.
+      let stored = null;
+      try {
+        stored = localStorage.getItem('ontrack.theme.preference');
+      } catch {
+        /* storage blocked; treat as unset and resolve against the OS */
+      }
+      const prefersDark =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const resolved =
+        stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-ot-theme', resolved);
+      document.documentElement.style.colorScheme = resolved;
+    </script>
+
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined"
       rel="stylesheet"
