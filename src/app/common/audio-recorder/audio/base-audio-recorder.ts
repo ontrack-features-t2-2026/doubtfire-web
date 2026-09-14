@@ -71,12 +71,20 @@ export abstract class BaseAudioRecorderComponent implements OnDestroy {
     private playbackCoordinator?: AudioPlaybackCoordinatorService,
     private appLifecycle?: AppLifecycleService,
   ) {
-    this.lifecycleSubscription = this.appLifecycle?.mediaPauseSubject.subscribe(() => {
-      this.isPlaying = false;
-      if (this.isRecording || this.isRequestingPermission) {
-        this.stopRecording();
-      }
-    });
+    this.lifecycleSubscription = this.appLifecycle?.mediaPauseSubject.subscribe(() =>
+      this.onLifecyclePause(),
+    );
+  }
+
+  /**
+   * Backgrounding the app or leaving the route ends the take, so the microphone
+   * is not left open. Subclasses whose stop has side effects can override this.
+   */
+  protected onLifecyclePause(): void {
+    this.isPlaying = false;
+    if (this.isRecording || this.isRequestingPermission) {
+      this.stopRecording();
+    }
   }
 
   protected init(): void {
