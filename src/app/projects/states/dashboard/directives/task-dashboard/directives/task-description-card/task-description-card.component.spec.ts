@@ -278,6 +278,131 @@ describe('TaskDescriptionCardComponent', () => {
     expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 
+  describe('key dates timeline', () => {
+    function timelineTask(status: Task['status'] = 'not_started'): Task {
+      const task = buildTask({dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)});
+      task.project = new Project(task.unit);
+      task.project.targetGrade = 0;
+      task.definition.dueDate = new Date(2026, 8, 29, 23, 59, 59, 999);
+      task.status = status;
+      return task;
+    }
+
+    function render(task: Task): HTMLElement[] {
+      component.task = task;
+      component.taskDef = task.definition;
+      component.unit = task.unit;
+      fixture.detectChanges();
+      return Array.from(fixture.nativeElement.querySelectorAll('.task-dates__step'));
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('lists the start, due and feedback dates in order', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const steps = render(timelineTask());
+
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
+      ).toEqual(['Start', 'Due', 'Feedback by']);
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__date').textContent.trim()),
+      ).toEqual(['Tue 1 Sep', 'Tue 15 Sep', 'Tue 29 Sep']);
+    });
+
+    it('marks the dates that have passed and says when the next one is', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const [start, due, feedback] = render(timelineTask());
+
+      expect(start.classList).toContain('task-dates__step--passed');
+      expect(due.classList).toContain('task-dates__step--next');
+      expect(due.querySelector('.task-dates__when').textContent.trim()).toBe('In 5 days');
+      expect(feedback.classList).not.toContain('task-dates__step--next');
+      expect(feedback.querySelector('.task-dates__when')).toBeNull();
+    });
+
+    it('says Today for a date later the same day', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 15, 9, 0));
+
+      const [, due] = render(timelineTask());
+
+      expect(due.querySelector('.task-dates__when').textContent.trim()).toBe('Today');
+    });
+
+    it('fills the line between two dates by how much of the time has gone', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      // Halfway between the start (1 Sept, midnight) and the due date (15 Sept, 23:59).
+      const start = new Date(2026, 8, 1).getTime();
+      const due = new Date(2026, 8, 15, 23, 59, 59, 999).getTime();
+      vi.setSystemTime(new Date(start + (due - start) / 2));
+
+      render(timelineTask());
+      const [first, second] = component.keyDates;
+
+      expect(first.progress).toBeCloseTo(0.5, 2);
+      expect(second.progress).toBe(0);
+    });
+
+    it('keeps the dates but drops the countdown once the task is submitted', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const steps = render(timelineTask('ready_for_feedback'));
+
+      expect(steps).toHaveLength(3);
+      expect(fixture.nativeElement.querySelector('.task-dates__step--next')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.task-dates__when')).toBeNull();
+    });
+
+    it('puts a planned submit date after the feedback date in date order, and flags it', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+      const task = timelineTask();
+      task.unit.allowFlexibleDates = true;
+      task.targetDueDate = new Date(2026, 8, 30, 23, 59, 59, 999);
+      task.definition.dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+
+      const steps = render(task);
+
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
+      ).toEqual(['Planned start', 'Feedback by', 'Planned submit']);
+      // The nearer feedback date is the one to count down to.
+      expect(steps[1].classList).toContain('task-dates__step--next');
+      expect(steps[1].querySelector('.task-dates__when').textContent.trim()).toBe('In 5 days');
+      expect(steps[2].querySelector('.task-dates__warning').textContent).toContain(
+        'After the feedback date',
+      );
+    });
+
+    it('draws each change detection pass for one moment, so the development check agrees', () => {
+      let clock = new Date(2026, 8, 10, 9, 0).getTime();
+      // Every read of the clock moves it on a minute and a bit, which would change the
+      // countdown and the line between Angular's check and its development re-check.
+      vi.spyOn(Date, 'now').mockImplementation(() => (clock += 61_000));
+
+      expect(() => render(timelineTask())).not.toThrow();
+    });
+
+    it('notes an extension on the due date', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+      const task = timelineTask();
+      task.extensions = 2;
+
+      const [, due] = render(task);
+
+      expect(due.querySelector('.task-dates__note').textContent.trim()).toBe('Extended 2 weeks');
+    });
+  });
+
   it('does not call window.open on Space when there is no resolvable due date', () => {
     // Defensive coverage for handleCalendarLinkKeydown's own null guard. The anchor
     // only renders inside @if (googleCalendarUrl), so this branch is unreachable through

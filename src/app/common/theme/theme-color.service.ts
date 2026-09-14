@@ -33,6 +33,12 @@ export class ThemeColorService {
     return this.token(`--ot-status-${String(status).replace(/_/g, '-')}`, fallback);
   }
 
+  /** Resolved status colour for a mark drawn on the page, such as a chart slice. It
+   *  clears 3:1 on the surface in both themes, which the darker fills do not in dark. */
+  statusGraphicColor(status: string, fallback = '#64748b'): string {
+    return this.token(`--ot-status-${String(status).replace(/_/g, '-')}-graphic`, fallback);
+  }
+
   /** Resolved on-colour (label/foreground) paired with a status, fixed for AA. */
   statusOnColor(status: string, fallback = '#ffffff'): string {
     return this.token(`--ot-status-${String(status).replace(/_/g, '-')}-on`, fallback);

@@ -9,7 +9,7 @@
 // min-width would make the panel wider than a 320px phone and push the page
 // sideways.
 ::ng-deep .notification-dropdown-menu.mat-mdc-menu-panel {
-  border-radius: 16px;
+  border-radius: var(--ot-radius-md);
   max-width: min(380px, calc(100vw - 32px));
   min-width: 0;
   // Material's own container shape is 4px. Without clipping, the first and last

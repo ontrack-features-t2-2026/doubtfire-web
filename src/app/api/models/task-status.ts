@@ -276,7 +276,7 @@ export class TaskStatus {
     ['ready_for_feedback', 'thumb_up'],
     ['not_started', 'pause'],
     ['working_on_it', 'bolt'],
-    ['need_help', 'help'],
+    ['need_help', 'question_mark'],
     ['redo', 'undo'],
     ['feedback_exceeded', 'visibility_off'],
     ['fix_and_resubmit', 'construction'],
@@ -295,7 +295,9 @@ export class TaskStatus {
     ['ready_for_feedback', 'thumb_up_off_alt'],
     ['not_started', 'pause'],
     ['working_on_it', 'bolt'],
-    ['need_help', 'help'],
+    // A bare question mark: the filled 'help' glyph drew a white disc inside the
+    // status circle, a circle within a circle.
+    ['need_help', 'question_mark'],
     ['redo', 'undo'],
     ['feedback_exceeded', 'visibility_off'],
     ['fix_and_resubmit', 'construction'],

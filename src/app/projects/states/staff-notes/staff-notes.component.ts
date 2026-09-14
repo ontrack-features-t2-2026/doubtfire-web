@@ -70,7 +70,7 @@ export class StaffNotesComponent implements OnInit {
 
     this.staffNoteService.addNote(this.project, noteText, this.replyingToNote).subscribe({
       next: (_note) => {
-        this.alertService.success('Succesfully submitted note', 4000);
+        this.alertService.success('Successfully submitted note', 4000);
         this.scrollDown();
         this.project.staffNoteCount++;
         this.replyingToNote = null;
@@ -91,7 +91,7 @@ export class StaffNotesComponent implements OnInit {
 
     this.staffNoteService.updateNote(this.project, this.editingNote, noteText).subscribe({
       next: (_note) => {
-        this.alertService.success('Succesfully updated note', 4000);
+        this.alertService.success('Successfully updated note', 4000);
         this.editingNote = null;
         this.editingNoteText = '';
       },

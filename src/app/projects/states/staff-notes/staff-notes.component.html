@@ -108,13 +108,15 @@
     }
   </div>
 
-  <div class="h-[150px] border-t border-ot-divider p-2.5">
+  <!-- At least the old 150px, but free to grow: replying to a long note used to push
+       the Submit button out of the fixed box. -->
+  <div class="min-h-[150px] border-t border-ot-divider p-2.5">
     @if (replyingToNote) {
       <div
         class="flex items-center justify-between rounded-t-md border border-b-0 border-ot-border p-1 text-sm select-none"
       >
         <div class="flex items-center">
-          <mat-icon class="mt-0.5 mr-2">reply</mat-icon>
+          <mat-icon aria-hidden="true" class="mt-0.5 mr-2">reply</mat-icon>
           <div class="flex flex-col">
             <span class="font-medium">
               Replying to {{ replyingToNote.user.firstName }} {{ replyingToNote.user.lastName }} ({{
@@ -124,7 +126,14 @@
             <span class="text-xs text-ot-muted">{{ replyingToNote.note }}</span>
           </div>
         </div>
-        <mat-icon class="cursor-pointer" (click)="cancelReplyingToNote()">close</mat-icon>
+        <button
+          aria-label="Stop replying"
+          mat-icon-button
+          type="button"
+          (click)="cancelReplyingToNote()"
+        >
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
       </div>
     }
 

@@ -10,9 +10,11 @@
   color: var(--ot-color-disabled-text);
 }
 
+// The tabs sit centred through the label container's auto margins, not
+// justify-content: centring an overflowing row pushed the first tabs off the left
+// edge where the scroll could not reach them, which staff, with more tabs, hit.
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
-    justify-content: center;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -29,4 +31,12 @@
   .mat-mdc-tab-labels {
     width: max-content;
   }
+}
+
+// A card with nothing to show leaves an empty host, or a host around a hidden card.
+// Either one still counts as a flex item, so it added a second gap and the space
+// between cards jumped about. ::ng-deep because the hidden card is in the child's view.
+:host ::ng-deep .task-details > :empty,
+:host ::ng-deep .task-details > :has(> [hidden]:only-child) {
+  display: none;
 }

@@ -16,38 +16,56 @@
 
           <div>
             <h1>{{ user?.firstName }}</h1>
-            Set up your {{ externalName.value }} profile
           </div>
         </div>
       </div>
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Username</mat-label>
-          <input matInput name="username" [disabled]="!newUser" [(ngModel)]="user.username" />
-        </mat-form-field>
-      </div>
+      <!-- Username is assigned by the institution and is not user-editable, so it only
+           appears when an admin is creating a brand-new account. In the student's own
+           setup/edit view it is hidden; the value stays on `user` and submits unchanged. -->
+      @if (newUser) {
+        <div fxFlexFill fxLayout="row">
+          <mat-form-field appearance="outline" fxFlexFill>
+            <mat-label>Username</mat-label>
+            <input autocomplete="username" matInput name="username" [(ngModel)]="user.username" />
+          </mat-form-field>
+        </div>
+      }
 
-      <div fxFlexFill fxLayout="row" fxLayout.lt-sm="column">
-        <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="start">
-          <mat-label>First Name</mat-label>
-          <input class="outline-none" matInput name="first" required [(ngModel)]="user.firstName" />
-        </mat-form-field>
+      <!-- First and Second name are the student's legal names, managed by the university,
+           so they are not student-editable. Like Username/Student ID they only appear while
+           an admin is creating the account; the values stay on `user` and submit unchanged. -->
+      @if (newUser) {
+        <div fxFlexFill fxLayout="row" fxLayout.lt-sm="column">
+          <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="start">
+            <mat-label>First Name</mat-label>
+            <input
+              autocomplete="given-name"
+              class="outline-none"
+              matInput
+              name="first"
+              required
+              [(ngModel)]="user.firstName"
+            />
+          </mat-form-field>
 
-        <div fxFlex fxHide.lt-sm></div>
+          <div fxFlex fxHide.lt-sm></div>
 
-        <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="end">
-          <mat-label>Second Name</mat-label>
-          <input matInput name="last" required [(ngModel)]="user.lastName" />
-        </mat-form-field>
-      </div>
+          <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="end">
+            <mat-label>Second Name</mat-label>
+            <input
+              autocomplete="family-name"
+              matInput
+              name="last"
+              required
+              [(ngModel)]="user.lastName"
+            />
+          </mat-form-field>
+        </div>
+      }
 
-      <div fxFlexFill fxLayout="row">
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Preferred Name</mat-label>
-          <input matInput name="preferred_name" [(ngModel)]="user.nickname" />
-        </mat-form-field>
-      </div>
+      <!-- Preferred Name dropped: profile identity is university-managed and not
+           customisable by the student. The nickname value stays on `user` untouched. -->
 
       <mat-form-field appearance="outline" fxFlexFill [hidden]="!customPronouns">
         <mat-label>Custom Pronouns</mat-label>
@@ -61,17 +79,32 @@
         />
       </mat-form-field>
 
-      @if (user.systemRole === 'Student') {
+      <!-- Student ID comes from enrolment and is not user-editable, so like Username it
+           only shows while an admin is creating the account. Hidden from the student's own
+           setup/edit view; the value stays on `user` and submits unchanged. -->
+      @if (user.systemRole === 'Student' && newUser) {
         <mat-form-field appearance="outline" fxFlexFill>
           <mat-label>Student ID</mat-label>
           <input matInput name="student_id" required [(ngModel)]="user.studentId" />
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline" fxFlexFill>
-        <mat-label>Email</mat-label>
-        <input matInput name="email" required type="email" [(ngModel)]="user.email" />
-      </mat-form-field>
+      <!-- Primary email is the university-managed address and is not student-editable.
+           Shown only during admin account creation; the value stays on `user` and submits
+           unchanged. (Notification email addresses are a separate, student-owned concern.) -->
+      @if (newUser) {
+        <mat-form-field appearance="outline" fxFlexFill>
+          <mat-label>Email</mat-label>
+          <input
+            autocomplete="email"
+            matInput
+            name="email"
+            required
+            type="email"
+            [(ngModel)]="user.email"
+          />
+        </mat-form-field>
+      }
 
       @if (canSeeSystemRole) {
         <mat-form-field appearance="outline" fxFlexFill>
@@ -119,8 +152,10 @@
         worker is not registered until six seconds after the page loads.
       -->
       <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
+        <!-- No color="primary": the primary blue label sat on the dark button fill at
+             well under AA contrast. The neutral stroked-button label (--ot-color-text via
+             the global override) reads clearly and matches the app's other stroked buttons. -->
         <button
-          color="primary"
           mat-stroked-button
           type="button"
           [disabled]="pushBusy || pushBlocker !== null"

@@ -435,6 +435,66 @@ describe('FUnitTaskListComponent', () => {
     expect(selectedTaskDefinition$.value).toBeNull();
   });
 
+  // A notification or link into another unit swaps the list while the old unit's task
+  // is still selected. The url names the task to open there, so the list must follow it
+  // instead of rewriting the address to the unit overview.
+  describe('when the list moves to another unit', () => {
+    let navigateByUrl: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      navigateByUrl = vi.fn();
+      const internals = component as unknown as {
+        angularRouter: unknown;
+        route: unknown;
+        routeTaskAbbreviation: string | null;
+      };
+      internals.angularRouter = {
+        createUrlTree: vi.fn((commands: unknown[]) => commands.join('/')),
+        navigateByUrl,
+      };
+      internals.route = {
+        paramMap: routeParamMap$.asObservable(),
+        parent: {
+          snapshot: {
+            paramMap: convertToParamMap({projectId: '3'}),
+            data: {project: {}},
+          },
+        },
+      };
+      component.project = studentProject();
+      component.targetGrade = 0;
+      component.tasks = [];
+    });
+
+    it('opens the linked task in the new unit and keeps it in the url', () => {
+      const oldUnitTask = taskDefinition(1, 'DUE3');
+      const newUnitTask = taskDefinition(11, 'DUE3');
+      component.taskDefinitions = [oldUnitTask];
+      const selectedTaskDefinition$ = openTaskDefinition(component, oldUnitTask);
+      (component as unknown as {routeTaskAbbreviation: string}).routeTaskAbbreviation = 'DUE3';
+
+      component.taskDefinitions = [newUnitTask];
+      component.ngOnChanges({taskDefinitions: {} as never});
+
+      expect(navigateByUrl).not.toHaveBeenCalled();
+      expect(selectedTaskDefinition$.value).toBe(newUnitTask);
+    });
+
+    it('still drops a filtered-out task from the url', () => {
+      const passTask = taskDefinition(1, 'P1', undefined, 0);
+      const creditTask = taskDefinition(2, 'C1', undefined, 1);
+      component.taskDefinitions = [passTask, creditTask];
+      component.toggleShowAboveTargetGrade(true);
+      const selectedTaskDefinition$ = openTaskDefinition(component, creditTask);
+      (component as unknown as {routeTaskAbbreviation: string}).routeTaskAbbreviation = 'C1';
+
+      component.toggleShowAboveTargetGrade(false);
+
+      expect(selectedTaskDefinition$.value).toBeNull();
+      expect(navigateByUrl).toHaveBeenCalledWith('/projects/3/dashboard', {replaceUrl: true});
+    });
+  });
+
   it('badges the filter button while tasks beyond the target grade are hidden', () => {
     component.project = studentProject();
     component.targetGrade = 0;

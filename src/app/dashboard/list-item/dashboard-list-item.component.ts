@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {TaskDefinition} from '../../api/models/task-definition';
-import {TaskStatusEnum} from '../../api/models/task-status';
+import {TaskStatus, TaskStatusEnum} from '../../api/models/task-status';
 
 export type DueDateWarning = {
   state: 'overdue' | 'within24Hours' | 'within3Days' | 'within7Days';
@@ -46,8 +46,8 @@ export type DashboardTask = {
   subtitle: string;
   statusLabel: string;
   abbreviation: string;
-  color: string;
   comments: number;
+  hasFeedback: boolean;
   status: TaskStatusEnum;
   targetGrade: number;
   targetGradeLabel: string;
@@ -72,5 +72,10 @@ export class DashboardListItemComponent {
 
   get dueDateWarning(): DueDateWarning | null {
     return getDueDateWarning(this.task?.dueDate, this.task?.showDueWarning ?? false);
+  }
+
+  // Finished tasks keep their row but step back, so the eye lands on open work.
+  get isFinal(): boolean {
+    return TaskStatus.FINAL_STATUSES.includes(this.task?.status);
   }
 }

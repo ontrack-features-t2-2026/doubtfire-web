@@ -1,9 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {HttpClient} from '@angular/common/http';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {Directive, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
-import {of} from 'rxjs';
+import {BehaviorSubject, of} from 'rxjs';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -132,5 +132,80 @@ describe('SignInComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/lti');
     expect(authReturnUrl.clear).toHaveBeenCalledOnce();
     expect(authReturnUrl.consume).not.toHaveBeenCalled();
+  });
+});
+
+// A11Y-FORM06: WCAG 1.3.5 Identify Input Purpose (AA).
+// Renders the real sign-in template and asserts the two credential inputs
+// declare their autocomplete purpose token, so browser autofill and password
+// managers reliably offer the stored credential. Standing in for the whole
+// Material/Forms stack, StubNgForm satisfies `#form="ngForm"` while
+// NO_ERRORS_SCHEMA lets the unknown mat-* elements render as plain markup, so
+// the static autocomplete attribute is what we assert on.
+@Directive({selector: 'form', exportAs: 'ngForm', standalone: false})
+class StubNgFormSignIn {
+  public invalid = false;
+}
+
+describe('SignInComponent autocomplete purpose (A11Y-FORM06)', () => {
+  let fixture: ComponentFixture<SignInComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [SignInComponent, StubNgFormSignIn],
+      providers: [
+        {
+          provide: AuthenticationService,
+          useValue: {
+            afterAuthCall: vi.fn(),
+            signIn: vi.fn().mockReturnValue(of(void 0)),
+            rememberMe: false,
+          },
+        },
+        {provide: UserService, useValue: {currentUser: {hasRunFirstTimeSetup: true}}},
+        {provide: Router, useValue: {navigateByUrl: vi.fn()}},
+        {provide: DoubtfireConstants, useValue: {}},
+        {provide: HttpClient, useValue: {}},
+        {
+          provide: GlobalStateService,
+          useValue: {goHome: vi.fn(), hideHeader: vi.fn(), onLoad: vi.fn()},
+        },
+        {provide: AlertService, useValue: {error: vi.fn()}},
+        {provide: AuthReturnUrlService, useValue: {consume: vi.fn(), clear: vi.fn()}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(SignInComponent);
+    const component = fixture.componentInstance;
+    // Reveal the credential fields (both guarded behind @if in the template).
+    component.isLoading = false;
+    component.showCredentials = true;
+    component.externalName = new BehaviorSubject<string>('OnTrack');
+    component.formData = {username: '', password: '', remember: false, autoLogin: false};
+    fixture.detectChanges();
+  });
+
+  const input = (name: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`input[name="${name}"]`);
+
+  it('declares autocomplete="username" on the sign-in username field', () => {
+    const username = input('username');
+    expect(username).toBeTruthy();
+    expect(username?.getAttribute('autocomplete')).toBe('username');
+  });
+
+  it('declares autocomplete="current-password" on the sign-in password field', () => {
+    const password = input('password');
+    expect(password).toBeTruthy();
+    expect(password?.getAttribute('autocomplete')).toBe('current-password');
+  });
+
+  // Failure path: the fix must be scoped to the credential inputs. The
+  // "stay logged in" control is not a fillable text field and must not be
+  // handed a purpose token.
+  it('does not put an autocomplete purpose token on the non-credential controls', () => {
+    const remember = fixture.nativeElement.querySelector('[name="remember"]');
+    expect(remember?.getAttribute('autocomplete') ?? null).toBeNull();
   });
 });

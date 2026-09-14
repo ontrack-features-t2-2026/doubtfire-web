@@ -1,16 +1,17 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA} from '@angular/core';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
+import {ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import {MatDividerModule} from '@angular/material/divider';
 import {MatIconModule} from '@angular/material/icon';
-import {MatSelectModule} from '@angular/material/select';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatMenuHarness} from '@angular/material/menu/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {Unit} from 'src/app/api/models/unit';
-import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {GradeService} from 'src/app/common/services/grade.service';
 import {TaskPlannerCardComponent} from './task-planner-card.component';
@@ -18,11 +19,12 @@ import {TaskPlannerCardComponent} from './task-planner-card.component';
 function buildProjectWithTasks(
   tasks: {dueDate?: Date; targetGrade?: number}[],
   projectTargetGrade: number | undefined = 0,
+  allowFlexibleDates = false,
 ): Project {
   const unit = new Unit();
   unit.id = 7;
   unit.code = 'COS10001';
-  unit.allowFlexibleDates = false;
+  unit.allowFlexibleDates = allowFlexibleDates;
 
   const project = new Project(unit);
   project.targetGrade = projectTargetGrade;
@@ -47,12 +49,39 @@ function buildProjectWithTasks(
   return project;
 }
 
+const DUE = new Date(2026, 8, 15, 23, 59, 59, 999);
+
+// The host below only projects a stand-in grade field into the card, so its short
+// template belongs here rather than in a file of its own. It checks eagerly, like the
+// dashboard, so a test can set a field and see the card re-render.
+/* eslint-disable @angular-eslint/component-max-inline-declarations */
+@Component({
+  template: `
+    <f-task-planner-card [project]="project" [showTips]="showTips">
+      <span class="projected-grade-field">Target grade</span>
+    </f-task-planner-card>
+  `,
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false,
+})
+class PlannerCardHostComponent {
+  project: Project;
+  showTips = true;
+}
+
 describe('TaskPlannerCardComponent', () => {
   let component: TaskPlannerCardComponent;
   let fixture: ComponentFixture<TaskPlannerCardComponent>;
   let fileDownloaderStub: {
     downloadBlobToFile: ReturnType<typeof vi.fn>;
     releaseBlob: ReturnType<typeof vi.fn>;
+  };
+
+  const menuItemTexts = async (): Promise<string[]> => {
+    const menu = await TestbedHarnessEnvironment.loader(fixture).getHarness(MatMenuHarness);
+    await menu.open();
+    const items = await menu.getItems();
+    return Promise.all(items.map((item) => item.getText()));
   };
 
   beforeEach(async () => {
@@ -62,8 +91,14 @@ describe('TaskPlannerCardComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [TaskPlannerCardComponent],
-      imports: [MatButtonModule, MatIconModule, MatSelectModule, FormsModule, NoopAnimationsModule],
+      declarations: [TaskPlannerCardComponent, PlannerCardHostComponent],
+      imports: [
+        MatButtonModule,
+        MatDividerModule,
+        MatIconModule,
+        MatMenuModule,
+        NoopAnimationsModule,
+      ],
       providers: [{provide: FileDownloaderService, useValue: fileDownloaderStub}, GradeService],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -76,69 +111,99 @@ describe('TaskPlannerCardComponent', () => {
     vi.restoreAllMocks();
   });
 
-  it('disables the download button when there are no active tasks yet', () => {
+  it('disables the calendar menu until the tasks have loaded', () => {
     // Simulates the dashboard's progressive resolution (project.resolver.ts), where
     // project.tasks can still be empty on first render.
     component.project = buildProjectWithTasks([]);
     fixture.detectChanges();
 
-    const downloadButton: HTMLButtonElement =
-      fixture.nativeElement.querySelector('.download-ics-link');
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('.download-ics-link');
 
-    expect(downloadButton).not.toBeNull();
-    expect(downloadButton.disabled).toBe(true);
+    expect(trigger).not.toBeNull();
+    expect(trigger.disabled).toBe(true);
   });
 
-  it('enables the download button once tasks at the selected grade are present', () => {
-    component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)}]);
+  it('enables the calendar menu once tasks are present', () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE}]);
     fixture.detectChanges();
 
-    const downloadButton: HTMLButtonElement =
-      fixture.nativeElement.querySelector('.download-ics-link');
+    const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('.download-ics-link');
 
-    expect(downloadButton.disabled).toBe(false);
+    expect(trigger.disabled).toBe(false);
   });
 
-  it('stacks the planner controls with space for the floating grade label', () => {
+  it('lists the target grade first and marks it, then the other grades lowest first', async () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE}], 1);
+    fixture.detectChanges();
+
+    expect(await menuItemTexts()).toEqual([
+      'Tasks for Credit (your target)',
+      'Tasks for Pass',
+      'Tasks for Distinction',
+      'Tasks for High Distinction',
+    ]);
+  });
+
+  it('follows a target grade the student changes after the card first renders', async () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE}], 0);
+    fixture.detectChanges();
+
+    component.project.targetGrade = 2;
+    fixture.detectChanges();
+
+    const [first] = await menuItemTexts();
+    expect(first).toBe('Tasks for Distinction (your target)');
+  });
+
+  it('lists every grade, with none marked, when the project has no target grade', async () => {
+    const project = buildProjectWithTasks([{dueDate: DUE}]);
+    project.targetGrade = undefined;
+    component.project = project;
+    fixture.detectChanges();
+
+    expect(await menuItemTexts()).toEqual([
+      'Tasks for Pass',
+      'Tasks for Credit',
+      'Tasks for Distinction',
+      'Tasks for High Distinction',
+    ]);
+  });
+
+  it('disables a grade in the menu when no task is at or below it', async () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE, targetGrade: 2}], 2);
+    fixture.detectChanges();
+
+    const menu = await TestbedHarnessEnvironment.loader(fixture).getHarness(MatMenuHarness);
+    await menu.open();
+    const [target, pass] = await menu.getItems();
+
+    expect(await target.isDisabled()).toBe(false);
+    expect(await pass.isDisabled()).toBe(true);
+  });
+
+  it('does not call the file downloader when the grade has no tasks, guarding against an empty file', () => {
     component.project = buildProjectWithTasks([]);
     fixture.detectChanges();
 
-    const controls: HTMLElement = fixture.nativeElement.querySelector('.task-planner-controls');
-    const plannerButton = controls.querySelector('button');
-    const gradeField = controls.querySelector('mat-form-field');
-    const downloadButton = controls.querySelector('.download-ics-link');
-
-    expect(controls.classList.contains('flex-col')).toBe(true);
-    expect(controls.classList.contains('gap-4')).toBe(true);
-    expect(plannerButton?.nextElementSibling).toBe(gradeField);
-    expect(gradeField?.nextElementSibling).toBe(downloadButton);
-  });
-
-  it('does not call the file downloader when there are no active tasks, guarding against an empty file', () => {
-    component.project = buildProjectWithTasks([]);
-    fixture.detectChanges();
-
-    component.downloadIcs();
+    component.downloadIcs(0);
 
     expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
     expect(fileDownloaderStub.releaseBlob).not.toHaveBeenCalled();
   });
 
-  it('downloads a blob named after the unit code and the selected grade abbreviation', () => {
-    component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)}]);
+  it('downloads a blob named after the unit code and the chosen grade abbreviation', () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE}]);
     fixture.detectChanges();
 
     const createObjectURLSpy = vi
       .spyOn(window.URL, 'createObjectURL')
       .mockReturnValue('blob:mock-url');
 
-    expect(component.hasDownloadableTasks).toBe(true);
-    component.downloadIcs();
+    component.downloadIcs(0);
 
     expect(createObjectURLSpy).toHaveBeenCalledOnce();
     const [blobArg] = createObjectURLSpy.mock.calls[0];
     expect((blobArg as Blob).type).toBe('text/calendar;charset=utf-8');
-    // Default project.targetGrade is 0 (Pass, abbreviation 'P').
     expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P.ics',
@@ -146,76 +211,98 @@ describe('TaskPlannerCardComponent', () => {
     expect(fileDownloaderStub.releaseBlob).toHaveBeenCalledWith('blob:mock-url');
   });
 
-  it('defaults selectedDownloadGrade to project.targetGrade', () => {
-    component.project = buildProjectWithTasks([], 2);
+  it('uses the chosen grade, not the target, in the filename', () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE, targetGrade: 0}], 0);
     fixture.detectChanges();
-
-    expect(component.selectedDownloadGrade).toBe(2);
-  });
-
-  it('falls back to the highest grade value when project.targetGrade is not set', () => {
-    const project = buildProjectWithTasks([]);
-    project.targetGrade = undefined;
-    component.project = project;
-    fixture.detectChanges();
-
-    // GradeService.gradeValues is [0, 1, 2, 3], the highest is 3 (High Distinction).
-    expect(component.selectedDownloadGrade).toBe(3);
-  });
-
-  it('does not persist the selection: does not write project.targetGrade', () => {
-    component.project = buildProjectWithTasks([], 1);
-    fixture.detectChanges();
-
-    component.selectedDownloadGrade = 3;
-
-    expect(component.project.targetGrade).toBe(1);
-  });
-
-  it('only includes tasks at or below the selected grade in the generated calendar', () => {
-    // Two tasks: one at grade 0 (Pass), one at grade 2 (Distinction). If the grade filter
-    // were ignored, both event UIDs would be present in the generated calendar.
-    component.project = buildProjectWithTasks([
-      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0},
-      {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2},
-    ]);
-    fixture.detectChanges();
-    component.selectedDownloadGrade = 0;
-
-    const selectedTasks = component['tasksForSelectedGrade']();
-    const ics = buildIcsCalendar(selectedTasks, new Date('2026-08-24T00:00:00Z'));
-    expect(selectedTasks.map((task) => task.definition.id)).toEqual([1]);
-    expect(ics).toContain('UID:E-1');
-    expect(ics).not.toContain('UID:E-2');
-  });
-
-  it('hasDownloadableTasks reflects the selected grade, not just whether any task exists', () => {
-    component.project = buildProjectWithTasks([
-      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 2},
-    ]);
-    fixture.detectChanges();
-
-    component.selectedDownloadGrade = 0;
-    expect(component.hasDownloadableTasks).toBe(false);
-
-    component.selectedDownloadGrade = 2;
-    expect(component.hasDownloadableTasks).toBe(true);
-  });
-
-  it('includes the selected grade abbreviation in the filename, not the default', () => {
-    component.project = buildProjectWithTasks([
-      {dueDate: new Date(2026, 8, 15, 23, 59, 59, 999), targetGrade: 0},
-    ]);
-    fixture.detectChanges();
-    component.selectedDownloadGrade = 1; // Credit, abbreviation 'C'.
-
     vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
-    component.downloadIcs();
+    component.downloadIcs(1); // Credit, abbreviation 'C'.
 
     expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-C.ics',
     );
+  });
+
+  it('puts only the tasks at or below the grade picked in the menu into the file', async () => {
+    // Two tasks: one at grade 0 (Pass), one at grade 2 (Distinction). If the menu passed the
+    // wrong grade, or the filter were ignored, both event UIDs would be in the file.
+    component.project = buildProjectWithTasks(
+      [
+        {dueDate: DUE, targetGrade: 0},
+        {dueDate: new Date(2026, 8, 20, 23, 59, 59, 999), targetGrade: 2},
+      ],
+      2,
+    );
+    fixture.detectChanges();
+    const createObjectURLSpy = vi
+      .spyOn(window.URL, 'createObjectURL')
+      .mockReturnValue('blob:mock-url');
+
+    const menu = await TestbedHarnessEnvironment.loader(fixture).getHarness(MatMenuHarness);
+    await menu.open();
+    await menu.clickItem({text: 'Tasks for Pass'});
+
+    const [blobArg] = createObjectURLSpy.mock.calls[0];
+    const ics = await (blobArg as Blob).text();
+    expect(ics).toContain('UID:E-1');
+    expect(ics).not.toContain('UID:E-2');
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-P.ics',
+    );
+  });
+
+  it('does not change the saved target grade when downloading another grade', () => {
+    component.project = buildProjectWithTasks([{dueDate: DUE}], 1);
+    fixture.detectChanges();
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+
+    component.downloadIcs(3);
+
+    expect(component.project.targetGrade).toBe(1);
+  });
+
+  describe('inside the dashboard', () => {
+    let hostFixture: ComponentFixture<PlannerCardHostComponent>;
+
+    beforeEach(() => {
+      hostFixture = TestBed.createComponent(PlannerCardHostComponent);
+    });
+
+    it('puts the projected grade field first in the same row as the actions', () => {
+      hostFixture.componentInstance.project = buildProjectWithTasks([{dueDate: DUE}]);
+      hostFixture.detectChanges();
+
+      const row: HTMLElement = hostFixture.nativeElement.querySelector('.task-planner-row');
+
+      expect(row.firstElementChild?.classList.contains('projected-grade-field')).toBe(true);
+      expect(row.querySelector('.task-planner-actions .download-ics-link')).not.toBeNull();
+    });
+
+    it('shows the tips for students and hides them when told to', () => {
+      hostFixture.componentInstance.project = buildProjectWithTasks([]);
+      hostFixture.detectChanges();
+
+      expect(hostFixture.nativeElement.querySelector('.task-planner-tips')).not.toBeNull();
+
+      hostFixture.componentInstance.showTips = false;
+      hostFixture.detectChanges();
+
+      expect(hostFixture.nativeElement.querySelector('.task-planner-tips')).toBeNull();
+    });
+
+    it('only says students can move their own dates on units that allow it', () => {
+      const tipsText = () =>
+        (hostFixture.nativeElement.querySelector('.task-planner-tips') as HTMLElement).textContent;
+
+      hostFixture.componentInstance.project = buildProjectWithTasks([], 0, false);
+      hostFixture.detectChanges();
+      expect(tipsText()).not.toContain('change your own target dates');
+
+      hostFixture.componentInstance.project = buildProjectWithTasks([], 0, true);
+      hostFixture.detectChanges();
+      expect(tipsText()).toContain('change your own target dates');
+    });
   });
 });

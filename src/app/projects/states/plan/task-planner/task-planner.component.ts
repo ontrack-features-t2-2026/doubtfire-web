@@ -40,6 +40,10 @@ interface TaskGanttItem extends GanttItem {
   originalLinks: GanttLink[];
 }
 
+const GANTT_HEADER_HEIGHT = 52;
+const GANTT_ROW_HEIGHT = 44;
+const GANTT_SCROLL_ALLOWANCE = 18;
+
 @Component({
   selector: 'f-task-planner',
   templateUrl: './task-planner.component.html',
@@ -233,26 +237,12 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         return false;
       }
       const diff = this.normalizeDateUTC(item.end) - this.normalizeDateUTC(ganttItem.end);
-      // const color = typeof ganttLink.color === 'string' ? ganttLink.color : ganttLink.color.default;
 
       if (diff > 0) {
         isAfterDependentStartDate = true;
       }
 
       continue;
-
-      // if (color === '#0079D8') {
-      //   // Ready for feedback
-      //   if (diff > 0) {
-      //     isAfterDependentStartDate = true;
-      //   }
-      // } else if (color === '#31b0d5' || color === '#5BB75B') {
-      //   // Discuss or Complete
-      //   if (diff >= -7 * 24 * 60 * 60) {
-      //     // We need to ensure this task is submitted a week earlier than its dependent so get it in a Discuss state
-      //     isAfterDependentStartDate = true;
-      //   }
-      // }
     }
 
     return isAfterDependentStartDate;
@@ -309,6 +299,10 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
         '[--bar-bg:var(--ot-color-disabled-surface)]',
         '[color:var(--ot-color-text-muted)]',
       );
+    } else if (this.isComplete(item)) {
+      // A finished task has no deadline left to warn about, so it shows as done
+      // rather than keeping the planning colour it had while open.
+      classes.push('[--bar-bg:var(--ot-status-complete)]', '[color:var(--ot-status-complete-on)]');
     } else if (this.isPastFeedbackDeadline(item)) {
       classes.push(
         '[--bar-bg:var(--ot-status-time-exceeded)]',
@@ -329,6 +323,18 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return classes;
+  }
+
+  // Measured from the rendered chart: a 52px date header, 44px rows, and room for
+  // the timeline's own horizontal scrollbar.
+  get ganttHeight(): number {
+    return (
+      GANTT_HEADER_HEIGHT + (this.items?.length ?? 0) * GANTT_ROW_HEIGHT + GANTT_SCROLL_ALLOWANCE
+    );
+  }
+
+  isComplete(item: TaskGanttItem): boolean {
+    return item.task?.status === 'complete';
   }
 
   isAboveTargetGrade(item: TaskGanttItem) {
@@ -553,23 +559,11 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     link.click();
   }
 
-  // normalizeDateUTC = (ts: number) => {
-  //   const d = new GanttDate(ts * 1000);
-  //   // const utc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
-  //   return Math.floor(d.getUnixTime());
-  // };
-
   normalizeDateUTC = (ts: number) => {
     const d = new GanttDate(ts * 1000);
     // d.setHours(0, 0, 0, 0);
     return Math.floor(d.startOfDay().getTime() / 1000);
   };
-
-  // normalizeDateUTC = (ts: number) => {
-  //   const d = new Date(ts * 1000);
-  //   d.setHours(0, 0, 0, 0);
-  //   return Math.floor(d.getTime() / 1000);
-  // };
 
   toDateString(timestamp: number | Date) {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp * 1000);
@@ -794,16 +788,16 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
 
             switch (p.taskStatus) {
               case 'ready_for_feedback':
-                color = this.cssVarRgba('--ot-status-ready-for-feedback', 0.1);
+                color = this.cssVarRgba('--ot-status-ready-for-feedback-graphic', 0.1);
                 break;
               case 'complete':
-                color = this.cssVarRgba('--ot-status-complete', 0.1);
+                color = this.cssVarRgba('--ot-status-complete-graphic', 0.1);
                 break;
               case 'discuss':
-                color = this.cssVarRgba('--ot-status-discuss', 0.1);
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               case 'demonstrate':
-                color = this.cssVarRgba('--ot-status-discuss', 0.1);
+                color = this.cssVarRgba('--ot-status-discuss-graphic', 0.1);
                 break;
               default:
                 color = this.cssVar('--ot-color-border');
@@ -822,22 +816,6 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
           }),
       };
 
-      // if (
-      //   item.links.length &&
-      //   (this.isCloseToFeedbackDeadline(item) || this.isPastFeedbackDeadline(item))
-      // ) {
-      //   const task = this.project.findTaskForDefinition(td.id);
-
-      //   item.start = this.normalizeDateUTC(task.startDate.getTime() / 1000);
-      //   item.end = this.normalizeDateUTC(task.localDueDate().getTime() / 1000);
-
-      //   // If the task defaults are still invalid, reset them to the task definition default
-      //   if (this.isCloseToFeedbackDeadline(item) || this.isPastFeedbackDeadline(item)) {
-      //     item.start = this.normalizeDateUTC(td.startDate.getTime() / 1000);
-      //     item.end = this.normalizeDateUTC(td.localDueDate().getTime() / 1000);
-      //   }
-      // }
-
       const originalItem = {...item};
       item.originalLinks = [...(originalItem.links as GanttLink[])];
 
@@ -855,10 +833,6 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       };
 
       _baselineItems.push(baselineItem);
-
-      // if (this.unsavedChanges(item)) {
-      //   this.saveTargetDate(item);
-      // }
     }
 
     this.items = [..._items];

@@ -17,6 +17,74 @@ import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloa
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 
+export type AnalyticsReportId =
+  | 'taskCompletion'
+  | 'taskAssessmentCounts'
+  | 'tasksAwaitingFeedback'
+  | 'tutorAssessments'
+  | 'overflowTaskClaims';
+
+export interface AnalyticsReport {
+  id: AnalyticsReportId;
+  title: string;
+  description: string;
+  /** Only convenors and admins can download it. The API refuses anyone else. */
+  convenorOnly?: boolean;
+}
+
+export interface AnalyticsReportGroup {
+  id: string;
+  title: string;
+  reports: readonly AnalyticsReport[];
+}
+
+// The descriptions say what is in each file, taken from the columns the API writes,
+// so staff can pick the right one without opening all five.
+export const ANALYTICS_REPORT_GROUPS: readonly AnalyticsReportGroup[] = [
+  {
+    id: 'students',
+    title: 'Students and tasks',
+    reports: [
+      {
+        id: 'taskCompletion',
+        title: 'Task completion',
+        description:
+          "Each student's status on every task, with their tutorial, target grade and portfolio grade.",
+      },
+      {
+        id: 'taskAssessmentCounts',
+        title: 'Task assessment counts',
+        description:
+          "How many times each student's task was given each status, such as complete, fix and resubmit or redo.",
+      },
+    ],
+  },
+  {
+    id: 'marking',
+    title: 'Marking and feedback',
+    reports: [
+      {
+        id: 'tasksAwaitingFeedback',
+        title: 'Tasks awaiting feedback',
+        description:
+          'Every task waiting for feedback, with its tutorial, tutor and how many days it has waited.',
+      },
+      {
+        id: 'tutorAssessments',
+        title: 'Tutor assessments',
+        description: "For each tutor, how many times their students' tasks have been assessed.",
+      },
+      {
+        id: 'overflowTaskClaims',
+        title: 'Overflow task claims',
+        description:
+          "Tasks a tutor claimed from another tutor's queue, with how long each had waited.",
+        convenorOnly: true,
+      },
+    ],
+  },
+];
+
 @Component({
   selector: 'f-unit-analytics',
   templateUrl: 'unit-analytics-route.component.html',
@@ -29,20 +97,21 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
 
   public unit: Unit;
 
+  public readonly reportGroups = ANALYTICS_REPORT_GROUPS;
+
   private unitSub?: Subscription;
 
   constructor(
     private sidekiqProgressModalService: SidekiqProgressModalService,
-    private alertsService: AlertService,
+    private alertService: AlertService,
     private fileDownloaderService: FileDownloaderService,
     private userService: UserService,
-    private alertService: AlertService,
     private route: ActivatedRoute,
     @Inject(LOCALE_ID) private locale: string,
   ) {}
 
   ngOnInit(): void {
-    this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
+    this.unit$ = this.unit$ ?? of(this.route.parent?.snapshot?.data?.unit);
     this.unitSub = this.unit$
       ?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id))
       .subscribe((unit) => {
@@ -55,17 +124,36 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
   }
 
   get role() {
-    return this.unit?.staff.find((s) => s.user.id === this.userService.currentUser.id)?.role;
+    return this.unit?.staff?.find((s) => s.user?.id === this.userService.currentUser?.id)?.role;
   }
 
   get isAdmin() {
     return this.userService.currentUser?.systemRole === 'Admin';
   }
 
+  public canDownload(report: AnalyticsReport): boolean {
+    return !report.convenorOnly || this.role === 'Convenor' || this.isAdmin;
+  }
+
+  public downloadReport(report: AnalyticsReport): void {
+    switch (report.id) {
+      case 'taskCompletion':
+        return this.getTaskCompletionCsv();
+      case 'taskAssessmentCounts':
+        return this.getTaskAssessmentCountCsv();
+      case 'tasksAwaitingFeedback':
+        return this.getTasksAwaitingFeedbackCsv();
+      case 'tutorAssessments':
+        return this.getTutorAssessmentCsv();
+      case 'overflowTaskClaims':
+        return this.getOverflowTaskClaimsCsv();
+    }
+  }
+
   public getTaskCompletionCsv() {
     this.downloadCsv(
       this.unit.downloadTaskCompletionCsv(),
-      'Task Completion Stats CSV',
+      'task completion CSV',
       `${this.unit.code}-task-completion-stats.csv`,
     );
   }
@@ -73,7 +161,7 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
   public getTutorAssessmentCsv() {
     this.downloadCsv(
       this.unit.downloadTutorAssessmentCsv(),
-      'Tutor Assessment Stats CSV',
+      'tutor assessments CSV',
       `${this.unit.code}-tutor-assessment-stats.csv`,
     );
   }
@@ -81,7 +169,7 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
   public getTasksAwaitingFeedbackCsv() {
     this.downloadCsv(
       this.unit.downloadTasksAwaitingFeedbackCsv(),
-      'Tasks Awaiting Feedback CSV',
+      'tasks awaiting feedback CSV',
       `${this.unit.code}-tasks-awaiting-feedback.csv`,
     );
   }
@@ -89,7 +177,7 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
   public getTaskAssessmentCountCsv() {
     this.downloadCsv(
       this.unit.downloadTaskAssessmentCountsCsv(),
-      'Task Assessment Counts CSV',
+      'task assessment counts CSV',
       `${this.unit.code}-task-assessment-counts.csv`,
     );
   }
@@ -99,27 +187,37 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
 
     this.downloadCsv(
       this.unit.downloadOverflowTaskClaimsCsv(),
-      'Overflow Task Claims CSV',
+      'overflow task claims CSV',
       `${this.unit.code}-overflow-task-claims-${timestamp}.csv`,
     );
   }
 
-  public downloadCsv(newJob: Observable<SidekiqJob>, title: string, filename: string) {
+  // An arrow function, not a method, because the tutor times card calls it through its
+  // downloadCsvFn input. A method passed that way ran with the card as `this`, which has
+  // no alertsService, so a failed download threw instead of showing the alert.
+  public readonly downloadCsv = (
+    newJob: Observable<SidekiqJob>,
+    title: string,
+    filename: string,
+  ): void => {
     newJob.subscribe({
       next: (job) => {
-        if (!job || !job.id) {
-          return this.alertsService.error(`Failed to download ${title}`, 6000);
+        if (!job?.id) {
+          this.alertService.error(`Failed to download ${title}`, 6000);
+          return;
         }
-        this.sidekiqProgressModalService.show(`Downloading ${title}`, job.id).subscribe((job) => {
-          const blob = new Blob([job.result], {type: 'text/csv'});
+        this.sidekiqProgressModalService.show(`Downloading ${title}`, job.id).subscribe((done) => {
+          const blob = new Blob([done.result], {type: 'text/csv'});
           const url = URL.createObjectURL(blob);
 
           this.fileDownloaderService.downloadBlobToFile(url, filename);
+          // Give the browser time to start the download, then free the file's memory.
+          setTimeout(() => URL.revokeObjectURL(url), 10_000);
         });
       },
       error: (error) => {
-        this.alertsService.error(`Could not download ${title}: ${error}`, 6000);
+        this.alertService.error(`Could not download ${title}: ${error}`, 6000);
       },
     });
-  }
+  };
 }
