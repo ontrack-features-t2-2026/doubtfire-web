@@ -1,0 +1,78 @@
+// Theme colours for every ngx-charts chart.
+//
+// ngx-charts has no inputs for axis, tick, gridline or legend colours. Its own CSS
+// hard-codes light values (#ddd gridlines, #afb7c8 legend labels) and it draws axis
+// titles and tick labels as SVG <text> with no fill at all, so they fall back to
+// black. On the dark card that put "Work Remaining" and "Time" in black. These rules
+// point the library's chrome at the theme tokens so it follows the resolved theme
+// without a re-render. Series colours are set in JS and re-resolved per component.
+
+// Library styles are added to <head> after the global sheet, so :root lifts these
+// above selectors of the same shape.
+:root {
+  .ngx-charts {
+    // Axis titles are the only <text> inside g[ngx-charts-axis-label].
+    g[ngx-charts-axis-label] text,
+    .tick text {
+      fill: var(--ot-chart-axis);
+    }
+
+    .gridline-path,
+    .gridline-path-dotted {
+      stroke: var(--ot-chart-grid);
+    }
+
+    // The axis line and tick marks carry the scale, so they take the axis colour
+    // (3:1 or better on every surface). Gridlines stay a quiet guide.
+    .tick line,
+    .domain {
+      stroke: var(--ot-chart-axis);
+    }
+
+    .refline-path {
+      stroke: var(--ot-chart-axis);
+    }
+
+    .pie-label {
+      fill: var(--ot-color-text);
+    }
+
+    .pie-label-line {
+      stroke: var(--ot-chart-axis);
+    }
+  }
+
+  .chart-legend {
+    .legend-title-text {
+      color: var(--ot-color-text);
+    }
+
+    .legend-label {
+      color: var(--ot-color-text-muted);
+    }
+
+    .legend-label:hover,
+    .legend-label .active .legend-label-text {
+      color: var(--ot-color-text);
+    }
+  }
+
+  .gauge {
+    .gauge-tick text {
+      fill: var(--ot-chart-axis);
+    }
+
+    .gauge-tick path {
+      stroke: var(--ot-chart-axis);
+    }
+
+    .background-arc path {
+      fill: var(--ot-meter-track);
+    }
+
+    // The centre value is plain <text> with no fill, so it went black in dark.
+    text {
+      fill: var(--ot-color-text);
+    }
+  }
+}

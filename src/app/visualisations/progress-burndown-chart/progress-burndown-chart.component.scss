@@ -24,24 +24,7 @@
   height: 100%;
   min-width: 0;
 
-  ::ng-deep .tick text {
-    fill: var(--ot-chart-axis);
-  }
-
-  ::ng-deep .axis-label {
-    fill: var(--ot-chart-axis);
-  }
-
-  ::ng-deep .gridline-path,
-  ::ng-deep .gridline-path-dotted,
-  ::ng-deep .reference-area {
-    stroke: var(--ot-chart-grid);
-  }
-
-  ::ng-deep .tick line,
-  ::ng-deep .domain {
-    stroke: var(--ot-chart-grid);
-  }
+  // Axis, tick, gridline and legend colours come from styles/common/charts.scss.
 }
 
 .progress-burndown__legend {

@@ -17,7 +17,6 @@ import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 @Component({
   selector: 'f-task-status-pie-chart',
   templateUrl: './task-status-pie-chart.component.html',
-  styleUrls: ['./task-status-pie-chart.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })

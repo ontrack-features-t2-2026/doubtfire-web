@@ -12,6 +12,7 @@ import {
   OnInit,
   SimpleChanges,
   ViewContainerRef,
+  effect,
 } from '@angular/core';
 import {Subscription} from 'rxjs';
 import {
@@ -44,6 +45,13 @@ interface BurndownSummary {
 
 type PeerMedianState = 'loading' | 'error' | PeerProgressState;
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 @Component({
   selector: 'f-progress-burndown-chart',
   templateUrl: './progress-burndown-chart.component.html',
@@ -65,7 +73,8 @@ export class ProgressBurndownChartComponent
   // Chart options
   legend: boolean = false;
   showLabels: boolean = true;
-  animations: boolean = true;
+  // ngx-charts animates in JS, which the global reduced-motion CSS cannot reach.
+  animations: boolean = !prefersReducedMotion();
   xAxis: boolean = true;
   yAxis: boolean = true;
   showYAxisLabel: boolean = true;
@@ -113,6 +122,16 @@ export class ProgressBurndownChartComponent
     super(viewContainerRef);
     this.data = [];
     this.temp = [];
+
+    // Series colours are resolved token strings, so they have to be read again when
+    // the theme flips while the chart is on screen. Axis and legend text follow the
+    // tokens in CSS (styles/common/charts.scss).
+    effect(() => {
+      this.themeColor.resolved();
+      if (this.initialised) {
+        this.applyVisibility();
+      }
+    });
   }
 
   ngOnInit(): void {
