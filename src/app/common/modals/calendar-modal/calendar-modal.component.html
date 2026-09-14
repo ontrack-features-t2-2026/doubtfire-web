@@ -184,8 +184,8 @@
                 <div class="flex min-w-0 flex-1 items-center">
                   <div
                     class="flex cursor-pointer items-center gap-1 break-all text-blue-700 hover:text-blue-900"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                    [cdkCopyToClipboard]="webcalSubscriptionUrl"
+                    (cdkCopyToClipboardCopied)="onCopyResult($event)"
                   >
                     <mat-icon>link</mat-icon>{{ webcalUrl }}.ics
                   </div>
@@ -195,8 +195,8 @@
                     mat-icon-button
                     matTooltip="Copy URL"
                     matTooltipPosition="above"
-                    [cdkCopyToClipboard]="webcalUrl"
-                    (click)="onCopyWebcalUrl()"
+                    [cdkCopyToClipboard]="webcalSubscriptionUrl"
+                    (cdkCopyToClipboardCopied)="onCopyResult($event)"
                   >
                     <mat-icon>{{ copying ? 'done' : 'content_copy' }}</mat-icon>
                   </button>
