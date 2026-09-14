@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Inject, Input, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Inject, Input} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
@@ -18,20 +18,39 @@ import {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskPlannerCardComponent implements OnInit {
-  @Input() project: Project;
+export class TaskPlannerCardComponent {
+  private currentProject: Project;
+  private downloadGradeOverride: number | undefined;
+
+  @Input()
+  public get project(): Project {
+    return this.currentProject;
+  }
+
+  public set project(project: Project) {
+    if (project !== this.currentProject) {
+      this.downloadGradeOverride = undefined;
+    }
+    this.currentProject = project;
+  }
+
   @Input() showTips = true;
   public get unit() {
     return this.project?.unit;
   }
 
   /**
-   * Local to the download only, not persisted. Deliberately never written back through
-   * projectService.update or to project.targetGrade, the Target Grade card on this same
-   * dashboard is intentionally read-only, this selector must not become a second way to
-   * change the saved grade.
+   * Follow the dashboard's current target until a different download grade is chosen.
+   * That choice stays local to this project and never changes its saved target grade.
    */
-  public selectedDownloadGrade: number;
+  public get selectedDownloadGrade(): number {
+    return this.downloadGradeOverride ?? this.project?.targetGrade ?? Math.max(...this.gradeValues);
+  }
+
+  public set selectedDownloadGrade(grade: number) {
+    const targetGrade = this.project?.targetGrade ?? Math.max(...this.gradeValues);
+    this.downloadGradeOverride = grade === targetGrade ? undefined : grade;
+  }
 
   /**
    * Local to the download only, not persisted, same as selectedDownloadGrade above. Defaults to
@@ -52,10 +71,6 @@ export class TaskPlannerCardComponent implements OnInit {
     private gradeService: GradeService,
     private dialog: MatDialog,
   ) {}
-
-  ngOnInit(): void {
-    this.selectedDownloadGrade = this.project?.targetGrade ?? Math.max(...this.gradeValues);
-  }
 
   public get lowestGradeLabel(): string {
     const [lowest] = this.gradeValues;
@@ -105,11 +120,13 @@ export class TaskPlannerCardComponent implements OnInit {
       return;
     }
 
+    const project = this.project;
+    const initialGrade = this.selectedDownloadGrade;
     const dialogRef = this.dialog.open(DownloadFilterDialogComponent, {
       data: {
         gradeValues: this.gradeValues,
         gradeLabel: (grade: number) => this.gradeLabel(grade),
-        initialGrade: this.selectedDownloadGrade,
+        initialGrade,
         initialDirection: this.downloadDirection,
         initialExcludeCompleted: this.excludeCompleted,
         matchingTaskCount: (
@@ -124,11 +141,13 @@ export class TaskPlannerCardComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((selection?: DownloadFilterSelection) => {
-      if (!selection) {
+      if (!selection || this.project !== project) {
         return;
       }
 
-      this.selectedDownloadGrade = selection.grade;
+      if (selection.grade !== this.selectedDownloadGrade) {
+        this.selectedDownloadGrade = selection.grade;
+      }
       this.downloadDirection = selection.direction;
       this.excludeCompleted = selection.excludeCompleted;
       this.downloadIcs();

@@ -8,7 +8,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSelectModule} from '@angular/material/select';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {of} from 'rxjs';
+import {Subject, of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
@@ -176,6 +176,123 @@ describe('TaskPlannerCardComponent', () => {
     fixture.detectChanges();
 
     expect(component.selectedDownloadGrade).toBe(2);
+  });
+
+  it('opens the download at the current target grade after it changes on the dashboard', async () => {
+    const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+    component.project = buildProjectWithTasks([
+      {dueDate, targetGrade: 0},
+      {dueDate, targetGrade: 3},
+    ]);
+    fixture.detectChanges();
+    component.project.targetGrade = 3;
+    fixture.detectChanges();
+
+    matDialogStub.open.mockImplementation((_dialog, {data}) => ({
+      afterClosed: () => of({grade: data.initialGrade, direction: 'upTo', excludeCompleted: true}),
+    }));
+    const createObjectURLSpy = vi
+      .spyOn(window.URL, 'createObjectURL')
+      .mockReturnValue('blob:mock-url');
+
+    component.openDownloadDialog();
+
+    expect(matDialogStub.open.mock.calls[0][1].data.initialGrade).toBe(3);
+    const downloaded = await (createObjectURLSpy.mock.calls[0][0] as Blob).text();
+    expect(downloaded).toContain('UID:E-1');
+    expect(downloaded).toContain('UID:E-2');
+    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+      'blob:mock-url',
+      'COS10001-tasks-HD-outstanding.ics',
+    );
+  });
+
+  it('keeps following the target grade after accepting the default download grade', () => {
+    component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15)}]);
+    fixture.detectChanges();
+    matDialogStub.open.mockReturnValue({
+      afterClosed: () => of({grade: 0, direction: 'upTo', excludeCompleted: true}),
+    });
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+
+    component.openDownloadDialog();
+    component.project.targetGrade = 2;
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(undefined)});
+    component.openDownloadDialog();
+
+    expect(matDialogStub.open.mock.calls[1][1].data.initialGrade).toBe(2);
+  });
+
+  it('preserves an explicit download grade and filters when the saved target changes', () => {
+    component.project = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15), targetGrade: 2}]);
+    fixture.detectChanges();
+    matDialogStub.open.mockReturnValue({
+      afterClosed: () => of({grade: 2, direction: 'andAbove', excludeCompleted: false}),
+    });
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+
+    component.openDownloadDialog();
+    component.project.targetGrade = 3;
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(undefined)});
+    component.openDownloadDialog();
+
+    expect(matDialogStub.open.mock.calls[1][1].data).toMatchObject({
+      initialGrade: 2,
+      initialDirection: 'andAbove',
+      initialExcludeCompleted: false,
+    });
+    expect(component.project.targetGrade).toBe(3);
+  });
+
+  it('resets a local download grade when the dashboard switches to another project', () => {
+    const firstProject = buildProjectWithTasks([{dueDate: new Date(2026, 8, 15)}]);
+    fixture.componentRef.setInput('project', firstProject);
+    fixture.detectChanges();
+    matDialogStub.open.mockReturnValue({
+      afterClosed: () => of({grade: 3, direction: 'upTo', excludeCompleted: true}),
+    });
+    vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    component.openDownloadDialog();
+
+    const nextProject = buildProjectWithTasks([{dueDate: new Date(2026, 8, 20)}], 1);
+    nextProject.unit.gradeDefinitions = nextProject.unit.gradeDefinitions.filter(
+      (grade) => grade.value <= 1,
+    );
+    fixture.componentRef.setInput('project', nextProject);
+    fixture.detectChanges();
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(undefined)});
+    component.openDownloadDialog();
+
+    expect(matDialogStub.open.mock.calls[1][1].data).toMatchObject({
+      initialGrade: 1,
+      gradeValues: [0, 1],
+    });
+    expect(nextProject.targetGrade).toBe(1);
+    expect(firstProject.targetGrade).toBe(0);
+  });
+
+  it('does not apply an old project dialog selection after the project input changes', () => {
+    fixture.componentRef.setInput(
+      'project',
+      buildProjectWithTasks([{dueDate: new Date(2026, 8, 15)}]),
+    );
+    fixture.detectChanges();
+    const closed: Subject<DownloadFilterSelection> = new Subject();
+    matDialogStub.open.mockReturnValue({afterClosed: () => closed});
+    component.openDownloadDialog();
+
+    fixture.componentRef.setInput(
+      'project',
+      buildProjectWithTasks([{dueDate: new Date(2026, 8, 20)}], 1),
+    );
+    fixture.detectChanges();
+    closed.next({grade: 3, direction: 'andAbove', excludeCompleted: false});
+    closed.complete();
+
+    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
+    expect(component.selectedDownloadGrade).toBe(1);
+    expect(component.downloadDirection).toBe('upTo');
+    expect(component.excludeCompleted).toBe(true);
   });
 
   it('falls back to the highest grade value when project.targetGrade is not set', () => {
