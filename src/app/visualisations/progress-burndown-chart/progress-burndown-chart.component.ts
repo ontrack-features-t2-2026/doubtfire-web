@@ -3,6 +3,7 @@ import {formatDate} from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DoCheck,
   HostListener,
   Inject,
   Input,
@@ -12,7 +13,6 @@ import {
   OnInit,
   SimpleChanges,
   ViewContainerRef,
-  effect,
 } from '@angular/core';
 import {Subscription} from 'rxjs';
 import {
@@ -61,7 +61,7 @@ function prefersReducedMotion(): boolean {
 })
 export class ProgressBurndownChartComponent
   extends ChartBaseComponent
-  implements OnChanges, OnDestroy, OnInit
+  implements DoCheck, OnChanges, OnDestroy, OnInit
 {
   @Input() project: Project;
   @Input() unit: Unit;
@@ -111,6 +111,7 @@ export class ProgressBurndownChartComponent
   private activePeerMedianRequest?: Subscription;
   private peerMedianRequestVersion: number = 0;
   private initialised: boolean = false;
+  private renderedTheme?: string;
 
   constructor(
     public viewContainerRef: ViewContainerRef,
@@ -122,16 +123,6 @@ export class ProgressBurndownChartComponent
     super(viewContainerRef);
     this.data = [];
     this.temp = [];
-
-    // Series colours are resolved token strings, so they have to be read again when
-    // the theme flips while the chart is on screen. Axis and legend text follow the
-    // tokens in CSS (styles/common/charts.scss).
-    effect(() => {
-      this.themeColor.resolved();
-      if (this.initialised) {
-        this.applyVisibility();
-      }
-    });
   }
 
   ngOnInit(): void {
@@ -183,6 +174,17 @@ export class ProgressBurndownChartComponent
       this.peerMedianState = 'disabled';
       this.peerMedian = [];
       this.updateData();
+    }
+  }
+
+  // Series colours are resolved token strings, so read them again when the theme flips
+  // while the chart is on screen. Axis and legend text follow the tokens in CSS
+  // (styles/common/charts.scss).
+  ngDoCheck(): void {
+    const theme = this.themeColor?.resolved?.();
+    if (this.initialised && theme !== this.renderedTheme) {
+      this.renderedTheme = theme;
+      this.applyVisibility();
     }
   }
 
