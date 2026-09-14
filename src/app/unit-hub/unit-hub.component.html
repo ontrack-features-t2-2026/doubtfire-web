@@ -1,26 +1,100 @@
 <main aria-labelledby="unit-hub-title" class="unit-hub">
+  <a class="back-link" routerLink="/home"
+    ><mat-icon aria-hidden="true">arrow_back</mat-icon> Home</a
+  >
   <header class="hub-heading">
-    <div>
-      <a class="back-link" routerLink="/home"
-        ><mat-icon aria-hidden="true">arrow_back</mat-icon> Home</a
-      >
-      <p class="eyebrow">YOUR LEARNING, TOGETHER</p>
+    <div class="hub-title">
+      <p class="eyebrow">Your learning, together</p>
       <h1 id="unit-hub-title">Unit Hub</h1>
-      <p>Announcements, HelpHubs and classes for the units you belong to.</p>
+      <p class="hub-subtitle">Announcements, HelpHubs and classes for the units you belong to.</p>
     </div>
     <div class="heading-actions">
-      <button mat-stroked-button type="button" [disabled]="demo.enabled" (click)="openCalendar()">
-        <mat-icon aria-hidden="true">calendar_add_on</mat-icon> Calendar settings
-      </button>
-      @if (manageableUnits.length) {
-        <button mat-flat-button type="button" [disabled]="saving" (click)="toggleManage()">
-          <mat-icon aria-hidden="true">edit_calendar</mat-icon>
-          {{ managing ? 'View student feed' : 'Manage updates' }}
-        </button>
+      @if (showFeed) {
+        <label class="field unit-filter" for="hub-unit"
+          >Showing updates for
+          <select
+            id="hub-unit"
+            [value]="selectedUnitId"
+            (change)="selectUnit($any($event.target).value)"
+          >
+            <option value="0" [selected]="!selectedUnitId">All my units</option>
+            @for (unit of units; track unit.id) {
+              <option [selected]="unit.id === selectedUnitId" [value]="unit.id">
+                {{ unit.code }} · {{ unit.name }}
+              </option>
+            }
+          </select>
+        </label>
       }
+      <div class="action-row">
+        <button
+          class="wide-only"
+          mat-stroked-button
+          type="button"
+          [disabled]="demo.enabled"
+          (click)="openCalendar()"
+        >
+          <mat-icon aria-hidden="true">calendar_add_on</mat-icon> Calendar settings
+        </button>
+        @if (manageableUnits.length) {
+          <button
+            class="wide-only"
+            mat-stroked-button
+            type="button"
+            [disabled]="saving"
+            (click)="toggleManage()"
+          >
+            <mat-icon aria-hidden="true">edit_calendar</mat-icon>
+            {{ managing ? 'View student feed' : 'Manage updates' }}
+          </button>
+          <button
+            class="wide-only"
+            mat-flat-button
+            type="button"
+            [disabled]="saving"
+            (click)="startAnnouncement()"
+          >
+            <mat-icon aria-hidden="true">campaign</mat-icon> New announcement
+          </button>
+          <button
+            class="wide-only"
+            mat-flat-button
+            type="button"
+            [disabled]="saving"
+            (click)="startSession()"
+          >
+            <mat-icon aria-hidden="true">event</mat-icon> New session
+          </button>
+        }
+        <button
+          aria-label="Unit Hub actions"
+          class="narrow-only"
+          mat-stroked-button
+          type="button"
+          [matMenuTriggerFor]="hubActions"
+        >
+          <mat-icon aria-hidden="true">more_horiz</mat-icon> Actions
+        </button>
+        <mat-menu #hubActions="matMenu" xPosition="before">
+          @if (manageableUnits.length) {
+            <button mat-menu-item type="button" [disabled]="saving" (click)="startAnnouncement()">
+              <mat-icon aria-hidden="true">campaign</mat-icon><span>New announcement</span>
+            </button>
+            <button mat-menu-item type="button" [disabled]="saving" (click)="startSession()">
+              <mat-icon aria-hidden="true">event</mat-icon><span>New session</span>
+            </button>
+            <button mat-menu-item type="button" [disabled]="saving" (click)="toggleManage()">
+              <mat-icon aria-hidden="true">edit_calendar</mat-icon
+              ><span>{{ managing ? 'View student feed' : 'Manage updates' }}</span>
+            </button>
+          }
+          <button mat-menu-item type="button" [disabled]="demo.enabled" (click)="openCalendar()">
+            <mat-icon aria-hidden="true">calendar_add_on</mat-icon><span>Calendar settings</span>
+          </button>
+        </mat-menu>
+      </div>
     </div>
   </header>
-  <f-study-essentials />
 
   @if (demo.enabled) {
     <aside aria-label="Demonstration content" class="notice demo-notice">
@@ -40,16 +114,36 @@
   <p class="status" role="status">{{ status }}</p>
 
   @if (loading) {
-    <section class="empty-state" role="status">
-      <mat-icon aria-hidden="true">hourglass_top</mat-icon>
-      <h2>Loading your unit updates…</h2>
+    <section aria-busy="true" class="hub-columns skeleton-layout" role="status">
+      <span class="visually-hidden">Loading your unit updates…</span>
+      <div aria-hidden="true" class="announcements-column">
+        <div class="skeleton skeleton-heading"></div>
+        @for (item of [1, 2, 3]; track item) {
+          <div class="hub-card skeleton-card">
+            <div class="skeleton skeleton-chip"></div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line short"></div>
+          </div>
+        }
+      </div>
+      <div aria-hidden="true" class="sessions-column">
+        <div class="skeleton skeleton-heading"></div>
+        @for (item of [1, 2]; track item) {
+          <div class="hub-card skeleton-card">
+            <div class="skeleton skeleton-chip"></div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-line short"></div>
+          </div>
+        }
+      </div>
     </section>
   } @else if (loadError) {
-    <section class="empty-state" role="alert">
-      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+    <section class="state-panel error-state" role="alert">
+      <span class="state-icon"><mat-icon aria-hidden="true">cloud_off</mat-icon></span>
       <h2>Updates are unavailable</h2>
       <p>{{ loadError }}</p>
-      <button mat-stroked-button type="button" (click)="reload()">Try again</button>
+      <button mat-flat-button type="button" (click)="reload()">Try again</button>
     </section>
   } @else if (managing) {
     <section aria-labelledby="manage-title" class="manage-panel">
@@ -421,8 +515,8 @@
       }
     </section>
   } @else if (!units.length) {
-    <section class="empty-state">
-      <mat-icon aria-hidden="true">school</mat-icon>
+    <section class="state-panel">
+      <span class="state-icon"><mat-icon aria-hidden="true">school</mat-icon></span>
       <h2>No active units to show</h2>
       <p>
         Your announcements and sessions will appear here when you are enrolled in an active unit, or
@@ -431,21 +525,6 @@
     </section>
   } @else {
     <div class="hub-filters">
-      <label class="field unit-filter" for="hub-unit"
-        >Showing updates for
-        <select
-          id="hub-unit"
-          [value]="selectedUnitId"
-          (change)="selectUnit($any($event.target).value)"
-        >
-          <option value="0" [selected]="!selectedUnitId">All my units</option>
-          @for (unit of units; track unit.id) {
-            <option [selected]="unit.id === selectedUnitId" [value]="unit.id">
-              {{ unit.code }} · {{ unit.name }}
-            </option>
-          }
-        </select>
-      </label>
       <nav aria-label="Type of update" class="view-switch">
         <button type="button" [attr.aria-pressed]="tab === 'all'" (click)="tab = 'all'">
           All updates
@@ -463,14 +542,16 @@
       </nav>
     </div>
     @if (unavailableUnit) {
-      <div class="notice" role="alert">
-        This unit is not available to your account. Choose one of your units above.
+      <div class="notice error-notice" role="alert">
+        <mat-icon aria-hidden="true">block</mat-icon>
+        <p>This unit is not available to your account. Choose one of your units above.</p>
       </div>
     }
     <div class="hub-columns" [class.single-column]="tab !== 'all'">
       @if (tab !== 'sessions') {
         <section aria-labelledby="announcements-title" class="announcements-column">
           <div class="section-heading">
+            <mat-icon aria-hidden="true">campaign</mat-icon>
             <h2 id="announcements-title">Announcements</h2>
             <span class="count">{{ announcements.length }}</span>
           </div>
@@ -481,20 +562,17 @@
             </p>
           }
           @for (announcement of announcements; track announcement.id) {
-            <article class="announcement-card">
+            <article class="hub-card announcement-card" [class.is-pinned]="announcement.pinned">
               <div class="card-meta">
                 <span class="unit-badge">{{ unitCode(announcement.unit_id) }}</span>
-                @if (isManagedExternally(announcement)) {
-                  <span>From Teams</span>
-                }
                 @if (announcement.pinned) {
-                  <span class="pinned"
+                  <span class="chip chip-pinned"
                     ><mat-icon aria-hidden="true">push_pin</mat-icon> Pinned</span
                   >
                 }
-                <time [attr.datetime]="announcement.published_at">{{
-                  announcement.published_at | date: 'd MMM'
-                }}</time>
+                @if (isManagedExternally(announcement)) {
+                  <span class="chip chip-neutral">From Teams</span>
+                }
               </div>
               <h3>
                 <button
@@ -505,30 +583,52 @@
                   {{ announcement.title }}
                 </button>
               </h3>
+              <p class="byline">
+                @if (announcement.author_name) {
+                  <span>{{ announcement.author_name }}</span
+                  ><span aria-hidden="true"> · </span>
+                }
+                <time [attr.datetime]="announcement.published_at">{{
+                  announcement.published_at | date: 'd MMM'
+                }}</time>
+              </p>
               <p class="preserve-lines card-preview">{{ announcement.body }}</p>
-              <button
-                class="details-link"
-                mat-button
-                type="button"
-                [attr.aria-label]="'Read announcement: ' + announcement.title"
-                (click)="openAnnouncement(announcement)"
-              >
-                Read full announcement <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-              </button>
-              @if (safeUrl(announcement.source_url)) {
-                <a
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  [href]="safeUrl(announcement.source_url)"
-                  >Open original post <mat-icon aria-hidden="true">open_in_new</mat-icon></a
+              <div class="card-footer">
+                <button
+                  class="details-link"
+                  mat-button
+                  type="button"
+                  [attr.aria-label]="'Read announcement: ' + announcement.title"
+                  (click)="openAnnouncement(announcement)"
                 >
-              }
+                  Read full announcement <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                </button>
+                @if (safeUrl(announcement.source_url)) {
+                  <a
+                    class="source-link"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    [href]="safeUrl(announcement.source_url)"
+                    >Open original post <mat-icon aria-hidden="true">open_in_new</mat-icon></a
+                  >
+                }
+              </div>
             </article>
           } @empty {
-            <div class="empty-card">
-              <mat-icon aria-hidden="true">campaign</mat-icon>
+            <div class="hub-card empty-card">
+              <span class="state-icon"><mat-icon aria-hidden="true">campaign</mat-icon></span>
               <h3>You're up to date</h3>
               <p>No announcements have been published for these units.</p>
+              @if (manageableUnits.length) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="saving"
+                  (click)="startAnnouncement()"
+                >
+                  <mat-icon aria-hidden="true">add</mat-icon> New announcement
+                </button>
+              }
             </div>
           }
         </section>
@@ -536,143 +636,180 @@
       @if (tab !== 'announcements') {
         <section aria-labelledby="sessions-title" class="sessions-column">
           <div class="section-heading">
-            <h2 id="sessions-title">HelpHubs &amp; classes</h2>
+            <mat-icon aria-hidden="true">event_upcoming</mat-icon>
+            <h2 id="sessions-title">Upcoming</h2>
             <span class="count">{{ sessions.length }}</span>
           </div>
           <p class="help-text time-note">
-            Times shown in {{ deviceTimeZone }}.
+            HelpHubs &amp; classes, times shown in {{ deviceTimeZone }}.
             @if (feed.window_end) {
               Scheduled sessions through {{ feed.window_end | date: 'd MMM yyyy' }}.
             }
           </p>
-          @for (session of sessions; track session.occurrence_id || session.id + session.start_at) {
-            <article class="session-card" [class.is-cancelled]="session.cancelled">
-              <div class="session-identity">
-                <span class="session-icon"
-                  ><mat-icon aria-hidden="true">{{ kindIcon(session.kind) }}</mat-icon></span
-                >
-                <div>
+          @for (group of sessionGroups; track group.key) {
+            <div class="day-group">
+              <h3 class="day-heading">
+                @if (group.label) {
+                  <span class="day-label">{{ group.label }}</span>
+                }
+                <span>{{ group.date | date: 'EEEE, d MMMM' }}</span>
+              </h3>
+              @for (
+                session of group.sessions;
+                track session.occurrence_id || session.id + session.start_at
+              ) {
+                <article class="hub-card session-card" [class.is-cancelled]="session.cancelled">
                   <div class="card-meta">
-                    <span class="unit-badge">{{ unitCode(session.unit_id) }}</span
-                    ><span>{{ kindLabel(session.kind) }}</span>
+                    <span class="chip kind-chip" [attr.data-tone]="kindTone(session.kind)"
+                      ><mat-icon aria-hidden="true">{{ kindIcon(session.kind) }}</mat-icon
+                      >{{ kindLabel(session.kind) }}</span
+                    >
+                    <span class="unit-badge">{{ unitCode(session.unit_id) }}</span>
+                    @if (sessionLive(session)) {
+                      <span class="chip live-badge">On now</span>
+                    }
+                    @if (session.cancelled) {
+                      <span class="chip chip-cancelled">Cancelled</span>
+                    }
                   </div>
-                  <h3>
+                  <h4>
                     <button class="details-title" type="button" (click)="openSession(session)">
                       {{ session.title }}
                     </button>
-                  </h3>
-                </div>
-              </div>
-              <div class="session-time">
-                <mat-icon aria-hidden="true">schedule</mat-icon>
-                <div>
-                  <strong>{{ session.start_at | date: 'EEE, d MMM' }}</strong
-                  ><span
-                    >{{ session.start_at | date: 'h:mm a' }} – {{ session.end_at | date: 'h:mm a' }}
-                    @if (
-                      (session.start_at | date: 'yyyyMMdd') !== (session.end_at | date: 'yyyyMMdd')
-                    ) {
-                      · ends {{ session.end_at | date: 'd MMM' }}
-                    }
-                  </span>
-                </div>
-                @if (sessionLive(session)) {
-                  <span class="live-badge">On now</span>
-                }
-              </div>
-              @if (session.cancelled) {
-                <p class="cancelled-label">Cancelled · this session will not run</p>
-              }
-              @if (session.description) {
-                <p class="preserve-lines card-preview">{{ session.description }}</p>
-              }
-              @if (session.location) {
-                <p class="location">
-                  <mat-icon aria-hidden="true">location_on</mat-icon>{{ session.location }}
-                </p>
-              }
-              @if (session.recurrence === 'weekly') {
-                <p class="help-text">Part of a weekly series</p>
-              }
-              <button
-                class="details-link"
-                mat-button
-                type="button"
-                [attr.aria-label]="'View session details: ' + session.title"
-                (click)="openSession(session)"
-              >
-                View full details <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-              </button>
-              @if (!session.cancelled) {
-                <div class="session-actions">
-                  @if (demo.enabled) {
-                    @if (joinUrl(session)) {
-                      <a
-                        mat-flat-button
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        [href]="joinUrl(session)"
-                        ><mat-icon aria-hidden="true">videocam</mat-icon>Join hosted demo</a
-                      >
-                    } @else {
-                      <span class="help-text"
-                        >No host meeting linked. Add a meeting in demo controls.</span
-                      >
-                    }
-                    <a
-                      mat-stroked-button
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      [href]="googleUrl(session, unitCode(session.unit_id))"
-                      >Preview DEMO in Google Calendar</a
-                    >
-                    <button mat-button type="button" (click)="downloadSession(session)">
-                      Download DEMO .ics
-                    </button>
-                  } @else {
-                    @if (joinUrl(session)) {
-                      <a
-                        mat-flat-button
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        [href]="joinUrl(session)"
-                        ><mat-icon aria-hidden="true">videocam</mat-icon>Join session</a
-                      >
-                    } @else {
-                      <span class="help-text">{{
-                        session.location
-                          ? 'See location details above.'
-                          : 'Joining details will be added by your teaching team.'
-                      }}</span>
-                    }
-                    <a
-                      mat-stroked-button
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      [href]="googleUrl(session, unitCode(session.unit_id))"
-                      >Add to Google Calendar</a
-                    >
-                    <button mat-button type="button" (click)="downloadSession(session)">
-                      Download .ics
-                    </button>
+                  </h4>
+                  <p class="session-fact">
+                    <mat-icon aria-hidden="true">schedule</mat-icon>
+                    <span
+                      >{{ session.start_at | date: 'h:mm a' }} –
+                      {{ session.end_at | date: 'h:mm a' }}
+                      @if (
+                        (session.start_at | date: 'yyyyMMdd') !==
+                        (session.end_at | date: 'yyyyMMdd')
+                      ) {
+                        · ends {{ session.end_at | date: 'd MMM' }}
+                      }
+                    </span>
+                  </p>
+                  @if (session.location) {
+                    <p class="session-fact location">
+                      <mat-icon aria-hidden="true">location_on</mat-icon
+                      ><span>{{ session.location }}</span>
+                    </p>
+                  } @else if (joinUrl(session)) {
+                    <p class="session-fact">
+                      <mat-icon aria-hidden="true">videocam</mat-icon><span>Online</span>
+                    </p>
                   }
-                </div>
+                  @if (session.recurrence === 'weekly') {
+                    <p class="session-fact">
+                      <mat-icon aria-hidden="true">repeat</mat-icon
+                      ><span>Part of a weekly series</span>
+                    </p>
+                  }
+                  @if (session.cancelled) {
+                    <p class="cancelled-label">Cancelled · this session will not run</p>
+                  }
+                  @if (session.description) {
+                    <p class="preserve-lines card-preview">{{ session.description }}</p>
+                  }
+                  @if (!session.cancelled) {
+                    <div class="session-actions">
+                      @if (demo.enabled) {
+                        @if (joinUrl(session)) {
+                          <a
+                            mat-flat-button
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            [href]="joinUrl(session)"
+                            ><mat-icon aria-hidden="true">videocam</mat-icon>Join hosted demo</a
+                          >
+                        } @else {
+                          <span class="help-text"
+                            >No host meeting linked. Add a meeting in demo controls.</span
+                          >
+                        }
+                        <a
+                          mat-stroked-button
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          [href]="googleUrl(session, unitCode(session.unit_id))"
+                          ><mat-icon aria-hidden="true">calendar_add_on</mat-icon>Preview DEMO in
+                          Google Calendar</a
+                        >
+                        <button mat-button type="button" (click)="downloadSession(session)">
+                          <mat-icon aria-hidden="true">download</mat-icon>Download DEMO .ics
+                        </button>
+                      } @else {
+                        @if (joinUrl(session)) {
+                          <a
+                            mat-flat-button
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            [href]="joinUrl(session)"
+                            ><mat-icon aria-hidden="true">videocam</mat-icon>Join session</a
+                          >
+                        } @else {
+                          <span class="help-text">{{
+                            session.location
+                              ? 'See location details above.'
+                              : 'Joining details will be added by your teaching team.'
+                          }}</span>
+                        }
+                        <a
+                          mat-stroked-button
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          [href]="googleUrl(session, unitCode(session.unit_id))"
+                          ><mat-icon aria-hidden="true">calendar_add_on</mat-icon>Add to Google
+                          Calendar</a
+                        >
+                        <button mat-button type="button" (click)="downloadSession(session)">
+                          <mat-icon aria-hidden="true">download</mat-icon>Download .ics
+                        </button>
+                      }
+                    </div>
+                  }
+                  <div class="card-footer">
+                    <button
+                      class="details-link"
+                      mat-button
+                      type="button"
+                      [attr.aria-label]="'View session details: ' + session.title"
+                      (click)="openSession(session)"
+                    >
+                      View full details <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+                    </button>
+                    @if (safeUrl(session.source_url)) {
+                      <a
+                        class="source-link"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        [href]="safeUrl(session.source_url)"
+                        >View original details
+                        <mat-icon aria-hidden="true">open_in_new</mat-icon></a
+                      >
+                    }
+                  </div>
+                </article>
               }
-              @if (safeUrl(session.source_url)) {
-                <a
-                  class="source-link"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  [href]="safeUrl(session.source_url)"
-                  >View original details <mat-icon aria-hidden="true">open_in_new</mat-icon></a
-                >
-              }
-            </article>
+            </div>
           } @empty {
-            <div class="empty-card">
-              <mat-icon aria-hidden="true">event_available</mat-icon>
+            <div class="hub-card empty-card">
+              <span class="state-icon"
+                ><mat-icon aria-hidden="true">event_available</mat-icon></span
+              >
               <h3>No sessions scheduled yet</h3>
               <p>Your teaching team can add HelpHubs, lectures and other classes here.</p>
+              @if (manageableUnits.length) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="saving"
+                  (click)="startSession()"
+                >
+                  <mat-icon aria-hidden="true">add</mat-icon> New session
+                </button>
+              }
             </div>
           }
           <aside class="calendar-note">
@@ -696,6 +833,9 @@
         </section>
       }
     </div>
+  }
+  <f-study-essentials />
+  @if (showFeed) {
     <p class="hub-footer">
       Only members of a unit can see its updates. Content comes from your teaching team or connected
       unit announcement channels; linked meetings may also require your university sign-in.

@@ -4,6 +4,7 @@ import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
+import {MatMenuModule} from '@angular/material/menu';
 import {ActivatedRoute, NavigationStart, Router, RouterLink} from '@angular/router';
 import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
@@ -38,6 +39,7 @@ import {UnitHubService} from './unit-hub.service';
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatMenuModule,
     RouterLink,
     StudyEssentialsComponent,
     TeamsMeetingComposerComponent,
@@ -172,6 +174,47 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
   kindIcon(kind: string): string {
     return this.sessionKinds.find((item) => item.value === kind)?.icon ?? 'event';
+  }
+  kindTone(kind: string): string {
+    return kind === 'helphub' || kind === 'lecture' ? kind : 'class';
+  }
+  get showFeed(): boolean {
+    return !this.loading && !this.loadError && !this.managing && this.units.length > 0;
+  }
+  /** Upcoming sessions grouped by the local calendar day they start on. */
+  get sessionGroups(): {key: string; label: string; date: string; sessions: LearningSession[]}[] {
+    const dayKey = (value: Date) =>
+      `${value.getFullYear()}-${value.getMonth() + 1}-${value.getDate()}`;
+    const today = new Date();
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const groups: {key: string; label: string; date: string; sessions: LearningSession[]}[] = [];
+    for (const session of this.sessions) {
+      const key = dayKey(new Date(session.start_at));
+      let group = groups.find((item) => item.key === key);
+      if (!group) {
+        const label = key === dayKey(today) ? 'Today' : key === dayKey(tomorrow) ? 'Tomorrow' : '';
+        group = {key, label, date: session.start_at, sessions: []};
+        groups.push(group);
+      }
+      group.sessions.push(session);
+    }
+    return groups;
+  }
+  startAnnouncement(): void {
+    this.openEditor('announcement');
+  }
+  startSession(): void {
+    this.openEditor('session');
+  }
+  private openEditor(kind: 'announcement' | 'session'): void {
+    if (!this.managing) {
+      this.toggleManage();
+    }
+    if (kind === 'announcement') {
+      this.editAnnouncement();
+    } else {
+      this.editSession();
+    }
   }
   sessionLive(session: LearningSession): boolean {
     const now = Date.now();

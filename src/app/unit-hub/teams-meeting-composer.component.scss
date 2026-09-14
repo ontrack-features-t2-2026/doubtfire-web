@@ -4,9 +4,10 @@
 }
 
 .teams-composer {
-  padding: 1rem;
+  margin-top: 24px;
+  padding: 16px;
   border: 1px solid var(--ot-color-divider);
-  border-radius: 0.75rem;
+  border-radius: var(--ot-radius-md);
   background: color-mix(in srgb, var(--ot-color-link) 6%, var(--ot-color-surface));
   color: var(--ot-color-text);
   overflow-wrap: anywhere;
@@ -14,7 +15,8 @@
 
 h3 {
   margin: 0 0 0.5rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  font-weight: 650;
 }
 
 p {
@@ -28,6 +30,7 @@ p {
   display: grid;
   gap: 0.35rem;
   margin: 1rem 0;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
@@ -39,7 +42,7 @@ textarea {
   padding: 0.65rem;
   // Muted text, not the border token: that is 1.6:1 in dark, too faint for a field edge.
   border: 1px solid var(--ot-color-text-muted);
-  border-radius: 0.35rem;
+  border-radius: var(--ot-radius-sm);
   background: var(--ot-color-surface-raised);
   color: var(--ot-color-text);
   font: inherit;
@@ -52,7 +55,8 @@ textarea {
 small,
 .handoff-note,
 .fallback-note {
-  font-size: 0.875rem;
+  color: var(--ot-color-text-muted);
+  font-size: 0.85rem;
   font-weight: 400;
 }
 .repeat-note {
