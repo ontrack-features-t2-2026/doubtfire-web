@@ -4,71 +4,82 @@
   id="pdfContainer"
   [attr.aria-label]="'PDF viewer for ' + displayFilename"
 >
+  <!-- Theme toolbar: the file name, then icon buttons with tooltips, as on every other
+       panel. Search and zoom sit on their own row while the OnTrack viewer is showing. -->
   <header aria-label="PDF viewer controls" class="pdf-viewer__toolbar">
-    <div class="pdf-viewer__file-heading">
-      <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
-      <span [title]="displayFilename">{{ displayFilename }}</span>
-    </div>
+    <div class="pdf-viewer__title-row">
+      <div class="pdf-viewer__file-heading">
+        <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+        <span [title]="displayFilename">{{ displayFilename }}</span>
+      </div>
 
-    <div class="pdf-viewer__toolbar-row pdf-viewer__primary-actions">
-      <button
-        class="pdf-viewer__control"
-        type="button"
-        [attr.aria-label]="previewEnabled ? 'Hide PDF preview' : 'Show PDF preview'"
-        [attr.aria-pressed]="previewEnabled"
-        (click)="togglePreview()"
-      >
-        <mat-icon aria-hidden="true">{{
-          previewEnabled ? 'visibility' : 'visibility_off'
-        }}</mat-icon>
-        <span>{{ previewEnabled ? 'Preview on' : 'Preview off' }}</span>
-      </button>
-
-      <button
-        class="pdf-viewer__control"
-        type="button"
-        [attr.aria-label]="
-          viewerMode === 'ontrack'
-            ? 'Viewer mode: OnTrack. Switch to browser viewer'
-            : 'Viewer mode: Browser. Switch to OnTrack viewer'
-        "
-        [disabled]="!previewEnabled || !pdfBlobUrl"
-        (click)="toggleViewerMode()"
-      >
-        <mat-icon aria-hidden="true">{{
-          viewerMode === 'ontrack' ? 'article' : 'open_in_browser'
-        }}</mat-icon>
-        <span>{{ viewerMode === 'ontrack' ? 'OnTrack viewer' : 'Browser viewer' }}</span>
-      </button>
-
-      <button
-        class="pdf-viewer__control"
-        type="button"
-        [attr.aria-label]="'Download PDF: ' + displayFilename"
-        [disabled]="!hasDownloadSource"
-        (click)="downloadPdf()"
-      >
-        <mat-icon aria-hidden="true">download</mat-icon>
-        <span>Download</span>
-      </button>
-      @if (canFullscreen) {
+      <div class="pdf-viewer__actions">
         <button
-          aria-label="Full screen"
-          class="pdf-viewer__control"
+          class="pdf-viewer__icon-button"
+          mat-icon-button
           type="button"
-          [attr.aria-pressed]="isFullscreen"
-          (click)="toggleFullscreen()"
+          [attr.aria-label]="previewEnabled ? 'Hide PDF preview' : 'Show PDF preview'"
+          [attr.aria-pressed]="previewEnabled"
+          [matTooltip]="previewEnabled ? 'Hide preview' : 'Show preview'"
+          (click)="togglePreview()"
         >
           <mat-icon aria-hidden="true">{{
-            isFullscreen ? 'fullscreen_exit' : 'fullscreen'
+            previewEnabled ? 'visibility' : 'visibility_off'
           }}</mat-icon>
-          <span>{{ isFullscreen ? 'Exit full screen' : 'Full screen' }}</span>
         </button>
-      }
+
+        <button
+          class="pdf-viewer__icon-button"
+          mat-icon-button
+          type="button"
+          [attr.aria-label]="
+            viewerMode === 'ontrack'
+              ? 'Viewer mode: OnTrack. Switch to browser viewer'
+              : 'Viewer mode: Browser. Switch to OnTrack viewer'
+          "
+          [disabled]="!previewEnabled || !pdfBlobUrl"
+          [matTooltip]="
+            viewerMode === 'ontrack' ? 'Use the browser viewer' : 'Use the OnTrack viewer'
+          "
+          (click)="toggleViewerMode()"
+        >
+          <mat-icon aria-hidden="true">{{
+            viewerMode === 'ontrack' ? 'open_in_browser' : 'article'
+          }}</mat-icon>
+        </button>
+
+        <button
+          class="pdf-viewer__icon-button"
+          mat-icon-button
+          matTooltip="Download PDF"
+          type="button"
+          [attr.aria-label]="'Download PDF: ' + displayFilename"
+          [disabled]="!hasDownloadSource"
+          (click)="downloadPdf()"
+        >
+          <mat-icon aria-hidden="true">download</mat-icon>
+        </button>
+
+        @if (canFullscreen) {
+          <button
+            aria-label="Full screen"
+            class="pdf-viewer__icon-button"
+            mat-icon-button
+            type="button"
+            [attr.aria-pressed]="isFullscreen"
+            [matTooltip]="isFullscreen ? 'Exit full screen' : 'Full screen'"
+            (click)="toggleFullscreen()"
+          >
+            <mat-icon aria-hidden="true">{{
+              isFullscreen ? 'fullscreen_exit' : 'fullscreen'
+            }}</mat-icon>
+          </button>
+        }
+      </div>
     </div>
 
     @if (previewEnabled && viewerMode === 'ontrack') {
-      <div class="pdf-viewer__toolbar-row pdf-viewer__document-actions">
+      <div class="pdf-viewer__document-actions">
         <label class="pdf-viewer__search">
           <mat-icon aria-hidden="true">search</mat-icon>
           <span class="sr-only">Search this PDF</span>
@@ -87,22 +98,26 @@
         <div aria-label="PDF zoom controls" class="pdf-viewer__zoom" role="group">
           <button
             aria-label="Zoom out PDF"
-            class="pdf-viewer__icon-control"
+            class="pdf-viewer__icon-button"
+            mat-icon-button
+            matTooltip="Zoom out"
             type="button"
             [disabled]="!canZoomOut"
             (click)="zoomOut()"
           >
-            <mat-icon>zoom_out</mat-icon>
+            <mat-icon aria-hidden="true">zoom_out</mat-icon>
           </button>
           <output aria-label="Current PDF zoom" aria-live="polite">{{ zoomPercent }}</output>
           <button
             aria-label="Zoom in PDF"
-            class="pdf-viewer__icon-control"
+            class="pdf-viewer__icon-button"
+            mat-icon-button
+            matTooltip="Zoom in"
             type="button"
             [disabled]="!canZoomIn"
             (click)="zoomIn()"
           >
-            <mat-icon>zoom_in</mat-icon>
+            <mat-icon aria-hidden="true">zoom_in</mat-icon>
           </button>
         </div>
       </div>
@@ -116,8 +131,15 @@
         <h3>Preview is off</h3>
         <p>{{ displayFilename }} is still available to download.</p>
         <div class="pdf-viewer__state-actions">
-          <button type="button" (click)="togglePreview()">Show preview</button>
-          <button type="button" [disabled]="!hasDownloadSource" (click)="downloadPdf()">
+          <button color="primary" mat-flat-button type="button" (click)="togglePreview()">
+            Show preview
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="!hasDownloadSource"
+            (click)="downloadPdf()"
+          >
             Download PDF
           </button>
         </div>
@@ -138,7 +160,9 @@
         >
           <p>
             Your browser cannot show this PDF preview.
-            <button type="button" (click)="downloadPdf()">Download {{ displayFilename }}</button>
+            <button mat-stroked-button type="button" (click)="downloadPdf()">
+              Download {{ displayFilename }}
+            </button>
           </p>
         </object>
       } @else if (pdfBlobUrl) {
@@ -174,8 +198,15 @@
           <h3>PDF preview unavailable</h3>
           <p>{{ errorMessage }}</p>
           <div class="pdf-viewer__state-actions">
-            <button type="button" (click)="retry()">Try preview again</button>
-            <button type="button" [disabled]="!hasDownloadSource" (click)="downloadPdf()">
+            <button color="primary" mat-flat-button type="button" (click)="retry()">
+              Try preview again
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="!hasDownloadSource"
+              (click)="downloadPdf()"
+            >
               Download PDF
             </button>
           </div>

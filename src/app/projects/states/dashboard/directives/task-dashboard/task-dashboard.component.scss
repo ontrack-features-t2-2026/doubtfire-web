@@ -93,4 +93,19 @@
     grid-template-rows: auto minmax(18rem, 1fr);
     padding: 0.5rem;
   }
+
+  // The page scrolls as one document on a phone, so a PDF sized to "100%" of it fell
+  // back to its minimum height and left blank page below. It takes the screen under
+  // the sticky task tabs instead, and once the headings above it have scrolled away
+  // it runs from the tabs to the bottom edge, through the page's bottom padding.
+  .task-dashboard-body > f-pdf-viewer,
+  .submission-preview {
+    display: block;
+    height: calc(100dvh - var(--mobile-task-tabs-height));
+    margin-bottom: calc(-1 * var(--mobile-page-bottom-padding));
+  }
+
+  .submission-view {
+    padding-bottom: 0;
+  }
 }
