@@ -90,7 +90,10 @@
       </div>
     }
 
-    <div class="relative flex shrink-0">
+    <!-- The comment count hangs off the circle's top right corner. In the list the
+         circle sits against the scroll edge, which clips overflow, so keep that
+         corner's overhang inside the row. -->
+    <div class="relative flex shrink-0" [ngClass]="{'mr-2': !isCollapsed}">
       <status-icon [status]="task.status"></status-icon>
       @if (task.numNewComments > 0) {
         <span
