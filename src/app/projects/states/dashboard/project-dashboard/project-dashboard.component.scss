@@ -8,7 +8,7 @@
   overflow: hidden;
 }
 
-.desktop-task-dashboard > f-task-dashboard {
+.desktop-task-dashboard {
   display: block;
   height: 100%;
 }
@@ -181,164 +181,29 @@
     -webkit-overflow-scrolling: auto;
   }
 
-  .project-task-list-panel--phone-hidden,
-  .project-task-resizer--phone-hidden,
-  .project-dashboard-placeholder--phone-hidden,
-  .comments-floating-toggle {
+  .project-task-list-panel--phone-hidden {
     display: none !important;
   }
 }
 
-.comments-floating-toggle {
-  position: fixed;
-  top: 50%;
-  right: -20px;
-  z-index: 300;
-  opacity: 0.55;
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
-  transform: translateY(-50%);
-}
-
-.comments-floating-toggle mat-icon {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  font-size: 20px;
-  height: 20px;
-  width: 20px;
-  transition: opacity 150ms ease;
-}
-
-.comments-floating-toggle:hover,
-.comments-floating-toggle:focus-visible {
-  opacity: 1;
-  transform: translate(-20px, -50%);
-}
-
-.comments-floating-toggle__edge-icon {
-  opacity: 1;
-  transform: translateX(-6px);
-}
-
-.comments-floating-toggle__hover-icon {
-  opacity: 0;
-}
-
-.comments-floating-toggle:hover .comments-floating-toggle__edge-icon,
-.comments-floating-toggle:focus-visible .comments-floating-toggle__edge-icon {
-  opacity: 0;
-}
-
-.comments-floating-toggle:hover .comments-floating-toggle__hover-icon,
-.comments-floating-toggle:focus-visible .comments-floating-toggle__hover-icon {
-  opacity: 1;
-}
-
-.comments-sidebar {
-  position: relative;
-}
-
-.comments-sidebar--narrow {
-  flex-basis: 375px !important;
-  min-width: 375px;
-  width: 375px !important;
-  border-radius: 0 !important;
-  box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
-  z-index: 250;
-}
-
-// Full-screen chat: the sidebar covers the task list and task pane inside the
-// dashboard layout, so the app header and demo banner stay where they are. The
-// template drops its w-1/4 utility while full screen (a layered !important this
-// file cannot beat); the !important widths here beat the narrow overlay's 375px.
-.project-dashboard-layout {
-  position: relative;
-}
-
-.comments-sidebar.comments-sidebar--fullscreen {
-  position: absolute;
-  inset: 0;
-  z-index: 270;
-  width: auto !important;
-  min-width: 0;
-  flex-basis: auto !important;
-  box-shadow: none;
-}
-
-// The header row, then the comments filling the rest of the panel.
-.comments-sidebar__column {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  flex-direction: column;
-}
-
-.comments-sidebar__bar {
-  display: flex;
-  height: 48px;
-  flex: none;
-  align-items: center;
-  gap: 0.5rem;
-  padding-inline: 0.75rem 0.25rem;
-  border-bottom: 1px solid var(--ot-color-divider);
-}
-
-.comments-sidebar__bar-icon {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  color: var(--ot-color-text-muted);
-  font-size: 20px;
-}
-
-.comments-sidebar__title {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  margin: 0;
-  color: var(--ot-color-text);
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.comments-sidebar__task {
-  margin-left: 0.375rem;
-  color: var(--ot-color-text-muted);
-  font-weight: 400;
-}
-
-.comments-sidebar__fullscreen {
-  flex: none;
-  color: var(--ot-color-text-muted);
-}
-
-.comments-sidebar__viewer {
+// The comments panel: the viewer fills it, and full screen gives it a centred column
+// wide enough for longer messages without a line running edge to edge.
+.project-comments__viewer {
   display: block;
   min-height: 0;
   flex: 1;
 }
 
-// Full screen: a centred column wide enough for longer messages, but not so wide
-// a line runs edge to edge. The bubbles and the gutters grow with it.
-.comments-sidebar--fullscreen .comments-sidebar__column {
+.project-comments__task {
+  margin-left: 0.375rem;
+  color: var(--ot-color-text-muted);
+  font-weight: 400;
+}
+
+.project-comments.app-panel--fullscreen .project-comments__viewer {
   --comment-bubble-max-width: min(42rem, 75%);
   --comments-gutter: 1.5rem;
   width: 100%;
   max-width: 72rem;
   margin-inline: auto;
-}
-
-.comments-sidebar__collapse {
-  position: absolute;
-  top: 50%;
-  left: -20px;
-  z-index: 260;
-  transform: translateY(-50%);
-  background: var(--ot-color-surface-raised);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
 }

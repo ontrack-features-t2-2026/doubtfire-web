@@ -1,4 +1,3 @@
-import {CdkDragEnd, CdkDragMove, CdkDragStart} from '@angular/cdk/drag-drop';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
@@ -11,7 +10,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
+import {BehaviorSubject, Observable, Subject, filter, map, takeUntil} from 'rxjs';
 import {
   Project,
   TaskDefinition,
@@ -56,7 +55,6 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public selectedTaskDefinition$: BehaviorSubject<TaskDefinition> =
     new BehaviorSubject<TaskDefinition>(null);
 
-  subs$: Observable<unknown> = of(true);
   readonly skeletonRows = Array.from({length: 10}, (_, index) => index);
   private readonly projectSubject: BehaviorSubject<Project> = new BehaviorSubject(null);
 
@@ -88,25 +86,20 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public readonly taskListExpandedWidth = 400;
   public readonly taskListCollapseThreshold = 125;
   private _leftWidth = this.taskListExpandedWidth;
-  public lastX;
-  public startWidth = 0;
-
-  public startLeftX = 0;
-  public isCommentsNarrow = false;
-  public commentsCollapsed = false;
-  // Desktop only: the chat covers the task list and task pane so a long
-  // conversation has room. Esc or the same button puts it back.
-  public commentsFullscreen = false;
+  // Desktop only: the panel shown full screen (the chat, so a long conversation has
+  // room), and the one shown when the panels stack. Esc or the same button puts it back.
+  public fullscreenPanel: string | null = null;
+  public activePanel: string | null = 'list';
   public isPhoneLayout = false;
   public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
   public activeTaskStatusFilter: TaskStatusEnum | null = null;
   private taskFilterNavigationActive = false;
 
-  private readonly commentsBreakpoint = '(max-width: 999.98px)';
   private readonly phoneBreakpoint = '(max-width: 639.98px)';
 
-  public get commentsPanelCollapsed(): boolean {
-    return this.isCommentsNarrow && this.commentsCollapsed;
+  /** The staff portfolio view embeds this page, and remembers its panels apart. */
+  public get panelPage(): string {
+    return this.taskSelectionUrlBase ? 'portfolio-progress' : 'project-dashboard';
   }
 
   public get taskListCollapsed(): boolean {
@@ -140,45 +133,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     return project.unit.taskDefinitions;
   }
 
-  startedDragging(event: CdkDragStart, boundary: HTMLElement) {
-    document.body.classList.add('split-pane-resizing');
-    event.source.element.nativeElement.classList.add('hovering');
-    const rect = boundary.getBoundingClientRect();
-    // x relative to the container
-    this.startLeftX = (event.event as MouseEvent).clientX - rect.left;
-    this.startWidth = this.leftWidth;
-  }
-
-  dragging(event: CdkDragMove, boundary: HTMLElement) {
-    const rect = boundary.getBoundingClientRect();
-    const x = (event.event as MouseEvent).clientX - rect.left;
-
-    const delta = x - this.startLeftX;
-    const newWidth = this.startWidth + delta;
-
-    this.leftWidth = Math.max(this.taskListCollapsedWidth, Math.min(500, newWidth));
-
-    // keep the handle visually glued to the divider
-    event.source.reset();
-  }
-
-  stoppedDragging(event: CdkDragEnd, _div: HTMLDivElement) {
-    document.body.classList.remove('split-pane-resizing');
-    event.source.element.nativeElement.classList.remove('hovering');
-  }
-
   ngOnInit(): void {
-    this.breakpointObserver
-      .observe(this.commentsBreakpoint)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(({matches}) => {
-        this.isCommentsNarrow = matches;
-        // Narrowing the window must not tuck away a chat the student has made
-        // full screen; that would hide its exit button along with it.
-        this.commentsCollapsed = matches && !this.commentsFullscreen;
-        window.dispatchEvent(new Event('resize'));
-      });
-
     this.breakpointObserver
       .observe(this.phoneBreakpoint)
       .pipe(takeUntil(this.destroy$))
@@ -186,7 +141,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         this.isPhoneLayout = matches;
         if (matches) {
           // The phone layout has its own feedback pane and no full-screen mode.
-          this.commentsFullscreen = false;
+          this.fullscreenPanel = null;
         }
         if (matches && this.selectedTaskDefinition$.value) {
           this.mobilePane = this.shouldOpenFeedback(this.selectedTaskDefinition$.value)
@@ -199,9 +154,12 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDefinition) => {
       if (!taskDefinition) {
         this.mobilePane = 'task';
-        this.commentsFullscreen = false;
+        this.activePanel = 'list';
+        this.fullscreenPanel = null;
         return;
       }
+
+      this.activePanel = 'task';
 
       if (this.isPhoneLayout) {
         // A task opened from a notification/deep link should expose its feedback immediately.
@@ -292,21 +250,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    document.body.classList.remove('split-pane-resizing');
     this.projectLoadCancel$.next();
     this.projectLoadCancel$.complete();
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  public toggleCommentsPanel(): void {
-    this.commentsCollapsed = !this.commentsCollapsed;
-    window.dispatchEvent(new Event('resize'));
-  }
-
-  public toggleCommentsFullscreen(): void {
-    this.commentsFullscreen = !this.commentsFullscreen;
-    window.dispatchEvent(new Event('resize'));
   }
 
   public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {

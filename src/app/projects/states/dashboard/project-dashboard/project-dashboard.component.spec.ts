@@ -18,7 +18,6 @@ describe('ProjectDashboardComponent task selection', () => {
   let fixture: ComponentFixture<ProjectDashboardComponent>;
   let taskStatusUpdated$: Subject<Task>;
   let taskSubmissionCompleted$: Subject<Task>;
-  let commentsNarrow$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
   let phoneLayout$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
 
   // findTaskForDefinition is read when the phone layout opens the selected task.
@@ -28,7 +27,6 @@ describe('ProjectDashboardComponent task selection', () => {
   beforeEach(async () => {
     taskStatusUpdated$ = new Subject<Task>();
     taskSubmissionCompleted$ = new Subject<Task>();
-    commentsNarrow$ = new BehaviorSubject({matches: false, breakpoints: {}});
     phoneLayout$ = new BehaviorSubject({matches: false, breakpoints: {}});
 
     await TestBed.configureTestingModule({
@@ -55,10 +53,8 @@ describe('ProjectDashboardComponent task selection', () => {
         },
         {
           provide: BreakpointObserver,
-          // ngOnInit observes the comments breakpoint first, then the phone one.
-          useValue: {
-            observe: vi.fn().mockReturnValueOnce(commentsNarrow$).mockReturnValueOnce(phoneLayout$),
-          },
+          // ngOnInit observes the phone breakpoint. The panel layout owns the rest.
+          useValue: {observe: vi.fn().mockReturnValue(phoneLayout$)},
         },
         {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
       ],
@@ -101,31 +97,21 @@ describe('ProjectDashboardComponent task selection', () => {
     expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
   });
 
-  it('toggles the full-screen chat and drops it when the task closes', () => {
-    component.toggleCommentsFullscreen();
-    expect(component.commentsFullscreen).toBe(true);
-
-    component.toggleCommentsFullscreen();
-    expect(component.commentsFullscreen).toBe(false);
+  it('drops the full-screen chat when the task closes', () => {
+    component.fullscreenPanel = 'comments';
 
     // A full-screen chat with no task behind it would leave nothing to exit back to.
-    component.toggleCommentsFullscreen();
     component.selectedTaskDefinition$.next(null);
 
-    expect(component.commentsFullscreen).toBe(false);
+    expect(component.fullscreenPanel).toBeNull();
   });
 
-  it('keeps a full-screen chat open when the window narrows, and leaves it for phones', () => {
-    component.toggleCommentsFullscreen();
-
-    commentsNarrow$.next({matches: true, breakpoints: {}});
-
-    expect(component.commentsFullscreen).toBe(true);
-    expect(component.commentsPanelCollapsed).toBe(false);
+  it('leaves full screen for the phone layout', () => {
+    component.fullscreenPanel = 'comments';
 
     phoneLayout$.next({matches: true, breakpoints: {}});
 
-    expect(component.commentsFullscreen).toBe(false);
+    expect(component.fullscreenPanel).toBeNull();
   });
 });
 
