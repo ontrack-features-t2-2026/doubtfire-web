@@ -13,16 +13,27 @@
       @if (task.numNewComments > 0) {
         <span
           class="flex size-[20px] items-center justify-center rounded-full bg-blue-500 text-[12px] leading-none font-bold text-white"
+          role="img"
+          [attr.aria-label]="newCommentsLabel(task)"
         >
           {{ task.numNewComments }}
         </span>
       }
       @if (task.similaritiesDetected) {
+        <!--
+          The label matches the tooltip exactly. When they differ the tooltip adds
+          an aria-describedby and a screen reader reads the text twice.
+        -->
         <span
+          aria-label="Similarities Detected"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c]"
           matTooltip="Similarities Detected"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
             visibility
           </mat-icon>
         </span>
@@ -50,30 +61,49 @@
       }
       @if (task.isDueSoon() && !task.inFinalState()) {
         <span
+          aria-label="Due soon"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#fab143] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-black">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-black"
+          >
             schedule
           </mat-icon>
         </span>
       }
       @if (task.betweenDueDateAndDeadlineDate() && !task.isPastDeadline() && !task.inFinalState()) {
         <span
+          aria-label="Due, deadline not yet passed"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
             schedule
           </mat-icon>
         </span>
       }
+      <!--
+        Same colour as the due badge above, so the glyph has to differ too.
+        Colour alone is not enough to tell the two states apart.
+      -->
       @if (task.isPastDeadline() && !task.inFinalState()) {
         <span
+          aria-label="Past deadline"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
-            schedule
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
+            event_busy
           </mat-icon>
-          <strong class="h-min font-bold text-white">!</strong>
+          <strong aria-hidden="true" class="h-min font-bold text-white">!</strong>
         </span>
       }
     </div>

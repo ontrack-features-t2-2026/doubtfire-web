@@ -23,7 +23,7 @@ theme MVP or change its palette. The fixes consume the existing `--ot-color-*` t
 | Task Planner and tutorials                    | Gantt surfaces/text and toolbar controls; tutorial cards and empty states                                                                          |
 | Calendar, About and demo controls             | Dialog fields, links, headings, cards and the demo banner                                                                                          |
 
-The final frontend regression run passed **1,036 tests across 141 files** on Node 22.
+The final frontend regression run passed **1,050 tests across 141 files** on Node 22.
 Full lint, typecheck, deployment configuration validation and the production build passed.
 The build retains its existing stylesheet-size and dependency warnings; budgets were not raised.
 The old test requiring a permanently white search field now checks its label, placeholder,

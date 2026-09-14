@@ -3,7 +3,7 @@ import {TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {provideRouter} from '@angular/router';
 import {RouterTestingHarness} from '@angular/router/testing';
-import {of, throwError} from 'rxjs';
+import {Subject, of, throwError} from 'rxjs';
 import {routes} from 'src/app/app.routes';
 import {roleWhitelistGuard} from 'src/app/common/guards/role-whitelist.guard';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
@@ -281,6 +281,31 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(component.announcementForm.controls.body.value).toBe('Keep my work');
     expect(component.saving).toBe(false);
   });
+
+  it('keeps both unit selectors on the unit being shown or managed, including after a save', async () => {
+    const data = feed();
+    data.units = [
+      {...data.units[0], can_manage: true},
+      {id: 222, code: 'SIT222', name: 'Other Unit', can_manage: true},
+    ];
+    service.feed.mockReturnValue(of(data));
+    const {component, harness, element} = await open('/unit-hub?unit=222');
+    expect((element.querySelector('#hub-unit') as HTMLSelectElement).value).toBe('222');
+    component.toggleManage();
+    harness.detectChanges();
+    expect((element.querySelector('#manage-unit') as HTMLSelectElement).value).toBe('222');
+    const pendingFeed: Subject<typeof data> = new Subject();
+    service.feed.mockReturnValue(pendingFeed);
+    component.editAnnouncement();
+    component.announcementForm.patchValue({title: 'Week update', body: 'Bring questions'});
+    component.save();
+    harness.detectChanges();
+    pendingFeed.next(data);
+    harness.detectChanges();
+    expect(service.saveAnnouncement).toHaveBeenCalledWith(222, expect.anything(), undefined);
+    expect((element.querySelector('#manage-unit') as HTMLSelectElement).value).toBe('222');
+  });
+
   it('opens full plain announcement details from its title and restores focus on close', async () => {
     const data = feed();
     data.announcements[0].body = 'Full announcement\n<img src=x onerror=alert(1)>\nLast paragraph';

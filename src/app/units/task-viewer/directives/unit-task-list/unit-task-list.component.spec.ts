@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
+import {Directive, NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject} from 'rxjs';
@@ -479,5 +479,165 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+});
+
+// A11Y-COLOUR03. The TaskStatusBadges template is what the dashboard and the
+// task viewer draw next to every task, and each badge is the only signal a
+// student gets that a task has new comments, similarities or a deadline state.
+// MatIcon hides the glyph and a tooltip is not a name for a non-interactive
+// element, so without a role and label a screen reader got nothing, or a bare
+// number for the comment count. These tests render the real template because
+// what assistive technology reads is a question about the markup. StubMatMenu
+// satisfies `#taskListFiltersMenu="matMenu"` in the filter menu, and
+// NO_ERRORS_SCHEMA renders the other mat-* elements as plain markup.
+@Directive({selector: 'mat-menu', exportAs: 'matMenu', standalone: false})
+class StubMatMenu {}
+
+describe('FUnitTaskListComponent task status badges', () => {
+  let fixture: ComponentFixture<FUnitTaskListComponent>;
+
+  const badgeTaskDefinition = {
+    ...taskDefinition(1, '1.1P'),
+    isGroupTask: () => false,
+  } as unknown as TaskDefinition;
+
+  // Every badge condition starts off, so each test turns on only the state it
+  // is about. Only the members the template reads are present.
+  const makeTask = (overrides: Record<string, unknown> = {}): Task =>
+    ({
+      definition: badgeTaskDefinition,
+      status: 'not_started',
+      numNewComments: 0,
+      similaritiesDetected: false,
+      qualityPts: 0,
+      hasGrade: () => false,
+      gradeDesc: () => '',
+      hasQualityPoints: () => false,
+      isDueSoon: () => false,
+      betweenDueDateAndDeadlineDate: () => false,
+      isPastDeadline: () => false,
+      inFinalState: () => false,
+      isBeforeStartDate: () => false,
+      inSubmittedState: () => false,
+      daysUntilDueDate: () => 20,
+      timeToDue: () => '',
+      localDueDate: (): Date => undefined,
+      ...overrides,
+    }) as unknown as Task;
+
+  const render = (task: Task, isCollapsed = false): void => {
+    fixture = TestBed.createComponent(FUnitTaskListComponent);
+    const component = fixture.componentInstance;
+    component.mode = 'all-tasks';
+    component.isCollapsed = isCollapsed;
+    component.taskDefinitions = [badgeTaskDefinition];
+    component.tasks = [task];
+    component.selectedTaskDefinition$ = new BehaviorSubject<TaskDefinition>(null);
+    fixture.detectChanges();
+  };
+
+  const badges = (): HTMLElement[] =>
+    Array.from(fixture.nativeElement.querySelectorAll('[role="img"]'));
+
+  const labels = (): string[] => badges().map((badge) => badge.getAttribute('aria-label'));
+
+  beforeEach(async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+    });
+
+    await TestBed.configureTestingModule({
+      declarations: [FUnitTaskListComponent, StubMatMenu],
+      providers: [
+        {provide: Router, useValue: emptyProvider},
+        {
+          provide: ActivatedRoute,
+          useValue: {paramMap: new Subject<ReturnType<typeof convertToParamMap>>()},
+        },
+      ],
+      // The real template is rendered on purpose: the fix is in the markup.
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  // The last column is how many glyphs the badge draws. The comment badge draws
+  // only its count, and the past deadline badge adds a "!" after its icon.
+  it.each([
+    ['one new comment', {numNewComments: 1}, '1 new comment', 0],
+    ['several new comments', {numNewComments: 3}, '3 new comments', 0],
+    ['similarities', {similaritiesDetected: true}, 'Similarities Detected', 1],
+    ['due soon', {isDueSoon: () => true}, 'Due soon', 1],
+    [
+      'due before the deadline',
+      {betweenDueDateAndDeadlineDate: () => true},
+      'Due, deadline not yet passed',
+      1,
+    ],
+    ['past deadline', {isPastDeadline: () => true}, 'Past deadline', 2],
+  ])('names the %s badge and hides its glyph', (_name, overrides, label, glyphCount) => {
+    render(makeTask(overrides));
+
+    expect(labels()).toEqual([label]);
+
+    const glyphs: HTMLElement[] = Array.from(badges()[0].querySelectorAll('mat-icon, strong'));
+    expect(glyphs).toHaveLength(glyphCount);
+    glyphs.forEach((glyph) => expect(glyph.getAttribute('aria-hidden')).toBe('true'));
+  });
+
+  // MatTooltip only skips adding aria-describedby when the tooltip text is
+  // exactly the aria-label, so any difference makes a screen reader say it twice.
+  it('gives the similarities badge the same label as its tooltip', () => {
+    render(makeTask({similaritiesDetected: true}));
+
+    const [badge] = badges();
+    expect(badge.getAttribute('aria-label')).toBe(badge.getAttribute('mattooltip'));
+  });
+
+  it('keeps the visible comment count as the bare number', () => {
+    render(makeTask({numNewComments: 4}));
+
+    expect(badges()[0].textContent.trim()).toBe('4');
+    expect(labels()).toEqual(['4 new comments']);
+  });
+
+  it('uses a different glyph for past deadline than for due, so colour is not the only signal', () => {
+    render(makeTask({betweenDueDateAndDeadlineDate: () => true}));
+    const dueGlyph = badges()[0].querySelector('mat-icon').textContent.trim();
+
+    render(makeTask({isPastDeadline: () => true}));
+    const pastDeadlineGlyph = badges()[0].querySelector('mat-icon').textContent.trim();
+
+    expect(dueGlyph).toBe('schedule');
+    expect(pastDeadlineGlyph).toBe('event_busy');
+  });
+
+  it('names the badges in the collapsed list as well', () => {
+    render(makeTask({numNewComments: 2, isDueSoon: () => true}), true);
+
+    expect(labels()).toEqual(['2 new comments', 'Due soon']);
+  });
+
+  // Failure path: a badge whose condition is false is not rendered, so a
+  // student is never told about a state that does not apply.
+  it('renders no badges when nothing applies', () => {
+    render(makeTask());
+
+    expect(badges()).toEqual([]);
+  });
+
+  it('drops the deadline badges once the task is in a final state', () => {
+    render(
+      makeTask({
+        isDueSoon: () => true,
+        isPastDeadline: () => true,
+        inFinalState: () => true,
+      }),
+    );
+
+    expect(badges()).toEqual([]);
   });
 });
