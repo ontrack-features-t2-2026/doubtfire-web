@@ -1,0 +1,19 @@
+@use '../../portfolio-wizard' as wizard;
+
+.welcome-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--ot-color-divider);
+  border-radius: var(--ot-radius-md);
+  background: var(--ot-color-surface-raised);
+}
+
+.welcome-step__icon {
+  @include wizard.icon-tile(primary);
+}
+
+.welcome-note {
+  @include wizard.callout(info);
+}

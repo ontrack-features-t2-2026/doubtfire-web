@@ -1,0 +1,6 @@
+// The target grade field runs at 48px (Material density -2) so it lines up with
+// the calendar button beside it.
+.plan-grade-field {
+  --mat-form-field-container-height: 48px;
+  --mat-form-field-container-vertical-padding: 12px;
+}

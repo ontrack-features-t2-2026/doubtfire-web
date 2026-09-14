@@ -191,29 +191,32 @@ describe('HeaderComponent', () => {
       component = fixture.componentInstance;
     });
 
-    it('renders the calendar button in the header', () => {
+    it('keeps the calendar out of the toolbar at every width', () => {
       fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector(calendarButtonSelector)).toBeNull();
 
-      const button = fixture.nativeElement.querySelector(calendarButtonSelector);
-
-      expect(button).not.toBeNull();
-    });
-
-    it('keeps the compact mobile toolbar clear and leaves calendar access in the account menu', () => {
       mediaObserverStub.isActive.mockImplementation((alias: string) => alias === 'xs');
       fixture.detectChanges();
-
-      const button = fixture.nativeElement.querySelector(calendarButtonSelector);
-
-      expect(button).toBeNull();
+      expect(fixture.nativeElement.querySelector(calendarButtonSelector)).toBeNull();
     });
 
-    it('clicking the calendar button invokes the same handler the avatar menu Calendar item uses', () => {
+    it('opens the calendar from the account menu', async () => {
       const openCalendarSpy = vi.spyOn(component, 'openCalendar');
       fixture.detectChanges();
+      await fixture.whenStable();
 
-      const button: HTMLButtonElement = fixture.nativeElement.querySelector(calendarButtonSelector);
-      button.click();
+      const accountMenuTrigger: HTMLButtonElement =
+        fixture.nativeElement.querySelector('.account-menu-trigger');
+      accountMenuTrigger.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const calendarItem = Array.from(
+        document.querySelectorAll<HTMLButtonElement>('button[mat-menu-item]'),
+      ).find((item) => item.textContent.includes('Calendar'));
+      expect(calendarItem).toBeTruthy();
+
+      calendarItem.click();
 
       expect(openCalendarSpy).toHaveBeenCalledOnce();
       expect(calendarModalServiceStub.show).toHaveBeenCalledOnce();

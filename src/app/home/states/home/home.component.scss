@@ -2,37 +2,21 @@
 
 #home {
   padding-top: 10px;
-
-  .spinner {
-    position: fixed;
-    // background: #f0f2f5;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 4999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    ::ng-deep .mat-mdc-progress-spinner circle,
-    .mat-mdc-progress-spinner circle {
-      stroke: var(--ot-color-text-muted);
-    }
-  }
 }
 
 .removeStyle {
   text-decoration: none;
 }
 
-.mat-mdc-card-header {
-}
-
+// The enrolled unit cards on the student side of this page. The staff cards are
+// built from token utilities in the template and use none of these rules.
 .base-card {
-  margin-right: 15px;
-  margin-bottom: 15px;
-  border-radius: 15px;
+  margin-right: 16px;
+  margin-bottom: 16px;
+  border-radius: var(--ot-radius-md);
+  // Material's default subtitle tone (the unit code under the title) sits around
+  // 4.6:1 and read as too faint. Pin it to the muted text token (AA in both themes).
+  --mat-card-subtitle-text-color: var(--ot-color-text-muted);
   overflow: hidden;
   clip: auto;
 
@@ -42,11 +26,18 @@
 
   .f-card-title {
     font-size: 18px;
-    min-height: 65px; // Ensures consistent card height while allowing text to wrap
-    white-space: wrap;
+    min-height: 65px; // reserve two lines so short and long titles keep a uniform card
+    // Clamp to two lines with a real ellipsis. The old white-space:wrap +
+    // text-overflow:ellipsis never truncated (ellipsis needs a single line), so long
+    // unit names wrapped to 3-4 lines and pushed the chip and progress bar out of the
+    // fixed-height card. -webkit-line-clamp truncates a genuinely long name instead.
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
-    overflow: hidden;
     font-weight: 100;
   }
 
@@ -59,18 +50,6 @@
   }
 }
 
-.admin-card {
-  @extend .base-card;
-  width: 250px;
-  max-width: none;
-  height: auto;
-
-  .mat-mdc-list-item-icon {
-    color: var(--ot-color-text);
-    margin-right: 6px;
-  }
-}
-
 .unit-card {
   :hover {
     cursor: pointer;
@@ -78,7 +57,9 @@
   @extend .base-card;
   width: 300px;
   max-width: 300px;
-  max-height: 200px;
+  // No hard max-height: with the title clamped to two lines the card is already a
+  // bounded, uniform height, and the 200px clip was cutting off the term chip and
+  // progress bar on any multi-line title.
 
   .mat-mdc-card-actions {
     margin-bottom: 0px;
@@ -88,4 +69,12 @@
 :host {
   --mat-progress-bar-track-height: 16px;
   --mat-progress-bar-active-indicator-height: 16px;
+}
+
+// The card-footer progress bar is 16px tall, so Material's default square ends
+// read as a chunky rectangle. Round it to the pill rung so the track matches the
+// chips and buttons on the same card.
+mat-progress-bar {
+  border-radius: var(--ot-radius-pill);
+  overflow: hidden;
 }

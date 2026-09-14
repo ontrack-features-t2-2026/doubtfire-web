@@ -34,14 +34,15 @@ $comment-inner-border-radius: 4px;
   margin: 0;
 }
 
+// The same gutter on both sides, so a bubble never sits against the panel edge. A
+// page that shows the comments wider sets --comments-gutter to give them more room.
 .comments-body {
-  padding-left: 10px;
+  padding-inline: var(--comments-gutter, 0.875rem);
   overflow-y: auto;
   @include scrollable();
 }
 
 .comments-scroll-content {
-  padding-right: 4px;
   max-height: 100%;
 }
 
@@ -343,7 +344,9 @@ $comment-inner-border-radius: 4px;
   }
 
   @mixin base-bubble {
-    max-width: 300px;
+    // A page that shows the comments wider, such as the full-screen chat, sets
+    // --comment-bubble-max-width so a message is not wrapped into a narrow strip.
+    max-width: var(--comment-bubble-max-width, 300px);
     margin-left: 5px;
     display: flex;
     color: var(--ot-color-on-primary);

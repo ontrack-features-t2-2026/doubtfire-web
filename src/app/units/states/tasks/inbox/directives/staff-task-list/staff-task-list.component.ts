@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow, @typescript-eslint/no-shadow */
 import {HotkeysService} from '@ngneat/hotkeys';
 import {
   ChangeDetectionStrategy,
@@ -38,6 +37,14 @@ import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {SelectedTaskService} from 'src/app/projects/states/dashboard/selected-task.service';
 import {BatchFeedbackWorkflowDialogComponent} from './batch-feedback-workflow-dialog/batch-feedback-workflow-dialog.component';
+
+export interface StaffTaskListEmptyState {
+  icon: string;
+  message: string;
+  hint: string;
+  action: 'clear-search' | 'all-students' | 'refresh' | null;
+  actionLabel?: string;
+}
 
 @Component({
   selector: 'df-staff-task-list',
@@ -106,7 +113,14 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
 
   panelOpenState = false;
   loading = true;
+  /** The last task query failed, so the list offers a retry instead of a blank panel. */
+  loadError = false;
   skeletonRows = Array.from({length: 12}, (_, index) => index);
+
+  // The list is drawn twice, once for wide screens and once for phones, so each copy
+  // needs its own id for the filter toggle to point at.
+  private static nextInstanceId = 0;
+  readonly filtersPanelId = `staff-task-filters-${StaffTaskListComponent.nextInstanceId++}`;
 
   definedTasksPipe = new TasksOfTaskDefinitionPipe();
   tasksInTutorialsPipe = new TasksInTutorialsPipe();
@@ -117,9 +131,9 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   // for selecting tasks by task definitions
 
   states = [
-    {sort: 'default', icon: 'horizontal_rule'},
-    {sort: 'ascending', icon: 'arrow_upward'},
-    {sort: 'descending', icon: 'arrow_downward'},
+    {sort: 'default', icon: 'swap_vert', label: 'Sort by task'},
+    {sort: 'ascending', icon: 'arrow_upward', label: 'Sorted by task, first to last'},
+    {sort: 'descending', icon: 'arrow_downward', label: 'Sorted by task, last to first'},
   ];
 
   taskDefSort = 0;
@@ -246,10 +260,10 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
 
     this.studentFilter = [
       ...[
-        {id: 'all', inboxDescription: 'All Students', abbreviation: '__all', forceStream: false},
+        {id: 'all', inboxDescription: 'All students', abbreviation: '__all', forceStream: false},
         {
           id: 'mine',
-          inboxDescription: 'My Students',
+          inboxDescription: 'My students',
           abbreviation: '__mine',
           forceStream: !this.isTaskDefMode,
         },
@@ -268,9 +282,9 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       ...(mentored.length > 0
         ? [
             {
-              label: 'My Tutors (Mentoring)',
+              label: 'Tutors you mentor',
               options: [
-                {id: 'mentoring_all', inboxDescription: 'Show All Mine'},
+                {id: 'mentoring_all', inboxDescription: 'All tutors you mentor'},
                 ...mentored.map((ur) => ({
                   id: ur.id,
                   inboxDescription: ur.user?.name,
@@ -280,9 +294,9 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
           ]
         : []),
       {
-        label: 'All Tutors',
+        label: 'All tutors',
         options: [
-          {id: 'all', inboxDescription: 'Show All'},
+          {id: 'all', inboxDescription: 'Any tutor'},
           ...allTutors.map((ur) => ({
             id: ur.id,
             inboxDescription: ur.user?.name,
@@ -303,6 +317,169 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
 
   public get isTaskDefMode(): boolean {
     return this.taskData.taskDefMode;
+  }
+
+  /** The page title, which names the queue the list is showing. */
+  public get listTitle(): string {
+    switch (this.viewType) {
+      case 'explorer':
+        return 'Task explorer';
+      case 'moderation':
+        return 'Moderation';
+      case 'overflow':
+        return 'Overflow';
+      case 'inbox':
+      default:
+        return 'Task inbox';
+    }
+  }
+
+  /** The muted line under the title: how many tasks the list holds right now. */
+  public get listSummary(): string {
+    if (this.loading) {
+      return 'Loading tasks';
+    }
+
+    if (this.loadError || !this.filteredTasks) {
+      return 'No tasks loaded';
+    }
+
+    const shown = this.filteredTasks.length;
+    const total = this.tasks?.length ?? shown;
+    const noun = (count: number) => (count === 1 ? 'task' : 'tasks');
+
+    return shown === total ? `${shown} ${noun(shown)}` : `${shown} of ${total} ${noun(total)}`;
+  }
+
+  /** What an empty list says, and the one thing it offers to do about it. */
+  public get emptyState(): StaffTaskListEmptyState {
+    if (this.hasSearchText) {
+      return {
+        icon: 'search_off',
+        message: 'No tasks match your search',
+        hint: 'Try a different name or task code.',
+        action: 'clear-search',
+        actionLabel: 'Clear search',
+      };
+    }
+
+    const someStudentsOnly = this.filters?.tutorialIdSelected !== 'all';
+
+    switch (this.viewType) {
+      case 'explorer':
+        if (!this.unit?.taskDefinitions?.length) {
+          return {
+            icon: 'assignment',
+            message: 'This unit has no tasks yet',
+            hint: 'Tasks show up here once they are added to the unit.',
+            action: null,
+          };
+        }
+        return someStudentsOnly
+          ? {
+              icon: 'group_off',
+              message: 'No students to show',
+              hint: 'None of the students in this filter have this task.',
+              action: 'all-students',
+              actionLabel: 'Show all students',
+            }
+          : {
+              icon: 'group_off',
+              message: 'No students to show',
+              hint: 'No students are enrolled in this unit yet.',
+              action: null,
+            };
+      case 'moderation':
+        return {
+          icon: 'verified',
+          message: 'Nothing to moderate',
+          hint: 'Tasks picked for moderation show up here.',
+          action: 'refresh',
+          actionLabel: 'Refresh',
+        };
+      case 'overflow':
+        return {
+          icon: 'more_time',
+          message: 'No overflow tasks',
+          hint: 'Tasks that have waited too long for feedback show up here.',
+          action: 'refresh',
+          actionLabel: 'Refresh',
+        };
+      case 'inbox':
+      default:
+        return someStudentsOnly
+          ? {
+              icon: 'done_all',
+              message: 'You are all caught up',
+              hint: 'None of these students have tasks waiting for you.',
+              action: 'all-students',
+              actionLabel: 'Show all students',
+            }
+          : {
+              icon: 'done_all',
+              message: 'You are all caught up',
+              hint: 'No tasks are waiting for feedback.',
+              action: 'refresh',
+              actionLabel: 'Refresh',
+            };
+    }
+  }
+
+  public runEmptyStateAction(action: StaffTaskListEmptyState['action']): void {
+    switch (action) {
+      case 'clear-search':
+        this.clearSearch();
+        break;
+      case 'all-students':
+        this.showAllStudents();
+        break;
+      case 'refresh':
+        this.refreshTasks();
+        break;
+    }
+  }
+
+  public get hasSearchText(): boolean {
+    return !!this.filters?.studentName?.trim();
+  }
+
+  public get taskSortLabel(): string {
+    return this.states[this.taskDefSort].label;
+  }
+
+  public clearSearch(): void {
+    this.filters.studentName = null;
+    this.applyFilters();
+  }
+
+  public showAllStudents(): void {
+    this.tutorialIdChanged(true, 'all');
+  }
+
+  /**
+   * The collapsed list shows only the avatar, so its button carries the student, the
+   * task and anything that needs attention in its name and tooltip.
+   */
+  public narrowRowLabel(task: Task): string {
+    const parts = [task.project?.student?.name, task.definition?.abbreviation];
+    if (task.numNewComments > 0) {
+      parts.push(`${task.numNewComments} new comment${task.numNewComments === 1 ? '' : 's'}`);
+    }
+    if (task.similaritiesDetected) {
+      parts.push('similarities detected');
+    }
+
+    return parts.filter(Boolean).join(', ');
+  }
+
+  /** How long the task has waited, for the warning beside the student's name. */
+  public waitingLabel(task: Task): string {
+    const days = task.daysSinceSubmission();
+    const waited = `Waiting ${days} ${days === 1 ? 'day' : 'days'} for feedback`;
+
+    return this.getWarningIcon(task) === 'overflow'
+      ? `${waited}. Feedback is overdue.`
+      : `${waited}. Feedback is due soon.`;
   }
 
   downloadSubmissionPdfs() {
@@ -355,7 +532,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
     const taskDefinition = this.filters.taskDefinition ?? undefined;
 
     if (!taskDefinition) {
-      this.alertService.error('Select a task definition before uploading batch feedback.', 5000);
+      this.alertService.error('Choose a task before uploading batch feedback.', 5000);
       return;
     }
 
@@ -552,6 +729,11 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
       this.unit.taskDefinitionCache.currentValues.find(
         (x) => x.abbreviation === taskKey?.taskDefAbbr,
       ) || this.unit.taskDefinitionCache.currentValues[0];
+    // A unit with no tasks yet has nothing to explore, and reading the id of the
+    // missing first task used to stop the explorer before it could say so.
+    if (!taskDef) {
+      return;
+    }
     this.filters.taskDefinitionIdSelected = taskDef.id;
     this.filters.taskDefinition = taskDef;
   }
@@ -581,7 +763,19 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   private refreshData() {
     const fetchMyStudentsOnly = this.filters.tutorialIdSelected === 'mine';
 
+    // The explorer asks for one task's submissions. A unit with no tasks has none to
+    // ask for, and the request it used to send named a task that does not exist.
+    if (this.isTaskDefMode && !this.filters?.taskDefinitionIdSelected) {
+      this.taskRequestSub?.unsubscribe();
+      this.tasks = [];
+      this.applyFilters();
+      this.loading = false;
+      this.loadError = false;
+      return;
+    }
+
     this.loading = true;
+    this.loadError = false;
     // A unit or filter change can start a second query before the previous one
     // returns. Cancel the older query so it cannot land late and put stale tasks
     // back on screen after the component has moved to the new unit.
@@ -594,6 +788,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
           this.tasks = response;
           this.applyFilters();
           this.loading = false;
+          this.loadError = false;
 
           this.fetchedAllTasks = !fetchMyStudentsOnly && !this.isTaskDefMode;
 
@@ -609,6 +804,7 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
         error: (message) => {
           this.alertService.error(message, 6000);
           this.loading = false;
+          this.loadError = true;
         },
       });
   }
@@ -715,6 +911,10 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   previousTask(): void {
+    // The shortcut is live before the first query returns.
+    if (!this.filteredTasks) {
+      return;
+    }
     const currentTaskIndex = this.filteredTasks.findIndex((task) => this.isSelectedTask(task));
     if (currentTaskIndex === 0) {
       return;

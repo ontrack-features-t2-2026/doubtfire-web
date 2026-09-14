@@ -6,7 +6,7 @@
 @mixin status-icon($status) {
   // Read the runtime status tokens so the chip flips with data-ot-theme. The
   // token names match the $status keys ('ready-for-feedback' etc.), and each
-  // pairs a -on foreground fixed for WCAG AA in both themes by the contract.
+  // -on foreground is white, which every fill clears at 4.5:1 by the contract.
   background-color: var(--ot-status-#{$status});
   color: var(--ot-status-#{$status}-on);
 }

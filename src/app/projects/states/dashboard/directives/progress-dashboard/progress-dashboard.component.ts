@@ -94,8 +94,27 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
     return this.demoMode.enabled && !this.viewingOtherStudentProject;
   }
 
+  public get targetGradeName(): string {
+    return this.grades.names[this.project?.targetGrade] ?? 'your target grade';
+  }
+
+  /**
+   * Counted on every render, not cached, because the dashboard route resolves tasks
+   * progressively and a cached count would stay at zero after they arrive.
+   */
+  public get targetProgressText(): string {
+    const tasks = this.project?.activeTasks?.() ?? [];
+    if (tasks.length === 0) {
+      return 'This sets which tasks you need to do.';
+    }
+
+    const completed = tasks.filter((task) => task.status === 'complete').length;
+    return `${completed} of ${tasks.length} tasks complete for ${this.targetGradeName}`;
+  }
+
   updateTargetGrade(newGrade: number): void {
     if (
+      this.viewingOtherStudentProject ||
       this.isUpdatingTargetGrade ||
       newGrade === undefined ||
       newGrade === null ||

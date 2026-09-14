@@ -3,6 +3,13 @@
   overflow-y: auto;
 }
 
+// The profile page (non-modal) ran its last controls hard against the bottom edge.
+// Give the content breathing room below the buttons so nothing sits flush at the
+// viewport bottom on either the page or the modal.
+.main {
+  padding-bottom: 3rem;
+}
+
 h1 {
   // THM-M01: was hardcoded black.
   color: var(--ot-color-text, #000);
@@ -57,7 +64,13 @@ section {
 }
 
 .peer-progress-preference {
+  // Divider token equals the raised surface in dark (#353c47), so this separator
+  // vanishes on the dialog. Use the border token in dark where it actually reads;
+  // keep the softer divider in light.
   border-block: 1px solid var(--ot-color-divider);
+  :root[data-ot-theme='dark'] & {
+    border-block-color: var(--ot-color-border);
+  }
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;

@@ -82,7 +82,7 @@ export class TutorNotesComponent implements OnInit {
       .addNote(this.unitRole, noteText, this.task, this.replyingToNote)
       .subscribe({
         next: (_note) => {
-          this.alertService.success('Succesfully submitted note', 4000);
+          this.alertService.success('Successfully submitted note', 4000);
           this.scrollDown();
           this.replyingToNote = null;
           this.tutorNoteService.updateTutorNoteReplies(
@@ -104,7 +104,7 @@ export class TutorNotesComponent implements OnInit {
 
     this.tutorNoteService.updateNote(this.unitRole, this.editingNote, noteText).subscribe({
       next: (_note) => {
-        this.alertService.success('Succesfully updated note', 4000);
+        this.alertService.success('Successfully updated note', 4000);
         this.editingNote = null;
         this.editingNoteText = '';
       },

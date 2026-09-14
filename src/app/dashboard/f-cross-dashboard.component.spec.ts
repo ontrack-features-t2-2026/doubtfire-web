@@ -1,9 +1,15 @@
+import {enAU} from 'date-fns/locale';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ReactiveFormsModule} from '@angular/forms';
+import {provideDateFnsAdapter} from '@angular/material-date-fns-adapter';
 import {MatButtonModule} from '@angular/material/button';
 import {MatButtonHarness} from '@angular/material/button/testing';
+import {MAT_DATE_LOCALE} from '@angular/material/core';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+import {MatDateRangeInputHarness} from '@angular/material/datepicker/testing';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
@@ -11,6 +17,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Observable, ReplaySubject, Subject, of, throwError} from 'rxjs';
 import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
@@ -120,14 +127,30 @@ describe('CrossDashboardComponent', () => {
       declarations: [CrossDashboardComponent],
       imports: [
         MatButtonModule,
+        MatDatepickerModule,
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
         MatMenuModule,
         MatSelectModule,
         NoopAnimationsModule,
+        ReactiveFormsModule,
       ],
       providers: [
+        // The app's own date setup (doubtfire-angular.module.ts), so typed dates
+        // are read day-first the way an Australian student enters them.
+        {provide: MAT_DATE_LOCALE, useValue: enAU},
+        provideDateFnsAdapter({
+          parse: {dateInput: 'dd/MM/yyyy'},
+          display: {
+            dateInput: 'dd/MM/yyyy',
+            monthYearLabel: 'MMMM yyyy',
+            dateA11yLabel: 'do MMMM yyyy',
+            monthYearA11yLabel: 'MMMM yyyy',
+          },
+        }),
+        {provide: ActivatedRoute, useValue: {queryParamMap: of(convertToParamMap({}))}},
+        {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
         {
           provide: GlobalStateService,
           useValue: globalStateServiceStub,
@@ -211,6 +234,20 @@ describe('CrossDashboardComponent', () => {
       showDueWarning: true,
     });
     expect(component.activeUnits[0].tasks[1].showDueWarning).toBe(false);
+  });
+
+  it('maps feedback metadata and safely defaults missing metadata to false', () => {
+    const noMetadataTask = makeTask('No feedback metadata', '1.1P', 'working_on_it', makeDate(10));
+    const feedbackTask = makeTask('Task with feedback', '1.2P', 'fix_and_resubmit', makeDate(11));
+
+    feedbackTask.hasFeedback = true;
+
+    projectsSubject.next([makeProject(1, 'COS10001', true, [noMetadataTask, feedbackTask])]);
+
+    const mappedTasks = component.activeUnits[0].tasks;
+
+    expect(mappedTasks.find((task) => task.abbreviation === '1.1P')?.hasFeedback).toBe(false);
+    expect(mappedTasks.find((task) => task.abbreviation === '1.2P')?.hasFeedback).toBe(true);
   });
 
   it('loads and displays previous units in Previous units mode', () => {
@@ -1484,7 +1521,7 @@ describe('CrossDashboardComponent', () => {
     expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('uses phone-safe widths while retaining the fixed desktop card strip', async () => {
+  it('uses phone-safe widths while retaining the desktop card strip', async () => {
     projectsSubject.next([makeProject(1, 'SIT764', true)]);
     await syncView();
 
@@ -1510,7 +1547,223 @@ describe('CrossDashboardComponent', () => {
       ]),
     );
     expect(Array.from(card.classList)).toEqual(
-      expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:w-128']),
+      expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:flex-[1_0_26rem]']),
     );
+  });
+
+  it('summarises each unit by status for the header progress bar', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('First', 'A', 'complete', makeDate(10)),
+        makeTask('Second', 'B', 'working_on_it', makeDate(11)),
+        makeTask('Third', 'C', 'not_started', makeDate(12)),
+        makeTask('Fourth', 'D', 'complete', makeDate(13)),
+      ]),
+    ]);
+    await syncView();
+
+    const progress = component.displayedUnits[0].progress;
+
+    expect(progress.completed).toBe(2);
+    expect(progress.total).toBe(4);
+    expect(progress.percentage).toBe(50);
+    expect(progress.segments.map(({status, count}) => [status, count])).toEqual([
+      ['not_started', 1],
+      ['working_on_it', 1],
+      ['complete', 2],
+    ]);
+    expect(progress.ariaLabel).toBe('Task statuses: 1 Not Started, 1 Working On It, 2 Complete');
+    expect(fixture.nativeElement.textContent).toContain('2 of 4 complete');
+
+    // The bar describes the whole unit, so a column search does not shrink it.
+    component.setSearch(1, 'first');
+    await syncView();
+
+    expect(component.displayedUnits[0].tasks).toHaveLength(1);
+    expect(component.displayedUnits[0].progress.total).toBe(4);
+  });
+
+  it('counts open overdue and soon-due work in active units for the page summary', async () => {
+    const day = 24 * 60 * 60 * 1000;
+    const inDays = (days: number): Date => new Date(Date.now() + days * day);
+
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Late', 'LATE', 'not_started', inDays(-1)),
+        makeTask('Soon', 'SOON', 'working_on_it', inDays(2)),
+        makeTask('Finished late', 'DONE', 'complete', inDays(-2)),
+        makeTask('Handed in', 'SENT', 'ready_for_feedback', inDays(-3)),
+        makeTask('Far away', 'FAR', 'not_started', inDays(30)),
+      ]),
+      makeProject(2, 'SIT782', false, [makeTask('Old', 'OLD', 'not_started', inDays(-5))]),
+    ]);
+    await syncView();
+
+    expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 1, dueSoon: 1});
+    expect(fixture.nativeElement.textContent).toContain('1 overdue');
+    expect(fixture.nativeElement.textContent).toContain('1 due within 7 days');
+
+    // Searching one column leaves the page-level counts alone.
+    component.setGlobalSearch('far away');
+    await syncView();
+
+    expect(component.summary.overdue).toBe(1);
+  });
+
+  it('moves a task from due soon to overdue when its deadline passes on an open page', async () => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(2026, 7, 10, 9, 0, 0));
+
+    try {
+      projectsSubject.next([
+        makeProject(1, 'SIT764', true, [
+          makeTask('Due at ten', 'TEN', 'not_started', new Date(2026, 7, 10, 10, 0, 0)),
+        ]),
+      ]);
+      await syncView();
+
+      expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 0, dueSoon: 1});
+
+      vi.setSystemTime(new Date(2026, 7, 10, 11, 0, 0));
+
+      expect(component.summary).toEqual({unitLabel: '1 active unit', overdue: 1, dueSoon: 0});
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives neighbouring active units different accents and finished units the slate band', async () => {
+    projectsSubject.next(
+      Array.from({length: 7}, (_, index) => makeProject(index + 1, `UNIT${index + 1}`, true)),
+    );
+    await syncView();
+
+    expect(component.displayedUnits.map((unit) => unit.accent)).toEqual([
+      'var(--ot-unit-1)',
+      'var(--ot-unit-2)',
+      'var(--ot-unit-3)',
+      'var(--ot-unit-4)',
+      'var(--ot-unit-5)',
+      'var(--ot-unit-6)',
+      'var(--ot-unit-1)',
+    ]);
+
+    const firstCard = fixture.nativeElement.querySelector('section.unit-card') as HTMLElement;
+    expect(firstCard.style.getPropertyValue('--unit-accent')).toBe('var(--ot-unit-1)');
+
+    projectsSubject.next([makeProject(1, 'SIT764', true), makeProject(2, 'SIT782', false)]);
+    await syncView();
+
+    expect(component.activeUnits.map((unit) => unit.accent)).toEqual(['var(--ot-unit-1)']);
+  });
+
+  it('marks previous units with the slate band', () => {
+    projectServiceQuery.mockReturnValue(of([makeProject(9, 'SIT700', false)]));
+
+    component.setUnitScope('previous');
+
+    expect(component.displayedUnits.map((unit) => unit.accent)).toEqual([
+      'var(--ot-unit-previous)',
+    ]);
+  });
+
+  it('filters by the dates typed into the range field, day first', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Early Task', 'EARLY', 'not_started', makeDate(5)),
+        makeTask('Middle Task', 'MIDDLE', 'not_started', makeDate(12)),
+        makeTask('Late Task', 'LATE', 'not_started', makeDate(20)),
+      ]),
+    ]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const range = await loader.getHarness(MatDateRangeInputHarness);
+    const start = await range.getStartInput();
+    const end = await range.getEndInput();
+
+    await start.setValue('10/08/2026');
+    await end.setValue('15/08/2026');
+    await end.blur();
+    await syncView();
+
+    expect(component.startDate).toBe('2026-08-10');
+    expect(component.endDate).toBe('2026-08-15');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['MIDDLE']);
+
+    await loader
+      .getHarness(MatButtonHarness.with({selector: '[aria-label="Clear dates"]'}))
+      .then((clear) => clear.click());
+    await syncView();
+
+    expect(await start.getValue()).toBe('');
+    expect(await end.getValue()).toBe('');
+    expect(component.displayedUnits[0].tasks).toHaveLength(3);
+  });
+
+  it('re-checks both ends when one is corrected, so no stale range error stays', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const range = await loader.getHarness(MatDateRangeInputHarness);
+    const start = await range.getStartInput();
+    const end = await range.getEndInput();
+
+    await start.setValue('20/08/2026');
+    await end.setValue('15/08/2026');
+    await end.blur();
+    await syncView();
+
+    expect(component.dateRange.controls.end.valid).toBe(false);
+
+    await start.setValue('10/08/2026');
+    await start.blur();
+    await syncView();
+
+    expect(component.dateRange.controls.start.valid).toBe(true);
+    expect(component.dateRange.controls.end.valid).toBe(true);
+    expect(component.dateRangeError).toBeNull();
+  });
+
+  it('filters the dashboard once when the dates are cleared', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-15');
+    const processTasks = vi.spyOn(
+      component as unknown as {processTasks: () => void},
+      'processTasks',
+    );
+
+    component.clearDateRange();
+
+    expect(processTasks).toHaveBeenCalledTimes(1);
+  });
+
+  it('flags a typo in the date field and clears it with Clear all', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const start = await (await loader.getHarness(MatDateRangeInputHarness)).getStartInput();
+
+    await start.setValue('31/31/2026');
+    await start.blur();
+    await syncView();
+
+    // Nothing parsed, so nothing filters, but the field still holds text to clear.
+    expect(component.startDate).toBe('');
+    expect(component.hasGlobalToolbarChanges).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-error')?.textContent).toContain(
+      'Enter dates as dd/mm/yyyy.',
+    );
+
+    await (await loader.getHarness(MatButtonHarness.with({text: 'Clear all'}))).click();
+    await syncView();
+
+    expect(await start.getValue()).toBe('');
+    expect(fixture.nativeElement.querySelector('mat-error')).toBeNull();
+    expect(component.hasGlobalToolbarChanges).toBe(false);
   });
 });

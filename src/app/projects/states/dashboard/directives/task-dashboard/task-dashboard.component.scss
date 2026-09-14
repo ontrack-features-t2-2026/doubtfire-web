@@ -10,11 +10,9 @@
   color: var(--ot-color-disabled-text);
 }
 
+// Keep the tab strip aligned to its start so narrow screens can reach every label.
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
-    // Left-align, not centre: when the tab strip is wider than a phone the centred
-    // strip clipped its own active first and last labels ("ask Details" / "Submissic").
-    // Left-aligned, the active first tab stays whole and the rest scrolls into view.
     justify-content: flex-start;
     max-width: 100%;
     overflow-x: auto;
@@ -32,4 +30,12 @@
   .mat-mdc-tab-labels {
     width: max-content;
   }
+}
+
+// A card with nothing to show leaves an empty host, or a host around a hidden card.
+// Either one still counts as a flex item, so it added a second gap and the space
+// between cards jumped about. ::ng-deep because the hidden card is in the child's view.
+:host ::ng-deep .task-details > :empty,
+:host ::ng-deep .task-details > :has(> [hidden]:only-child) {
+  display: none;
 }

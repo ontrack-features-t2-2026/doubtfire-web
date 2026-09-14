@@ -86,7 +86,6 @@ export class FUsersComponent implements OnInit, AfterViewInit, OnDestroy {
     this.fileDownloaderService.downloadFile(this.userService.csvURL, 'Users.csv');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // TODO: This needs to be brought out into a service which replaces the old csv-result-modal
   protected onUserUploadSuccess(event) {
     const max_full_errors = 5;

@@ -190,8 +190,9 @@ export class GlobalStateService implements OnDestroy {
 
   public setNotInboxState() {
     this._isInboxState = false;
-    // THM-M01: was hardcoded #fff inline.
-    document.body.style.setProperty('background-color', 'var(--ot-color-surface, #fff)');
+    // Hand the page back to the stylesheet. Painting it the surface colour here made
+    // every page after the inbox match its own cards, so the cards lost their edge.
+    document.body.style.removeProperty('background-color');
     this.resetHeight();
   }
 

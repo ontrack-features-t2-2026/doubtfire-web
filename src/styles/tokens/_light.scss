@@ -22,42 +22,65 @@
   --ot-color-on-primary: #ffffff;
   --ot-color-success: #398239;
   --ot-color-warning: #a56504;
+  // Text on a filled warning or error header. White clears 4.5:1 on both fills here.
+  --ot-color-on-warning: #ffffff;
   --ot-color-error: #d73613;
+  --ot-color-on-error: #ffffff;
   --ot-color-info: #0075d0;
   --ot-color-inverse-surface: #212121;
   --ot-color-inverse-text: #fafafa;
 
   // --- 8.1 Task status: --ot-status-<key> / -on ---
+  // Every status carries white icons and text, so each fill is darkened (hue and
+  // saturation held) until white clears 4.5:1. See THEME-CONTRACT.md 8.1.
   --ot-status-ready-for-feedback: #0078d5;
   --ot-status-ready-for-feedback-on: #ffffff;
-  --ot-status-not-started: #cccccc;
-  --ot-status-not-started-on: #212121;
-  --ot-status-working-on-it: #eb8f06;
-  --ot-status-working-on-it-on: #212121;
-  --ot-status-need-help: #a48fce;
-  --ot-status-need-help-on: #212121;
-  --ot-status-fix-and-resubmit: #f2d85c;
-  --ot-status-fix-and-resubmit-on: #212121;
-  --ot-status-feedback-exceeded: #d46b54;
-  --ot-status-feedback-exceeded-on: #212121;
+  --ot-status-not-started: #757575;
+  --ot-status-not-started-on: #ffffff;
+  --ot-status-working-on-it: #a86604;
+  --ot-status-working-on-it-on: #ffffff;
+  --ot-status-need-help: #8366bc;
+  --ot-status-need-help-on: #ffffff;
+  --ot-status-fix-and-resubmit: #8b750b;
+  --ot-status-fix-and-resubmit-on: #ffffff;
+  --ot-status-feedback-exceeded: #ca4e33;
+  --ot-status-feedback-exceeded-on: #ffffff;
   --ot-status-redo: #804000;
   --ot-status-redo-on: #ffffff;
-  --ot-status-discuss: #31b0d5;
-  --ot-status-discuss-on: #212121;
+  --ot-status-discuss: #20809c;
+  --ot-status-discuss-on: #ffffff;
   --ot-status-rediscuss: #126352;
   --ot-status-rediscuss-on: #ffffff;
   --ot-status-demonstrate: #337ab7;
   --ot-status-demonstrate-on: #ffffff;
-  --ot-status-complete: #5bb75b;
-  --ot-status-complete-on: #212121;
+  --ot-status-complete: #3b863b;
+  --ot-status-complete-on: #ffffff;
   --ot-status-fail: #d93713;
   --ot-status-fail-on: #ffffff;
   --ot-status-time-exceeded: #d93713;
   --ot-status-time-exceeded-on: #ffffff;
-  --ot-status-assess-in-portfolio: #f2d85c;
-  --ot-status-assess-in-portfolio-on: #212121;
-  --ot-status-attention-required: #f1814d;
-  --ot-status-attention-required-on: #212121;
+  --ot-status-assess-in-portfolio: #8b750b;
+  --ot-status-assess-in-portfolio-on: #ffffff;
+  --ot-status-attention-required: #cd4c10;
+  --ot-status-attention-required-on: #ffffff;
+
+  // Status as a mark on the page (chart slices, bars, accents, footer glyphs).
+  // The fills above already clear 3:1 on the light page, so these match them.
+  --ot-status-ready-for-feedback-graphic: #0078d5;
+  --ot-status-not-started-graphic: #757575;
+  --ot-status-working-on-it-graphic: #a86604;
+  --ot-status-need-help-graphic: #8366bc;
+  --ot-status-fix-and-resubmit-graphic: #8b750b;
+  --ot-status-feedback-exceeded-graphic: #ca4e33;
+  --ot-status-redo-graphic: #804000;
+  --ot-status-discuss-graphic: #20809c;
+  --ot-status-rediscuss-graphic: #126352;
+  --ot-status-demonstrate-graphic: #337ab7;
+  --ot-status-complete-graphic: #3b863b;
+  --ot-status-fail-graphic: #d93713;
+  --ot-status-time-exceeded-graphic: #d93713;
+  --ot-status-assess-in-portfolio-graphic: #8b750b;
+  --ot-status-attention-required-graphic: #cd4c10;
 
   // --- 8.2 Everything else ---
   --ot-urgency-overdue: #c94823;
@@ -72,6 +95,20 @@
   --ot-chart-6: #d07e05;
   --ot-chart-grid: #e0e0e0;
   --ot-chart-axis: #616161;
+  // The empty part of a progress or meter bar, so its full length shows on a card.
+  --ot-meter-track: #e0e0e0;
+
+  // Unit accents: the header band that tells units apart on the cross-unit
+  // dashboard. White text sits on each, so every value clears 4.5:1 with white.
+  // Previous units take the slate band so active units lead.
+  --ot-unit-1: #3939ff;
+  --ot-unit-2: #0f766e;
+  --ot-unit-3: #7c3aed;
+  --ot-unit-4: #be123c;
+  --ot-unit-5: #0369a1;
+  --ot-unit-6: #b45309;
+  --ot-unit-previous: #475569;
+  --ot-unit-on: #ffffff;
 
   --ot-code-surface: #f5f5f5;
   --ot-code-text: #212121;
