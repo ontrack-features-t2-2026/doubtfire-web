@@ -76,7 +76,7 @@ describe('TaskCommentsViewerComponent', () => {
     });
     fixture = TestBed.createComponent(TaskCommentsViewerComponent);
     component = fixture.componentInstance;
-    component.task = {comments: [{}]} as any;
+    component.task = {comments: [{}]} as unknown as TaskCommentsViewerComponent['task'];
     fixture.detectChanges();
 
     const emptyIcon = fixture.nativeElement.querySelector('#noView');

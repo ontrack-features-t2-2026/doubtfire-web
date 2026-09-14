@@ -263,9 +263,8 @@
 
   <div class="center-task-list" [hidden]="loading || filteredTasks?.length !== 0 || isNarrow">
     <mat-icon aria-hidden="true">done_all</mat-icon>
-      <p>No tasks match these filters.</p>
+    <p>No tasks match these filters.</p>
   </div>
-
   <!--/search-options-->
   @if (filteredTasks && !loading) {
     <cdk-virtual-scroll-viewport class="tasks-viewport scrollable" itemSize="60">

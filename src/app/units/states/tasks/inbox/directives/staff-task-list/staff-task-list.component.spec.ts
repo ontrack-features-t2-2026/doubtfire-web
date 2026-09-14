@@ -1,6 +1,6 @@
-import '@angular/compiler';
 import {HotkeysService} from '@ngneat/hotkeys';
 import {beforeEach, describe, expect, it} from 'vitest';
+import '@angular/compiler';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
@@ -65,15 +65,15 @@ describe('StaffTaskListComponent', () => {
       tutorialsForUserName: () => [],
       staff: [],
       tutorials: [],
-    } as any;
-    component.unitRole = {role: 'Tutor', id: 1} as any;
+    } as unknown as StaffTaskListComponent['unit'];
+    component.unitRole = {role: 'Tutor', id: 1} as unknown as StaffTaskListComponent['unitRole'];
     component.taskData = {
       source: () => EMPTY,
       selectedTask: null,
       taskKey: null,
       onSelectedTaskChange: () => {},
       taskDefMode: false,
-    } as any;
+    } as unknown as StaffTaskListComponent['taskData'];
     component.tasks = [];
   };
 
@@ -113,7 +113,7 @@ describe('StaffTaskListComponent', () => {
     setupComponentInputs();
     fixture.detectChanges();
 
-    component.filteredTasks = [{} as any];
+    component.filteredTasks = [{} as unknown as StaffTaskListComponent['filteredTasks'][number]];
     component.loading = false;
     component.isNarrow = false;
     fixture.detectChanges();
