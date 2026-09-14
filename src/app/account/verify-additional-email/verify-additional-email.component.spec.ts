@@ -1,7 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
 import {Router} from '@angular/router';
-import {of, throwError} from 'rxjs';
+import {Subject, of, throwError} from 'rxjs';
 import {AdditionalNotificationEmailService} from 'src/app/api/services/additional-notification-email.service';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {
@@ -23,15 +25,14 @@ describe('VerifyAdditionalEmailComponent', () => {
   const create = async (): Promise<void> => {
     await TestBed.configureTestingModule({
       declarations: [VerifyAdditionalEmailComponent],
+      imports: [MatButtonModule, MatIconModule],
       providers: [
         {provide: AdditionalNotificationEmailService, useValue: service},
         {provide: AuthenticationService, useValue: authentication},
         {provide: Router, useValue: router},
         {provide: AuthReturnUrlService, useValue: authReturnUrl},
       ],
-    })
-      .overrideComponent(VerifyAdditionalEmailComponent, {set: {template: ''}})
-      .compileComponents();
+    }).compileComponents();
     fixture = TestBed.createComponent(VerifyAdditionalEmailComponent);
     component = fixture.componentInstance;
     if (token) {
@@ -42,6 +43,9 @@ describe('VerifyAdditionalEmailComponent', () => {
     }
     fixture.detectChanges();
   };
+
+  const rendered = (selector: string): HTMLElement | null =>
+    (fixture.nativeElement as HTMLElement).querySelector(selector);
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -58,6 +62,33 @@ describe('VerifyAdditionalEmailComponent', () => {
     expect(service.verify).toHaveBeenCalledWith('private-token');
     expect(component.state).toBe('verified');
     expect(consumeAdditionalEmailVerificationToken()).toBeNull();
+  });
+
+  it('shows the success message and next step when the response arrives after first render', async () => {
+    const response: Subject<void> = new Subject();
+    service.verify.mockReturnValue(response.asObservable());
+    await create();
+    expect(rendered('p')?.textContent).toContain('Verifying');
+    expect(rendered('button')).toBeNull();
+
+    response.next();
+    response.complete();
+    fixture.detectChanges();
+
+    expect(rendered('p')?.textContent).toContain('Your additional notification email is verified.');
+    expect(rendered('button')?.textContent).toContain('Review notification settings');
+  });
+
+  it('shows the error message and recovery step when a late response fails', async () => {
+    const response: Subject<void> = new Subject();
+    service.verify.mockReturnValue(response.asObservable());
+    await create();
+
+    response.error(new Error('expired'));
+    fixture.detectChanges();
+
+    expect(rendered('p')?.textContent).toContain('invalid, expired, or has already been used');
+    expect(rendered('button')?.textContent).toContain('Request a new verification link');
   });
 
   it('takes a signed-out verifier through sign-in with the profile saved as the destination', async () => {

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {AdditionalNotificationEmailService} from 'src/app/api/services/additional-notification-email.service';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
@@ -22,6 +22,7 @@ export class VerifyAdditionalEmailComponent implements OnInit {
     private authentication: AuthenticationService,
     private router: Router,
     private authReturnUrl: AuthReturnUrlService,
+    private changeDetector: ChangeDetectorRef,
   ) {}
 
   public openProfile(): void {
@@ -41,14 +42,18 @@ export class VerifyAdditionalEmailComponent implements OnInit {
       return;
     }
 
+    // The component is OnPush by default, so a response that arrives after the
+    // first render has to mark the view or the page stays on "Verifying".
     this.additionalEmailService.verify(token).subscribe({
       next: () => {
         this.state = 'verified';
         this.message = 'Your additional notification email is verified.';
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.state = 'error';
         this.message = 'This verification link is invalid, expired, or has already been used.';
+        this.changeDetector.markForCheck();
       },
     });
   }
