@@ -1,18 +1,100 @@
 <ng-template #TaskStatusBadges let-task="task">
+  <!-- The status circle keeps its face clear: only the new-comment count and the
+       similarity flag sit on its top corners. The grade, quality and deadline badges
+       sit beside it (under it in the collapsed list), in theme colours. Each badge's
+       name matches its tooltip, so a screen reader does not read it twice. -->
+  @let dueState =
+    task.inFinalState()
+      ? null
+      : task.isPastDeadline()
+        ? 'past-deadline'
+        : task.betweenDueDateAndDeadlineDate()
+          ? 'past-due'
+          : task.isDueSoon()
+            ? 'due-soon'
+            : null;
+  @let showGrade = task.hasGrade();
+  @let showQuality = task.hasQualityPoints();
   <div
-    class="relative mr-1 flex shrink-0 items-center justify-center"
+    class="task-status-column flex shrink-0 items-center"
     [ngClass]="{
-      'pr-0.5': !isCollapsed,
+      'flex-row gap-1.5 pl-1': !isCollapsed,
+      'flex-col-reverse justify-center gap-1 px-1': isCollapsed,
     }"
   >
-    <status-icon [status]="task.status"></status-icon>
+    @if (dueState || showGrade || showQuality) {
+      <div class="flex items-center gap-1 text-[10px] leading-none font-bold">
+        @if (showGrade) {
+          <span
+            class="flex h-[18px] min-w-[18px] items-center justify-center rounded-ot-pill bg-ot-inverse px-1 text-ot-on-inverse"
+            role="img"
+            [attr.aria-label]="'Grade ' + task.gradeDesc()"
+            [matTooltip]="'Grade ' + task.gradeDesc()"
+          >
+            {{ task.gradeDesc() }}
+          </span>
+        }
+        @if (showQuality) {
+          @let qualityLabel =
+            'Quality ' + task.qualityPts + ' out of ' + task.definition.maxQualityPts;
+          <span
+            class="flex h-[18px] items-center justify-center rounded-ot-pill bg-ot-primary px-1.5 text-ot-on-primary tabular-nums"
+            role="img"
+            [attr.aria-label]="qualityLabel"
+            [matTooltip]="qualityLabel"
+          >
+            {{ task.qualityPts }}/{{ task.definition.maxQualityPts }}
+          </span>
+        }
+        @switch (dueState) {
+          @case ('due-soon') {
+            <span
+              aria-label="Due soon"
+              class="flex size-[18px] items-center justify-center rounded-ot-circle bg-(--ot-status-working-on-it) text-(--ot-status-working-on-it-on)"
+              matTooltip="Due soon"
+              role="img"
+            >
+              <mat-icon aria-hidden="true" class="!size-[12px] !text-[12px] !leading-none">
+                schedule
+              </mat-icon>
+            </span>
+          }
+          @case ('past-due') {
+            <span
+              aria-label="Due, deadline not yet passed"
+              class="flex size-[18px] items-center justify-center rounded-ot-circle bg-(--ot-status-feedback-exceeded) text-(--ot-status-feedback-exceeded-on)"
+              matTooltip="Due, deadline not yet passed"
+              role="img"
+            >
+              <mat-icon aria-hidden="true" class="!size-[12px] !text-[12px] !leading-none">
+                schedule
+              </mat-icon>
+            </span>
+          }
+          <!-- Same colour as the due badge above, so the glyph differs too: colour
+               alone does not tell the two states apart. -->
+          @case ('past-deadline') {
+            <span
+              aria-label="Past deadline"
+              class="flex h-[18px] items-center justify-center gap-px rounded-ot-pill bg-(--ot-status-feedback-exceeded) px-1 text-(--ot-status-feedback-exceeded-on)"
+              matTooltip="Past deadline"
+              role="img"
+            >
+              <mat-icon aria-hidden="true" class="!size-[12px] !text-[12px] !leading-none">
+                event_busy
+              </mat-icon>
+              <strong aria-hidden="true">!</strong>
+            </span>
+          }
+        }
+      </div>
+    }
 
-    <div
-      class="absolute -top-2 right-0.5 flex items-center gap-px drop-shadow-[0_4px_2px_rgba(0,0,0,0.15)]"
-    >
+    <div class="relative flex shrink-0">
+      <status-icon [status]="task.status"></status-icon>
       @if (task.numNewComments > 0) {
         <span
-          class="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ot-primary px-1 text-[12px] leading-none font-bold text-ot-on-primary"
+          class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-ot-pill bg-ot-primary px-1 text-[10px] leading-none font-bold text-ot-on-primary ring-2 ring-ot-surface"
           role="img"
           [attr.aria-label]="newCommentsLabel(task)"
         >
@@ -20,90 +102,18 @@
         </span>
       }
       @if (task.similaritiesDetected) {
-        <!--
-          The label matches the tooltip exactly. When they differ the tooltip adds
-          an aria-describedby and a screen reader reads the text twice.
-        -->
         <span
           aria-label="Similarities Detected"
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c]"
+          class="absolute -top-1.5 -left-1.5 flex size-4 items-center justify-center rounded-ot-circle bg-ot-error ring-2 ring-ot-surface"
           matTooltip="Similarities Detected"
           role="img"
         >
           <mat-icon
             aria-hidden="true"
-            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+            class="!size-[10px] !text-[10px] !leading-none text-(--ot-color-on-error)"
           >
             visibility
           </mat-icon>
-        </span>
-      }
-    </div>
-
-    <div class="absolute right-0.5 -bottom-2 flex items-center gap-px text-[10px] leading-none">
-      @if (task.hasGrade()) {
-        <span
-          class="mr-3 flex size-5.5 items-center justify-center rounded-full bg-gray-800 font-bold text-white drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
-        >
-          <span>
-            {{ task.gradeDesc() }}
-          </span>
-        </span>
-      }
-      @if (task.hasQualityPoints()) {
-        <span
-          class="flex size-[22px] items-center justify-center rounded-full bg-formatif-blue font-bold text-white drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
-        >
-          <span class="mr-px mb-[6px] text-[8px]">{{ task.qualityPts }}</span>
-          <span class="font-extrabold"> &frasl; </span>
-          <span class="mt-[6px] ml-px text-[8px]">{{ task.definition.maxQualityPts }}</span>
-        </span>
-      }
-      @if (task.isDueSoon() && !task.inFinalState()) {
-        <span
-          aria-label="Due soon"
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#fab143] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
-          role="img"
-        >
-          <mat-icon
-            aria-hidden="true"
-            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-black"
-          >
-            schedule
-          </mat-icon>
-        </span>
-      }
-      @if (task.betweenDueDateAndDeadlineDate() && !task.isPastDeadline() && !task.inFinalState()) {
-        <span
-          aria-label="Due, deadline not yet passed"
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
-          role="img"
-        >
-          <mat-icon
-            aria-hidden="true"
-            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
-          >
-            schedule
-          </mat-icon>
-        </span>
-      }
-      <!--
-        Same colour as the due badge above, so the glyph has to differ too.
-        Colour alone is not enough to tell the two states apart.
-      -->
-      @if (task.isPastDeadline() && !task.inFinalState()) {
-        <span
-          aria-label="Past deadline"
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
-          role="img"
-        >
-          <mat-icon
-            aria-hidden="true"
-            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
-          >
-            event_busy
-          </mat-icon>
-          <strong aria-hidden="true" class="h-min font-bold text-white">!</strong>
         </span>
       }
     </div>
