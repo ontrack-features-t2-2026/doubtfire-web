@@ -1,6 +1,8 @@
 .demo-mode-banner {
   align-items: center;
-  background: var(--ot-color-surface-raised);
+  // A warning tint, not a plain surface. In light mode the raised surface is the same
+  // white as the page, and demo data has to be obvious at a glance in both themes.
+  background: color-mix(in srgb, var(--ot-color-warning) 14%, var(--ot-color-surface-raised));
   border-bottom: 1px solid var(--ot-color-warning);
   color: var(--ot-color-text);
   display: flex;
