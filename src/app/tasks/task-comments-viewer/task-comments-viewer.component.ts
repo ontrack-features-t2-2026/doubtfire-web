@@ -155,13 +155,14 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
         }
       }
 
-      for (const cachedComment of task.comments) {
-        if (!comments.find((c) => c.id === cachedComment.id)) {
+      const commentIds = new Set(comments.map((comment) => comment.id));
+
+      for (const cachedComment of [...task.comments]) {
+        if (!commentIds.has(cachedComment.id)) {
           // This comment is in cache but not in the latest comments list
           task.commentCache.delete(cachedComment.id);
         }
       }
-
       task.refreshCommentData();
 
       const lastReadComment: TaskComment = task.comments
