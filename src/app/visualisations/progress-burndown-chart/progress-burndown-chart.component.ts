@@ -3,6 +3,7 @@ import {formatDate} from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DoCheck,
   HostListener,
   Inject,
   Input,
@@ -44,6 +45,13 @@ interface BurndownSummary {
 
 type PeerMedianState = 'loading' | 'error' | PeerProgressState;
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 @Component({
   selector: 'f-progress-burndown-chart',
   templateUrl: './progress-burndown-chart.component.html',
@@ -53,7 +61,7 @@ type PeerMedianState = 'loading' | 'error' | PeerProgressState;
 })
 export class ProgressBurndownChartComponent
   extends ChartBaseComponent
-  implements OnChanges, OnDestroy, OnInit
+  implements DoCheck, OnChanges, OnDestroy, OnInit
 {
   @Input() project: Project;
   @Input() unit: Unit;
@@ -65,7 +73,8 @@ export class ProgressBurndownChartComponent
   // Chart options
   legend: boolean = false;
   showLabels: boolean = true;
-  animations: boolean = true;
+  // ngx-charts animates in JS, which the global reduced-motion CSS cannot reach.
+  animations: boolean = !prefersReducedMotion();
   xAxis: boolean = true;
   yAxis: boolean = true;
   showYAxisLabel: boolean = true;
@@ -102,6 +111,7 @@ export class ProgressBurndownChartComponent
   private activePeerMedianRequest?: Subscription;
   private peerMedianRequestVersion: number = 0;
   private initialised: boolean = false;
+  private renderedTheme?: string;
 
   constructor(
     public viewContainerRef: ViewContainerRef,
@@ -164,6 +174,17 @@ export class ProgressBurndownChartComponent
       this.peerMedianState = 'disabled';
       this.peerMedian = [];
       this.updateData();
+    }
+  }
+
+  // Series colours are resolved token strings, so read them again when the theme flips
+  // while the chart is on screen. Axis and legend text follow the tokens in CSS
+  // (styles/common/charts.scss).
+  ngDoCheck(): void {
+    const theme = this.themeColor?.resolved?.();
+    if (this.initialised && theme !== this.renderedTheme) {
+      this.renderedTheme = theme;
+      this.applyVisibility();
     }
   }
 

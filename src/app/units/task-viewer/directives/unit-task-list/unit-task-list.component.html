@@ -382,6 +382,7 @@
         >
           @if (isCollapsed) {
             <a
+              aria-label="Create portfolio"
               class="flex w-full flex-col items-center justify-center gap-2 py-2 text-inherit no-underline"
               [routerLink]="['/projects', project.id, 'portfolio']"
             >

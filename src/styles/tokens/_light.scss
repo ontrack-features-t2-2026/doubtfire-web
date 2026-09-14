@@ -15,18 +15,21 @@
   --ot-color-text: #212121;
   --ot-color-text-muted: #616161;
   --ot-color-border: #8a8a8a;
+  // The edge of a control a user has to find (input outline, unchecked box).
+  // 1.4.11 needs 3:1 on every surface, which the decorative border does not give.
+  --ot-color-control-border: #8a8a8a;
   --ot-color-divider: #e0e0e0;
   --ot-color-focus: #3939ff;
   --ot-color-link: #3939ff;
   --ot-color-primary: #3939ff;
   --ot-color-on-primary: #ffffff;
-  --ot-color-success: #398239;
-  --ot-color-warning: #a56504;
+  --ot-color-success: #377c37;
+  --ot-color-warning: #9d6004;
   // Text on a filled warning or error header. White clears 4.5:1 on both fills here.
   --ot-color-on-warning: #ffffff;
-  --ot-color-error: #d73613;
+  --ot-color-error: #ce3412;
   --ot-color-on-error: #ffffff;
-  --ot-color-info: #0075d0;
+  --ot-color-info: #0070c7;
   --ot-color-inverse-surface: #212121;
   --ot-color-inverse-text: #fafafa;
 
@@ -83,8 +86,8 @@
   --ot-status-attention-required-graphic: #cd4c10;
 
   // --- 8.2 Everything else ---
-  --ot-urgency-overdue: #c94823;
-  --ot-urgency-soon: #a56504;
+  --ot-urgency-overdue: #c14522;
+  --ot-urgency-soon: #9d6004;
   --ot-urgency-later: #616161;
 
   --ot-chart-1: #3939ff;

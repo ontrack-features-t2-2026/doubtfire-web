@@ -3,6 +3,8 @@
 @use '@worktile/gantt/styles/index';
 @use 'theme' as *;
 @use 'styles/common/typeface';
+// Theme colours for ngx-charts axes, ticks, gridlines and legends.
+@use 'styles/common/charts';
 // Theme foundation (THM-F01): the --ot-* token layer. These two partials are the
 // only place a colour value is declared. Light is the bare :root default so the
 // app stays correct even if the pre-hydration marker script (THM-F04) never runs.
@@ -257,6 +259,18 @@ ngx-gantt-root {
 ):focus-visible {
   outline: 2px solid var(--ot-color-focus);
   outline-offset: 2px;
+}
+
+// Accessibility (1.4.11): the resting outline of a text field and an unchecked box
+// is how a user finds the control. Material's defaults are 38% black, which sits at
+// 2.7:1 on a white card, so point both at the control-border token (3:1 or better
+// on every surface in both themes). The dark selector matches the dark Material
+// theme include in theme.scss, which this file follows.
+:root,
+:root[data-ot-theme='dark'] {
+  --mat-form-field-outlined-outline-color: var(--ot-color-control-border);
+  --mat-checkbox-unselected-icon-color: var(--ot-color-control-border);
+  --mat-radio-unselected-icon-color: var(--ot-color-control-border);
 }
 
 // Keep focus outlines inside menu panels so their edges do not clip them.

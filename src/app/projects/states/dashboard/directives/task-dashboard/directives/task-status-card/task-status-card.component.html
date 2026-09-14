@@ -7,6 +7,7 @@
   @if (triggers?.length > 0) {
     <mat-form-field appearance="outline" class="px-2.5 pt-2.5">
       <mat-select
+        aria-label="Task status"
         [disabled]="task?.blockedByPrerequisiteTasks() && !isTutor"
         [value]="$safeNavigationMigration(task?.status)"
         (selectionChange)="triggerTransition($event.value)"
