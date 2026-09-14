@@ -37,9 +37,11 @@
       ></f-unit-task-list>
     </section>
 
+    <!-- The panel scrolls as a whole: the details keep their natural height, so their
+         buttons are never cut off, and the task sheet keeps a usable height below. -->
     <section
       aria-label="Selected task"
-      class="min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
+      class="min-h-0 min-w-0 flex-1 flex-col overflow-y-auto rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
       [ngClass]="activeTaskDef ? 'flex' : 'hidden lg:flex'"
     >
       @if (activeTaskDef) {
@@ -58,11 +60,11 @@
           </p>
         </div>
         <f-task-details-view
-          class="block max-h-[45%] shrink-0 overflow-auto border-b border-ot-divider"
+          class="block shrink-0 border-b border-ot-divider"
           [taskDef]="activeTaskDef"
           [unit]="unit"
         ></f-task-details-view>
-        <f-task-sheet-view class="block min-h-0 flex-1" [taskDef]="activeTaskDef">
+        <f-task-sheet-view class="block min-h-[32rem] flex-1" [taskDef]="activeTaskDef">
         </f-task-sheet-view>
       } @else {
         <div class="flex h-full items-center justify-center px-4">
