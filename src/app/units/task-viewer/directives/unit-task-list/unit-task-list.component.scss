@@ -123,20 +123,37 @@ $my-palette: mat.m2-define-palette($md-formatif);
   }
 }
 
+.task-status-control {
+  position: relative;
+}
+
+// The browser's own arrow sat cramped against the pill's edge and differed between
+// browsers, so the select draws none and the theme's chevron sits inside the pill.
 .task-status-control select {
   height: 40px;
   width: 100%;
+  appearance: none;
   border: 1px solid var(--ot-color-border);
   border-radius: 999px;
   background-color: var(--ot-color-surface);
-  padding: 0 2rem 0 0.875rem;
+  padding: 0 2.5rem 0 0.875rem;
   color: var(--ot-color-text);
   font-size: 0.875rem;
+  cursor: pointer;
 
   &:focus-visible {
     outline: 2px solid var(--ot-color-focus);
     outline-offset: 1px;
   }
+}
+
+.task-status-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  translate: 0 -50%;
+  color: var(--ot-color-text-muted);
+  pointer-events: none;
 }
 
 .task-view-options {
