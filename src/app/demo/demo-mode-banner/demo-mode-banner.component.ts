@@ -7,7 +7,6 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import {DEMO_RELOAD} from '../demo-controls/demo-controls.component';
 import {DemoModeStore} from '../demo-mode.store';
 
 const BANNER_HEIGHT_PROPERTY = '--ot-demo-banner-height';
@@ -24,7 +23,6 @@ export class DemoModeBannerComponent implements OnDestroy {
 
   constructor(
     readonly demoMode: DemoModeStore,
-    @Inject(DEMO_RELOAD) private reload: () => void,
     @Inject(DOCUMENT) private document: Document,
   ) {}
 
@@ -52,8 +50,7 @@ export class DemoModeBannerComponent implements OnDestroy {
   }
 
   exitDemo(): void {
-    this.demoMode.reset();
-    this.reload();
+    this.demoMode.setEnabled(false);
   }
 
   private publishHeight(height: number): void {

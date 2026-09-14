@@ -1,7 +1,8 @@
 <div
+  aria-label="Task planner display options"
   class="planner-toolbar flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-ot-divider px-4 py-2.5"
 >
-  <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+  <div class="planner-toggles flex flex-wrap items-center gap-x-6 gap-y-2">
     <mat-slide-toggle [(ngModel)]="showDatesColumn">Show task dates</mat-slide-toggle>
     <mat-slide-toggle
       [ngModel]="showTasksAboveTargetGrade"
@@ -11,7 +12,7 @@
     </mat-slide-toggle>
   </div>
   @if (unit.allowFlexibleDates) {
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="planner-date-actions flex flex-wrap items-center gap-2">
       <button mat-button type="button" (click)="saveImage()">
         <mat-icon aria-hidden="true">save_alt</mat-icon>
         Download chart
@@ -93,12 +94,87 @@
   </span>
 </div>
 
+<section aria-label="Tasks in this plan" class="mobile-planner">
+  @if (!items.length) {
+    <div class="mobile-planner-empty" role="status">No tasks match the selected target grade.</div>
+  }
+
+  @for (item of items; track item.id) {
+    <article class="mobile-task-card" [attr.data-task-definition-id]="item.id">
+      <header class="mobile-task-card__header">
+        <div class="min-w-0">
+          <p class="mobile-task-card__grade">
+            {{ gradeString(item.taskDefinition.targetGrade) }} task
+          </p>
+          <h3>{{ item.taskDefinition.abbreviation }} {{ item.taskDefinition.name }}</h3>
+        </div>
+        <div class="mobile-task-card__status">
+          <status-icon [showTooltip]="false" [status]="item.task.status"> </status-icon>
+          <span>{{ statusLabel(item) }}</span>
+        </div>
+      </header>
+
+      <p class="mobile-task-card__date-summary">
+        {{ toDateString(item.start) }} to {{ toDateString(item.end) }}
+      </p>
+
+      @if (showDatesColumn) {
+        <dl class="mobile-task-card__dates">
+          <div>
+            <dt>Start date</dt>
+            <dd>{{ toDateString(item.start) }}</dd>
+          </div>
+          <div>
+            <dt>Target / due date</dt>
+            <dd>{{ toDateString(item.end) }}</dd>
+          </div>
+          <div>
+            <dt>Deadline</dt>
+            <dd>
+              {{
+                item.task.localDeadlineDate()
+                  ? toDateString(item.task.localDeadlineDate())
+                  : 'Not set'
+              }}
+            </dd>
+          </div>
+        </dl>
+      }
+
+      <div class="mobile-task-card__connections">
+        <mat-icon aria-hidden="true">account_tree</mat-icon>
+        <span>{{ connectionSummary(item) }}</span>
+      </div>
+
+      <div class="mobile-task-card__actions">
+        <button
+          mat-stroked-button
+          type="button"
+          [attr.aria-label]="
+            'View prerequisites and dependent tasks for ' + item.taskDefinition.abbreviation
+          "
+          (click)="barClick(item)"
+        >
+          View connections
+        </button>
+        <a
+          mat-button
+          [attr.aria-label]="'Open task ' + item.taskDefinition.abbreviation"
+          [routerLink]="['/projects', project.id, 'dashboard', item.taskDefinition.abbreviation]"
+        >
+          Open task
+        </a>
+      </div>
+    </article>
+  }
+</section>
+
 <!-- The chart gets a fixed height from its row count, since ngx-gantt fills its
      container; the toolbar and legend above it are free to wrap. -->
-<div class="planner-chart" [style.height.px]="ganttHeight">
+<div class="planner-chart desktop-planner" [style.height.px]="ganttHeight">
   <ngx-gantt
     #gantt
-    class="h-full overflow-hidden"
+    class="desktop-planner h-full overflow-hidden"
     [async]="false"
     [baselineItems]="unit.allowFlexibleDates ? baselineItems : []"
     [class.flexible-dates]="overlayLines"

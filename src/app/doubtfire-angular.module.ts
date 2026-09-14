@@ -93,6 +93,7 @@ import {
   TaskCommentComposerComponent,
 } from 'src/app/tasks/task-comment-composer/task-comment-composer.component';
 import {EditProfileComponent} from './account/edit-profile/edit-profile.component';
+import {VerifyAdditionalEmailComponent} from './account/verify-additional-email/verify-additional-email.component';
 import {ActivityTypeListComponent} from './admin/institution-settings/activity-type-list/activity-type-list.component';
 import {CampusListComponent} from './admin/institution-settings/campuses/campus-list/campus-list.component';
 import {InstitutionSettingsComponent} from './admin/institution-settings/institution-settings.component';
@@ -158,6 +159,7 @@ import {TutorNoteService} from './api/services/tutor-note.service';
 import {setAppInjector} from './app-injector';
 import {AppComponent} from './app.component';
 import {routes} from './app.routes';
+import {AdditionalNotificationEmailComponent} from './common/additional-notification-email/additional-notification-email.component';
 import {ArchiveViewerComponent} from './common/archive-viewer/archive-viewer.component';
 import {AudioPlayerComponent} from './common/audio-player/audio-player.component';
 import {AudioCommentRecorderComponent} from './common/audio-recorder/audio/audio-comment-recorder/audio-comment-recorder';
@@ -259,6 +261,7 @@ import {EngagementDetailDialogComponent} from './projects/states/dashboard/direc
 import {EngagementPassportCardComponent} from './projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-passport-card.component';
 import {PeerProgressUnitSummaryComponent} from './projects/states/dashboard/directives/progress-dashboard/peer-progress-unit-summary/peer-progress-unit-summary.component';
 import {ProgressDashboardComponent} from './projects/states/dashboard/directives/progress-dashboard/progress-dashboard.component';
+import {DownloadFilterDialogComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/download-filter-dialog/download-filter-dialog.component';
 import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/progress-dashboard/task-planner-card/task-planner-card.component';
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
 import {TaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/task-list-item/task-list-item.component';
@@ -324,6 +327,7 @@ import {IntelligentDiscussionRecorderComponent} from './tasks/task-comments-view
 import {PdfImageCommentComponent} from './tasks/task-comments-viewer/pdf-image-comment/pdf-image-comment.component';
 import {ScormCommentComponent} from './tasks/task-comments-viewer/scorm-comment/scorm-comment.component';
 import {ScormExtensionCommentComponent} from './tasks/task-comments-viewer/scorm-extension-comment/scorm-extension-comment.component';
+import {SentAttachmentCardComponent} from './tasks/task-comments-viewer/sent-attachment-card/sent-attachment-card.component';
 import {TaskAssessmentCommentComponent} from './tasks/task-comments-viewer/task-assessment-comment/task-assessment-comment.component';
 import {TaskCommentsViewerComponent} from './tasks/task-comments-viewer/task-comments-viewer.component';
 import {UnitStudentEnrolmentModalComponent} from './units/modals/unit-student-enrolment-modal/unit-student-enrolment-modal.component';
@@ -492,6 +496,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     IntelligentDiscussionRecorderComponent,
     ExtensionCommentComponent,
     PdfImageCommentComponent,
+    SentAttachmentCardComponent,
     CampusListComponent,
     ActivityTypeListComponent,
     OverseerImageListComponent,
@@ -568,6 +573,8 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     SignInComponent,
     EditProfileFormComponent,
     EditProfileComponent,
+    VerifyAdditionalEmailComponent,
+    AdditionalNotificationEmailComponent,
     UserBadgeComponent,
     TaskStatusCardComponent,
     TaskDueCardComponent,
@@ -648,6 +655,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     TaskPlannerComponent,
     DownloadStaffNotesComponent,
     TaskPlannerCardComponent,
+    DownloadFilterDialogComponent,
     TaskPlannerPrerequisitesModalComponent,
     TaskOverseerReportComponent,
     SubmissionFilesModalComponent,

@@ -24,14 +24,18 @@
     [hint]="unitRole ? 'Add a student with the search below.' : ''"
   ></f-empty-state>
 } @else {
-  <ul aria-label="Group members" class="m-0 list-none p-0">
+  <ul aria-label="Group members" class="m-0 list-none p-0" [class.student-member-cards]="project">
     @for (member of members; track member.id) {
       <li
         class="flex min-h-14 items-center gap-3 border-b border-ot-divider px-5 py-2 last:border-b-0"
+        [class.student-member-card]="project"
       >
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1" [class.student-member-card__identity]="project">
           <p class="m-0 truncate font-medium text-ot-text">
             {{ member.student?.name || 'Unnamed student' }}
+            @if (project?.id === member.id) {
+              <strong>(You)</strong>
+            }
           </p>
           @if (unitRole && member.student?.username) {
             <p class="m-0 truncate text-sm text-ot-muted">{{ member.student.username }}</p>

@@ -1,73 +1,123 @@
 <form
   #form="ngForm"
-  fxLayout="column"
-  fxLayoutAlign="center start"
+  class="flex flex-col items-start justify-center"
   [ngClass]="{'p-10': modal}"
-  (ngSubmit)="submit()"
+  (ngSubmit)="submit(form)"
 >
   <div class="main-container flex w-full flex-row items-start justify-start">
     <div class="main flex w-full flex-col items-start justify-start">
       <!-- avatar -->
       <div class="mb-[25px] flex w-full flex-row items-center justify-between">
         <div class="flex flex-row items-center justify-between">
-          <a class="ml-[20px]" href="https://gravatar.com/connect/?source=_signup/" target="_blank">
+          <a
+            class="ml-[20px]"
+            href="https://gravatar.com/connect/?source=_signup/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             <user-icon style="margin-right: 25px" [size]="80" [user]="user"></user-icon
           ></a>
 
           <div>
             <h1>{{ user?.firstName }}</h1>
+            Set up your {{ externalName.value }} profile
           </div>
         </div>
       </div>
 
-      <!-- Username is assigned by the institution and is not user-editable, so it only
-           appears when an admin is creating a brand-new account. In the student's own
-           setup/edit view it is hidden; the value stays on `user` and submits unchanged. -->
       @if (newUser) {
-        <div fxFlexFill fxLayout="row">
-          <mat-form-field appearance="outline" fxFlexFill>
+        <div class="m-0 flex size-full min-h-full min-w-full flex-row">
+          <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
             <mat-label>Username</mat-label>
             <input autocomplete="username" matInput name="username" [(ngModel)]="user.username" />
           </mat-form-field>
         </div>
+      } @else {
+        <section aria-labelledby="account-information-title" class="account-information">
+          <div>
+            <h2 id="account-information-title">Account information</h2>
+            <p>
+              These details identify your sign-in account. Student ID cannot be changed from your
+              profile.
+            </p>
+          </div>
+          <dl>
+            <div>
+              <dt>Username</dt>
+              <dd>{{ user.username }}</dd>
+            </div>
+            @if (user.systemRole === 'Student' && !canEditStudentId) {
+              <div>
+                <dt>Student ID</dt>
+                <dd>{{ user.studentId || 'Not supplied' }}</dd>
+              </div>
+            }
+            @if (!canEditEmail) {
+              <div>
+                <dt>Institutional / sign-in email</dt>
+                <dd>{{ user.email }}</dd>
+              </div>
+            }
+          </dl>
+          @if (user.institutionalIdentityManaged) {
+            <p class="account-information__managed">
+              Your institution manages sign-in identity changes. Contact support if these details
+              are incorrect.
+            </p>
+          }
+        </section>
       }
 
-      <!-- First and Second name are the student's legal names, managed by the university,
-           so they are not student-editable. Like Username/Student ID they only appear while
-           an admin is creating the account; the values stay on `user` and submit unchanged. -->
-      @if (newUser) {
-        <div fxFlexFill fxLayout="row" fxLayout.lt-sm="column">
-          <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="start">
-            <mat-label>First Name</mat-label>
-            <input
-              autocomplete="given-name"
-              class="outline-none"
-              matInput
-              name="first"
-              required
-              [(ngModel)]="user.firstName"
-            />
-          </mat-form-field>
+      <div class="profile-name-fields">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name</mat-label>
+          <input
+            #firstModel="ngModel"
+            autocomplete="given-name"
+            class="outline-none"
+            matInput
+            name="first"
+            required
+            [(ngModel)]="user.firstName"
+          />
+          @if (firstModel.hasError('required')) {
+            <mat-error>First name is required</mat-error>
+          }
+        </mat-form-field>
 
-          <div fxFlex fxHide.lt-sm></div>
+        <mat-form-field appearance="outline">
+          <mat-label>Second Name</mat-label>
+          <input
+            #lastModel="ngModel"
+            autocomplete="family-name"
+            matInput
+            name="last"
+            required
+            [(ngModel)]="user.lastName"
+          />
+          @if (lastModel.hasError('required')) {
+            <mat-error>Second name is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-          <mat-form-field appearance="outline" fxFlex="48" fxFlex.lt-sm="100" fxFlexAlign="end">
-            <mat-label>Second Name</mat-label>
-            <input
-              autocomplete="family-name"
-              matInput
-              name="last"
-              required
-              [(ngModel)]="user.lastName"
-            />
-          </mat-form-field>
-        </div>
-      }
+      <div class="m-0 flex size-full min-h-full min-w-full flex-row">
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
+          <mat-label>Preferred Name</mat-label>
+          <input
+            autocomplete="nickname"
+            matInput
+            name="preferred_name"
+            [(ngModel)]="user.nickname"
+          />
+        </mat-form-field>
+      </div>
 
-      <!-- Preferred Name dropped: profile identity is university-managed and not
-           customisable by the student. The nickname value stays on `user` untouched. -->
-
-      <mat-form-field appearance="outline" fxFlexFill [hidden]="!customPronouns">
+      <mat-form-field
+        appearance="outline"
+        class="m-0 size-full min-h-full min-w-full"
+        [hidden]="!customPronouns"
+      >
         <mat-label>Custom Pronouns</mat-label>
         <input
           matInput
@@ -79,35 +129,49 @@
         />
       </mat-form-field>
 
-      <!-- Student ID comes from enrolment and is not user-editable, so like Username it
-           only shows while an admin is creating the account. Hidden from the student's own
-           setup/edit view; the value stays on `user` and submits unchanged. -->
-      @if (user.systemRole === 'Student' && newUser) {
-        <mat-form-field appearance="outline" fxFlexFill>
-          <mat-label>Student ID</mat-label>
-          <input matInput name="student_id" required [(ngModel)]="user.studentId" />
-        </mat-form-field>
+      @if (user.systemRole === 'Student') {
+        @if (canEditStudentId) {
+          <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
+            <mat-label>Student ID</mat-label>
+            <input
+              #studentIdModel="ngModel"
+              matInput
+              name="student_id"
+              required
+              [(ngModel)]="user.studentId"
+            />
+            @if (studentIdModel.hasError('required')) {
+              <mat-error>Student ID is required</mat-error>
+            }
+          </mat-form-field>
+        }
       }
 
-      <!-- Primary email is the university-managed address and is not student-editable.
-           Shown only during admin account creation; the value stays on `user` and submits
-           unchanged. (Notification email addresses are a separate, student-owned concern.) -->
-      @if (newUser) {
-        <mat-form-field appearance="outline" fxFlexFill>
+      @if (canEditEmail) {
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>Email</mat-label>
           <input
+            #emailModel="ngModel"
             autocomplete="email"
+            email
+            inputmode="email"
             matInput
             name="email"
             required
             type="email"
             [(ngModel)]="user.email"
           />
+          @if (emailModel.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (emailModel.hasError('email')) {
+            <mat-error>Enter a valid email address</mat-error>
+          }
         </mat-form-field>
       }
 
       @if (canSeeSystemRole) {
-        <mat-form-field appearance="outline" fxFlexFill>
+        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
           <mat-label>System Role</mat-label>
           <mat-select
             name="systemRole"
@@ -123,13 +187,18 @@
         </mat-form-field>
       }
 
-      <f-notification-settings [user]="user"></f-notification-settings>
+      @if (mode === 'edit' && managingOwnProfile) {
+        <f-additional-notification-email [user]="user"></f-additional-notification-email>
+      }
+
+      <f-notification-settings
+        [showNotificationsLink]="isOwnProfilePage"
+        [user]="user"
+      ></f-notification-settings>
 
       <section
         aria-labelledby="peer-progress-preference-title"
-        class="peer-progress-preference"
-        fxFlexFill
-        fxLayout="column"
+        class="peer-progress-preference m-0 flex size-full min-h-full min-w-full flex-col"
       >
         <h3 id="peer-progress-preference-title">Peer progress</h3>
         <mat-slide-toggle
@@ -151,10 +220,9 @@
         its permission prompt in response to a user gesture, and the service
         worker is not registered until six seconds after the page loads.
       -->
-      <section class="push-opt-in" fxFlexFill fxLayout="column" fxLayoutAlign="center start">
-        <!-- No color="primary": the primary blue label sat on the dark button fill at
-             well under AA contrast. The neutral stroked-button label (--ot-color-text via
-             the global override) reads clearly and matches the app's other stroked buttons. -->
+      <section
+        class="push-opt-in m-0 flex size-full min-h-full min-w-full flex-col items-start justify-center"
+      >
         <button
           mat-stroked-button
           type="button"
@@ -181,14 +249,16 @@
           <small class="push-opt-in__hint">This device will receive push notifications.</small>
         }
       </section>
-      <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+      <section class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start">
         <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
           >Send anonymous research statistics
         </mat-checkbox>
       </section>
 
       @if (tiiEnabled) {
-        <section fxFlexFill fxLayout="row" fxLayoutAlign="start center">
+        <section
+          class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start"
+        >
           <mat-checkbox
             color="primary"
             disabled
@@ -200,9 +270,9 @@
           </mat-checkbox>
         </section>
       }
-      <div fxFlexFill fxLayout="row" style="padding-top: 12px">
+      <div class="profile-actions m-0 flex size-full min-h-full min-w-full flex-row">
         <button
-          fxFlexAlign="start"
+          class="self-start"
           mat-stroked-button
           type="button"
           [hidden]="mode === 'edit' || mode === 'new'"
@@ -210,30 +280,36 @@
         >
           Sign Out
         </button>
-        <div fxFlex></div>
+        <div class="flex-1"></div>
         @if (mode === 'create') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
             type="submit"
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || saving"
           >
-            Confirm Account
+            {{ saving ? 'Saving…' : 'Confirm account' }}
           </button>
         }
         @if (mode === 'edit') {
           <button
+            class="self-end"
             color="primary"
-            fxFlexAlign="end"
             mat-flat-button
-            type="button"
-            [disabled]="form.invalid"
-            (click)="submit()"
+            type="submit"
+            [disabled]="form.invalid || form.pristine || saving"
           >
-            Save Profile
+            {{ saving ? 'Saving…' : form.dirty ? 'Save profile' : 'Profile saved' }}
           </button>
         }
+      </div>
+      <div class="profile-save-status">
+        @if (form.invalid && form.dirty) {
+          <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
+        }
+        <p aria-live="polite" class="profile-save-status__success">{{ saveMessage }}</p>
+        <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
       </div>
     </div>
   </div>

@@ -15,30 +15,32 @@ export const DEMO_TOOLS_AVAILABLE: InjectionToken<boolean> = new InjectionToken(
 @Injectable({providedIn: 'root'})
 export class DemoModeStore {
   private readonly enabledSubject: BehaviorSubject<boolean>;
+  private scenarioId: string | null = null;
+  private userId: number | null = null;
 
   readonly enabled$: Observable<boolean>;
 
-  constructor(@Inject(DEMO_TOOLS_AVAILABLE) readonly available: boolean) {
-    const enabled = available && this.readStoredValue();
-
-    if (!available) {
-      this.removeStoredValue();
-    }
-
-    this.enabledSubject = new BehaviorSubject(enabled);
+  constructor(@Inject(DEMO_TOOLS_AVAILABLE) private readonly toolsEligible: boolean) {
+    this.enabledSubject = new BehaviorSubject(false);
     this.enabled$ = this.enabledSubject.asObservable().pipe(distinctUntilChanged());
+  }
+
+  get available(): boolean {
+    return this.toolsEligible && this.scenarioId !== null && this.userId !== null;
   }
 
   get enabled(): boolean {
     return this.available && this.enabledSubject.value;
   }
 
-  /**
-   * Local development starts in the intentionally quiet state. Production and
-   * builds without demo tools must always pass API data through unchanged.
-   */
-  get shouldMaskApiData(): boolean {
-    return this.available && !this.enabled;
+  configureScenario(scenarioId: string, userId: number): void {
+    if (!this.toolsEligible) {
+      return;
+    }
+
+    this.scenarioId = scenarioId;
+    this.userId = userId;
+    this.enabledSubject.next(this.readStoredValue());
   }
 
   setEnabled(enabled: boolean): void {
@@ -61,9 +63,15 @@ export class DemoModeStore {
     this.enabledSubject.next(false);
   }
 
+  clearScenario(): void {
+    this.reset();
+    this.scenarioId = null;
+    this.userId = null;
+  }
+
   private readStoredValue(): boolean {
     try {
-      return globalThis.sessionStorage?.getItem(DEMO_MODE_STORAGE_KEY) === 'true';
+      return globalThis.sessionStorage?.getItem(this.storageKey) === 'true';
     } catch {
       return false;
     }
@@ -71,7 +79,7 @@ export class DemoModeStore {
 
   private writeStoredValue(): void {
     try {
-      globalThis.sessionStorage?.setItem(DEMO_MODE_STORAGE_KEY, 'true');
+      globalThis.sessionStorage?.setItem(this.storageKey, 'true');
     } catch {
       // Storage can be unavailable in private or hardened browser contexts.
     }
@@ -79,9 +87,15 @@ export class DemoModeStore {
 
   private removeStoredValue(): void {
     try {
-      globalThis.sessionStorage?.removeItem(DEMO_MODE_STORAGE_KEY);
+      if (this.scenarioId !== null && this.userId !== null) {
+        globalThis.sessionStorage?.removeItem(this.storageKey);
+      }
     } catch {
       // The in-memory state still fails closed when storage is unavailable.
     }
+  }
+
+  private get storageKey(): string {
+    return `${DEMO_MODE_STORAGE_KEY}:${this.scenarioId}:uid${this.userId}`;
   }
 }

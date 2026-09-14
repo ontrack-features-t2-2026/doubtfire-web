@@ -1,0 +1,103 @@
+{
+  "capturedAt": "2026-08-31T06:58:00+10:00",
+  "environment": {
+    "origin": "http://127.0.0.1:4400",
+    "route": "/projects/2/plan",
+    "fixture": "local synthetic student_1 / project 2 / COS10001",
+    "liveDataChanged": false
+  },
+  "taskPlanner": {
+    "phone": [
+      {
+        "viewport": {"width": 320, "height": 844},
+        "documentClientWidth": 320,
+        "documentScrollWidth": 320,
+        "horizontalOverflow": 0,
+        "mobilePlannerDisplay": "grid",
+        "desktopPlannerDisplay": "none",
+        "visibleTaskCards": 22,
+        "firstCard": {"left": 32, "right": 288, "width": 256},
+        "primaryControlColumns": "288px",
+        "taskActionHeights": [44, 44],
+        "expandedDateColumns": "222px"
+      },
+      {
+        "viewport": {"width": 360, "height": 844},
+        "documentScrollWidth": 360,
+        "horizontalOverflow": 0,
+        "mobilePlannerDisplay": "grid",
+        "desktopPlannerDisplay": "none",
+        "firstCard": {"left": 32, "right": 328, "width": 296},
+        "expandedDateColumns": "82px 82px 82px",
+        "taskActionHeights": [44, 44]
+      },
+      {
+        "viewport": {"width": 390, "height": 844},
+        "documentScrollWidth": 390,
+        "horizontalOverflow": 0,
+        "mobilePlannerDisplay": "grid",
+        "desktopPlannerDisplay": "none",
+        "firstCard": {"left": 32, "right": 358, "width": 326},
+        "expandedDateColumns": "92px 92px 92px",
+        "taskActionHeights": [44, 44]
+      },
+      {
+        "viewport": {"width": 412, "height": 844},
+        "documentScrollWidth": 412,
+        "horizontalOverflow": 0,
+        "mobilePlannerDisplay": "grid",
+        "desktopPlannerDisplay": "none",
+        "firstCard": {"left": 32, "right": 380, "width": 348},
+        "expandedDateColumns": "99.3281px 99.3359px 99.3359px",
+        "taskActionHeights": [44, 44]
+      }
+    ],
+    "desktop": {
+      "viewport": {"width": 1440, "height": 900},
+      "documentClientWidth": 1440,
+      "documentScrollWidth": 1440,
+      "horizontalOverflow": 0,
+      "mobilePlannerDisplay": "none",
+      "desktopPlannerDisplay": "flex",
+      "desktopPlanner": {"left": 32, "right": 1408, "width": 1376, "height": 1032},
+      "primaryControlColumns": "600px 600px"
+    }
+  },
+  "webCalendarAt320": {
+    "viewport": {"width": 320, "height": 844},
+    "documentClientWidth": 320,
+    "documentScrollWidth": 320,
+    "horizontalOverflow": 0,
+    "dialog": {
+      "left": 16,
+      "right": 304,
+      "top": 68.2,
+      "bottom": 775.8,
+      "width": 288,
+      "height": 707.59
+    },
+    "scrollRegion": {
+      "left": 16,
+      "right": 304,
+      "clientWidth": 288,
+      "scrollWidth": 288,
+      "horizontalOverflow": 0,
+      "clientHeight": 549,
+      "scrollHeight": 1427,
+      "verticalOverflow": 878
+    },
+    "unitChips": [
+      {"left": 41, "right": 271, "width": 230, "height": 40},
+      {"left": 41, "right": 271, "width": 230, "height": 40},
+      {"left": 41, "right": 271, "width": 230, "height": 40},
+      {"left": 41, "right": 271, "width": 230, "height": 40}
+    ],
+    "providerTabs": [
+      {"label": "Google", "left": 49, "right": 124.65, "width": 75.65, "height": 48},
+      {"label": "Apple", "left": 124.65, "right": 191.29, "width": 66.64, "height": 48},
+      {"label": "Outlook", "left": 191.29, "right": 271, "width": 79.71, "height": 48}
+    ],
+    "reminderColumns": "188px",
+    "downloadAndCloseActionHeights": [44, 44, 44, 44]
+  }
+}

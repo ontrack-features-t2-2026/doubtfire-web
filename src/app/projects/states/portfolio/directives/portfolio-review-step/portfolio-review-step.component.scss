@@ -63,3 +63,34 @@
 .create-panel__icon {
   @include wizard.icon-tile(primary);
 }
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.portfolio-step-footer button {
+  min-height: 44px;
+}
+
+@media (max-width: 639.98px) {
+  .portfolio-step-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+.portfolio-review-file-name {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639.98px) {
+  .portfolio-download-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portfolio-download-actions button {
+    min-height: 44px;
+    white-space: normal;
+  }
+}

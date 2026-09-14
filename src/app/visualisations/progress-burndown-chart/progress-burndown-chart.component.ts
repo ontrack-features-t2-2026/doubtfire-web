@@ -36,6 +36,12 @@ interface BurndownSeries {
   series: BurndownPoint[];
 }
 
+interface BurndownSummary {
+  name: 'Projected' | 'To Submit' | 'To Complete';
+  remaining: number;
+  color: string;
+}
+
 type PeerMedianState = 'loading' | 'error' | PeerProgressState;
 
 @Component({
@@ -65,7 +71,7 @@ export class ProgressBurndownChartComponent
   showYAxisLabel: boolean = true;
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
-  yAxisLabel: string = 'Tasks Remaining';
+  yAxisLabel: string = 'Work Remaining';
   // ngx-charts hands the scheme domain to the series by position, so the full palette is
   // kept here and the scheme is narrowed to whatever is on show. These are token names,
   // resolved to concrete colours at render time (seriesColor) so the lines flip with the
@@ -347,6 +353,20 @@ export class ProgressBurndownChartComponent
 
     this.seriesVisibility[name] = !this.isDataShown(name);
     this.applyVisibility();
+  }
+
+  get summaries(): BurndownSummary[] {
+    const names: BurndownSummary['name'][] = ['Projected', 'To Submit', 'To Complete'];
+
+    return names.flatMap((name) => {
+      const index = this.temp.findIndex((series) => series.name === name);
+      const series = index >= 0 ? this.temp[index] : undefined;
+      const latest = series?.series.at(-1)?.value;
+
+      return latest === undefined
+        ? []
+        : [{name, remaining: latest, color: this.seriesColor(index)}];
+    });
   }
 
   // A hidden series is dropped from the chart data. Zeroing its points instead left the
