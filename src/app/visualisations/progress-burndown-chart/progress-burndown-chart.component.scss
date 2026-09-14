@@ -81,10 +81,6 @@
   font: inherit;
   line-height: 1.25;
   cursor: pointer;
-
-  &:hover {
-    background: var(--ot-color-hover);
-  }
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 
@@ -94,9 +90,11 @@
   }
 }
 
+// Hover only where a pointer can hover. A phone keeps :hover after a tap, which would
+// cover the hidden state of the series just switched off.
 @media (hover: hover) and (pointer: fine) {
   .progress-burndown__legend-item:hover {
-    background: rgba(127, 127, 127, 0.16);
+    background: var(--ot-color-hover);
   }
 }
 
