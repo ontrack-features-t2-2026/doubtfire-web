@@ -4,9 +4,12 @@ import {
   Component,
   Input,
   OnChanges,
+  QueryList,
   SimpleChanges,
   ViewChild,
+  ViewChildren,
 } from '@angular/core';
+import {MatExpansionPanelHeader} from '@angular/material/expansion';
 import {Subscription} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {TaskSimilarity} from 'src/app/api/models/task-similarity';
@@ -28,6 +31,7 @@ import {SelectedTaskService} from '../../../../selected-task.service';
 export class TaskSimilarityViewComponent implements OnChanges {
   @Input() task: Task;
   @ViewChild('jplagViewer') jplagViewer!: JplagReportViewerComponent;
+  @ViewChildren(MatExpansionPanelHeader) panelHeaders?: QueryList<MatExpansionPanelHeader>;
   panelOpenState = false;
   jplagOpenState = false;
   loading = false;
@@ -82,6 +86,19 @@ export class TaskSimilarityViewComponent implements OnChanges {
         part.panelOpenState = false;
       }
     }
+    this.focusFirstPanel();
+  }
+
+  closeJplagReport(): void {
+    this.jplagOpenState = false;
+    this.focusFirstPanel();
+  }
+
+  // Collapse all and Back to summary both leave the page once used, which would drop
+  // keyboard focus to the page body. Hand it to the first similarity instead, once the
+  // list has rendered.
+  private focusFirstPanel(): void {
+    setTimeout(() => this.panelHeaders?.first?.focus());
   }
 
   toggleFlag(e: Event, similarity: TaskSimilarity) {

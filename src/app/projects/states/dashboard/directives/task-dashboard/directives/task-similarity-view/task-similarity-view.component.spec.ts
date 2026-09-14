@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatExpansionModule} from '@angular/material/expansion';
 import {Observable, of, throwError} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {TaskSimilarity} from 'src/app/api/models/task-similarity';
@@ -148,5 +149,47 @@ describe('TaskSimilarityViewComponent', () => {
 
     expect(component.jplagOpenState).toBe(false);
     expect(collapseAll()).not.toBeNull();
+  });
+});
+
+describe('TaskSimilarityViewComponent focus', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TaskSimilarityViewComponent],
+      // Real panels, so there is a panel header to take focus.
+      imports: [EmptyStateComponent, MatExpansionModule],
+      providers: [
+        {provide: TaskSimilarityService, useValue: {}},
+        {provide: AlertService, useValue: {}},
+        {provide: SelectedTaskService, useValue: {}},
+        {provide: FileDownloaderService, useValue: {}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  it('hands focus to the first similarity once Collapse all has gone', async () => {
+    const similarity = similarityStub();
+    similarity.parts[0].panelOpenState = true;
+    const fixture = TestBed.createComponent(TaskSimilarityViewComponent);
+    fixture.componentRef.setInput('task', {
+      id: 7,
+      similarityCache: {values: of([similarity]), currentValues: [similarity]},
+      fetchSimilarities: () => of([similarity]),
+    } as unknown as Task);
+    fixture.detectChanges();
+
+    const collapse = fixture.nativeElement.querySelector(
+      'button[aria-label="Collapse all"]',
+    ) as HTMLButtonElement;
+    collapse.focus();
+    collapse.click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(fixture.nativeElement.querySelector('button[aria-label="Collapse all"]')).toBeNull();
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('mat-expansion-panel-header'),
+    );
   });
 });
