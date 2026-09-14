@@ -209,7 +209,7 @@
         }
       }
       @case (DashboardViews.tutor_notes) {
-        <div class="h-full overflow-auto">
+        <div class="h-full">
           @if (canAccessTutorNotes) {
             <f-tutor-notes-view [task]="task"></f-tutor-notes-view>
           }

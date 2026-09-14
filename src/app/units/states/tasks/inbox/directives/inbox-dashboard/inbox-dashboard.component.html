@@ -138,7 +138,7 @@
           </div>
         }
         @case (InboxDashboardTab.tutorNotes) {
-          <div class="h-full overflow-auto">
+          <div class="h-full">
             @if (canAccessTutorNotes) {
               <f-tutor-notes-view [task]="task"></f-tutor-notes-view>
             }
