@@ -24,6 +24,24 @@
   min-width: 0;
 }
 
+// On a wider screen the submission view scrolls as one: the summary card, then the
+// PDF as tall as the panel. Scrolling past the card gives the document the whole
+// panel instead of the strip the card left it. (Phones size it to the screen below.)
+@media (min-width: 640px) {
+  .task-dashboard-body {
+    container-type: size;
+  }
+
+  .submission-view {
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+
+  .submission-preview {
+    height: calc(100cqh - 1.5rem);
+  }
+}
+
 .submission-preview-placeholder {
   align-items: center;
   border: 1px dashed var(--ot-color-border);

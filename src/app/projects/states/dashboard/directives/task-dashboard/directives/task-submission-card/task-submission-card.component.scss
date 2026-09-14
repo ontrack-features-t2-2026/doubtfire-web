@@ -2,11 +2,11 @@
   min-width: 0;
 }
 
-.submission-state-card mat-card-header {
-  align-items: center;
+.submission-summary {
   display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1rem 0.75rem;
 }
 
 .submission-state {
@@ -50,17 +50,15 @@
   gap: 0.5rem;
 }
 
+.submission-actions {
+  padding: 0 1rem 1rem;
+}
+
 .submission-actions button {
-  min-height: 44px;
   white-space: normal;
 }
 
 @media (max-width: 639.98px) {
-  .submission-state-card mat-card-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .submission-actions {
     align-items: stretch;
     display: grid;
