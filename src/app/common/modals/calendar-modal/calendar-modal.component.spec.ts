@@ -18,12 +18,13 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatTabsModule} from '@angular/material/tabs';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {of, throwError} from 'rxjs';
+import {Subject, of, throwError} from 'rxjs';
 import {Project, Webcal} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {WebcalService} from 'src/app/api/services/webcal.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {DEMO_TOOLS_AVAILABLE} from 'src/app/demo/demo-mode.store';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 import {CalendarModalComponent} from './calendar-modal.component';
@@ -98,6 +99,7 @@ describe('CalendarModalComponent', () => {
         NoopAnimationsModule,
       ],
       providers: [
+        {provide: DEMO_TOOLS_AVAILABLE, useValue: true},
         {provide: MAT_DIALOG_DATA, useValue: {}},
         {provide: WebcalService, useValue: webcalService},
         {provide: ProjectService, useValue: projectService},
@@ -149,6 +151,42 @@ describe('CalendarModalComponent', () => {
     expect(
       fixture.nativeElement.querySelector('.calendar-provider-help__instructions').textContent,
     ).toContain('Subscribe from web');
+  });
+
+  it('keeps learning sessions opt-in and restores the saved preference after a failed update', async () => {
+    await render();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    const response: Subject<Webcal> = new Subject();
+    webcalService.update.mockReturnValue(response);
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+
+    expect(webcalService.update).toHaveBeenCalledWith(
+      expect.objectContaining({includeLearningSessions: true}),
+    );
+    expect(component.working).toBe(true);
+    response.error(new Error('offline'));
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(component.working).toBe(false);
+  });
+
+  it('blocks the session subscription preference in demo mode', async () => {
+    await render();
+    component.demoMode.configureScenario('calendar-spec', 1);
+    component.demoMode.setEnabled(true);
+    webcalService.update.mockClear();
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+    fixture.detectChanges();
+
+    expect(webcalService.update).not.toHaveBeenCalled();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(fixture.nativeElement.querySelector('#calendar-sessions-hint').textContent).toContain(
+      'turned off in demo mode',
+    );
+    component.demoMode.clearScenario();
   });
 
   it('uses the shared download feedback helper with a useful ICS filename', async () => {

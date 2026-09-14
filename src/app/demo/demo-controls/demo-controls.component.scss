@@ -5,6 +5,58 @@
   padding: 1.5rem 1rem 4rem;
 }
 
+.hub-demo__open {
+  justify-self: start;
+}
+
+.hub-meeting-links {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ot-color-divider);
+
+  h3 {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    // Muted text, not the border token: that is 1.6:1 in dark, too faint for a field edge.
+    border: 1px solid var(--ot-color-text-muted);
+    border-radius: var(--ot-radius-sm);
+    padding: 0.75rem;
+    background: var(--ot-color-surface);
+    color: var(--ot-color-text);
+  }
+}
+
+.fixture-section .hub-meeting-links__error {
+  color: var(--ot-color-error);
+}
+
+.hub-meeting-links__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hub-demo__draft summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 mat-card-content {
   display: grid;
   gap: 1.25rem;

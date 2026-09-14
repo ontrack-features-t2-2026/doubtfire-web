@@ -50,6 +50,79 @@
           }
         </nav>
 
+        <section aria-labelledby="hub-demo-title" class="fixture-section hub-demo">
+          <h2 id="hub-demo-title">Unit Hub: announcements, HelpHubs and classes</h2>
+          <p>
+            Turn demo mode on above, then open Unit Hub to preview a student enrolled only in
+            SIT111. The sample includes announcements, two HelpHubs and a lecture. SIT102 content
+            stays hidden.
+          </p>
+          <p>
+            Demo dates and content are fictional. Subscriptions and editing are turned off. You can
+            export a calendar copy labelled DEMO. With demo mode off, Unit Hub reads real content
+            for your account.
+          </p>
+          <a class="hub-demo__open" mat-stroked-button routerLink="/unit-hub"
+            ><mat-icon aria-hidden="true">campaign</mat-icon>Open Unit Hub</a
+          >
+
+          <form
+            class="hub-meeting-links"
+            [formGroup]="meetingLinksForm"
+            (ngSubmit)="saveMeetingLinks()"
+          >
+            <h3>Use your own HelpHub links</h3>
+            <p id="hosted-links-note">
+              Optional: add Teams joining links you host. They stay in this browser tab and are
+              cleared on sign out. Demo Join buttons and calendar copies will use these real links
+              with fictional dates. Opening a calendar draft shares its details with your chosen
+              calendar provider.
+            </p>
+            <label for="demo-helphub-link">HelpHub meeting link</label>
+            <input
+              aria-describedby="hosted-links-note"
+              autocomplete="off"
+              formControlName="helpHub"
+              id="demo-helphub-link"
+              maxlength="4096"
+              spellcheck="false"
+              type="url"
+            />
+            <label for="demo-extra-helphub-link">Extra HelpHub meeting link</label>
+            <input
+              aria-describedby="hosted-links-note"
+              autocomplete="off"
+              formControlName="extraHelpHub"
+              id="demo-extra-helphub-link"
+              maxlength="4096"
+              spellcheck="false"
+              type="url"
+            />
+            @if (meetingLinksError) {
+              <p class="hub-meeting-links__error" role="alert">{{ meetingLinksError }}</p>
+            }
+            @if (meetingLinksStatus) {
+              <p role="status">{{ meetingLinksStatus }}</p>
+            }
+            <div class="hub-meeting-links__actions">
+              <button mat-stroked-button type="submit">Save demo links</button>
+              <button mat-button type="button" (click)="clearMeetingLinks()">
+                Clear demo links
+              </button>
+            </div>
+          </form>
+
+          <details class="hub-demo__draft">
+            <summary>Try the Teams meeting draft</summary>
+            <p>
+              This example opens a real Teams invitation draft with fictional details. OnTrack sends
+              nothing. In the normal version, assigned teaching staff prepare meetings from the
+              session editor using their own title, dates and description.
+            </p>
+            <f-teams-meeting-composer unitCode="SIT111" [draft]="demoMeetingDraft" />
+          </details>
+        </section>
+
         <section aria-labelledby="lifecycle-title" class="fixture-section">
           <div class="fixture-section__heading">
             <div>

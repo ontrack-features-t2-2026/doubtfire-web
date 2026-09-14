@@ -5,6 +5,7 @@ import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {PeerProgressDisplayPreferenceService} from 'src/app/common/services/peer-progress-display-preference.service';
+import {DemoMeetingLinksStore} from '../demo-meeting-links.store';
 import {DemoModeStore} from '../demo-mode.store';
 import {DemoScenarioContract, DemoScenarioRegistryService} from '../demo-scenario-registry.service';
 import {DemoToolsModule} from '../demo-tools.module';
@@ -105,13 +106,20 @@ const scenario: DemoScenarioContract = {
 describe('DemoControlsComponent', () => {
   let fixture: ComponentFixture<DemoControlsComponent>;
   let demoMode: {available: boolean; enabled: boolean; setEnabled: ReturnType<typeof vi.fn>};
+  let meetingLinks: {
+    links: {helpHub: string; extraHelpHub: string};
+    save: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     demoMode = {available: true, enabled: false, setEnabled: vi.fn()};
+    meetingLinks = {links: {helpHub: '', extraHelpHub: ''}, save: vi.fn(), clear: vi.fn()};
     await TestBed.configureTestingModule({
       imports: [DemoToolsModule, NoopAnimationsModule],
       providers: [
         {provide: DemoModeStore, useValue: demoMode},
+        {provide: DemoMeetingLinksStore, useValue: meetingLinks},
         {provide: DemoScenarioRegistryService, useValue: {scenario$: of(scenario), scenario}},
         {
           provide: PeerProgressDisplayPreferenceService,
@@ -150,6 +158,42 @@ describe('DemoControlsComponent', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="demo-link-notifications"]'),
     ).toBeTruthy();
+  });
+
+  it('links to the Unit Hub walkthrough and offers the Teams meeting draft', () => {
+    const host: HTMLElement = fixture.nativeElement;
+    const section = host.querySelector('[aria-labelledby="hub-demo-title"]');
+    expect(section?.textContent).toContain('Unit Hub: announcements, HelpHubs and classes');
+    expect(section?.querySelector('a[href="/unit-hub"]')?.textContent).toContain('Open Unit Hub');
+    expect(section?.querySelector('f-teams-meeting-composer')).toBeTruthy();
+  });
+
+  it('saves hosted meeting links for this tab and reports a rejected link', () => {
+    const component = fixture.componentInstance;
+    const host: HTMLElement = fixture.nativeElement;
+    const link = 'https://teams.microsoft.com/meet/123456789';
+    component.meetingLinksForm.setValue({helpHub: link, extraHelpHub: ''});
+
+    host.querySelector<HTMLButtonElement>('.hub-meeting-links button[type="submit"]').click();
+    fixture.detectChanges();
+
+    expect(meetingLinks.save).toHaveBeenCalledWith({helpHub: link, extraHelpHub: ''});
+    expect(host.querySelector('.hub-meeting-links [role="status"]')?.textContent).toContain(
+      'Saved for this browser tab',
+    );
+
+    meetingLinks.save.mockImplementation(() => {
+      throw new Error('Use a Teams joining link.');
+    });
+    component.saveMeetingLinks();
+    fixture.detectChanges();
+    expect(host.querySelector('.hub-meeting-links [role="alert"]')?.textContent).toContain(
+      'Use a Teams joining link.',
+    );
+
+    component.clearMeetingLinks();
+    expect(meetingLinks.clear).toHaveBeenCalled();
+    expect(component.meetingLinksForm.getRawValue()).toEqual({helpHub: '', extraHelpHub: ''});
   });
 
   it('includes the Batch 10 peer progress preview without duplicating the scenario registry', () => {

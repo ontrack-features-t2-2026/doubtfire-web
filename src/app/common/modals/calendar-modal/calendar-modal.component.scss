@@ -142,9 +142,21 @@
   margin-top: 0.25rem;
 }
 
-.calendar-reminder-actions button,
-.calendar-start-date-option {
+.calendar-reminder-actions button {
   min-height: 44px;
+}
+
+// One option per line: mat-checkbox is inline, so two in a row sat side by side.
+.calendar-option {
+  display: flex;
+  min-height: 44px;
+}
+
+// Sits under the sessions option, lined up with its label rather than the box.
+.calendar-options-card__hint {
+  margin: 0 0 0.5rem 2.5rem;
+  color: var(--ot-color-text-muted);
+  font-size: 0.8125rem;
 }
 
 .calendar-provider-help {

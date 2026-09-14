@@ -1,4 +1,25 @@
 <f-page-container id="home">
+  <!-- Unit Hub gathers every unit's announcements, HelpHubs and classes, so it sits above
+       the unit cards for everyone, including someone with no units yet. -->
+  <a
+    class="home-hub-entry mt-2 mb-5 flex min-h-11 items-center gap-4 rounded-ot-lg border border-ot-divider bg-ot-surface px-4 py-3 text-ot-text no-underline shadow-(--ot-elevation-1) hover:bg-ot-hover sm:px-5"
+    routerLink="/unit-hub"
+  >
+    <span
+      aria-hidden="true"
+      class="flex size-10 shrink-0 items-center justify-center rounded-full bg-ot-link/12 text-ot-link"
+    >
+      <mat-icon class="!leading-none">campaign</mat-icon>
+    </span>
+    <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+      <strong class="text-base leading-snug font-semibold">Unit Hub</strong>
+      <span class="text-sm text-ot-muted">
+        Your unit announcements, HelpHubs and upcoming classes, together.
+      </span>
+    </span>
+    <mat-icon aria-hidden="true" class="shrink-0 text-ot-muted">arrow_forward</mat-icon>
+  </a>
+
   @if (loading) {
     <div class="pt-2 pb-8" role="status">
       <span class="sr-only">Loading your units...</span>
