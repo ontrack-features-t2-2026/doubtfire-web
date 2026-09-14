@@ -338,7 +338,9 @@ mat-card {
   );
 }
 
-button[mat-stroked-button] {
+// Include the dialog so the global M2 .mat-primary palette cannot override
+// the accessible link colour on outlined actions in dark mode.
+:host .calendar-dialog button[mat-stroked-button] {
   @include mat.button-overrides(
     (
       outlined-label-text-color: var(--ot-color-link),
