@@ -92,6 +92,7 @@ export class UploadSubmissionModalComponent implements OnInit {
 
   private uploadResponse: UploadSubmissionResponse | null = null;
   private startUpload?: () => void;
+  private closingAfterUpload = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: UploadSubmissionModalData,
@@ -222,7 +223,15 @@ export class UploadSubmissionModalComponent implements OnInit {
   };
 
   public canClose(): boolean {
-    if (this.isUploading) {
+    // The close predicate also runs on the closes this component makes once the
+    // server has answered, and those must not be held back or asked about.
+    if (this.closingAfterUpload) {
+      return true;
+    }
+    // The uploader keeps isUploading set after a response. Only a failed
+    // response hands control back to the student. A successful one is still
+    // being applied to the task and closes the dialog itself.
+    if (this.isUploading && !this.uploadFailed) {
       return false;
     }
     if (!this.isDirty) {
@@ -299,7 +308,7 @@ export class UploadSubmissionModalComponent implements OnInit {
     }
 
     console.error('Invalid response', response);
-    this.dialogRef.close({value: this.task});
+    this.closeAfterUpload();
     this.alertService.error(
       'Upload failed. Please try again, or contact your tutor if the issue continues.',
       8000,
@@ -325,7 +334,7 @@ export class UploadSubmissionModalComponent implements OnInit {
       this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService, true);
     }
 
-    this.dialogRef.close({value: this.task});
+    this.closeAfterUpload();
   };
 
   public uploadButtonClicked(): void {
@@ -337,6 +346,16 @@ export class UploadSubmissionModalComponent implements OnInit {
     this.uploadStarted = true;
     this.currentStage = 'details';
     this.startUpload?.();
+  }
+
+  private get uploadFailed(): boolean {
+    const info = this.fileUploader?.uploadingInfo;
+    return info?.complete === true && info.success === false;
+  }
+
+  private closeAfterUpload(): void {
+    this.closingAfterUpload = true;
+    this.dialogRef.close({value: this.task});
   }
 
   private buildSubmissionTypeOptions(): UploadSubmissionTypeOption[] {
