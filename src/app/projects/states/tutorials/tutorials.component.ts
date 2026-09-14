@@ -91,17 +91,22 @@ export class TutorialsComponent implements OnInit, OnDestroy {
 
   /**
    * Formats the passed-in time string to the format of: HH:mm
-   * Todo: Add date validation
+   * Falls back to the raw value (or an empty string) when it is not a
+   * "hours:minutes" string, instead of throwing.
+   *
    * @param meetingTime
    *
    * @returns string
    */
-  shortTime(meetingTime: string): string {
+  shortTime(meetingTime?: string): string {
+    if (!meetingTime) {
+      return '';
+    }
     const [hours, minutes] = meetingTime.split(':');
-    const formattedHours = hours.padStart(2, '0');
-    const formattedMinutes = minutes.padStart(2, '0');
-
-    return `${formattedHours}:${formattedMinutes}`;
+    if (minutes === undefined) {
+      return meetingTime;
+    }
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   }
 
   private sortCompare(

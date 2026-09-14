@@ -8,6 +8,9 @@
 // app stays correct even if the pre-hydration marker script (THM-F04) never runs.
 @use 'styles/tokens/light';
 @use 'styles/tokens/dark';
+// Shape (radius) scale — theme-independent, declared once. Reference --ot-radius-*
+// (or the rounded-ot-* Tailwind utilities) instead of hardcoding a radius.
+@use 'styles/tokens/shape';
 @use 'tailwindcss';
 @config '../tailwind.config.js';
 
@@ -34,7 +37,8 @@ body {
 $main-view-top-padding: 30px;
 $main-view-bottom-padding: $main-view-top-padding;
 
-$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
+// --ot-demo-banner-height is published by the demo banner, which sits above the header.
+$main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px - var(--ot-demo-banner-height, 0px));
 
 // This is the new Angular Material 3 theme file which we will migrate to
 // @use './styles/m3-theme.scss';
@@ -66,7 +70,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
 .f-table {
   @include mat.elevation(1);
-  border-radius: 0.8rem;
+  border-radius: var(--ot-radius-md);
   margin-bottom: 1rem;
 
   background-color: transparent !important;
@@ -98,6 +102,39 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 .mat-mdc-progress-spinner circle,
 .mat-spinner circle {
   stroke: var(--ot-color-divider) !important;
+}
+
+// Dialogs follow the 12px surface rung (Material defaults to a tight 4px), so every
+// modal has the same soft corner as a card. Both themes.
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-shape: var(--ot-radius-md);
+}
+
+// Inactive tab labels default to a low-contrast tone (visible on the calendar
+// modal's For Google / Apple / Outlook strip in dark). Pin them to the muted text
+// token so every tab strip clears AA; the active label keeps the theme accent.
+.mat-mdc-tab-group,
+.mat-mdc-tab-nav-bar {
+  // This Material build reads --mat-tab-{active,inactive}-label-text-color for the
+  // label colour (the --mat-tab-header-* names are NOT honoured, verified computed).
+  // Inactive defaulted to a low-contrast tone on the dark panel -> muted text; the
+  // active label defaulted to the mid primary #1f6feb which read dim -> brighter link
+  // token (#6cb2ff dark / #3939ff light) so the selected tab pops.
+  --mat-tab-inactive-label-text-color: var(--ot-color-text-muted);
+  --mat-tab-active-label-text-color: var(--ot-color-link);
+}
+// The theme mixin re-sets --mat-tab-active-label-text-color inside the dark scope at
+// higher specificity than the declaration above, so the token override is beaten in
+// dark. Force the active label colour directly (!important clears the scoped token).
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label,
+.mat-mdc-tab-link.mdc-tab--active .mdc-tab__text-label {
+  color: var(--ot-color-link) !important;
+}
+// Ink bar to match the active label (Material's own indicator rule wins on source
+// order, so this needs !important).
+.mat-mdc-tab-group .mdc-tab-indicator__content--underline,
+.mat-mdc-tab-nav-bar .mdc-tab-indicator__content--underline {
+  border-color: var(--ot-color-link) !important;
 }
 
 /* Ensures smooth resizing of task list in project dashboard */
@@ -145,6 +182,13 @@ body.split-pane-resizing pdf-viewer {
 // <ngx-gantt-root> host, which beats a :root definition. So override them on the
 // host with !important (a stylesheet !important wins over an inline non-important
 // custom property). References only — the --ot-* tokens stay the single source.
+// Today is drawn in the warning colour in both themes, so the planner's legend can
+// key it with the same token. The library's light default was a salmon that also
+// put white text on the today chip at about 2:1.
+ngx-gantt-root {
+  --gantt-color-highlight: var(--ot-color-warning) !important;
+}
+
 :root[data-ot-theme='dark'] ngx-gantt-root {
   --gantt-color-background: var(--ot-color-surface) !important;
   --gantt-color-gray-100: var(--ot-color-page) !important;
@@ -172,35 +216,32 @@ body.split-pane-resizing pdf-viewer {
 // it flips light/dark. :is() (not :where()) so it beats the browser default;
 // :focus-visible so mouse clicks never draw it. Interactive elements only.
 :is(
-    a[href],
-    area[href],
-    button,
-    input,
-    select,
-    textarea,
-    summary,
-    [tabindex]:not([tabindex='-1']),
-    [role='button'],
-    [role='link'],
-    [role='tab'],
-    [role='menuitem'],
-    [role='menuitemcheckbox'],
-    [role='menuitemradio'],
-    [role='option'],
-    [role='checkbox'],
-    [role='radio'],
-    [role='switch'],
-    [role='slider'],
-    [contenteditable='true']
-  ):focus-visible {
+  a[href],
+  area[href],
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1']),
+  [role='button'],
+  [role='link'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='option'],
+  [role='checkbox'],
+  [role='radio'],
+  [role='switch'],
+  [role='slider'],
+  [contenteditable='true']
+):focus-visible {
   outline: 2px solid var(--ot-color-focus);
   outline-offset: 2px;
 }
 
-// Inside a menu/list the 2px outward ring is clipped by the panel edge and reads as
-// two harsh bars top and bottom of the focused row. Inset it so it frames the row.
-// The panel-ancestor selectors clear the global :is(a[href], ...) ring, which lands
-// at (0,2,1) specificity because of its a[href] arm.
+// Keep focus outlines inside menu panels so their edges do not clip them.
 .mat-mdc-menu-panel .mat-mdc-menu-item:focus-visible,
 .mat-mdc-select-panel .mat-mdc-option:focus-visible {
   outline-offset: -2px;

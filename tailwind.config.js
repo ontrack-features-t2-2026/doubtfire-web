@@ -6,6 +6,18 @@ module.exports = {
   darkMode: ['selector', '[data-ot-theme="dark"]'],
   theme: {
     extend: {
+      // Shape scale as Tailwind radius utilities: rounded-ot-sm … rounded-ot-circle
+      // reference the --ot-radius-* tokens (styles/tokens/_shape.scss) so templates
+      // pin to the same six rungs as SCSS. Use these instead of rounded-md/lg/xl,
+      // which had drifted across five tiers for the same kinds of element.
+      borderRadius: {
+        'ot-xs': 'var(--ot-radius-xs)',
+        'ot-sm': 'var(--ot-radius-sm)',
+        'ot-md': 'var(--ot-radius-md)',
+        'ot-lg': 'var(--ot-radius-lg)',
+        'ot-pill': 'var(--ot-radius-pill)',
+        'ot-circle': 'var(--ot-radius-circle)',
+      },
       colors: {
         'formatif-blue': '#3939ff',
         'formatif-blue-lighter': '#e7e7ff',

@@ -4,6 +4,8 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   Inject,
   Input,
   OnChanges,
@@ -13,6 +15,7 @@ import {
 } from '@angular/core';
 import {FileDownloaderService} from '../file-downloader/file-downloader.service';
 import {AlertService} from '../services/alert.service';
+import {ElementFullscreen} from './element-fullscreen';
 
 @Component({
   selector: 'f-pdf-viewer',
@@ -37,9 +40,15 @@ export class fPdfViewerComponent implements OnDestroy, OnChanges, AfterViewInit 
   public pageNumber: number = 1;
 
   @ViewChild(PdfViewerComponent) private pdfComponent: PdfViewerComponent;
+  @ViewChild('pdfContainer', {static: true}) private container: ElementRef<HTMLElement>;
   pdfSearchString: string;
   zoomValue = 1;
   loaded = false;
+
+  private readonly fullscreen = new ElementFullscreen(() => this.container?.nativeElement);
+  /** Phones such as the iPhone only let video go full screen, so the button hides there. */
+  public readonly canFullscreen = this.fullscreen.supported;
+  public isFullscreen = false;
 
   constructor(
     @Inject(FileDownloaderService) private fileDownloader: FileDownloaderService,
@@ -47,6 +56,7 @@ export class fPdfViewerComponent implements OnDestroy, OnChanges, AfterViewInit 
   ) {}
 
   ngOnDestroy(): void {
+    this.fullscreen.release();
     if (this.pdfBlobUrl) {
       this.fileDownloader.releaseBlob(this.pdfBlobUrl);
       this.pdfBlobUrl = null;
@@ -118,6 +128,27 @@ export class fPdfViewerComponent implements OnDestroy, OnChanges, AfterViewInit 
 
   public downloadPdf() {
     this.fileDownloader.downloadBlobToFile(this.pdfBlobUrl, 'displayed-pdf.pdf');
+  }
+
+  /**
+   * The browser's own full screen, for the task sheet or submission in this viewer.
+   * Esc leaves it too, and fullscreenchange keeps the button in step either way.
+   */
+  public toggleFullscreen(): void {
+    const entering = !this.fullscreen.active;
+    this.fullscreen.toggle().catch((error: unknown) => {
+      if (entering) {
+        this.alerts.error(`Could not open full screen. ${error}`, 6000);
+      }
+    });
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.isFullscreen = this.fullscreen.active;
+    // The pages are sized to the viewer's width when the window resizes, and the
+    // viewer has just changed size.
+    window.dispatchEvent(new Event('resize'));
   }
 
   public toggleNativePdfViewer() {

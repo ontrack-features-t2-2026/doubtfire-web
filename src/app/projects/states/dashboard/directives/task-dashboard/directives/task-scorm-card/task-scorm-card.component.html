@@ -35,7 +35,7 @@
 @if (!isPassed) {
   <mat-card appearance="outlined" [hidden]="!task.scormEnabled">
     @if (isPassed === false) {
-      <mat-card-header class="bg-ot-error text-white">
+      <mat-card-header class="bg-ot-error text-(--ot-color-on-error)">
         <mat-card-title class="mb-2.5 flex items-center"
           ><mat-icon class="font-extrabold">close</mat-icon>
           <span class="ml-2.5">Knowledge Check Unsuccessful</span></mat-card-title

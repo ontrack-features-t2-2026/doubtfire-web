@@ -100,7 +100,7 @@ export class TaskStatusPieChartComponent extends ChartBaseComponent implements O
       this.colors = Array.from(TaskStatus.STATUS_COLORS).map(([status]) => {
         return {
           name: TaskStatus.STATUS_LABELS.get(status),
-          value: this.themeColor.statusColor(status),
+          value: this.themeColor.statusGraphicColor(status),
         };
       });
     }

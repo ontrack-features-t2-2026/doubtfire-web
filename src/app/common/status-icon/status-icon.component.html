@@ -1,14 +1,21 @@
 <div
-  class="status-chip mx-0.5 flex h-7 min-h-[30px] cursor-pointer items-center justify-center rounded-full"
+  class="status-chip mx-0.5 flex shrink-0 items-center justify-center rounded-full"
   matTooltip="{{ statusLabel }}"
   matTooltipPosition="above"
+  role="img"
   style="font-size: 14px"
+  [attr.aria-label]="statusLabel"
   [matTooltipDisabled]="!showTooltip"
-  [ngClass]="[statusClass, compact ? 'max-w-[30px] min-w-[30px]' : 'min-w-[50px] px-3']"
+  [ngClass]="[statusClass, size === 'large' ? 'size-10' : 'size-[30px]']"
 >
   <mat-icon
-    class="m-0 scale-75 place-self-center"
-    [ngClass]="{'font-black': resolvedStatus === 'complete'}"
+    aria-hidden="true"
+    class="m-0 place-self-center"
+    [ngClass]="{
+      'font-black': resolvedStatus === 'complete',
+      'scale-75': size !== 'large',
+      'scale-90': size === 'large',
+    }"
     >{{ statusIcon }}</mat-icon
   >
 </div>

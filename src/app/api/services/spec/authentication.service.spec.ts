@@ -1,18 +1,17 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {provideHttpClient, withInterceptorsFromDi, withXhr} from '@angular/common/http';
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
-import {Injector} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
 import {Subject, of, throwError} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
-import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ThemeService} from 'src/app/common/theme/theme.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
+import {provideAppInjectorForTests} from 'src/app/testing/app-injector-stub';
 import {AuthenticationService} from '../authentication.service';
 import {NotificationService} from '../notification.service';
 import {PushNotificationService} from '../push-notification.service';
@@ -72,30 +71,11 @@ describe('AuthenticationService', () => {
 
   // signOut resolves PushNotificationService, GlobalStateService and
   // NotificationService through AppInjector rather than the constructor (its
-  // comment explains this avoids a circular dependency). This stub injector
-  // hands back the mocks above. It is set once, and reads them through its
-  // closure so each test's fresh mocks flow through. setAppInjector is only ever
-  // called by the app module otherwise, so in a unit test AppInjector starts
-  // unset and this is the only writer.
-  //
-  // The throw at the end is deliberate. A token this stub does not know about
-  // means signOut grew a dependency nobody told these tests about, and a stub
-  // that quietly answered undefined would turn that into a confusing failure
-  // somewhere else.
-  const injectorStub = {
-    get: (token: unknown) => {
-      if (token === PushNotificationService) {
-        return pushService;
-      }
-      if (token === GlobalStateService) {
-        return globalState;
-      }
-      if (token === NotificationService) {
-        return notificationService;
-      }
-      throw new Error(`unexpected AppInjector token: ${String(token)}`);
-    },
-  } as unknown as Injector;
+  // comment explains this avoids a circular dependency). Each test registers its
+  // fresh mocks with the shared spec stand-in, which throws for any token it was
+  // not given: a token nobody registered means signOut grew a dependency these
+  // tests do not know about, and a stub that quietly answered undefined would turn
+  // that into a confusing failure somewhere else.
 
   beforeEach(() => {
     pushService = {unsubscribeQuietly: vi.fn().mockReturnValue(of(void 0))};
@@ -137,9 +117,11 @@ describe('AuthenticationService', () => {
       resetAuthenticatedSettings: vi.fn(),
     };
 
-    if (!AppInjector) {
-      setAppInjector(injectorStub);
-    }
+    provideAppInjectorForTests([
+      [PushNotificationService, pushService],
+      [GlobalStateService, globalState],
+      [NotificationService, notificationService],
+    ]);
 
     TestBed.configureTestingModule({
       providers: [

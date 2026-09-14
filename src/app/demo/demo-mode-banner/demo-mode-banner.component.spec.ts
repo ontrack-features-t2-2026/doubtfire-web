@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it, onTestFinished, vi} from 'vitest';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {provideRouter} from '@angular/router';
@@ -42,5 +42,28 @@ describe('DemoModeBannerComponent', () => {
 
     expect(reset).toHaveBeenCalledOnce();
     expect(reload).toHaveBeenCalledOnce();
+  });
+
+  it('publishes its height for full-height screens and clears it when it goes', () => {
+    const bannerHeight = () =>
+      document.documentElement.style.getPropertyValue('--ot-demo-banner-height');
+    // jsdom lays nothing out, so give the banner a height to report.
+    const heightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(49);
+    onTestFinished(() => heightSpy.mockRestore());
+    const measured = TestBed.createComponent(DemoModeBannerComponent);
+    measured.detectChanges();
+
+    expect(bannerHeight()).toBe('49px');
+
+    enabled.next(false);
+    measured.detectChanges();
+
+    expect(bannerHeight()).toBe('0px');
+
+    enabled.next(true);
+    measured.detectChanges();
+    measured.destroy();
+
+    expect(bannerHeight()).toBe('0px');
   });
 });

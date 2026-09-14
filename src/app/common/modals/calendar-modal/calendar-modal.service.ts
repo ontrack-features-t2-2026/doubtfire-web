@@ -11,7 +11,10 @@ export class CalendarModalService {
 
   public show(_task?: Task) {
     this.dialog.open(CalendarModalComponent, {
-      height: 'h-min',
+      // 'h-min' is a Tailwind class, not a CSS length, so Material dropped it and the
+      // dialog kept an odd height. Size to content (capped at 90vh) so the disabled
+      // state is compact and the enabled state grows then scrolls.
+      height: 'min-content',
       maxHeight: '90vh',
       width: '800px',
       maxWidth: '95vw',

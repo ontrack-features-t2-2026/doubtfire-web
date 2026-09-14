@@ -5,8 +5,12 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  ViewChild,
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {FormControl, FormGroup} from '@angular/forms';
+import {MatEndDate, MatStartDate} from '@angular/material/datepicker';
+import {ActivatedRoute, Router} from '@angular/router';
 import {catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Grade} from '../api/models/grade';
@@ -34,6 +38,7 @@ enum SortMode {
 }
 
 const completedTypes: readonly TaskStatusEnum[] = ['complete'];
+const UNIT_ACCENT_COUNT = 6;
 const finalTypes: readonly TaskStatusEnum[] = TaskStatus.FINAL_STATUSES;
 
 const displayedDueDateFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -53,6 +58,27 @@ type MobileUnitSummary = {
   hasDeadlineWarning: boolean;
 };
 
+type UnitProgressSegment = {
+  status: TaskStatusEnum;
+  label: string;
+  color: string;
+  count: number;
+};
+
+type UnitProgress = {
+  completed: number;
+  total: number;
+  percentage: number;
+  segments: UnitProgressSegment[];
+  ariaLabel: string;
+};
+
+type DashboardSummary = {
+  unitLabel: string;
+  overdue: number;
+  dueSoon: number;
+};
+
 type DashboardUnit = {
   projectId: number;
   code: string;
@@ -60,6 +86,8 @@ type DashboardUnit = {
   tasks: DashboardTask[];
   gradeSummaries: GradeCompletionSummary[];
   mobileSummary: MobileUnitSummary;
+  progress: UnitProgress;
+  accent: string;
   isPrevious: boolean;
 };
 
@@ -99,6 +127,18 @@ export class CrossDashboardComponent implements OnInit {
 
   startDate = '';
   endDate = '';
+  // The range picker works in Dates while the filter keeps ISO day strings. The
+  // form group owns what the field shows, so a reset also clears text that never
+  // parsed, and its validators flag typos and reversed ranges on the inputs.
+  readonly dateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
+  @ViewChild(MatStartDate) private startDateInput?: MatStartDate<Date>;
+  @ViewChild(MatEndDate) private endDateInput?: MatEndDate<Date>;
+  // Material re-runs its sibling validators during a reset and each run emits
+  // valueChanges, so the reset mutes the subscription and processes once itself.
+  private resettingDates = false;
 
   previousUnitsLoaded = false;
   loadingPreviousUnits = false;
@@ -123,10 +163,32 @@ export class CrossDashboardComponent implements OnInit {
     private taskService: TaskService,
     private changeDetectorRef: ChangeDetectorRef,
     private destroyRef: DestroyRef,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.dateRange.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({start, end}) => {
+        if (this.resettingDates) {
+          return;
+        }
+        this.startDate = this.formatDateAsIso(start);
+        this.endDate = this.formatDateAsIso(end);
+        this.processTasks();
+      });
+
     this.globalStateService.onLoad(() => {
+      this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+        const requested = params.get('scope');
+        const scope: UnitScope =
+          requested === 'previous' || requested === 'all' ? requested : 'active';
+        if (scope !== this.unitScope) {
+          this.applyUnitScope(scope);
+        }
+      });
+
       const projectChanges = this.globalStateService.currentUserProjects.values.pipe(
         tap((projects) => this.refreshActiveUnits(projects)),
         map(() => undefined),
@@ -192,9 +254,28 @@ export class CrossDashboardComponent implements OnInit {
       this.globalSearchTerm.length > 0 ||
       this.selectedStatuses.length > 0 ||
       this.selectedGrades.length > 0 ||
-      !!this.startDate ||
-      !!this.endDate
+      this.hasDateText
     );
+  }
+
+  // True while either date field holds anything, including text that did not parse,
+  // so Clear all and the clear button stay available to wipe a typo.
+  get hasDateText(): boolean {
+    return !!this.startDate || !!this.endDate || this.hasDateParseError;
+  }
+
+  get dateRangeError(): string | null {
+    if (this.hasDateParseError) {
+      return 'Enter dates as dd/mm/yyyy.';
+    }
+
+    return this.isDateRangeInvalid ? 'Start date must be on or before end date.' : null;
+  }
+
+  private get hasDateParseError(): boolean {
+    const {start, end} = this.dateRange.controls;
+
+    return start.hasError('matDatepickerParse') || end.hasError('matDatepickerParse');
   }
 
   get mobileSecondaryFilterCount(): number {
@@ -207,6 +288,17 @@ export class CrossDashboardComponent implements OnInit {
   }
 
   setUnitScope(scope: UnitScope): void {
+    this.applyUnitScope(scope);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {scope: scope === 'active' ? null : scope},
+      queryParamsHandling: 'merge',
+      preserveFragment: true,
+      replaceUrl: true,
+    });
+  }
+
+  private applyUnitScope(scope: UnitScope): void {
     this.unitScope = scope;
     this.expandedMobileProjectId = null;
     this.processTasks();
@@ -249,8 +341,7 @@ export class CrossDashboardComponent implements OnInit {
     this.globalSearchTerm = '';
     this.selectedStatuses = [];
     this.selectedGrades = [];
-    this.startDate = '';
-    this.endDate = '';
+    this.resetDateRange();
 
     if (this.unitScope !== 'active') {
       this.setUnitScope('active');
@@ -262,17 +353,18 @@ export class CrossDashboardComponent implements OnInit {
 
   setStartDate(value: string): void {
     this.startDate = value;
+    this.dateRange.controls.start.setValue(this.parseIsoDate(value), {emitEvent: false});
     this.processTasks();
   }
 
   setEndDate(value: string): void {
     this.endDate = value;
+    this.dateRange.controls.end.setValue(this.parseIsoDate(value), {emitEvent: false});
     this.processTasks();
   }
 
   clearDateRange(): void {
-    this.startDate = '';
-    this.endDate = '';
+    this.resetDateRange();
     this.processTasks();
   }
 
@@ -294,6 +386,20 @@ export class CrossDashboardComponent implements OnInit {
 
   isFilterEnabled(project: number, filter: Filter): boolean {
     return this.filters.get(project)?.includes(filter) === true;
+  }
+
+  activeFilterCount(project: number): number {
+    return this.filters.get(project)?.length ?? 0;
+  }
+
+  getSort(project: number): SortMode {
+    return this.sorting.get(project) ?? SortMode.Recommended;
+  }
+
+  retryPreviousUnits(): void {
+    if (!this.loadingPreviousUnits) {
+      this.loadPreviousUnits();
+    }
   }
 
   setSearch(project: number, value: string): void {
@@ -380,7 +486,7 @@ export class CrossDashboardComponent implements OnInit {
             );
           })
           .sort((a, b) => {
-            const sort = this.sorting.get(unit.projectId) ?? SortMode.Recommended;
+            const sort = this.getSort(unit.projectId);
 
             if (finalTypes.includes(a.status) && !finalTypes.includes(b.status)) {
               return 1;
@@ -409,6 +515,56 @@ export class CrossDashboardComponent implements OnInit {
     }));
 
     this.changeDetectorRef.markForCheck();
+  }
+
+  // The page heading counts deadlines across the whole scope, not the filtered
+  // columns, so searching for one task does not make the overdue count vanish.
+  // It is a getter, like each row's deadline chip, so both read the same clock
+  // and a deadline that passes while the page is open moves them together.
+  get summary(): DashboardSummary {
+    const units = this.getUnitsForCurrentScope();
+    const scopeLabel = {active: 'active ', previous: 'previous ', all: ''}[this.unitScope];
+    const warnings = units
+      .filter((unit) => !unit.isPrevious)
+      .flatMap((unit) => unit.tasks)
+      .filter((task) => !finalTypes.includes(task.status))
+      .map((task) => getDueDateWarning(task.dueDate, task.showDueWarning)?.state)
+      .filter((state) => state !== undefined);
+
+    return {
+      unitLabel: `${units.length} ${scopeLabel}${units.length === 1 ? 'unit' : 'units'}`,
+      overdue: warnings.filter((state) => state === 'overdue').length,
+      dueSoon: warnings.filter((state) => state !== 'overdue').length,
+    };
+  }
+
+  private buildProgress(tasks: readonly DashboardTask[]): UnitProgress {
+    const counts: Map<TaskStatusEnum, number> = new Map();
+    tasks.forEach((task) => counts.set(task.status, (counts.get(task.status) ?? 0) + 1));
+
+    const segments = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.filter((status) =>
+      counts.has(status),
+    ).map((status) => ({
+      status,
+      label: TaskStatus.STATUS_LABELS.get(status) ?? status,
+      // The bar is drawn on the card surface, so it takes the -graphic colour,
+      // which keeps 3:1 against the surface in both themes.
+      color: `var(--ot-status-${TaskStatus.statusClass(status)}-graphic)`,
+      count: counts.get(status) ?? 0,
+    }));
+    const completed = counts.get('complete') ?? 0;
+    const total = tasks.length;
+
+    return {
+      completed,
+      total,
+      percentage: total === 0 ? 0 : Math.round((completed / total) * 100),
+      segments,
+      ariaLabel:
+        total === 0
+          ? 'No tasks yet'
+          : `Task statuses: ${segments.map((segment) => `${segment.count} ${segment.label}`).join(', ')}`,
+    };
   }
 
   private setRecommendationScores(recommendations: readonly TaskRecommendation[]): void {
@@ -638,6 +794,41 @@ export class CrossDashboardComponent implements OnInit {
     return {numericDates, remainingText};
   }
 
+  private resetDateRange(): void {
+    this.startDate = '';
+    this.endDate = '';
+    this.resettingDates = true;
+    try {
+      this.dateRange.reset({start: null, end: null}, {emitEvent: false});
+      // A reset writes null, and Material only reformats the field when the value
+      // changes, so text that never parsed (already null) would stay on screen. The
+      // inputs' own value setter always reformats, so clear through it too.
+      if (this.startDateInput) {
+        this.startDateInput.value = null;
+      }
+      if (this.endDateInput) {
+        this.endDateInput.value = null;
+      }
+      this.revalidateDateRange();
+    } finally {
+      this.resettingDates = false;
+    }
+  }
+
+  // Each end's range check depends on the other end, and Material only re-runs the
+  // one being typed in. Correcting the start would leave a stale "end before start"
+  // error on the end, so every edit re-checks both.
+  revalidateDateRange(): void {
+    this.dateRange.controls.start.updateValueAndValidity({emitEvent: false});
+    this.dateRange.controls.end.updateValueAndValidity({emitEvent: false});
+  }
+
+  private parseIsoDate(value: string): Date | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
+
+    return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
+  }
+
   private normaliseNumericDate(year: string, month: string, day: string): string {
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
@@ -685,19 +876,26 @@ export class CrossDashboardComponent implements OnInit {
   }
 
   private mapProjects(projects: readonly Project[]): DashboardUnit[] {
-    return projects.map((project) => {
+    return projects.map((project, index) => {
       project.calcTopTasks();
       const unit = project.unit;
+      // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
+      // `activeTasks()` excludes definitions above the student's current target grade,
+      // even though those tasks are returned by the API and remain available to them.
+      const tasks = this.mapTasks(project.tasks, project.id, unit.code);
 
       return {
         projectId: project.id,
         code: unit.code,
         name: unit.name,
-        // The cross-unit dashboard is an authorised-task view, not a target-grade plan.
-        // `activeTasks()` excludes definitions above the student's current target grade,
-        // even though those tasks are returned by the API and remain available to them.
-        tasks: this.mapTasks(project.tasks, project.id, unit.code),
+        tasks,
         gradeSummaries: [],
+        progress: this.buildProgress(tasks),
+        // Active units take the six unit accents in order, so neighbouring columns
+        // never share a colour. Finished units share the quieter slate band.
+        accent: unit.isActive
+          ? `var(--ot-unit-${(index % UNIT_ACCENT_COUNT) + 1})`
+          : 'var(--ot-unit-previous)',
         mobileSummary: {
           taskCountLabel: '0 tasks',
           deadlineLabel: 'No upcoming deadlines',
@@ -718,10 +916,8 @@ export class CrossDashboardComponent implements OnInit {
         subtitle: `${def.abbreviation} - ${def.targetGradeText} Task`,
         statusLabel: TaskStatus.STATUS_LABELS.get(task.status),
         abbreviation: def.abbreviation,
-        // CSS var so the list-item status accent flips with the theme (used in a
-        // [style] binding, where var() resolves).
-        color: `var(--ot-status-${String(task.status).replace(/_/g, '-')})`,
         comments: task.numNewComments ?? 0,
+        hasFeedback: task.hasFeedback ?? false,
         status: task.status,
         targetGrade: def.targetGrade,
         targetGradeLabel: def.targetGradeText,

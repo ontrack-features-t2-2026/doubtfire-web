@@ -115,6 +115,68 @@ describe('ProgressDashboardComponent', () => {
     expect(await select.isDisabled()).toBe(true);
   });
 
+  it('blocks staff from changing the target grade in code, not only in the template', () => {
+    project.unit.myRole = 'Tutor';
+    project.student = {id: 99} as Project['student'];
+
+    component.updateTargetGrade(1);
+
+    expect(projectServiceUpdate).not.toHaveBeenCalled();
+    expect(project.targetGrade).toBe(0);
+  });
+
+  it('says how many target grade tasks are complete under the grade field', () => {
+    const hint: HTMLElement = fixture.nativeElement.querySelector('.target-grade-field mat-hint');
+
+    expect(hint.textContent.trim()).toBe('1 of 3 tasks complete for Pass');
+  });
+
+  it('explains the field instead of showing 0 of 0 before tasks load', () => {
+    (project.activeTasks as ReturnType<typeof vi.fn>).mockReturnValue([]);
+    fixture.detectChanges();
+
+    const hint: HTMLElement = fixture.nativeElement.querySelector('.target-grade-field mat-hint');
+
+    expect(hint.textContent.trim()).toBe('This sets which tasks you need to do.');
+  });
+
+  it('names the target grade in the chart subtitles', () => {
+    const subtitles = Array.from<HTMLElement>(
+      fixture.nativeElement.querySelectorAll('mat-card-subtitle'),
+    ).map((subtitle) => subtitle.textContent.trim());
+
+    expect(subtitles).toContain('How much work you have left to reach Pass.');
+    expect(subtitles).toContain('The tasks you need for Pass, grouped by status.');
+  });
+
+  it('shows the submitted grade as a locked field beside the target in the portfolio view', async () => {
+    component.showSubmittedGrade = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const submitted = await loader.getHarness(
+      MatSelectHarness.with({selector: '[aria-label="Submitted grade"]'}),
+    );
+
+    expect(await submitted.isDisabled()).toBe(true);
+  });
+
+  it('turns the planning tips off when staff view another student', () => {
+    const planner = () =>
+      fixture.nativeElement.querySelector('f-task-planner-card') as HTMLElement & {
+        showTips: boolean;
+      };
+
+    expect(planner().showTips).toBe(true);
+
+    project.unit.myRole = 'Tutor';
+    project.student = {id: 99} as Project['student'];
+    fixture.detectChanges();
+
+    expect(planner().showTips).toBe(false);
+  });
+
   it('restores the previous target grade when the update fails', () => {
     projectServiceUpdate.mockReturnValueOnce(throwError(() => new Error('update failed')));
     vi.spyOn(console, 'error').mockImplementation(() => undefined);

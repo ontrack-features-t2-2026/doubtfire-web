@@ -1,4 +1,4 @@
-<div id="pdfContainer">
+<div #pdfContainer id="pdfContainer">
   <div id="actionBar">
     <div id="pdfViewActions" [hidden]="!pdfBlobUrl">
       <button aria-label="Switch viewer" mat-icon-button (click)="toggleNativePdfViewer()">
@@ -12,46 +12,70 @@
         <mat-icon>download</mat-icon>
       </button>
     </div>
-    <div id="pdfActions" [hidden]="!loaded || useNativePdfViewer">
-      <form #loginForm="ngForm">
-        <mat-form-field appearance="outline" class="pdf-form-field" floatLabel="auto" ngSubmit>
-          <mat-icon matPrefix>search</mat-icon>
-          <input
-            matInput
-            name="pdfSearchString"
-            placeholder="Search PDF"
-            type="text"
-            [(ngModel)]="pdfSearchString"
-            (ngModelChange)="searchPdf(pdfSearchString)"
-          />
 
-          <button
-            aria-label="Zoom in PDF button"
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="zoomOut()"
-          >
-            <mat-icon>zoom_out</mat-icon>
-          </button>
-          <button
-            aria-label="Zoom in PDF button"
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="zoomIn()"
-          >
-            <mat-icon>zoom_in</mat-icon>
-          </button>
-        </mat-form-field>
-      </form>
+    <div class="pdf-actions-end">
+      <!-- A plain pill rather than an outlined form field: the field's outline is
+           drawn in pieces around a notch for a floating label, and restyling the
+           pieces into a pill left a broken curve beside the search icon. -->
+      <div
+        class="pdf-search"
+        id="pdfActions"
+        role="search"
+        [hidden]="!loaded || useNativePdfViewer"
+      >
+        <mat-icon aria-hidden="true" class="pdf-search__icon">search</mat-icon>
+        <input
+          aria-label="Search PDF"
+          autocomplete="off"
+          class="pdf-search__input"
+          placeholder="Search PDF"
+          spellcheck="false"
+          type="search"
+          [(ngModel)]="pdfSearchString"
+          (ngModelChange)="searchPdf(pdfSearchString)"
+        />
+        <span aria-hidden="true" class="pdf-search__divider"></span>
+        <button
+          aria-label="Zoom out"
+          class="pdf-toolbar-button"
+          mat-icon-button
+          type="button"
+          (click)="zoomOut()"
+        >
+          <mat-icon>zoom_out</mat-icon>
+        </button>
+        <button
+          aria-label="Zoom in"
+          class="pdf-toolbar-button"
+          mat-icon-button
+          type="button"
+          (click)="zoomIn()"
+        >
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+      </div>
+
+      @if (canFullscreen && pdfBlobUrl) {
+        <button
+          aria-label="Full screen"
+          class="pdf-fullscreen-button"
+          mat-icon-button
+          type="button"
+          [attr.aria-pressed]="isFullscreen"
+          (click)="toggleFullscreen()"
+        >
+          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      }
     </div>
   </div>
 
   @if (pdfBlobUrl) {
     @if (useNativePdfViewer) {
       @if (pdfBlobUrl) {
-        <object type="application/pdf" [data]="pdfBlobUrl | safe">PDF Preview</object>
+        <object title="Submission PDF" type="application/pdf" [data]="pdfBlobUrl | safe">
+          PDF Preview
+        </object>
       }
     } @else {
       <pdf-viewer
@@ -66,6 +90,11 @@
       ></pdf-viewer>
     }
   } @else {
-    <mat-spinner color="accent" diameter="100" strokeWidth="2"></mat-spinner>
+    <mat-spinner
+      aria-label="Loading PDF"
+      color="accent"
+      diameter="100"
+      strokeWidth="2"
+    ></mat-spinner>
   }
 </div>
