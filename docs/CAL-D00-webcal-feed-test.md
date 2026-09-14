@@ -4,7 +4,7 @@ Before treating the WebCal feed as limited, this records what the implementation
 
 ## Feed shape
 
-The feed is a single per-student iCalendar (`Webcal#to_ical`). The calendar declares a product id from the institution config and a one-day refresh interval, set on both `X-PUBLISHED-TTL` and `REFRESH-INTERVAL`, so subscribed clients re-poll roughly daily.
+The feed is a single per-student iCalendar (`Webcal#to_ical`). The calendar declares a product id from the institution config. API PR #147 corrects the refresh value to `PT4H` on both `X-PUBLISHED-TTL` and `REFRESH-INTERVAL`. This is a four-hour refresh hint; each calendar client decides when it actually refreshes.
 
 ## Which tasks appear
 

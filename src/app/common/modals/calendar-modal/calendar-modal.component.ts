@@ -25,6 +25,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
   @ViewChild('webcalToggle') webcalToggle: MatSlideToggle;
 
   webcal: Webcal | null;
+  private savedWebcal: Webcal | null = null;
   working: boolean = true;
   copying: boolean = false;
   selectedCalendarProviderIndex: number = 0;
@@ -109,11 +110,19 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
     if (this.working) {
       return false;
     }
+    const previous = this.savedWebcal ?? this.copyWebcal(this.webcal);
     apply();
     this.working = true;
-    this.webcalService.update(this.webcal).subscribe((webcal) => {
-      this.loadWebcal(webcal);
-      this.working = false;
+    this.webcalService.update(this.webcal).subscribe({
+      next: (webcal) => {
+        this.loadWebcal(webcal);
+        this.working = false;
+      },
+      error: () => {
+        this.loadWebcal(Object.assign(this.webcal, previous));
+        this.working = false;
+        this.alerts.error('Could not save calendar settings. Please try again.', 4000);
+      },
     });
     return true;
   }
@@ -268,6 +277,7 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
    */
   private loadWebcal(webcal: Webcal) {
     this.webcal = webcal;
+    this.savedWebcal = webcal ? this.copyWebcal(webcal) : null;
     if (webcal) {
       if (webcal.reminder) {
         this.newReminderActive = true;
@@ -278,5 +288,13 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
         this.newReminderTime = this.newReminderUnit = null;
       }
     }
+  }
+
+  private copyWebcal(webcal: Webcal): Webcal {
+    return Object.assign(new Webcal(), webcal, {
+      reminder: webcal.reminder ? {...webcal.reminder} : null,
+      unitExclusions: [...(webcal.unitExclusions ?? [])],
+      shouldChangeGuid: false,
+    });
   }
 }

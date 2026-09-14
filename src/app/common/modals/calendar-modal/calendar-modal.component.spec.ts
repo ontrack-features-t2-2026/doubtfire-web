@@ -48,6 +48,37 @@ describe('CalendarModalComponent', () => {
     vi.restoreAllMocks();
   });
 
+  it('restores saved settings and allows a retry after a failed save', () => {
+    const first = new Subject<Webcal>();
+    const retry = new Subject<Webcal>();
+    const update = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(retry);
+    const error = vi.fn();
+    const internals = component as unknown as {
+      webcalService: {update: typeof update};
+      alerts: {error: typeof error};
+      loadWebcal: (value: Webcal) => void;
+    };
+    internals.webcalService = {update};
+    internals.alerts = {error};
+    const webcal = Object.assign(new Webcal(), {
+      enabled: true,
+      guid: 'saved-guid',
+      unitExclusions: [],
+      includeStartDates: false,
+    });
+    internals.loadWebcal(webcal);
+
+    component.includeExclusion({unit: {id: 7}});
+    first.error(new Error('offline'));
+
+    expect(component.working).toBe(false);
+    expect(component.webcal.unitExclusions).toEqual([]);
+    expect(error).toHaveBeenCalledOnce();
+    component.includeExclusion({unit: {id: 7}});
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(component.working).toBe(true);
+  });
+
   it('downloads the feed as an .ics file when the webcal is enabled', () => {
     const webcal = new Webcal();
     webcal.enabled = true;
