@@ -26,6 +26,8 @@ import {SubmissionFilesModalComponent} from './submission-files-modal/submission
 export class TaskOverseerReportComponent implements OnInit {
   @Input() task: Task;
   @Input() loadOverseerAssessmentId?: number;
+  /** The Overseer assessment dialog shows its own title, so the report leaves its heading out. */
+  @Input() inDialog = false;
   public histories: SubmissionHistory[] = [];
   public overseerAssessments: OverseerAssessment[] = [];
   public comparisonSourceHistoryId: number | null = null;
@@ -164,6 +166,14 @@ export class TaskOverseerReportComponent implements OnInit {
     }
 
     return `${count} ${count === 1 ? 'submission' : 'submissions'} kept, newest first.`;
+  }
+
+  // The refresh button stays focusable while a load runs, so ignore a click until it ends.
+  refreshHistory(): void {
+    if (this.loading) {
+      return;
+    }
+    this.loadHistory(true);
   }
 
   overseerResultLabel(assessment: OverseerAssessment): string {

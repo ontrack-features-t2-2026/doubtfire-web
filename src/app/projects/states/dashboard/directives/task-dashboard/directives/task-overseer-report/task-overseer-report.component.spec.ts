@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatButtonModule} from '@angular/material/button';
 import {MatDialog} from '@angular/material/dialog';
-import {Observable, of, throwError} from 'rxjs';
+import {Observable, Subject, of, throwError} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {SubmissionHistory} from 'src/app/api/models/submission-history';
 import {Task} from 'src/app/api/models/task';
@@ -39,7 +40,8 @@ describe('TaskOverseerReportComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [TaskOverseerReportComponent],
-      imports: [EmptyStateComponent],
+      // The real button, so disabledInteractive behaves as it does in the app.
+      imports: [EmptyStateComponent, MatButtonModule],
       providers: [
         {provide: AlertService, useValue: {error: vi.fn(), message: vi.fn()}},
         {provide: SubmissionHistoryService, useValue: {queryForTask: queryHistories}},
@@ -53,13 +55,18 @@ describe('TaskOverseerReportComponent', () => {
     }).compileComponents();
   });
 
-  function render(loadOverseerAssessmentId?: number): void {
+  function render(loadOverseerAssessmentId?: number, inDialog = false): void {
     fixture = TestBed.createComponent(TaskOverseerReportComponent);
     fixture.componentRef.setInput('task', taskStub());
     if (loadOverseerAssessmentId) {
       fixture.componentRef.setInput('loadOverseerAssessmentId', loadOverseerAssessmentId);
     }
+    fixture.componentRef.setInput('inDialog', inDialog);
     fixture.detectChanges();
+  }
+
+  function refreshButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('button[aria-label="Refresh history"]');
   }
 
   function text(): string {
@@ -76,9 +83,7 @@ describe('TaskOverseerReportComponent', () => {
     render();
 
     expect(fixture.nativeElement.querySelector('h2').textContent).toContain('Submission history');
-    const refresh = fixture.nativeElement.querySelector(
-      'button[aria-label="Refresh history"]',
-    ) as HTMLButtonElement;
+    const refresh = refreshButton();
     expect(refresh).not.toBeNull();
     expect(refresh.getAttribute('type')).toBe('button');
 
@@ -86,6 +91,32 @@ describe('TaskOverseerReportComponent', () => {
     fixture.detectChanges();
 
     expect(queryHistories).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps refresh focusable while loading and ignores it until the load ends', () => {
+    const pending: Subject<SubmissionHistory[]> = new Subject();
+    nextHistories = () => pending;
+    render();
+
+    const refresh = refreshButton();
+    expect(refresh.hasAttribute('disabled')).toBe(false);
+    expect(refresh.getAttribute('aria-disabled')).toBe('true');
+
+    refresh.click();
+    expect(queryHistories).toHaveBeenCalledTimes(1);
+
+    pending.next([]);
+    pending.complete();
+    fixture.detectChanges();
+    expect(refresh.getAttribute('aria-disabled')).toBeNull();
+  });
+
+  it('leaves the title to the Overseer dialog but keeps the count and refresh', () => {
+    render(undefined, true);
+
+    expect(fixture.nativeElement.querySelector('h2')).toBeNull();
+    expect(text()).toContain('Past submissions of this task, newest first.');
+    expect(refreshButton()).not.toBeNull();
   });
 
   it('shows the empty state when no earlier submissions are kept', () => {

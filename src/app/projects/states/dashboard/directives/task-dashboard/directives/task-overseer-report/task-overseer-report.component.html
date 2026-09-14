@@ -1,8 +1,17 @@
-<header class="flex shrink-0 items-start justify-between gap-2 px-4 pt-4 pb-3">
+<!-- In a dialog the title is the dialog's own and the dialog pads its content. -->
+<header
+  class="flex shrink-0 items-start justify-between gap-2 pb-3"
+  [ngClass]="inDialog ? 'pt-0' : 'px-4 pt-4'"
+>
   <div class="min-w-0">
-    <h2 class="m-0 truncate text-lg leading-snug font-semibold text-ot-text">Submission history</h2>
-    <p aria-live="polite" class="m-0 mt-1 text-sm text-ot-muted">{{ historySummary }}</p>
+    @if (!inDialog) {
+      <h2 class="m-0 mb-1 truncate text-lg leading-snug font-semibold text-ot-text">
+        Submission history
+      </h2>
+    }
+    <p aria-live="polite" class="m-0 text-sm text-ot-muted">{{ historySummary }}</p>
   </div>
+  <!-- disabledInteractive keeps focus on the button while it reloads. -->
   <button
     aria-label="Refresh history"
     class="shrink-0"
@@ -10,13 +19,14 @@
     matTooltip="Refresh history"
     type="button"
     [disabled]="loading"
-    (click)="loadHistory(true)"
+    [disabledInteractive]="true"
+    (click)="refreshHistory()"
   >
     <mat-icon aria-hidden="true">refresh</mat-icon>
   </button>
 </header>
 
-<div class="min-h-0 flex-1 overflow-auto px-4 pb-4">
+<div class="min-h-0 flex-1 overflow-auto" [ngClass]="{'px-4 pb-4': !inDialog}">
   @if (loading) {
     <div
       aria-label="Loading the submission history"
