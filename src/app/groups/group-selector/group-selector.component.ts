@@ -283,6 +283,31 @@ export class GroupSelectorComponent
     return capacity == null ? null : capacity + (group.capacityAdjustment ?? 0);
   }
 
+  public groupTutorialLabel(group: Group): string {
+    return group?.tutorial?.abbreviation || 'Not assigned';
+  }
+
+  public groupCapacityLabel(group: Group): string {
+    const configuredCapacity = group?.groupSet?.capacity;
+    if (configuredCapacity === null || configuredCapacity === undefined) {
+      return `${group?.memberCount ?? 0} members, no set limit`;
+    }
+
+    const capacity = Math.max(0, configuredCapacity + (group?.capacityAdjustment ?? 0));
+    return `${group?.memberCount ?? 0} of ${capacity} places`;
+  }
+
+  public canStudentJoin(group: Group): boolean {
+    return Boolean(
+      this.project &&
+      !this.isPartOfGroup(this.project, group) &&
+      this.selectedGroupSet?.allowStudentsToManageGroups &&
+      !group.locked &&
+      !this.selectedGroupSet.locked &&
+      group.hasSpace(),
+    );
+  }
+
   joinGroup(group: Group) {
     if (!this.project) {
       return;

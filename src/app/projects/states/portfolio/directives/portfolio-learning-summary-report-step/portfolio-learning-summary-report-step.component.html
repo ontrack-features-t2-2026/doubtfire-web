@@ -35,10 +35,16 @@
     @if (
       projectHasDraftLearningSummaryReport && !forceLSRSubmit && !acceptUploadNewLearningSummary
     ) {
-      <div class="report-done">
+      <section
+        aria-labelledby="learning-summary-submitted-title"
+        class="report-done submitted"
+        role="status"
+      >
         <mat-icon aria-hidden="true">check_circle</mat-icon>
         <div class="flex min-w-0 flex-1 flex-col gap-1">
-          <p class="m-0 font-semibold">Learning summary report uploaded</p>
+          <h2 class="m-0 text-lg font-semibold" id="learning-summary-submitted-title">
+            Learning Summary Report submitted
+          </h2>
           @if (draftTaskDefinitionWasUsed()) {
             <p class="m-0 text-sm leading-relaxed text-ot-muted">
               It was added for you from your
@@ -48,9 +54,9 @@
           }
         </div>
         <button class="shrink-0" mat-stroked-button type="button" (click)="forceLSRSubmit = true">
-          Upload a new one
+          Upload a new report
         </button>
-      </div>
+      </section>
     }
     <div
       class="flex flex-col gap-3"
@@ -74,22 +80,29 @@
     </div>
   </div>
 
-  <footer class="flex flex-wrap items-center gap-3 border-t border-ot-divider px-5 py-3 sm:px-6">
-    <button mat-stroked-button type="button" (click)="advanceActiveTab(-1)">Back</button>
-    <span class="flex-1"></span>
+  <footer
+    class="portfolio-step-footer flex flex-col gap-3 border-t border-ot-divider px-5 py-3 sm:px-6"
+  >
     @if (!projectHasDraftLearningSummaryReport) {
-      <span class="order-first w-full text-sm text-ot-muted sm:order-none sm:w-auto"
-        >Upload your report to continue.</span
-      >
+      <p class="portfolio-validation" id="learning-summary-validation" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <span>You're missing a Learning Summary Report. Upload one to continue.</span>
+      </p>
     }
-    <button
-      color="primary"
-      mat-flat-button
-      type="button"
-      [disabled]="!projectHasDraftLearningSummaryReport"
-      (click)="advanceActiveTab(1)"
-    >
-      Next
-    </button>
+    <div class="portfolio-step-actions flex items-center justify-between gap-3">
+      <button mat-stroked-button type="button" (click)="advanceActiveTab(-1)">Back</button>
+      <button
+        color="primary"
+        mat-flat-button
+        type="button"
+        [attr.aria-describedby]="
+          projectHasDraftLearningSummaryReport ? null : 'learning-summary-validation'
+        "
+        [disabled]="!projectHasDraftLearningSummaryReport"
+        (click)="advanceActiveTab(1)"
+      >
+        Next
+      </button>
+    </div>
   </footer>
 </section>

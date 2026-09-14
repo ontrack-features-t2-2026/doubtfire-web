@@ -1,12 +1,11 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
+import {Directive, NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject} from 'rxjs';
-import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {Project, Task, TaskDefinition, TaskStatusEnum} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {FUnitTaskListComponent} from './unit-task-list.component';
-
-const emptyProvider = {};
 
 const flushTaskSelection = async (): Promise<void> => {
   await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -32,11 +31,13 @@ const taskForDefinition = (
   definition: TaskDefinition,
   topWeight: number,
   numNewComments = 0,
+  status: TaskStatusEnum = 'not_started',
 ): Task =>
   ({
     definition,
     topWeight,
     numNewComments,
+    status,
   }) as Task;
 
 const studentProject = () =>
@@ -63,19 +64,30 @@ describe('FUnitTaskListComponent', () => {
   let component: FUnitTaskListComponent;
   let fixture: ComponentFixture<FUnitTaskListComponent>;
   let routeParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routeQueryParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routerNavigate: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
     routeParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routeQueryParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routerNavigate = vi.fn().mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
       declarations: [FUnitTaskListComponent],
       providers: [
-        {provide: Router, useValue: emptyProvider},
+        {
+          provide: Router,
+          useValue: {navigate: routerNavigate, createUrlTree: vi.fn()},
+        },
+        {provide: UserService, useValue: {currentUser: {id: 99}}},
         {
           provide: ActivatedRoute,
-          useValue: {paramMap: routeParamMap$.asObservable()},
+          useValue: {
+            paramMap: routeParamMap$.asObservable(),
+            queryParamMap: routeQueryParamMap$.asObservable(),
+          },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -104,6 +116,22 @@ describe('FUnitTaskListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('releases the task list scrollbar to the phone document while preserving desktop styles', () => {
+    const styles = (
+      FUnitTaskListComponent as unknown as {
+        ɵcmp: {styles: string[]};
+      }
+    ).ɵcmp.styles.join('\n');
+
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-y:\s*visible/,
+    );
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-x:\s*clip/,
+    );
+    expect(styles).toMatch(/\.scrollable[^{]*\{[^}]*overflow-y:\s*scroll/);
   });
 
   it('follows task route changes without recreating the component', async () => {
@@ -539,5 +567,233 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+
+  it('intersects canonical status routing with text search and clears either filter', () => {
+    const completeAlpha = taskDefinition(1, 'A1');
+    completeAlpha.name = 'Alpha complete';
+    const completeBeta = taskDefinition(2, 'B1');
+    completeBeta.name = 'Beta complete';
+    const workingAlpha = taskDefinition(3, 'A2');
+    workingAlpha.name = 'Alpha working';
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [completeAlpha, completeBeta, workingAlpha];
+    component.tasks = [
+      taskForDefinition(completeAlpha, 1, 0, 'complete'),
+      taskForDefinition(completeBeta, 2, 0, 'complete'),
+      taskForDefinition(workingAlpha, 3, 0, 'working_on_it'),
+    ];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'complete'}));
+    component.searchText = 'Alpha';
+    component.applyFilters();
+
+    expect(component.activeStatusFilter).toBe('complete');
+    expect(component.activeStatusFilterLabel).toBe('Complete');
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha]);
+
+    component.clearSearch();
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta]);
+
+    component.setStatusFilter(null);
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta, workingAlpha]);
+    expect(routerNavigate).toHaveBeenLastCalledWith([], {
+      relativeTo: expect.anything(),
+      queryParams: {taskStatus: null, taskView: 'tasks'},
+      queryParamsHandling: 'merge',
+    });
+  });
+
+  it('rejects unknown status query values and preserves a zero-result canonical filter', () => {
+    const task = taskDefinition(1, 'A1');
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [task];
+    component.tasks = [taskForDefinition(task, 1, 0, 'not_started')];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'invented-status'}));
+    expect(component.activeStatusFilter).toBeNull();
+    expect(component.filteredTaskDefinitions).toEqual([task]);
+
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'fail'}));
+    expect(component.activeStatusFilter).toBe('fail');
+    expect(component.filteredTaskDefinitions).toEqual([]);
+  });
+
+  it('stores view preferences under the current user and unit instead of a global key', () => {
+    component.project = studentProject();
+    component.taskDefinitions = [taskDefinition(1, 'A1')];
+
+    component.setSortBy('abbreviation');
+
+    expect(globalThis.localStorage.setItem).toHaveBeenCalledWith(
+      'ontrack.user.99.unitTaskList.20.viewPreferences',
+      expect.any(String),
+    );
+  });
+});
+
+// A11Y-COLOUR03. The TaskStatusBadges template is what the dashboard and the
+// task viewer draw next to every task, and each badge is the only signal a
+// student gets that a task has new comments, similarities or a deadline state.
+// MatIcon hides the glyph and a tooltip is not a name for a non-interactive
+// element, so without a role and label a screen reader got nothing, or a bare
+// number for the comment count. These tests render the real template because
+// what assistive technology reads is a question about the markup. StubMatMenu
+// satisfies `#taskListFiltersMenu="matMenu"` in the filter menu, and
+// NO_ERRORS_SCHEMA renders the other mat-* elements as plain markup.
+@Directive({selector: 'mat-menu', exportAs: 'matMenu', standalone: false})
+class StubMatMenu {}
+
+describe('FUnitTaskListComponent task status badges', () => {
+  let fixture: ComponentFixture<FUnitTaskListComponent>;
+
+  const badgeTaskDefinition = {
+    ...taskDefinition(1, '1.1P'),
+    isGroupTask: () => false,
+  } as unknown as TaskDefinition;
+
+  // Every badge condition starts off, so each test turns on only the state it
+  // is about. Only the members the template reads are present.
+  const makeTask = (overrides: Record<string, unknown> = {}): Task =>
+    ({
+      definition: badgeTaskDefinition,
+      status: 'not_started',
+      numNewComments: 0,
+      similaritiesDetected: false,
+      qualityPts: 0,
+      hasGrade: () => false,
+      gradeDesc: () => '',
+      hasQualityPoints: () => false,
+      isDueSoon: () => false,
+      betweenDueDateAndDeadlineDate: () => false,
+      isPastDeadline: () => false,
+      inFinalState: () => false,
+      isBeforeStartDate: () => false,
+      inSubmittedState: () => false,
+      daysUntilDueDate: () => 20,
+      timeToDue: () => '',
+      localDueDate: (): Date => undefined,
+      ...overrides,
+    }) as unknown as Task;
+
+  const render = (task: Task, isCollapsed = false): void => {
+    fixture = TestBed.createComponent(FUnitTaskListComponent);
+    const component = fixture.componentInstance;
+    component.mode = 'all-tasks';
+    component.isCollapsed = isCollapsed;
+    component.taskDefinitions = [badgeTaskDefinition];
+    component.tasks = [task];
+    component.selectedTaskDefinition$ = new BehaviorSubject<TaskDefinition>(null);
+    fixture.detectChanges();
+  };
+
+  const badges = (): HTMLElement[] =>
+    Array.from(fixture.nativeElement.querySelectorAll('[role="img"]'));
+
+  const labels = (): string[] => badges().map((badge) => badge.getAttribute('aria-label'));
+
+  beforeEach(async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(),
+    });
+
+    await TestBed.configureTestingModule({
+      declarations: [FUnitTaskListComponent, StubMatMenu],
+      providers: [
+        {provide: Router, useValue: {}},
+        {provide: UserService, useValue: {currentUser: {id: 99}}},
+        {
+          provide: ActivatedRoute,
+          useValue: {paramMap: new Subject<ReturnType<typeof convertToParamMap>>()},
+        },
+      ],
+      // The real template is rendered on purpose: the fix is in the markup.
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  // The last column is how many glyphs the badge draws. The comment badge draws
+  // only its count, and the past deadline badge adds a "!" after its icon.
+  it.each([
+    ['one new comment', {numNewComments: 1}, '1 new comment', 0],
+    ['several new comments', {numNewComments: 3}, '3 new comments', 0],
+    ['similarities', {similaritiesDetected: true}, 'Similarities Detected', 1],
+    ['due soon', {isDueSoon: () => true}, 'Due soon', 1],
+    [
+      'due before the deadline',
+      {betweenDueDateAndDeadlineDate: () => true},
+      'Due, deadline not yet passed',
+      1,
+    ],
+    ['past deadline', {isPastDeadline: () => true}, 'Past deadline', 2],
+  ])('names the %s badge and hides its glyph', (_name, overrides, label, glyphCount) => {
+    render(makeTask(overrides));
+
+    expect(labels()).toEqual([label]);
+
+    const glyphs: HTMLElement[] = Array.from(badges()[0].querySelectorAll('mat-icon, strong'));
+    expect(glyphs).toHaveLength(glyphCount);
+    glyphs.forEach((glyph) => expect(glyph.getAttribute('aria-hidden')).toBe('true'));
+  });
+
+  // MatTooltip only skips adding aria-describedby when the tooltip text is
+  // exactly the aria-label, so any difference makes a screen reader say it twice.
+  it('gives the similarities badge the same label as its tooltip', () => {
+    render(makeTask({similaritiesDetected: true}));
+
+    const [badge] = badges();
+    expect(badge.getAttribute('aria-label')).toBe(badge.getAttribute('mattooltip'));
+  });
+
+  it('keeps the visible comment count as the bare number', () => {
+    render(makeTask({numNewComments: 4}));
+
+    expect(badges()[0].textContent.trim()).toBe('4');
+    expect(labels()).toEqual(['4 new comments']);
+  });
+
+  it('uses a different glyph for past deadline than for due, so colour is not the only signal', () => {
+    render(makeTask({betweenDueDateAndDeadlineDate: () => true}));
+    const dueGlyph = badges()[0].querySelector('mat-icon').textContent.trim();
+
+    render(makeTask({isPastDeadline: () => true}));
+    const pastDeadlineGlyph = badges()[0].querySelector('mat-icon').textContent.trim();
+
+    expect(dueGlyph).toBe('schedule');
+    expect(pastDeadlineGlyph).toBe('event_busy');
+  });
+
+  it('names the badges in the collapsed list as well', () => {
+    render(makeTask({numNewComments: 2, isDueSoon: () => true}), true);
+
+    expect(labels()).toHaveLength(2);
+    expect(labels()).toEqual(expect.arrayContaining(['2 new comments', 'Due soon']));
+  });
+
+  // Failure path: a badge whose condition is false is not rendered, so a
+  // student is never told about a state that does not apply.
+  it('renders no badges when nothing applies', () => {
+    render(makeTask());
+
+    expect(badges()).toEqual([]);
+  });
+
+  it('drops the deadline badges once the task is in a final state', () => {
+    render(
+      makeTask({
+        isDueSoon: () => true,
+        isPastDeadline: () => true,
+        inFinalState: () => true,
+      }),
+    );
+
+    expect(badges()).toEqual([]);
   });
 });

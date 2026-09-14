@@ -4,6 +4,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
+import {RouterModule} from '@angular/router';
 import {User} from 'src/app/api/models/user/user';
 import {NotificationSettingsComponent} from './notification-settings.component';
 
@@ -23,7 +24,7 @@ describe('NotificationSettingsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [NotificationSettingsComponent],
-      imports: [FormsModule, MatCheckboxModule],
+      imports: [FormsModule, MatCheckboxModule, RouterModule.forRoot([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationSettingsComponent);
@@ -80,9 +81,9 @@ describe('NotificationSettingsComponent', () => {
   it('shows help text for each notification category', () => {
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Receive notifications for task-related events.');
-    expect(text).toContain('Receive notifications for feedback-related events.');
-    expect(text).toContain('Receive notifications for portfolio-related events.');
+    expect(text).toContain('Due dates, changed dates, and task status updates.');
+    expect(text).toContain('New comments, feedback, and review outcomes.');
+    expect(text).toContain('Portfolio processing and assessment updates.');
   });
 
   it('associates each checkbox with its help text', () => {
@@ -102,5 +103,22 @@ describe('NotificationSettingsComponent', () => {
       expect(inputs[index].getAttribute('aria-describedby')).toBe(id);
       expect(inputs[index].hasAttribute('name')).toBe(false);
     });
+  });
+
+  it('links the notification preferences to the notifications page', () => {
+    fixture.componentRef.setInput('showNotificationsLink', true);
+    fixture.detectChanges();
+
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href="/notifications"]');
+
+    expect(link).not.toBeNull();
+    expect(link.textContent.trim()).toBe('Notifications page');
+  });
+
+  // The admin Users dialog and the first-login form render these settings too,
+  // and neither should link to the viewer's own notifications.
+  it('leaves the notifications page link out unless asked to show it', () => {
+    expect(fixture.nativeElement.querySelector('a[href="/notifications"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Notifications page');
   });
 });

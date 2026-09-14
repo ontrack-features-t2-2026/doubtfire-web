@@ -1,6 +1,9 @@
 <div class="size-full overflow-auto">
   @if (taskDef?.hasTaskSheet) {
-    <f-pdf-viewer [pdfUrl]="taskDef.getTaskPDFUrl()"></f-pdf-viewer>
+    <f-pdf-viewer
+      [filename]="taskDef.effectiveTaskSheetFilename"
+      [pdfUrl]="taskDef.getTaskPDFUrl()"
+    ></f-pdf-viewer>
   } @else {
     <div class="flex size-full items-center justify-center px-4">
       <f-empty-state

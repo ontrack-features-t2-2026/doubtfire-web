@@ -1,3 +1,7 @@
+:host {
+  flex-direction: column;
+}
+
 #audioDiscussionTemplate {
   display: flex;
   align-items: center;
@@ -21,6 +25,25 @@
 
 #audio-recorder-visualiser.audio-visualiser {
   height: 22px;
-  margin-left: 16px;
-  margin-right: 46px;
+  display: block;
+  margin: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#audio-recorder-visualiser.audio-visualiser:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.audio-recorder-error {
+  align-self: stretch;
+  margin: 4px 0;
+  border: 1px solid var(--ot-color-error);
+  border-radius: var(--ot-radius-sm);
+  padding: 0.5rem;
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-error);
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }

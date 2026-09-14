@@ -1,9 +1,10 @@
 import {Injectable} from '@angular/core';
 import {Observable, of} from 'rxjs';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {
-  DEMO_PEER_MEDIAN_STATE,
-  DEMO_WEEKLY_REMAINING,
-} from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
+  DemoScenarioRegistryService,
+  DemoUnitHook,
+} from 'src/app/demo/demo-scenario-registry.service';
 import {PeerMedianPoint, PeerProgressResponse} from '../models/peer-progress';
 import {Project} from '../models/project';
 import {MappingFunctions} from './mapping-fn';
@@ -12,6 +13,11 @@ import {MappingFunctions} from './mapping-fn';
   providedIn: 'root',
 })
 export class PeerProgressService {
+  constructor(
+    private readonly demoMode: DemoModeStore,
+    private readonly demoRegistry: DemoScenarioRegistryService,
+  ) {}
+
   /**
    * Temporary proof-of-concept state.
    *
@@ -23,17 +29,52 @@ export class PeerProgressService {
     project: Project,
     targetGrade: number = project.targetGrade,
   ): Observable<PeerProgressResponse> {
-    const state = DEMO_PEER_MEDIAN_STATE;
+    const unit = this.demoUnitFor(project.id);
+    if (!unit) {
+      return of(this.response(project.id, targetGrade, 'disabled'));
+    }
+
+    if (unit.ppi.state !== 'available') {
+      const state =
+        unit.ppi.unavailable_reason === 'insufficient_cohort' ? 'suppressed' : 'unavailable';
+      return of(this.response(project.id, targetGrade, state));
+    }
+
+    const submitted = unit.ppi.submitted_percentage;
+    if (typeof submitted !== 'number' || submitted < 0 || submitted > 100) {
+      return of(this.response(project.id, targetGrade, 'unavailable'));
+    }
+
+    const scenario = this.demoRegistry.scenario;
+    const unitIndex = scenario?.units.findIndex((candidate) => candidate.key === unit.key) ?? 0;
+    const comparisonOffset = unitIndex % 2 === 0 ? 0.08 : -0.08;
+    const currentRemaining = Math.min(0.95, Math.max(0.05, 1 - submitted / 100 + comparisonOffset));
 
     return of({
       project_id: project.id,
       target_grade: targetGrade,
-      state,
-      median_burndown: state === 'ready' ? this.sampleProfile(project, DEMO_WEEKLY_REMAINING) : [],
+      state: 'ready',
+      median_burndown: this.sampleProfile(project, currentRemaining),
     });
   }
 
-  private sampleProfile(project: Project, profile: readonly number[]): PeerMedianPoint[] {
+  private response(
+    projectId: number,
+    targetGrade: number,
+    state: PeerProgressResponse['state'],
+  ): PeerProgressResponse {
+    return {project_id: projectId, target_grade: targetGrade, state, median_burndown: []};
+  }
+
+  private demoUnitFor(projectId: number): DemoUnitHook | undefined {
+    if (!this.demoMode.enabled) {
+      return undefined;
+    }
+
+    return this.demoRegistry.scenario?.units.find((unit) => unit.project_id === projectId);
+  }
+
+  private sampleProfile(project: Project, currentRemaining: number): PeerMedianPoint[] {
     const asOf = Date.now();
     const weeks = MappingFunctions.step(
       project.unit.startDate.getTime(),
@@ -41,16 +82,12 @@ export class PeerProgressService {
       MappingFunctions.weeksMs(1),
     );
 
-    // Map against the whole unit before removing future points. Mapping only
-    // the elapsed weeks would incorrectly stretch the sample to 100% complete
-    // at today's date and make the demo look like the cohort has finished every
-    // task.
-    return weeks
-      .map((time, week) => ({
-        date: new Date(time).toISOString(),
-        remaining:
-          profile[Math.round((week / Math.max(weeks.length - 1, 1)) * (profile.length - 1))],
-      }))
-      .filter((point) => new Date(point.date).getTime() <= asOf);
+    const elapsed = weeks.filter((time) => time <= asOf);
+    const finalIndex = Math.max(elapsed.length - 1, 1);
+
+    return elapsed.map((time, week) => ({
+      date: new Date(time).toISOString(),
+      remaining: Number((1 - (1 - currentRemaining) * (week / finalIndex)).toFixed(2)),
+    }));
   }
 }

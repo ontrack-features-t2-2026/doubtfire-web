@@ -3,6 +3,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute} from '@angular/router';
 import {EMPTY} from 'rxjs';
+import {Task} from 'src/app/api/models/task';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {ExtensionModalService} from 'src/app/common/modals/extension-modal/extension-modal.service';
@@ -47,5 +48,30 @@ describe('TaskStatusCardComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it.each([
+    {history: false, requiresFiles: true, first: true, replacement: false},
+    {history: true, requiresFiles: true, first: false, replacement: true},
+    {history: true, requiresFiles: false, first: false, replacement: false},
+  ])(
+    'shows exactly one appropriate upload action for $history/$requiresFiles',
+    ({history, requiresFiles, first, replacement}) => {
+      component.task = {
+        hasSubmissionHistory: () => history,
+        requiresFileUpload: () => requiresFiles,
+      } as unknown as Task;
+
+      expect(component.showUploadSubmission).toBe(first);
+      expect(component.showUploadNewFiles).toBe(replacement);
+    },
+  );
+
+  it('marks the replacement action pending while details or PDF processing is unresolved', () => {
+    component.task = {processingPdf: true, loadingSubmissionDetails: false} as Task;
+    expect(component.submissionActionPending).toBe(true);
+
+    component.task = {processingPdf: false, loadingSubmissionDetails: true} as Task;
+    expect(component.submissionActionPending).toBe(true);
   });
 });

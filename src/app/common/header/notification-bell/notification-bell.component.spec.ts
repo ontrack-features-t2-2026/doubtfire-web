@@ -225,6 +225,14 @@ describe('NotificationBellComponent', () => {
     expect(badgeIsHidden()).toBe(false);
   });
 
+  it('keeps a large unread count compact while announcing the exact count', () => {
+    unreadCount.next(137);
+    fixture.detectChanges();
+
+    expect(badgeText()).toBe('99+');
+    expect(bell().getAttribute('aria-label')).toBe('Notifications, 137 unread');
+  });
+
   it('says how many are unread to a screen reader too', () => {
     fixture.detectChanges();
 

@@ -1,5 +1,6 @@
-<div class="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+<div class="group-work-layout">
   <f-group-selector
+    class="group-work-layout__selector"
     [onSelect]="groupSelectHandler"
     [project]="project"
     [selectedGroup]="selectedGroup"
@@ -7,11 +8,11 @@
     [showGroupSetSelector]="showGroupSetSelector !== false"
     [unit]="unit"
     [unitRole]="unitRole"
-    (selectedGroupSetChange)="onGroupSetChange()"
+    (selectedGroupSetChange)="onGroupSetChange($event)"
   ></f-group-selector>
 
   <section
-    class="flex min-w-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
+    class="group-work-layout__members flex min-w-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
     [attr.aria-label]="
       selectedGroup ? 'Members of ' + (selectedGroup.name || 'the group') : 'Group members'
     "
