@@ -20,6 +20,7 @@ import {NotificationService} from 'src/app/api/services/notification.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {
   type AuthenticatedSettingsResponseFormat,
   DoubtfireConstants,
@@ -89,6 +90,7 @@ export class AuthenticationService {
     private doubtfireConstants: DoubtfireConstants,
     private demoMode: DemoModeStore,
     private authReturnUrl: AuthReturnUrlService,
+    private themeService: ThemeService,
   ) {
     this.AUTH_URL = `${this.doubtfireConstants.API_URL}/auth`;
     // Ensure any only user data is removed from local storage
@@ -301,8 +303,32 @@ export class AuthenticationService {
     user.authenticationToken = response['auth_token'];
     user.authenticationTokenExpiry = response['auth_token_expiry'];
 
+    // This path also runs on hourly token refresh and can receive overlapping
+    // sign-ins. Capture the prior account identity before replacing currentUser:
+    // only a refresh for the same account may keep the existing save closure.
+    const previousAuthenticatedUserId = this.isAuthenticated()
+      ? this.userService.currentUser.id
+      : undefined;
+
     // Record the current user
     this.userService.currentUser = user;
+
+    // Connect only on a real sign-in/session restore. Hourly token refreshes keep
+    // the existing connection and therefore cannot clobber a mid-session choice.
+    if (previousAuthenticatedUserId !== user.id) {
+      this.themeService.connectAccount(
+        user.id,
+        user.themePreference,
+        user.themePreferenceUpdatedAt,
+        (preference) =>
+          this.userService.updateThemePreference(user, preference).pipe(
+            map((updatedUser) => ({
+              preference: updatedUser.themePreference,
+              updatedAt: updatedUser.themePreferenceUpdatedAt,
+            })),
+          ),
+      );
+    }
 
     // Feature flags are part of authentication readiness. Consumers use their
     // current values synchronously, so do not load globals, publish authComplete
@@ -443,6 +469,10 @@ export class AuthenticationService {
     }
 
     this.demoMode.reset();
+
+    // Cancel any debounced/in-flight account write for this session. The local
+    // theme keys intentionally remain so the next boot stays flash-free.
+    this.themeService.disconnectAccount();
 
     // Invalidate authentication work before the asynchronous push and token
     // teardown. This prevents a late /settings response from restoring values

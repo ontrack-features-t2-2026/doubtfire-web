@@ -1,11 +1,14 @@
 .mat-toolbar {
   height: 72px;
-  background-color: white;
+  // THM-M01: was hardcoded white / #f5f5f5 / black, which never flipped in dark
+  // because component styles beat the global Material theme. Onto tokens: the light
+  // value of --ot-color-surface is #ffffff, so light is unchanged.
+  background-color: var(--ot-color-surface, #fff);
   box-shadow: 3px 4px 5px #0000000d;
   margin-bottom: 20px;
 
   &.inbox {
-    background-color: #f5f5f5;
+    background-color: var(--ot-color-page, #f5f5f5);
     box-shadow: none;
     margin-bottom: 0px; // nice drop shadow on bottom of toolbar
   }
@@ -13,9 +16,17 @@
   font-family: 'Grotesk';
 
   .mat-icon {
-    color: black;
+    color: var(--ot-color-text, #000);
     transform: scale(1.5);
   }
+}
+
+// Dark only: sit the toolbar on the page tone so it is seamless, and carry the
+// separation on a hairline since the drop shadow is invisible on dark. Kept out of
+// light so no new divider line appears there.
+:host-context([data-ot-theme='dark']) .mat-toolbar {
+  background-color: var(--ot-color-page);
+  border-bottom: 1px solid var(--ot-color-divider);
 }
 
 // The unread count beside "Notifications" in the account menu, which is the only

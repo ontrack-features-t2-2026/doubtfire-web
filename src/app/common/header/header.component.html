@@ -46,6 +46,7 @@
       there asking for an unread count nobody can see.
     -->
     @if (!media.isActive('xs')) {
+      <app-theme-toggle class="mx-1"></app-theme-toggle>
       <notification-bell></notification-bell>
     }
     @if (sidekiqJobs.length) {
