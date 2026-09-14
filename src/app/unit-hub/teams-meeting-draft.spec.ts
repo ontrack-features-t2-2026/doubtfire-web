@@ -156,4 +156,11 @@ describe('Teams meeting draft URLs', () => {
       /200/,
     );
   });
+
+  it('opens a draft for an API session saved without a description', () => {
+    const draft = {...session(), description: null as unknown as string, location: null};
+    expect(teamsMeetingContent(draft, 'SIT111')).toBe('Unit: SIT111');
+    const url = new URL(teamsMeetingDraftUrl(draft, 'SIT111'));
+    expect(url.searchParams.get('content')).toBe('Unit: SIT111');
+  });
 });

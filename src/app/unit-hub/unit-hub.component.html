@@ -71,7 +71,9 @@
           (change)="loadStaff(+$any($event.target).value)"
         >
           @for (unit of manageableUnits; track unit.id) {
-            <option [value]="unit.id">{{ unit.code }} · {{ unit.name }}</option>
+            <option [selected]="unit.id === managedUnitId" [value]="unit.id">
+              {{ unit.code }} · {{ unit.name }}
+            </option>
           }
         </select>
       </label>
@@ -436,9 +438,11 @@
           [value]="selectedUnitId"
           (change)="selectUnit($any($event.target).value)"
         >
-          <option value="0">All my units</option>
+          <option value="0" [selected]="!selectedUnitId">All my units</option>
           @for (unit of units; track unit.id) {
-            <option [value]="unit.id">{{ unit.code }} · {{ unit.name }}</option>
+            <option [selected]="unit.id === selectedUnitId" [value]="unit.id">
+              {{ unit.code }} · {{ unit.name }}
+            </option>
           }
         </select>
       </label>

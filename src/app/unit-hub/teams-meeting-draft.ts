@@ -86,7 +86,8 @@ export function teamsMeetingAttendees(value = ''): string[] {
 
 export function teamsMeetingContent(draft: TeamsMeetingDraft, unitCode: string): string {
   const code = plainText(unitCode, 'Unit code', 50);
-  const description = plainText(draft.description, 'Session details', 20000);
+  // The API returns null when a session was saved without a description.
+  const description = plainText(draft.description || '', 'Session details', 20000);
   const location = plainText(draft.location || '', 'Location', 300);
   return [code ? `Unit: ${code}` : '', description, location ? `Location: ${location}` : '']
     .filter(Boolean)
