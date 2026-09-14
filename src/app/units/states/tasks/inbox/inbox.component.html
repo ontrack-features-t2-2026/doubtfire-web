@@ -37,36 +37,14 @@
   ></ngx-skeleton-loader>
 </ng-template>
 
-<!-- The heading row of the comments panel, the height of the task tabs beside it. -->
+<!-- The heading row of the comments overlay on a phone. -->
 <ng-template #CommentsHeader>
   <div class="flex h-12 shrink-0 items-center gap-2 border-b border-ot-divider pr-1 pl-3">
     <mat-icon aria-hidden="true" class="!size-5 shrink-0 !text-xl !leading-none text-ot-muted"
       >forum</mat-icon
     >
-    <h2 class="m-0 min-w-0 flex-1 truncate text-base font-semibold text-ot-text">
-      Comments
-      @if (commentsFullscreen && taskData?.selectedTask) {
-        <span class="ml-1.5 font-normal text-ot-muted">
-          {{ taskData.selectedTask.definition?.abbreviation }} ·
-          {{ taskData.selectedTask.project?.student?.name }}
-        </span>
-      }
-    </h2>
-    @if (!isMobileView && taskData?.selectedTask) {
-      <button
-        aria-label="Full-screen chat"
-        mat-icon-button
-        type="button"
-        [attr.aria-pressed]="commentsFullscreen"
-        [matTooltip]="commentsFullscreen ? 'Exit full screen (Esc)' : 'Full-screen chat'"
-        (click)="toggleCommentsFullscreen()"
-      >
-        <mat-icon aria-hidden="true">{{
-          commentsFullscreen ? 'close_fullscreen' : 'open_in_full'
-        }}</mat-icon>
-      </button>
-    }
-    @if (isCommentsNarrow && !commentsCollapsed && !commentsFullscreen) {
+    <h2 class="m-0 min-w-0 flex-1 truncate text-base font-semibold text-ot-text">Comments</h2>
+    @if (isCommentsNarrow && !commentsCollapsed) {
       <button
         aria-label="Hide comments"
         mat-icon-button
@@ -102,15 +80,27 @@
 </ng-template>
 
 @if (!isMobileView) {
-  <!-- The panels sit in an even 12px frame, the same as the gap between them, and the
-       marking bar below runs edge to edge. -->
+  <!-- The shared panel layout: list, task and comments in an even 12px frame, with the
+       marking bar below running edge to edge. -->
   <div class="flex size-full min-h-0 flex-col">
-    <div class="inbox-layout flex min-h-0 flex-1 p-3">
-      <section
+    <app-panel-layout
+      class="min-h-0 flex-1"
+      [page]="panelPage"
+      [(activePanel)]="activePanel"
+      [(fullscreenPanel)]="fullscreenPanel"
+    >
+      <app-panel
         #inboxpanel
-        aria-label="Task list"
-        class="inbox-panel inbox-panel--side overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface p-2 shadow-(--ot-elevation-1)"
+        bodyClass="p-2"
+        icon="inbox"
         id="inboxpanel"
+        panelId="list"
+        panelTitle="Task list"
+        resizeEdge="end"
+        [maxWidth]="500"
+        [minWidth]="250"
+        [showHeader]="false"
+        [width]="350"
       >
         @if (loading) {
           <ng-container *ngTemplateOutlet="TaskListSkeleton"></ng-container>
@@ -125,24 +115,16 @@
             [viewType]="viewType"
           ></df-staff-task-list>
         }
-      </section>
-      @if (subs$ | async) {
-        <div
-          #leftResizerEl
-          aria-hidden="true"
-          cdkDrag
-          cdkDragLockAxis="x"
-          class="resizer"
-          id="leftResizerEl"
-          (cdkDragEnded)="stoppedDragging($event, inboxpanel)"
-          (cdkDragMoved)="dragging($event, inboxpanel)"
-          (cdkDragStarted)="startedDragging($event, inboxpanel)"
-        ></div>
-      }
+      </app-panel>
 
-      <section
-        aria-label="Selected task"
-        class="inbox-panel min-w-0 flex-1 overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface p-1 shadow-(--ot-elevation-1)"
+      <app-panel
+        bodyClass="p-1"
+        icon="assignment"
+        panelId="task"
+        panelTitle="Selected task"
+        [collapsible]="false"
+        [flex]="true"
+        [showHeader]="false"
       >
         @if (loading) {
           <ng-container *ngTemplateOutlet="BlankPanelSkeleton"></ng-container>
@@ -152,50 +134,28 @@
             (visiblePdfUrlChange)="visiblePdfUrl = $event"
           ></f-inbox-dashboard>
         }
-      </section>
-      @if (isCommentsNarrow && commentsCollapsed && !loading && taskData?.selectedTask) {
-        <button
-          aria-label="Show comments"
-          class="comments-floating-toggle"
-          color="primary"
-          mat-mini-fab
-          matTooltip="Show comments"
-          type="button"
-          (click)="toggleCommentsPanel()"
-        >
-          <mat-icon aria-hidden="true" class="comments-floating-toggle__edge-icon">
-            chevron_left
-          </mat-icon>
-          <mat-icon aria-hidden="true" class="comments-floating-toggle__hover-icon">forum</mat-icon>
-        </button>
-      }
-      <div
-        #rightResizerEl
-        aria-hidden="true"
-        cdkDrag
-        cdkDragLockAxis="x"
-        class="resizer"
-        id="rightResizerEl"
-        [class.hidden]="isCommentsNarrow"
-        (cdkDragEnded)="stoppedDragging($event, commentspanel)"
-        (cdkDragMoved)="dragging($event, commentspanel)"
-        (cdkDragStarted)="startedDragging($event, commentspanel)"
-      ></div>
-      <!-- Display is switched through ngClass: Tailwind's utilities are important and
-           layered, so the global [hidden] rule and a plain class cannot beat "flex". -->
-      <section
-        #commentspanel
-        aria-label="Comments"
-        class="inbox-panel inbox-panel--side comments-sidebar flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1)"
-        [class.comments-sidebar--fullscreen]="commentsFullscreen"
-        [class.comments-sidebar--narrow]="isCommentsNarrow"
-        [ngClass]="commentsPanelCollapsed && !commentsFullscreen ? 'hidden' : 'flex'"
-        (keydown.escape)="commentsFullscreen && toggleCommentsFullscreen()"
+      </app-panel>
+
+      <app-panel
+        class="inbox-comments"
+        icon="forum"
+        panelId="comments"
+        panelTitle="Comments"
+        resizeEdge="start"
+        [fullscreenable]="!!taskData?.selectedTask"
+        [maxWidth]="500"
+        [minWidth]="250"
+        [width]="350"
       >
-        <ng-container *ngTemplateOutlet="CommentsHeader"></ng-container>
+        @if (fullscreenPanel === 'comments' && taskData?.selectedTask) {
+          <span class="ml-1.5 font-normal text-ot-muted" panelSubtitle>
+            {{ taskData.selectedTask.definition?.abbreviation }} ·
+            {{ taskData.selectedTask.project?.student?.name }}
+          </span>
+        }
         <ng-container *ngTemplateOutlet="CommentsBody"></ng-container>
-      </section>
-    </div>
+      </app-panel>
+    </app-panel-layout>
     <f-footer class="z-10 shrink-0" [viewType]="viewType"></f-footer>
   </div>
 } @else {

@@ -1,5 +1,4 @@
 import {HotkeysHelpComponent, HotkeysService} from '@ngneat/hotkeys';
-import {CdkDragEnd, CdkDragMove, CdkDragStart} from '@angular/cdk/drag-drop';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
@@ -12,7 +11,7 @@ import {
 } from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {Router} from '@angular/router';
-import {Observable, Subject, auditTime, merge, of, takeUntil, tap, withLatestFrom} from 'rxjs';
+import {Observable, Subject, takeUntil} from 'rxjs';
 import {Tutorial} from 'src/app/api/models/doubtfire-model';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
@@ -56,16 +55,10 @@ export class InboxComponent implements OnInit, OnDestroy {
     taskDefinitionIdSelected: number | TaskDefinition;
   }>;
   @Input() showSearchOptions: boolean;
-  @ViewChild('inboxpanel') inboxPanel: ElementRef;
-  @ViewChild('commentspanel') commentspanel: ElementRef;
+  @ViewChild('inboxpanel', {read: ElementRef}) inboxPanel: ElementRef;
 
   @Input() viewType: 'inbox' | 'explorer' | 'moderation' | 'overflow';
 
-  subs$: Observable<unknown>;
-
-  private inboxStartSize$: Subject<number> = new Subject();
-  private dragMove$: Subject<{event: CdkDragMove; div: HTMLElement}> = new Subject();
-  private dragMoveAudited$;
   private readonly destroy$: Subject<void> = new Subject();
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
   /** ng-flex-layout's `xs` breakpoint. */
@@ -77,7 +70,9 @@ export class InboxComponent implements OnInit, OnDestroy {
   public taskSelected = false;
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
-  public commentsFullscreen = false;
+  /** The panel shown full screen, and the one shown when the panels stack. */
+  public fullscreenPanel: string | null = null;
+  public activePanel: string | null = 'list';
 
   visiblePdfUrl: string;
 
@@ -87,6 +82,11 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   get isMobileView(): boolean {
     return this.breakpointObserver.isMatched(this.mobileBreakpoint);
+  }
+
+  /** Explorer, moderation and the inbox each remember their own panels. */
+  get panelPage(): string {
+    return `task-${this.viewType || 'inbox'}`;
   }
 
   get commentsPanelCollapsed(): boolean {
@@ -109,8 +109,9 @@ export class InboxComponent implements OnInit, OnDestroy {
 
     this.selectedTask.selectedTask$.subscribe((task) => {
       this.taskSelected = task != null;
+      this.activePanel = task ? 'task' : 'list';
       if (!task) {
-        this.commentsFullscreen = false;
+        this.fullscreenPanel = null;
       }
     });
   }
@@ -178,39 +179,10 @@ export class InboxComponent implements OnInit, OnDestroy {
         });
     }
 
-    this.dragMoveAudited$ = this.dragMove$.pipe(
-      withLatestFrom(this.inboxStartSize$),
-      auditTime(30),
-      tap(([moveEvent, startSize]) => {
-        window.dispatchEvent(new Event('resize'));
-
-        let newWidth: number;
-        let width: number;
-        if (moveEvent.div.id === 'inboxpanel') {
-          newWidth = startSize + moveEvent.event.distance.x;
-
-          // if width is belo 250, snap to 50px
-          if (newWidth < 250 && newWidth > 100) {
-            width = 250;
-          } else if (newWidth < 150) {
-            width = 50;
-          } else {
-            width = Math.min(newWidth, 500);
-          }
-        } else {
-          newWidth = startSize - moveEvent.event.distance.x;
-          width = Math.min(Math.max(newWidth, 250), 500);
-        }
-        moveEvent.div.style.width = `${width}px`;
-        moveEvent.event.source.reset();
-      }),
-    );
-    this.subs$ = merge(this.dragMoveAudited$, of(true));
     window.dispatchEvent(new Event('resize'));
   }
 
   ngOnDestroy(): void {
-    document.body.classList.remove('split-pane-resizing');
     this.destroy$.next();
     this.destroy$.complete();
     this.hotkeys.removeShortcuts('control.shift.d');
@@ -219,31 +191,9 @@ export class InboxComponent implements OnInit, OnDestroy {
     this.hotkeys.removeShortcuts('shift.?');
   }
 
-  public toggleCommentsFullscreen(): void {
-    this.commentsFullscreen = !this.commentsFullscreen;
-    window.dispatchEvent(new Event('resize'));
-  }
-
   public toggleCommentsPanel(): void {
     this.commentsCollapsed = !this.commentsCollapsed;
     window.dispatchEvent(new Event('resize'));
-  }
-
-  startedDragging(event: CdkDragStart, div: HTMLElement) {
-    document.body.classList.add('split-pane-resizing');
-    event.source.element.nativeElement.classList.add('hovering');
-    const w = div.getBoundingClientRect().width;
-    this.inboxStartSize$.next(w);
-  }
-
-  dragging(event: CdkDragMove, div: HTMLElement) {
-    this.dragMove$.next({event, div});
-    event.source.reset();
-  }
-
-  stoppedDragging(event: CdkDragEnd, _div: HTMLElement) {
-    document.body.classList.remove('split-pane-resizing');
-    event.source.element.nativeElement.classList.remove('hovering');
   }
 
   goToStudent(): void {
