@@ -11,7 +11,7 @@
   border-bottom: 1px solid var(--ot-color-divider);
 }
 
-// The plan page sizes the chart from its row count. The toolbar sits above it and
+// The plan page sizes the chart from its row count, at the gantt's 44px rows. The toolbar sits above it and
 // adds to the page height, so a toolbar, even a wrapped one, never hides a row.
 .planner-chart {
   flex: 0 0 auto;

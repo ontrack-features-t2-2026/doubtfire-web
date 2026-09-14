@@ -113,7 +113,8 @@ describe('ProjectPlanComponent', () => {
 
     const surface = fixture.nativeElement.querySelector('.task-planner-surface') as HTMLElement;
     const chartHeight = surface.style.getPropertyValue('--planner-chart-height');
-    expect(chartHeight).toBe('86px');
+    // One 44px header row plus room for a horizontal scrollbar under the rows.
+    expect(chartHeight).toBe('64px');
     expect(chartHeight).not.toContain('NaN');
   });
 

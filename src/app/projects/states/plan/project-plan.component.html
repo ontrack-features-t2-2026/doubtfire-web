@@ -56,7 +56,7 @@
   <f-page-container [fullWidth]="true">
     <div
       class="planner-container task-planner-surface"
-      [style.--planner-chart-height]="((planner?.items?.length ?? 0) + 2) * 43 + 'px'"
+      [style.--planner-chart-height]="((planner?.items?.length ?? 0) + 1) * 44 + 20 + 'px'"
     >
       <f-task-planner [project]="project" [targetGrade]="selectedTargetGrade"></f-task-planner>
     </div>
