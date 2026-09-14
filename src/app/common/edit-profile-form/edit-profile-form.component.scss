@@ -40,8 +40,11 @@ section {
 }
 
 .account-information {
-  background: #f8fafc;
-  border: 1px solid #d4d4d8;
+  // Theme tokens, not fixed light greys. The card sits on the dark page too, and its
+  // heading and values inherit the text colour.
+  background: var(--ot-color-surface-raised);
+  border: 1px solid var(--ot-color-divider);
+  color: var(--ot-color-text);
   border-radius: 12px;
   display: grid;
   gap: 12px;
@@ -61,7 +64,7 @@ section {
   }
 
   p {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     margin-top: 4px;
   }
 
@@ -76,7 +79,7 @@ section {
   }
 
   dt {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     font-size: 0.8125rem;
     font-weight: 600;
   }
@@ -86,7 +89,7 @@ section {
   }
 
   &__managed {
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--ot-color-divider);
     padding-top: 10px;
   }
 }
@@ -120,7 +123,7 @@ section {
 }
 
 .peer-progress-preference {
-  border-block: 1px solid #e4e4e7;
+  border-block: 1px solid var(--ot-color-divider);
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;
@@ -130,14 +133,14 @@ section {
   }
 
   small {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     max-width: 42rem;
   }
 }
 
 .profile-actions {
-  background: rgb(255 255 255 / 96%);
-  border-top: 1px solid #e4e4e7;
+  background: color-mix(in srgb, var(--ot-color-surface) 96%, transparent);
+  border-top: 1px solid var(--ot-color-divider);
   bottom: 0;
   padding: 12px clamp(16px, 4vw, 28px) max(12px, env(safe-area-inset-bottom));
   position: sticky;
@@ -158,12 +161,12 @@ section {
   }
 
   &__success {
-    color: #166534;
+    color: var(--ot-color-success);
   }
 
   &__validation,
   &__error {
-    color: #b91c1c;
+    color: var(--ot-color-error);
     font-weight: 600;
   }
 }
