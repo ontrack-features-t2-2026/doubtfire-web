@@ -216,6 +216,25 @@ describe('HeaderComponent', () => {
       expect(button).toBeNull();
     });
 
+    it('keeps the theme toggle and notification bell together as the toolbar changes size', () => {
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).toBeNull();
+
+      breakpointObserverStub.isMatched.mockReturnValue(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-theme-toggle')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('notification-bell')).not.toBeNull();
+    });
+
     it('clicking the calendar button invokes the same handler the avatar menu Calendar item uses', () => {
       const openCalendarSpy = vi.spyOn(component, 'openCalendar');
       fixture.detectChanges();
@@ -251,6 +270,40 @@ describe('HeaderComponent', () => {
 
       menuAction.click();
       expect(showMyQrSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('uniqueUnitRoles', () => {
+    // Treat every role as active so the test targets the dedup logic only.
+    beforeEach(() => {
+      component['isActiveUnitRole'] = {transform: (roles: unknown[]) => roles} as never;
+    });
+
+    const roleFor = (unitId: number, role = 'Student') => ({unit: {id: unitId}, role}) as never;
+
+    it('keeps a role when its unit appears once', () => {
+      const roles = [roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('drops both non-tutor roles when a unit appears more than once', () => {
+      const roles = [roleFor(1), roleFor(1), roleFor(2)];
+
+      const result = component.uniqueUnitRoles(roles).map((r: {unit: {id: number}}) => r.unit.id);
+
+      expect(result).toEqual([2]);
+    });
+
+    it('always keeps a tutor role even when the unit is duplicated', () => {
+      const roles = [roleFor(1, 'Tutor'), roleFor(1)];
+
+      const result = component.uniqueUnitRoles(roles);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as {role: string}).role).toBe('Tutor');
     });
   });
 });

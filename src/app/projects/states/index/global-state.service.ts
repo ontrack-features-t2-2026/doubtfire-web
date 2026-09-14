@@ -1,5 +1,5 @@
-import {MediaObserver} from 'ng-flex-layout';
 import {EntityCache} from 'ngx-entity-service';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, find} from 'rxjs';
@@ -114,7 +114,7 @@ export class GlobalStateService implements OnDestroy {
     private feedbackTemplateService: FeedbackTemplateService,
     private router: Router,
     private alerts: AlertService,
-    private mediaObserver: MediaObserver,
+    private breakpointObserver: BreakpointObserver,
     private authReturnUrl: AuthReturnUrlService,
   ) {
     this.loadedUnitRoles = this.unitRoleService.cache;
@@ -159,7 +159,7 @@ export class GlobalStateService implements OnDestroy {
 
       if (this._isInboxState) {
         document.body.style.setProperty('--vh', `${vh}px`);
-      } else if (!this.mediaObserver.isActive('gt-sm') || !this._showFooter) {
+      } else if (!this.breakpointObserver.isMatched('(min-width: 960px)') || !this._showFooter) {
         document.body.style.setProperty('--vh', `${vh - 0.2}px`);
       } else {
         if (this._showFooter && !this._showFooterWarning) {
@@ -177,20 +177,21 @@ export class GlobalStateService implements OnDestroy {
 
   public setInboxState() {
     this._isInboxState = true;
-    // set background color to inbox grey
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    // THM-M01: inbox grey, was hardcoded #f5f5f5 inline. Onto the page token so it
+    // follows the resolved theme; the fallback keeps the legacy value pre-boot.
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
     this.resetHeight();
   }
 
   public goHome() {
     this.showHeader();
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
   }
 
   public setNotInboxState() {
     this._isInboxState = false;
-    // set background color to white
-    document.body.style.setProperty('background-color', '#fff');
+    // THM-M01: was hardcoded #fff inline.
+    document.body.style.setProperty('background-color', 'var(--ot-color-surface, #fff)');
     this.resetHeight();
   }
 

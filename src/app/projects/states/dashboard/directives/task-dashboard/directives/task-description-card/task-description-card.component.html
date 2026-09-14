@@ -24,10 +24,12 @@
           }}.
         </li>
         <li>I'm aiming to <b>submit</b> this task by {{ dueDate() | date: 'EEE d MMM' }}.</li>
-        <li>
-          To receive <b>feedback</b>, I must submit this task by
-          {{ feedbackDate() | date: 'EEE d MMM' }}.
-        </li>
+        @if (feedbackDate()) {
+          <li [class.text-amber-600]="shouldShowDeadline()">
+            To receive <b>feedback</b>, I must submit this task by
+            {{ feedbackDate() | date: 'EEE d MMM' }}.
+          </li>
+        }
       } @else {
         <li>
           Start Date &mdash; I'm aiming to <b>start</b> this task by
@@ -41,6 +43,12 @@
           Due Date &mdash; I'm aiming to <b>submit</b> this task by
           {{ dueDate() | date: 'EEE d MMM' }}.
         </li>
+        @if (feedbackDate()) {
+          <li [class.text-amber-600]="shouldShowDeadline()">
+            Feedback Deadline &mdash; To receive <b>feedback</b>, I must submit this task by
+            {{ feedbackDate() | date: 'EEE d MMM' }}.
+          </li>
+        }
       }
     </ul>
   </mat-card-content>
