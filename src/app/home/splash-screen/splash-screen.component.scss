@@ -17,11 +17,113 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1.25rem;
+  // fast sessions never see it, so it doesnt flash on every start
+  opacity: 0;
+  animation: splash-fade-in 240ms ease-out 180ms forwards;
 
   p {
-    margin-top: 1rem;
+    margin: 0;
     color: var(--ot-color-text-muted);
-    font-size: 1rem;
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+  }
+}
+
+.app-splash-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+
+  img {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    animation: splash-breathe 1.8s ease-in-out infinite;
+  }
+}
+
+.app-splash-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ot-color-primary, #3939ff) 35%, transparent) 0%,
+    transparent 70%
+  );
+  animation: splash-glow 1.8s ease-in-out infinite;
+}
+
+.app-splash-bar {
+  position: relative;
+  overflow: hidden;
+  width: 160px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ot-color-text-muted) 20%, transparent);
+
+  span {
+    position: absolute;
+    inset-block: 0;
+    left: -40%;
+    width: 40%;
+    border-radius: inherit;
+    background: var(--ot-color-primary, #3939ff);
+    animation: splash-slide 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+}
+
+@keyframes splash-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes splash-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes splash-slide {
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-splash-inner {
+    opacity: 1;
+    animation: none;
+  }
+
+  .app-splash-mark img,
+  .app-splash-glow {
+    animation: none;
+  }
+
+  .app-splash-bar span {
+    left: 30%;
+    animation: none;
   }
 }
 

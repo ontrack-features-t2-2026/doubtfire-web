@@ -1,4 +1,3 @@
-import {AnimationOptions} from 'ngx-lottie';
 import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {Observable} from 'rxjs';
 import {GlobalStateService, StartupState} from 'src/app/projects/states/index/global-state.service';
@@ -16,12 +15,6 @@ export class SplashScreenComponent {
   constructor(private globalState: GlobalStateService) {
     this.startupState$ = this.globalState.startupStateSubject.asObservable();
   }
-
-  options: AnimationOptions = {
-    loop: true,
-    autoplay: true,
-    path: '../../../assets/images/formatif-isolated-lottie.json',
-  };
 
   retry(): void {
     this.globalState.retryStartup();

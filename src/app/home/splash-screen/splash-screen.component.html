@@ -8,7 +8,11 @@
       role="status"
     >
       <div class="app-splash-inner">
-        <ng-lottie width="70vw" [options]="options"></ng-lottie>
+        <div aria-hidden="true" class="app-splash-mark">
+          <span class="app-splash-glow"></span>
+          <img alt="" height="72" src="/assets/images/logo.svg" width="72" />
+        </div>
+        <div aria-hidden="true" class="app-splash-bar"><span></span></div>
         <p>Checking your session…</p>
       </div>
     </div>
