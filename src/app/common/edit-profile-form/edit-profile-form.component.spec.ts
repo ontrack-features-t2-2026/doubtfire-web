@@ -1,7 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {Directive, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
 import {of} from 'rxjs';
@@ -405,5 +410,78 @@ describe('EditProfileFormComponent notifications page link', () => {
 
     expect(fixture.nativeElement.querySelector('f-notification-settings')).not.toBeNull();
     expect(notificationsLink()).toBeNull();
+  });
+});
+
+// Save profile is disabled while the form is pristine. The notification
+// category checkboxes live in a child component with standalone ngModels, so
+// they never join this form. Renders the real NgForm and NgModel so the
+// pristine state is the one the page actually uses.
+describe('EditProfileFormComponent save state', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+  let userServiceStub: {currentUser: User; update: ReturnType<typeof vi.fn>};
+
+  beforeEach(async () => {
+    const currentUser = makeUser({firstName: 'Ada', lastName: 'Lovelace'});
+    userServiceStub = {currentUser, update: vi.fn().mockReturnValue(of(currentUser))};
+
+    await TestBed.configureTestingModule({
+      declarations: [EditProfileFormComponent, NotificationSettingsComponent],
+      imports: [FormsModule, MatCheckboxModule, MatSlideToggleModule],
+      providers: [
+        {provide: AlertService, useValue: {error: vi.fn()}},
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: userServiceStub},
+        {provide: Router, useValue: {navigateByUrl: vi.fn()}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: null},
+        {provide: MatSnackBar, useValue: {open: vi.fn()}},
+        {
+          provide: PushNotificationService,
+          useValue: {
+            subscription$: of(null),
+            blocker: () => 'no-service-worker',
+            permissionDeniedInstructions: () => [],
+          },
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    fixture.componentRef.setInput('mode', 'edit');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  const saveButton = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('.profile-actions button[type="submit"]');
+
+  it('keeps Save profile disabled until something changes', () => {
+    expect(saveButton().disabled).toBe(true);
+    expect(saveButton().textContent.trim()).toBe('Profile saved');
+  });
+
+  it('enables Save profile when only a notification category changes', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const feedback = await loader.getHarness(
+      MatCheckboxHarness.with({label: 'Feedback notifications'}),
+    );
+
+    await feedback.check();
+    fixture.detectChanges();
+
+    expect(saveButton().disabled).toBe(false);
+    expect(saveButton().textContent.trim()).toBe('Save profile');
+
+    saveButton().click();
+
+    expect(userServiceStub.update).toHaveBeenCalledWith(
+      expect.objectContaining({receiveFeedbackNotifications: true}),
+    );
   });
 });

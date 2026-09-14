@@ -18,6 +18,7 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receiveTaskNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Task notifications
     </mat-checkbox>
@@ -32,6 +33,7 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receiveFeedbackNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Feedback notifications
     </mat-checkbox>
@@ -46,6 +48,7 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receivePortfolioNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Portfolio notifications
     </mat-checkbox>

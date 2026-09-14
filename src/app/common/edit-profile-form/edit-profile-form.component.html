@@ -196,6 +196,7 @@
       <f-notification-settings
         [showNotificationsLink]="isOwnProfilePage"
         [user]="user"
+        (preferencesChange)="form.form.markAsDirty()"
       ></f-notification-settings>
 
       <section
