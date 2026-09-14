@@ -558,6 +558,70 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     );
     expect(harness.component.stagedAttachments).toEqual([]);
   });
+
+  it('uses a new idempotency id when the text changes after an ambiguous failure', () => {
+    const harness = createComposer();
+    const firstAttempt: Subject<TaskComment> = new Subject();
+    harness.taskCommentService.addComment.mockReturnValueOnce(firstAttempt.asObservable());
+    harness.message.value = 'Fix the tpyo';
+
+    harness.component.addComment();
+    const firstRequestId = harness.taskCommentService.addComment.mock.calls[0][5];
+    firstAttempt.error({status: 0});
+    harness.message.value = 'Fix the typo';
+    harness.component.addComment();
+
+    expect(harness.taskCommentService.addComment).toHaveBeenCalledTimes(2);
+    expect(harness.taskCommentService.addComment.mock.calls[1][1]).toBe('Fix the typo');
+    expect(harness.taskCommentService.addComment.mock.calls[1][5]).not.toBe(firstRequestId);
+  });
+
+  it('uses a new idempotency id when the reply target changes after an ambiguous failure', () => {
+    const harness = createComposer();
+    const firstAttempt: Subject<TaskComment> = new Subject();
+    harness.taskCommentService.addComment.mockReturnValueOnce(firstAttempt.asObservable());
+    harness.component.sharedData.originalComment = {id: 812} as TaskComment;
+    harness.message.value = 'Same words';
+
+    harness.component.addComment();
+    const firstRequestId = harness.taskCommentService.addComment.mock.calls[0][5];
+    firstAttempt.error({status: 0});
+    harness.component.cancelReply();
+    harness.component.addComment();
+
+    expect(harness.taskCommentService.addComment.mock.calls[1][3]).toBeNull();
+    expect(harness.taskCommentService.addComment.mock.calls[1][5]).not.toBe(firstRequestId);
+  });
+
+  it.each([
+    ['keeps', 'send once', 'send once'],
+    ['replaces', 'Fix the tpyo', 'Fix the typo'],
+  ])(
+    '%s the idempotency id across a reload when the retried text is %s then %s',
+    (verb, firstText, retriedText) => {
+      const taskValue = task(4);
+      const firstTab = createComposer(taskValue);
+      firstTab.taskCommentService.addComment.mockReturnValueOnce(throwError(() => ({status: 0})));
+      firstTab.message.value = firstText;
+      firstTab.component.addComment();
+      const firstRequestId = firstTab.taskCommentService.addComment.mock.calls[0][5];
+      typeDraft(firstTab, retriedText);
+
+      const reloaded = createComposer(taskValue);
+      (
+        reloaded.component as unknown as {loadDraftForTask(taskValue: unknown): void}
+      ).loadDraftForTask(taskValue);
+      expect(reloaded.message.value).toBe(retriedText);
+      reloaded.component.addComment();
+
+      const retriedRequestId = reloaded.taskCommentService.addComment.mock.calls[0][5];
+      if (verb === 'keeps') {
+        expect(retriedRequestId).toBe(firstRequestId);
+      } else {
+        expect(retriedRequestId).not.toBe(firstRequestId);
+      }
+    },
+  );
 });
 
 describe('TaskCommentComposerComponent editing keeps the unsent draft', () => {

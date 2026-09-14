@@ -115,6 +115,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private destroyed = false;
   public stagedAttachments: StagedFeedbackAttachment[] = [];
   private draftClientRequestId: string | null = null;
+  private draftClientRequestFingerprint: string | null = null;
   private draftReplyToId: number | null = null;
   private draftBeforeEdit: string = '';
   // The comment whose text is in the field, or null when the field holds the draft.
@@ -191,6 +192,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       this.sharedData.originalComment = null;
       this.stagedAttachments = [];
       this.draftClientRequestId = null;
+      this.draftClientRequestFingerprint = null;
       this.draftReplyToId = null;
       this.clearInput();
       this.isSending = this.sendingDraftKeys.has(this.getDraftKey(newTask) ?? '');
@@ -330,7 +332,13 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         raw = _rawFromDom ?? '';
       }
 
-      this.draftStore.save(context, raw, replyToId, this.draftClientRequestId);
+      this.draftStore.save(
+        context,
+        raw,
+        replyToId,
+        this.draftClientRequestId,
+        this.draftClientRequestFingerprint,
+      );
     } catch (error) {
       console.error('saveDraftForTask error:', error);
     }
@@ -351,6 +359,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       const draft = this.draftStore.load(context);
       this.stagedAttachments = this.draftStore.attachments(context);
       this.draftClientRequestId = draft.clientRequestId;
+      this.draftClientRequestFingerprint = draft.clientRequestFingerprint;
       this.draftReplyToId = draft.replyToId;
 
       if (!draft.text && draft.replyToId === null && this.stagedAttachments.length === 0) {
@@ -739,17 +748,34 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     this.setSending(send, true);
+    const text = this.emojiService.nativeEmojiToColons(raw);
+    // The API answers a repeated request id with the comment it already stored and
+    // ignores the new text. Reuse an id only for the words and reply it was issued
+    // for, so a retry after a lost response is safe but a corrected message is not
+    // silently dropped.
+    const fingerprint = JSON.stringify([send.originalComment?.id ?? null, text]);
     let clientRequestId: string;
     if (stored && send.context) {
-      clientRequestId = stored.clientRequestId ?? this.newClientRequestId();
-      this.draftStore.save(send.context, stored.text, stored.replyToId, clientRequestId);
+      clientRequestId =
+        stored.clientRequestId && stored.clientRequestFingerprint === fingerprint
+          ? stored.clientRequestId
+          : this.newClientRequestId();
+      this.draftStore.save(
+        send.context,
+        stored.text,
+        stored.replyToId,
+        clientRequestId,
+        fingerprint,
+      );
     } else {
-      this.draftClientRequestId ??= this.newClientRequestId();
+      if (!this.draftClientRequestId || this.draftClientRequestFingerprint !== fingerprint) {
+        this.draftClientRequestId = this.newClientRequestId();
+        this.draftClientRequestFingerprint = fingerprint;
+      }
       clientRequestId = this.draftClientRequestId;
       this.saveCurrentDraft();
     }
 
-    const text = this.emojiService.nativeEmojiToColons(raw);
     this.taskCommentService
       .addComment(send.task, text, 'text', send.originalComment, undefined, clientRequestId)
       .subscribe({
@@ -843,6 +869,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
     this.stagedAttachments = [];
     this.draftClientRequestId = null;
+    this.draftClientRequestFingerprint = null;
     this.draftReplyToId = null;
     this.sharedData.originalComment = null;
     this.clearInput();
@@ -999,6 +1026,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
     this.stagedAttachments = [];
     this.draftClientRequestId = null;
+    this.draftClientRequestFingerprint = null;
     this.draftReplyToId = null;
     this.sharedData.originalComment = null;
     this.clearInput();
