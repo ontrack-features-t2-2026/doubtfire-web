@@ -247,6 +247,12 @@ ngx-gantt-root {
   outline-offset: 2px;
 }
 
+// Keep focus outlines inside menu panels so their edges do not clip them.
+.mat-mdc-menu-panel .mat-mdc-menu-item:focus-visible,
+.mat-mdc-select-panel .mat-mdc-option:focus-visible {
+  outline-offset: -2px;
+}
+
 // Accessibility: honour prefers-reduced-motion. Near-zero (not 0) durations keep
 // JS transitionend/animationend callbacks firing.
 @media (prefers-reduced-motion: reduce) {

@@ -1,9 +1,10 @@
 @use 'theme' as *;
 
 ::ng-deep .unit-dropdown-menu.mat-mdc-menu-panel {
-  max-width: 400px !important;
-  min-width: 400px !important;
-  width: 400px !important;
+  // Keep the unit switcher within a phone viewport.
+  min-width: min(400px, calc(100vw - 16px)) !important;
+  max-width: calc(100vw - 16px) !important;
+  width: auto !important;
   // Match the sibling notifications dropdown at the 12px menu rung (it forced 16px,
   // this inherited Material's 4px default — two radii on adjacent header menus).
   border-radius: var(--ot-radius-md);
