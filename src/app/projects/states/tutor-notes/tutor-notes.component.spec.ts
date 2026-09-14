@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatButtonModule} from '@angular/material/button';
 import {MatChipSelectionChange} from '@angular/material/chips';
 import {EMPTY, of, throwError} from 'rxjs';
 import {Task, UserService} from 'src/app/api/models/doubtfire-model';
@@ -118,6 +119,7 @@ describe('TutorNotesComponent states', () => {
   let component: TutorNotesComponent;
   let fixture: ComponentFixture<TutorNotesComponent>;
   let loadTutorNotes: ReturnType<typeof vi.fn>;
+  let addNote: ReturnType<typeof vi.fn>;
 
   const otherTaskNote = {
     id: 4,
@@ -130,15 +132,17 @@ describe('TutorNotesComponent states', () => {
 
   beforeEach(async () => {
     loadTutorNotes = vi.fn(() => of([]));
+    addNote = vi.fn(() => EMPTY);
 
     await TestBed.configureTestingModule({
       declarations: [TutorNotesComponent, HumanizedDatePipe, LocalizedDatePipe, MarkedPipe],
-      imports: [EmptyStateComponent],
+      // The real button, so disabledInteractive behaves as it does in the app.
+      imports: [EmptyStateComponent, MatButtonModule],
       providers: [
         {provide: UserService, useValue: emptyProvider},
         {
           provide: TutorNoteService,
-          useValue: {loadTutorNotes, updateTutorNoteReplies: () => undefined},
+          useValue: {loadTutorNotes, addNote, updateTutorNoteReplies: () => undefined},
         },
         {provide: AlertService, useValue: emptyProvider},
         {provide: ConfirmationModalService, useValue: emptyProvider},
@@ -217,17 +221,21 @@ describe('TutorNotesComponent states', () => {
     expect(text()).toContain('No moderation notes yet');
   });
 
-  it('puts Submit outside the text field and keeps it off until there is text', () => {
+  it('puts Submit outside the text field, focusable but inactive until there is text', () => {
     render([]);
     const submit = Array.from<HTMLButtonElement>(
       fixture.nativeElement.querySelectorAll('button'),
     ).find((button) => button.textContent.trim() === 'Submit');
 
     expect(submit.closest('mat-form-field')).toBeNull();
-    expect(submit.disabled).toBe(true);
+    expect(submit.hasAttribute('disabled')).toBe(false);
+    expect(submit.getAttribute('aria-disabled')).toBe('true');
+
+    submit.click();
+    expect(addNote).not.toHaveBeenCalled();
 
     component.noteText = 'Can we talk about this mark?';
     fixture.detectChanges();
-    expect(submit.disabled).toBe(false);
+    expect(submit.getAttribute('aria-disabled')).toBeNull();
   });
 });
