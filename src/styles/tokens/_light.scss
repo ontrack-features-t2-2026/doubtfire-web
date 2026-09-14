@@ -97,6 +97,9 @@
   --ot-chart-axis: #616161;
   // The empty part of a progress or meter bar, so its full length shows on a card.
   --ot-meter-track: #e0e0e0;
+  // The fill behind other people's chat messages: one clear step off the panel so a
+  // bubble reads as a shape, 1.18:1 against the surface in both themes.
+  --ot-comment-bubble: #e6e9ee;
 
   // Unit accents: the header band that tells units apart on the cross-unit
   // dashboard. White text sits on each, so every value clears 4.5:1 with white.

@@ -776,6 +776,7 @@ One source of truth, in CSS.
 |           | `--ot-chart-grid`             | `#e0e0e0`                    | `#353438`                    | gridlines, decorative                                            |
 |           | `--ot-chart-axis`             | `#616161`                    | `#adaaaf`                    | axis labels are text, 4.5:1                                      |
 | Meters    | `--ot-meter-track`            | `#e0e0e0`                    | `#4a5361`                    | empty part of a progress bar; 1.43 on dark raised, decorative    |
+| Comments  | `--ot-comment-bubble`         | `#e6e9ee`                    | `#353c47`                    | other people's chat bubbles; 1.18 on the surface, text 13.2/8.6  |
 | Units     | `--ot-unit-1` … `-6`          | see below                    | see below                    | cross-unit dashboard header bands; white text ≥4.5:1             |
 |           | `--ot-unit-previous`          | `#475569`                    | `#3c4757`                    | band for units that have finished                                |
 |           | `--ot-unit-on`                | `#ffffff`                    | `#ffffff`                    | text and icons on every unit band                                |

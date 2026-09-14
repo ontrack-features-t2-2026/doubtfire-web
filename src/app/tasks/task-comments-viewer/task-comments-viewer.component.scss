@@ -463,14 +463,16 @@ $comment-inner-border-radius: 4px;
     background: $discussion-comment-bubble-color;
   } */
 
+  // Other people's bubbles take their own fill: the raised surface is white in light,
+  // which vanished against the near-white panel.
   .comment.comment-by-other-user .text-bubble {
-    background: var(--ot-color-surface-raised);
+    background: var(--ot-comment-bubble);
     color: var(--ot-color-text);
     margin-left: 0;
   }
 
   .comment.comment-by-other-user .pdf-bubble {
-    background: var(--ot-color-surface-raised);
+    background: var(--ot-comment-bubble);
     color: var(--ot-color-text);
     margin-right: 50px;
     margin-left: 0;
