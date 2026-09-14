@@ -96,7 +96,9 @@ describe('DemoControlsComponent', () => {
     expect(text).toContain('Preview only');
     expect(text).toContain('Feedback is ready');
     expect(text).toContain('Open My Profile for real notifications');
-    expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/edit_profile');
+    expect(
+      fixture.nativeElement.querySelector('a[href="/edit_profile"]').getAttribute('href'),
+    ).toBe('/edit_profile');
     expect(requestPermission).not.toHaveBeenCalled();
     expect(requestSubscription).not.toHaveBeenCalled();
     httpTesting.expectNone((request) => request.url.includes('/push_subscriptions'));

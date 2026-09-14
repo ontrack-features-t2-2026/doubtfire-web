@@ -50,6 +50,7 @@ export class DemoControlsComponent {
   );
 
   readonly affectedSurfaces = [
+    'Unit Hub: fictional SIT111 announcements and sessions, with SIT102 excluded and API writes disabled',
     'All live local project cards, tasks, deadline warnings, filters, and recommendation scores',
     'The live notification bell, unread count, and notification history',
     'Live task-level peer comparison data returned by the local API',
