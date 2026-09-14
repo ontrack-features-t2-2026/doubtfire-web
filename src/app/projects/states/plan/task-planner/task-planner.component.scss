@@ -1,7 +1,6 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-width: 0;
   color: var(--ot-color-text);
 }
@@ -12,9 +11,11 @@
   border-bottom: 1px solid var(--ot-color-divider);
 }
 
+// The plan page sizes the chart from its row count. The toolbar sits above it and
+// adds to the page height, so a toolbar, even a wrapped one, never hides a row.
 .planner-chart {
-  flex: 1 1 auto;
-  height: auto;
+  flex: 0 0 auto;
+  height: var(--planner-chart-height, auto);
   min-height: 220px;
 }
 

@@ -112,8 +112,9 @@ describe('ProjectPlanComponent', () => {
     await createComponent(buildProject('Student', 25));
 
     const surface = fixture.nativeElement.querySelector('.task-planner-surface') as HTMLElement;
-    expect(surface.style.height).toBe('86px');
-    expect(surface.style.height).not.toContain('NaN');
+    const chartHeight = surface.style.getPropertyValue('--planner-chart-height');
+    expect(chartHeight).toBe('86px');
+    expect(chartHeight).not.toContain('NaN');
   });
 
   it('refreshes the same planner after a successful target-grade change', async () => {
