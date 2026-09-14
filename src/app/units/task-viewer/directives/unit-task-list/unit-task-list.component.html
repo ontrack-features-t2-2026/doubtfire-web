@@ -310,12 +310,12 @@
                       <span class="task-row-status">{{ taskStatusLabel(task) }}</span>
                       @if (taskStartApproaching(task)) {
                         <span class="task-row-urgency text-ot-info">
-                          <mat-icon>event_upcoming</mat-icon>
+                          <mat-icon>event</mat-icon>
                           {{ taskStartLabel(task) }}
                         </span>
                       } @else if (taskOngoing(task)) {
                         <span class="task-row-urgency text-ot-info">
-                          <mat-icon>event_upcoming</mat-icon>
+                          <mat-icon>event</mat-icon>
                           Start now
                         </span>
                       } @else if (!task.isBeforeStartDate() && !task.inSubmittedState()) {

@@ -8,7 +8,7 @@ export interface NotificationPresentation {
 
 const EVENT_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = {
   new_task_available: {icon: 'assignment_add', label: 'New task', tone: 'task'},
-  task_due_soon: {icon: 'event_upcoming', label: 'Due soon', tone: 'task'},
+  task_due_soon: {icon: 'event', label: 'Due soon', tone: 'task'},
   task_due_date_changed: {icon: 'edit_calendar', label: 'Date changed', tone: 'task'},
   task_comment_created: {icon: 'chat_bubble', label: 'New feedback', tone: 'feedback'},
   discussion_request_created: {
