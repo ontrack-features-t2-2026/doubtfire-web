@@ -253,6 +253,13 @@ ngx-gantt-root {
   outline-offset: -2px;
 }
 
+// A Material form field draws its own focused outline, so the control inside it
+// does not take the ring as well: it showed as a second box inside the field. Same
+// specificity as the ring rule above and later in the file, so it wins.
+.mat-mdc-form-field :is(input, textarea, select, .mat-mdc-select):focus-visible {
+  outline: none;
+}
+
 // Accessibility: honour prefers-reduced-motion. Near-zero (not 0) durations keep
 // JS transitionend/animationend callbacks firing.
 @media (prefers-reduced-motion: reduce) {
