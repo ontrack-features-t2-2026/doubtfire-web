@@ -20,7 +20,8 @@
       [routerLink]="studentDashboardRoute"
     >
       <h4 class="mat-h4" style="margin-bottom: 1px">
-        {{ selectedTask?.project.student.firstName }} {{ selectedTask?.project.student.lastName }}
+        {{ selectedTask?.project?.student?.firstName }}
+        {{ selectedTask?.project?.student?.lastName }}
       </h4>
     </a>
     <a

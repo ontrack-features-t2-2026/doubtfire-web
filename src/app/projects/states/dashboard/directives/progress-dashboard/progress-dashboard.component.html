@@ -4,8 +4,8 @@
   <div class="flex items-center border-b border-ot-divider bg-ot-raised px-4">
     <h4 class="py-3.5 text-lg font-semibold text-ot-text">
       Progress Dashboard
-      @if (viewingOtherStudentProject) {
-        <span>for {{ project?.student?.name }}</span>
+      @if (viewingOtherStudentProject && project?.student?.name; as studentName) {
+        <span>for {{ studentName }}</span>
       }
     </h4>
   </div>

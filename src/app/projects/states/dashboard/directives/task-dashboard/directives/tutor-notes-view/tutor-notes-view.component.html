@@ -11,9 +11,10 @@
   <p class="m-0 text-sm text-ot-muted">{{ description }}</p>
   @if (task) {
     <p class="m-0 mt-1 truncate text-sm text-ot-muted">
-      {{ task.definition.abbreviation }} {{ task.definition.name }} ({{
-        task.project.student.name
-      }})
+      {{ task.definition.abbreviation }} {{ task.definition.name }}
+      @if (task.project?.student?.name; as studentName) {
+        ({{ studentName }})
+      }
     </p>
   }
 </header>

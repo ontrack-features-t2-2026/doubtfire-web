@@ -9,7 +9,10 @@
     </h3>
     <div class="truncate text-ot-muted">
       {{ data.assessment.task.definition.abbreviation }}
-      {{ data.assessment.task.definition.name }} ({{ data.assessment.task.project.student.name }})
+      {{ data.assessment.task.definition.name }}
+      @if (data.assessment.task.project?.student?.name; as studentName) {
+        ({{ studentName }})
+      }
     </div>
   </div>
 
