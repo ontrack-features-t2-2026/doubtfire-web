@@ -28,7 +28,7 @@ describe('StaffNotesViewComponent', () => {
     expect(fixture.nativeElement.querySelector('f-staff-notes')).not.toBeNull();
   });
 
-  it('fills its host so only the notes list scrolls', () => {
+  it('lays itself out as a full-height flex column', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.classList).toContain('h-full');
