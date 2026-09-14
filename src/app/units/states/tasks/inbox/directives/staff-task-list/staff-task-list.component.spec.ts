@@ -1,5 +1,5 @@
 import {HotkeysService} from '@ngneat/hotkeys';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
@@ -270,5 +270,20 @@ describe('StaffTaskListComponent', () => {
 
       expect(component.rowActionsShown(task)).toBe(false);
     });
+  });
+
+  it('previousTask does not throw before the task queue has loaded', () => {
+    component.filteredTasks = null;
+    expect(() => component.previousTask()).not.toThrow();
+  });
+
+  it('previousTask selects nothing when no task is selected', () => {
+    vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
+    const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    component.filteredTasks = [{}, {}] as unknown as Task[];
+
+    component.previousTask();
+
+    expect(setSelected).not.toHaveBeenCalled();
   });
 });
