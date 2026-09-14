@@ -179,6 +179,15 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.mode === 'new';
   }
 
+  /**
+   * True only on the user's own profile page. The admin Users dialog opens this
+   * form in edit mode as a modal to change someone else's settings, and the
+   * welcome page uses create mode, so neither links to the notifications page.
+   */
+  public get isOwnProfilePage(): boolean {
+    return this.mode === 'edit' && !this.modal;
+  }
+
   public get canEditSystemRole(): boolean {
     return !(this.user.id === this.userService.currentUser.id);
   }
