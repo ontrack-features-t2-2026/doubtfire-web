@@ -54,6 +54,9 @@ interface PendingSend {
   context: FeedbackDraftContext | null;
   key: string | null;
   originalComment: TaskComment | null;
+  // The text in the field when this draft stopped showing. Once the composer is
+  // rebuilt, the stored draft belongs to the new one and may hold newer words.
+  text: string | null;
 }
 
 /**
@@ -113,6 +116,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   // Drafts with a request still in flight, so returning to one shows it as sending.
   private readonly sendingDraftKeys: Set<string> = new Set();
   private destroyed = false;
+  private readonly inFlightSends: Set<PendingSend> = new Set();
   public stagedAttachments: StagedFeedbackAttachment[] = [];
   private draftClientRequestId: string | null = null;
   private draftClientRequestFingerprint: string | null = null;
@@ -179,9 +183,16 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       const newTask = changes.task.currentValue as Task;
       const previousTask = changes.task.previousValue as Task;
       if (previousTask) {
+        const previousText =
+          this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText;
+        const previousKey = this.getDraftKey(previousTask);
+        this.keepTextOfSends(
+          (send) => send.task === previousTask || (send.key !== null && send.key === previousKey),
+          previousText,
+        );
         this.saveDraftForTask(
           previousTask,
-          this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText,
+          previousText,
           this.sharedData?.originalComment?.id ?? this.draftReplyToId,
         );
       }
@@ -213,6 +224,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   ngOnDestroy(): void {
+    this.keepTextOfSends(
+      (send) => this.isShowing(send),
+      this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText,
+    );
     this.saveCurrentDraft();
     this.destroyed = true;
     this.cancelDraftLoadTimers();
@@ -703,7 +718,16 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       context,
       key: context ? this.draftStore.key(context) : null,
       originalComment: this.sharedData.originalComment,
+      text: null,
     };
+  }
+
+  private keepTextOfSends(leaving: (send: PendingSend) => boolean, text: string): void {
+    for (const send of this.inFlightSends) {
+      if (send.text === null && leaving(send)) {
+        send.text = text;
+      }
+    }
   }
 
   // True while the composer still shows the draft this send was pressed on.
@@ -717,6 +741,11 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   private setSending(send: PendingSend, sending: boolean): void {
+    if (sending) {
+      this.inFlightSends.add(send);
+    } else {
+      this.inFlightSends.delete(send);
+    }
     if (send.key !== null) {
       if (sending) {
         this.sendingDraftKeys.add(send.key);
@@ -741,9 +770,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     // Once another task is open, the field belongs to that task. This draft's text
     // was saved when the task changed, so post that.
     const stored = showing || !send.context ? null : this.draftStore.load(send.context);
-    const raw = showing ? this.currentInputText : (stored?.text ?? '');
+    const raw = showing ? this.currentInputText : (send.text ?? stored?.text ?? '');
     if (!this.hasContent(raw)) {
-      this.finishSuccessfulDraft(send);
+      this.finishSuccessfulDraft(send, raw);
       return;
     }
 
@@ -760,13 +789,16 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         stored.clientRequestId && stored.clientRequestFingerprint === fingerprint
           ? stored.clientRequestId
           : this.newClientRequestId();
-      this.draftStore.save(
-        send.context,
-        stored.text,
-        stored.replyToId,
-        clientRequestId,
-        fingerprint,
-      );
+      // Only record the id against the stored draft when it still holds these words.
+      if (stored.text === raw) {
+        this.draftStore.save(
+          send.context,
+          stored.text,
+          stored.replyToId,
+          clientRequestId,
+          fingerprint,
+        );
+      }
     } else {
       if (!this.draftClientRequestId || this.draftClientRequestFingerprint !== fingerprint) {
         this.draftClientRequestId = this.newClientRequestId();
@@ -780,7 +812,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       .addComment(send.task, text, 'text', send.originalComment, undefined, clientRequestId)
       .subscribe({
         next: (_tc: TaskComment) => {
-          this.finishSuccessfulDraft(send);
+          this.finishSuccessfulDraft(send, raw);
         },
         error: (error: ApiError) => {
           this.setSending(send, false);
@@ -851,7 +883,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       });
   }
 
-  private finishSuccessfulDraft(send: PendingSend): void {
+  private finishSuccessfulDraft(send: PendingSend, sentText?: string): void {
     this.setSending(send, false);
     const task = send.task;
     const taskKey = task.id || `${task.projectId || task.project?.id}_${task.definition?.id}`;
@@ -862,7 +894,13 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     if (send.context) {
-      this.draftStore.clear(send.context);
+      const showing = this.isShowing(send);
+      const stored = showing ? null : this.draftStore.load(send.context);
+      // A rebuilt composer may have saved newer words for this task since Send was
+      // pressed. Those were never sent, so leave them.
+      if (showing || sentText === undefined || stored.text === sentText) {
+        this.draftStore.clear(send.context);
+      }
     }
     if (!this.isShowing(send)) {
       return;

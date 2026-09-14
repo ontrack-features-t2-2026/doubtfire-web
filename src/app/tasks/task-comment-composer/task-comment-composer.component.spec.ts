@@ -493,6 +493,34 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     expect(harness.component.isSending).toBe(false);
   });
 
+  it('posts the text Send was pressed on when the composer is rebuilt during an upload', () => {
+    const taskValue = task(1);
+    const first = createComposer(taskValue);
+    const upload: Subject<AttachmentUploadState> = new Subject();
+    first.taskCommentService.uploadStagedAttachment.mockReturnValueOnce(upload.asObservable());
+    first.message.value = 'Original feedback, see attached';
+    first.component.uploadFiles([fakeFile('a1.pdf', 'application/pdf')]);
+    first.component.addComment();
+
+    // The phone dashboard destroys the composer when the pane changes and builds a new one.
+    first.component.ngOnDestroy();
+    const second = createComposer(taskValue);
+    (second.component as unknown as {loadDraftForTask(taskValue: unknown): void}).loadDraftForTask(
+      taskValue,
+    );
+    typeDraft(second, 'A new message not sent yet');
+
+    upload.next({state: 'complete', progress: 100});
+    upload.complete();
+
+    expect(first.taskCommentService.addComment).toHaveBeenCalledOnce();
+    expect(first.taskCommentService.addComment.mock.calls[0][1]).toBe(
+      'Original feedback, see attached',
+    );
+    expect(second.taskCommentService.addComment).not.toHaveBeenCalled();
+    expect(second.draftStore.load(contextFor(taskValue)).text).toBe('A new message not sent yet');
+  });
+
   it('shows a send still in flight as sending again after coming back to its task', () => {
     const taskA = task(1);
     const taskB = task(2);
