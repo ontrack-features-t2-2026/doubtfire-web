@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it} from 'vitest';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {RouterModule} from '@angular/router';
-import {Project, TaskStatus} from 'src/app/api/models/doubtfire-model';
+import {Project} from 'src/app/api/models/doubtfire-model';
 import {TaskVisualisationComponent} from './task-visualisation.component';
 
 describe('TaskVisualisationComponent', () => {
@@ -22,15 +22,17 @@ describe('TaskVisualisationComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders every canonical status as a semantic Tasks filter link, including zero counts', () => {
+  it('always shows the four main statuses as Tasks filter links, including zero counts', () => {
     const host = fixture.nativeElement as HTMLElement;
     const cards = Array.from(host.querySelectorAll<HTMLElement>('[role="listitem"]'));
     const awaitingFeedback = cards.find((card) => card.textContent.includes('Awaiting Feedback'));
 
-    expect(cards).toHaveLength(TaskStatus.STATUS_KEYS.length);
-    expect(cards.map((card) => card.dataset.status).sort()).toEqual(
-      [...TaskStatus.STATUS_KEYS].sort(),
-    );
+    expect(cards.map((card) => card.dataset.status)).toEqual([
+      'not_started',
+      'working_on_it',
+      'ready_for_feedback',
+      'complete',
+    ]);
     expect(awaitingFeedback).toBeTruthy();
     expect(awaitingFeedback?.textContent).not.toContain('...');
     expect(awaitingFeedback?.getAttribute('aria-label')).toBe('Show 0 Awaiting Feedback tasks');
@@ -40,6 +42,29 @@ describe('TaskVisualisationComponent', () => {
     );
     expect(host.querySelector('ngx-charts-number-card')).toBeNull();
     expect(host.querySelector('button')).toBeNull();
+  });
+
+  it('adds a tile for any other status only while a task is in it', () => {
+    fixture.componentInstance.project = {
+      id: 7,
+      activeTasks: () => [{status: 'need_help'}, {status: 'fail'}],
+    } as unknown as Project;
+    fixture.componentInstance.updateData();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const statuses = Array.from(host.querySelectorAll<HTMLElement>('[role="listitem"]')).map(
+      (card) => card.dataset.status,
+    );
+
+    expect(statuses).toEqual([
+      'not_started',
+      'working_on_it',
+      'need_help',
+      'ready_for_feedback',
+      'complete',
+      'fail',
+    ]);
   });
 
   it('keeps every rendered status card above the 4.5:1 contrast floor', () => {

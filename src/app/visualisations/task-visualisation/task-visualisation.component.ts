@@ -16,6 +16,16 @@ interface TaskStatusSummary {
   textColor: string;
 }
 
+// The four statuses every student moves through always show, so the card keeps its
+// shape. The rest show only while a task is in them: fifteen tiles, most of them 0,
+// made the card a wall of colour.
+const ALWAYS_SHOWN: TaskStatusEnum[] = [
+  'not_started',
+  'working_on_it',
+  'ready_for_feedback',
+  'complete',
+];
+
 @Component({
   selector: 'f-task-visualisation',
   templateUrl: './task-visualisation.component.html',
@@ -62,7 +72,10 @@ export class TaskVisualisationComponent implements OnChanges, OnInit {
           color: `var(--ot-status-${key})`,
           textColor: `var(--ot-status-${key}-on)`,
         };
-      }).filter(({status}) => TaskStatus.isStatus(status));
+      }).filter(
+        ({status, value}) =>
+          TaskStatus.isStatus(status) && (value > 0 || ALWAYS_SHOWN.includes(status)),
+      );
     }
   }
 }
