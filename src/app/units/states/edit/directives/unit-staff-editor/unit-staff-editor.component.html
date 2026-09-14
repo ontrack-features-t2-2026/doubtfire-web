@@ -68,7 +68,7 @@
           matTooltipPosition="above"
           matTooltipShowDelay="1000"
           [checked]="unitRole.observerOnly"
-          [disabled]="unitRole.id === unit.mainConvenor.id"
+          [disabled]="unitRole.id === unit?.mainConvenor?.id"
           (change)="toggleObserverOnly(unitRole)"
         ></mat-slide-toggle>
       </td>
@@ -91,15 +91,18 @@
       <th *matHeaderCellDef mat-header-cell>Mentor</th>
       <td *matCellDef="let unitRole" mat-cell>
         <mat-select
+          canSelectNullableOptions
           class="w-full min-w-[140px]"
           [ngModel]="unitRole.mentorId"
           (selectionChange)="selectMentor(unitRole, $event)"
         >
-          <mat-option value="">(None)</mat-option>
-          @for (unitRole of unitStaff; track unitRole) {
-            <mat-option class="w-full min-w-fit" [value]="unitRole.id">
-              {{ unitRole.user.name }}</mat-option
-            >
+          <mat-option [value]="null">(None)</mat-option>
+          @for (staffMember of unitStaff; track staffMember) {
+            @if (staffMember.id !== unitRole.id) {
+              <mat-option class="w-full min-w-fit" [value]="staffMember.id">
+                {{ staffMember.user.name }}</mat-option
+              >
+            }
           }
         </mat-select>
       </td>

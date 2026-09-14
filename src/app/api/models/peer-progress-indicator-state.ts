@@ -5,6 +5,7 @@ export type PeerProgressUiState =
   | 'success'
   | 'no-data'
   | 'hidden'
+  | 'preference-disabled'
   | 'unavailable'
   | 'disabled'
   | 'stale'
@@ -32,6 +33,14 @@ export function resolvePeerProgressState(
     return {state: 'error', data: null, message: GENERIC_ERROR_MESSAGE};
   }
 
+  if (!data.isUserEnabled) {
+    return {
+      state: 'preference-disabled',
+      data,
+      message: 'Peer progress is turned off in your profile settings.',
+    };
+  }
+
   if (!data.isFeatureEnabled) {
     return {state: 'disabled', data, message: data.unavailableMessage};
   }
@@ -44,11 +53,13 @@ export function resolvePeerProgressState(
     return {state: 'stale', data, message: data.unavailableMessage};
   }
 
-  if (data.submittedPercentage === null) {
+  const compactPercentage = data.completedPercentage ?? data.submittedPercentage;
+
+  if (compactPercentage === null) {
     return {state: 'unavailable', data, message: data.unavailableMessage};
   }
 
-  if (data.submittedPercentage === 0) {
+  if (compactPercentage === 0) {
     return {state: 'no-data', data, message: null};
   }
 

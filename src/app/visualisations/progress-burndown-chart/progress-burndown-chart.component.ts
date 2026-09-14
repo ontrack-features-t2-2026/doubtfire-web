@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   HostListener,
+  Inject,
   Input,
   LOCALE_ID,
   OnChanges,
@@ -21,8 +22,8 @@ import {
   Project,
   Unit,
 } from 'src/app/api/models/doubtfire-model';
-import {AppInjector} from 'src/app/app-injector';
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 
 interface BurndownPoint {
   name: string;
@@ -64,21 +65,27 @@ export class ProgressBurndownChartComponent
   showXAxisLabel: boolean = true;
   xAxisLabel: string = 'Time';
   yAxisLabel: string = 'Tasks Remaining';
-
-  readonly seriesColors: string[] = ['#AAAAAA', '#777777', '#0079d8', '#E01B5D', '#7C3AED'];
-
+  // ngx-charts hands the scheme domain to the series by position, so the full palette is
+  // kept here and the scheme is narrowed to whatever is on show.
+  private readonly seriesPalette: string[] = [
+    '#AAAAAA',
+    '#777777',
+    '#0079d8',
+    '#E01B5D',
+    '#7C3AED',
+  ];
   colorScheme: Color = {
     name: 'Burndown',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: this.seriesColors,
+    domain: [...this.seriesPalette],
   };
 
   yScaleMin: number = 0;
   yScaleMax: number = 100;
 
   /** Drives the privacy-safe status message below the chart. */
-  peerMedianState: PeerMedianState = 'loading';
+  peerMedianState: PeerMedianState = 'disabled';
 
   private seriesVisibility: Record<string, boolean> = {};
   private peerMedian: PeerMedianPoint[] = [];
@@ -89,6 +96,8 @@ export class ProgressBurndownChartComponent
   constructor(
     public viewContainerRef: ViewContainerRef,
     private peerProgressService: PeerProgressService,
+    readonly demoMode: DemoModeStore,
+    @Inject(LOCALE_ID) private locale: string,
   ) {
     super(viewContainerRef);
     this.data = [];
@@ -106,29 +115,45 @@ export class ProgressBurndownChartComponent
       this.seriesVisibility[item.name] = true;
     });
 
-    this.loadPeerMedian();
+    if (this.demoMode.enabled) {
+      this.loadPeerMedian();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    const gradeChange = changes.grade;
+    const projectChanged =
+      !!changes.project &&
+      !changes.project.firstChange &&
+      changes.project.currentValue !== changes.project.previousValue;
+    const unitChanged =
+      !!changes.unit &&
+      !changes.unit.firstChange &&
+      changes.unit.currentValue !== changes.unit.previousValue;
+    const gradeChanged =
+      !!changes.grade &&
+      !changes.grade.firstChange &&
+      changes.grade.currentValue !== undefined &&
+      changes.grade.currentValue !== changes.grade.previousValue;
 
     // Angular calls ngOnChanges before ngOnInit. Ignore that first call so the
-    // initial peer request is made exactly once from ngOnInit.
-    if (
-      !this.initialised ||
-      !gradeChange ||
-      gradeChange.firstChange ||
-      gradeChange.currentValue === undefined ||
-      gradeChange.currentValue === gradeChange.previousValue
-    ) {
+    // initial peer request is made exactly once from ngOnInit. Refresh for
+    // project and unit input changes as well as target-grade changes because
+    // Angular can reuse this component while switching between project routes.
+    if (!this.initialised || (!projectChanged && !unitChanged && !gradeChanged)) {
       return;
     }
 
     this.project.refreshBurndownChartData();
     this.updateData();
 
-    // The comparison cohort changes when the selected target grade changes.
-    this.loadPeerMedian();
+    // The comparison cohort changes with the project, unit, or target grade.
+    if (this.demoMode.enabled) {
+      this.loadPeerMedian();
+    } else {
+      this.peerMedianState = 'disabled';
+      this.peerMedian = [];
+      this.updateData();
+    }
   }
 
   @HostListener('window:resize')
@@ -223,7 +248,7 @@ export class ProgressBurndownChartComponent
 
   updateData(): void {
     const chartData = this.project?.burndownChartData;
-    const locale: string = AppInjector.get(LOCALE_ID);
+    const locale = this.locale;
     const startDate: Date = this.project.unit.startDate;
     const endDate: Date = this.project.unit.endDate;
 
@@ -274,7 +299,10 @@ export class ProgressBurndownChartComponent
     }
 
     this.temp = JSON.parse(JSON.stringify(formattedData));
-    this.data = formattedData;
+    this.seriesVisibility = Object.fromEntries(
+      formattedData.map((series) => [series.name, this.seriesVisibility[series.name] !== false]),
+    );
+    this.applyVisibility();
   }
 
   private toSeries(
@@ -304,27 +332,33 @@ export class ProgressBurndownChartComponent
       return;
     }
 
-    const tempData: BurndownSeries[] = JSON.parse(JSON.stringify(this.data));
+    this.toggleSeries(event);
+  }
 
-    if (this.isDataShown(event)) {
-      tempData.forEach((series) => {
-        if (series.name === event) {
-          series.series.forEach((point) => {
-            point.value = 0;
-          });
-        }
-      });
-    } else {
-      const originalSeries = this.temp.find((series) => series.name === event);
-
-      const seriesIndex = tempData.findIndex((series) => series.name === event);
-
-      if (originalSeries && seriesIndex >= 0) {
-        tempData[seriesIndex] = JSON.parse(JSON.stringify(originalSeries));
-      }
+  toggleSeries(name: string): void {
+    if (!this.temp.some((series) => series.name === name)) {
+      return;
     }
 
-    this.data = tempData;
+    this.seriesVisibility[name] = !this.isDataShown(name);
+    this.applyVisibility();
+  }
+
+  // A hidden series is dropped from the chart data. Zeroing its points instead left the
+  // line drawn flat along the x axis while its legend button said it was off.
+  private applyVisibility(): void {
+    const shown = this.temp
+      .map((series, index) => ({series, index}))
+      .filter((entry) => this.isDataShown(entry.series.name));
+
+    this.data = shown.map((entry) => ({
+      name: entry.series.name,
+      series: entry.series.series.map((point) => ({...point})),
+    }));
+    this.colorScheme = {
+      ...this.colorScheme,
+      domain: shown.map((entry) => this.seriesColor(entry.index)),
+    };
   }
 
   isLegend(event: string | BurndownPoint): event is string {
@@ -332,9 +366,11 @@ export class ProgressBurndownChartComponent
   }
 
   isDataShown(name: string): boolean {
-    return Boolean(
-      this.data.find((series) => series.name === name)?.series.some((point) => point.value !== 0),
-    );
+    return this.seriesVisibility[name] !== false;
+  }
+
+  seriesColor(index: number): string {
+    return this.seriesPalette[index % this.seriesPalette.length];
   }
 
   public formatPerc(input: number): string {

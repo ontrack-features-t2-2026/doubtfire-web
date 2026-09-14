@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {MatTabChangeEvent} from '@angular/material/tabs';
 import {ActivatedRoute, ParamMap, Router} from '@angular/router';
-import {BehaviorSubject, Observable, Subscription, first, of} from 'rxjs';
+import {BehaviorSubject, Observable, Subscription, distinctUntilChanged, of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Unit} from 'src/app/api/models/unit';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -47,6 +47,9 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   private selectedProjectId: number | null = null;
+  private progressTaskSelectionUrlBaseCache: unknown[] | null = null;
+  private progressTaskSelectionUrlBaseKey: string | null = null;
+  private routeParamsSubscribed = false;
 
   constructor(
     private projectService: ProjectService,
@@ -59,9 +62,14 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
     this.subscriptions.push(
-      this.unit$.pipe(first()).subscribe({
+      this.unit$.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe({
         next: (unit) => {
+          const unitChanged = this.unit != null && this.unit.id !== unit.id;
           this.unit = unit;
+
+          if (unitChanged) {
+            this.resetStudentSelection();
+          }
 
           if (
             this.userService.currentUser.systemRole === 'Admin' ||
@@ -70,15 +78,9 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
             this.unit.loadD2lMapping().subscribe();
           }
 
+          this.loadingStudents = true;
           this.loadStudents();
-          this.subscriptions.push(
-            this.route.paramMap.subscribe((params) => {
-              this.updateCurrentTabFromState(params.get('tab'), params.get('projectId'));
-            }),
-            this.route.queryParamMap.subscribe((params) => {
-              this.updatePortfolioListFiltersFromQueryParams(params);
-            }),
-          );
+          this.subscribeToRouteParams();
         },
         error: (error) => {
           this.alertService.error(`Failed to load unit: ${error}`, 6000);
@@ -102,7 +104,23 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    return ['/units', this.unit.id, 'students', 'portfolios', this.selectedProject.id, 'progress'];
+    // Cache the array so the binding keeps the same reference between change detection passes.
+    // A new literal each call makes the input dirty every check, which pushes the progress tab
+    // to re-emit its project over and over.
+    const key = `${this.unit.id}/${this.selectedProject.id}`;
+    if (key !== this.progressTaskSelectionUrlBaseKey) {
+      this.progressTaskSelectionUrlBaseKey = key;
+      this.progressTaskSelectionUrlBaseCache = [
+        '/units',
+        this.unit.id,
+        'students',
+        'portfolios',
+        this.selectedProject.id,
+        'progress',
+      ];
+    }
+
+    return this.progressTaskSelectionUrlBaseCache;
   }
 
   public studentSelected(project: Project): void {
@@ -134,6 +152,42 @@ export class PortfoliosComponent implements OnInit, OnDestroy {
     }
 
     this.navigateToProject(this.selectedProject.id, nextTab.routeSegment);
+  }
+
+  // The selected student belongs to the unit we just left, so drop it and go back to
+  // the student list rather than showing someone who is not enrolled in the new unit.
+  private resetStudentSelection(): void {
+    const hadSelection = this.selectedProjectId != null;
+
+    this.selectedProjectId = null;
+    this.selectedProject = null;
+    this.selectedProject$.next(null);
+    this.currentTab = this.tabs[0];
+
+    if (hadSelection) {
+      this.router.navigate(['/units', this.unit.id, 'students', 'portfolios'], {
+        queryParams: this.portfolioListFilterQueryParams(),
+        replaceUrl: true,
+      });
+    }
+  }
+
+  // The unit stream fires again on every unit change, so this has to be idempotent or
+  // a switch would stack a second pair of route subscriptions on top of the first.
+  private subscribeToRouteParams(): void {
+    if (this.routeParamsSubscribed) {
+      return;
+    }
+
+    this.routeParamsSubscribed = true;
+    this.subscriptions.push(
+      this.route.paramMap.subscribe((params) => {
+        this.updateCurrentTabFromState(params.get('tab'), params.get('projectId'));
+      }),
+      this.route.queryParamMap.subscribe((params) => {
+        this.updatePortfolioListFiltersFromQueryParams(params);
+      }),
+    );
   }
 
   private loadStudents(): void {

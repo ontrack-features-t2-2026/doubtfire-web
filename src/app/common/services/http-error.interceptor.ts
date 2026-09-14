@@ -116,18 +116,27 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     } else if (error.error instanceof ProgressEvent) {
       errorMessage = error.statusText;
     } else {
-      // server-side error
-      if (error.error.error) {
-        errorMessage = error.error.error;
-      } else if (error.error instanceof Blob) {
+      // Server-side error. error.error is null whenever the response body was
+      // empty, which is every 502 from a proxy and every 500 that returns
+      // nothing, so the property read has to come after the checks rather than
+      // before them. The blob check moves up for the same reason: it only worked
+      // where it was because a Blob happens to have no error property.
+      const body: unknown = error.error;
+      if (body instanceof Blob) {
         errorMessage = error.statusText;
+      } else if (typeof body === 'string') {
+        errorMessage = body;
       } else {
-        errorMessage = error.error;
+        // An unparseable body arrives as {error: SyntaxError, text: '<html>'},
+        // so the nested value has to be a string before it is used as one.
+        const nested = (body as {error?: unknown})?.error;
+        errorMessage =
+          typeof nested === 'string' ? nested : error.statusText || 'Something went wrong';
       }
       logMessage = `Error Code: ${error.status}`;
     }
 
-    this.throwError(`${logMessage}: ${errorMessage}`, error.status);
+    this.reportError(`${logMessage}: ${errorMessage}`, error.status);
 
     console.error(`${logMessage}: ${errorMessage}`);
     return errorMessage;
@@ -142,20 +151,14 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     });
   }
 
-  throwError(message: string, statusCode: number) {
-    Sentry.diagnoseSdkConnectivity().then(() => {
-      Sentry.startSpan(
-        {
-          name: `Error ${statusCode}`,
-          op: 'http.client_error',
-          attributes: {
-            'http.response.status_code': statusCode,
-          },
-        },
-        () => {
-          throw new HttpRequestError(message, statusCode);
-        },
-      );
+  // Reports the failure rather than throwing at Sentry. The old version threw
+  // inside a startSpan callback, which rethrows, inside a then() with no catch,
+  // so every failed request in the app left an unhandled promise rejection that
+  // nothing in the observable chain could see. Named reportError because rxjs
+  // throwError is imported into this same file.
+  private reportError(message: string, statusCode: number) {
+    Sentry.captureException(new HttpRequestError(message, statusCode), {
+      tags: {'http.response.status_code': statusCode},
     });
   }
 }

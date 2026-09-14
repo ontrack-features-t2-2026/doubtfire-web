@@ -14,6 +14,15 @@ import {PeerProgressIndicator} from './peer-progress-indicator';
  *
  * `taskDefinitionId` is omitted because this summary is not scoped to one task.
  */
-export interface PeerProgressUnitSummary extends Omit<PeerProgressIndicator, 'taskDefinitionId'> {
+export interface PeerProgressUnitSummary extends Omit<
+  PeerProgressIndicator,
+  | 'taskDefinitionId'
+  | 'completedPercentage'
+  | 'distributionAvailable'
+  | 'statusDistribution'
+  | 'isUserEnabled'
+  | 'unavailableReason'
+  | 'distributionUnavailableReason'
+> {
   studentPercentage: number | null;
 }

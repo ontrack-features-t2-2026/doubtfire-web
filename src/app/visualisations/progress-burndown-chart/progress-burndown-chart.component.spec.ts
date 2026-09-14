@@ -1,5 +1,5 @@
-import {beforeAll, describe, expect, it, vi} from 'vitest';
-import {Injector, LOCALE_ID, SimpleChange, ViewContainerRef} from '@angular/core';
+import {describe, expect, it, vi} from 'vitest';
+import {SimpleChange, ViewContainerRef} from '@angular/core';
 import {Subject, of, throwError} from 'rxjs';
 import {
   PeerProgressResponse,
@@ -7,26 +7,11 @@ import {
   PeerProgressState,
   Project,
 } from 'src/app/api/models/doubtfire-model';
-import {AppInjector, setAppInjector} from 'src/app/app-injector';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {ProgressBurndownChartComponent} from './progress-burndown-chart.component';
 
 describe('ProgressBurndownChartComponent peer comparison', () => {
   const EXISTING_SERIES = ['Target', 'Projected', 'To Submit', 'To Complete'];
-
-  beforeAll(() => {
-    if (!AppInjector) {
-      setAppInjector(
-        Injector.create({
-          providers: [
-            {
-              provide: LOCALE_ID,
-              useValue: 'en-US',
-            },
-          ],
-        }),
-      );
-    }
-  });
 
   function makeProject(): Project {
     const startDate = new Date(2026, 6, 1);
@@ -98,7 +83,10 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
     };
   }
 
-  function makeHarness(getCohortMedian: ReturnType<typeof vi.fn>): {
+  function makeHarness(
+    getCohortMedian: ReturnType<typeof vi.fn>,
+    demoEnabled = true,
+  ): {
     component: ProgressBurndownChartComponent;
     project: Project;
   } {
@@ -109,6 +97,8 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
       {
         getCohortMedian,
       } as unknown as PeerProgressService,
+      {enabled: demoEnabled} as DemoModeStore,
+      'en-US',
     );
 
     component.project = project;
@@ -133,6 +123,17 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
   function seriesNames(component: ProgressBurndownChartComponent): string[] {
     return component.data.map((series) => series.name);
   }
+
+  it('does not request or render synthetic peer data when demo mode is off', () => {
+    const getCohortMedian = vi.fn();
+    const {component} = makeHarness(getCohortMedian, false);
+
+    initialise(component);
+
+    expect(getCohortMedian).not.toHaveBeenCalled();
+    expect(seriesNames(component)).toEqual(EXISTING_SERIES);
+    expect(component.peerMedianState).toBe('disabled');
+  });
 
   function expectOnlyExistingSeries(component: ProgressBurndownChartComponent): void {
     expect(seriesNames(component)).toEqual(EXISTING_SERIES);
@@ -270,6 +271,67 @@ describe('ProgressBurndownChartComponent peer comparison', () => {
 
     component.ngOnDestroy();
   });
+
+  it('refreshes both chart and peer data when a reused route receives a new project', () => {
+    const getCohortMedian = vi.fn((currentProject: Project) =>
+      of(makeResponse(currentProject, 'unavailable')),
+    );
+    const {component, project} = makeHarness(getCohortMedian);
+
+    initialise(component);
+
+    const nextProject = makeProject();
+    nextProject.id = 456;
+    component.project = nextProject;
+    component.unit = nextProject.unit;
+
+    component.ngOnChanges({
+      project: new SimpleChange(project, nextProject, false),
+      unit: new SimpleChange(project.unit, nextProject.unit, false),
+    });
+
+    expect(nextProject.refreshBurndownChartData).toHaveBeenCalledTimes(1);
+    expect(getCohortMedian).toHaveBeenLastCalledWith(nextProject, nextProject.targetGrade);
+  });
+
+  it('toggles one accessible legend series without hiding the peer series', () => {
+    const getCohortMedian = vi.fn();
+    const {component, project} = makeHarness(getCohortMedian);
+
+    getCohortMedian.mockReturnValue(of(makeResponse(project, 'ready')));
+    initialise(component);
+
+    component.onSelect('Target');
+
+    expect(component.isDataShown('Target')).toBe(false);
+    expect(component.isDataShown('Peer median (demo)')).toBe(true);
+    expect(seriesNames(component)).not.toContain('Target');
+    expect(component.temp.map((series) => series.name)).toContain('Target');
+
+    component.onSelect('Target');
+
+    expect(component.isDataShown('Target')).toBe(true);
+    expect(seriesNames(component)).toContain('Target');
+  });
+
+  it('does not mistake a genuine all-zero series for a hidden series', () => {
+    const getCohortMedian = vi.fn();
+    const {component, project} = makeHarness(getCohortMedian, false);
+
+    project.burndownChartData.push({
+      key: 'Zero progress',
+      values: [
+        [project.unit.startDate.getTime(), 0],
+        [project.unit.endDate.getTime(), 0],
+      ],
+    });
+
+    initialise(component);
+
+    expect(component.isDataShown('Zero progress')).toBe(true);
+    expect(seriesNames(component)).toContain('Zero progress');
+  });
+
   it('hides axis titles on narrow screens', () => {
     const {component} = makeHarness(vi.fn());
     const originalWidth = window.innerWidth;
