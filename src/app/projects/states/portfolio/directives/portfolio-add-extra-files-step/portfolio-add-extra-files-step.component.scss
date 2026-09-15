@@ -1,0 +1,52 @@
+.portfolio-extra-file {
+  align-items: center;
+  border-bottom: 2px solid rgb(243 244 246);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  padding-block: 0.25rem;
+}
+
+.portfolio-extra-file__name {
+  align-items: center;
+  display: grid;
+  gap: 0.375rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+}
+
+.portfolio-extra-file__name span {
+  overflow-wrap: anywhere;
+}
+
+.portfolio-file-uploader {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+.portfolio-step-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+@media (max-width: 639.98px) {
+  :host,
+  mat-card,
+  mat-card-content {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  mat-card-content {
+    padding-inline: 1rem;
+  }
+
+  .portfolio-step-actions {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}

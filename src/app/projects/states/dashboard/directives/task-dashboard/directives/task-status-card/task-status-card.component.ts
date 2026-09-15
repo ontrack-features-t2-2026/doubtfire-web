@@ -117,6 +117,18 @@ export class TaskStatusCardComponent implements OnChanges, AfterViewInit, OnDest
     return this.task.status === 'assess_in_portfolio';
   }
 
+  public get showUploadSubmission(): boolean {
+    return !!this.task && !this.task.hasSubmissionHistory();
+  }
+
+  public get showUploadNewFiles(): boolean {
+    return !!this.task?.hasSubmissionHistory() && this.task.requiresFileUpload();
+  }
+
+  public get submissionActionPending(): boolean {
+    return !!(this.task?.processingPdf || this.task?.loadingSubmissionDetails);
+  }
+
   triggerTransition(trigger: TaskStatusEnum): void {
     if (trigger === 'complete' && !this.task.canMarkComplete) {
       return;

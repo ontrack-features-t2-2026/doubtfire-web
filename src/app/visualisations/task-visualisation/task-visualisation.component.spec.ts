@@ -1,7 +1,8 @@
 import {beforeEach, describe, expect, it} from 'vitest';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {Project} from 'src/app/api/models/doubtfire-model';
+import {RouterModule} from '@angular/router';
+import {Project, TaskStatus} from 'src/app/api/models/doubtfire-model';
 import {TaskVisualisationComponent} from './task-visualisation.component';
 
 describe('TaskVisualisationComponent', () => {
@@ -9,25 +10,34 @@ describe('TaskVisualisationComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [RouterModule.forRoot([])],
       declarations: [TaskVisualisationComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TaskVisualisationComponent);
     fixture.componentInstance.project = {
+      id: 7,
       activeTasks: () => [{status: 'complete'}, {status: 'not_started'}],
     } as unknown as Project;
     fixture.detectChanges();
   });
 
-  it('renders complete status labels without chart ellipsis or a false click affordance', () => {
+  it('renders every canonical status as a semantic Tasks filter link, including zero counts', () => {
     const host = fixture.nativeElement as HTMLElement;
     const cards = Array.from(host.querySelectorAll<HTMLElement>('[role="listitem"]'));
     const awaitingFeedback = cards.find((card) => card.textContent.includes('Awaiting Feedback'));
 
+    expect(cards).toHaveLength(TaskStatus.STATUS_KEYS.length);
+    expect(cards.map((card) => card.dataset.status).sort()).toEqual(
+      [...TaskStatus.STATUS_KEYS].sort(),
+    );
     expect(awaitingFeedback).toBeTruthy();
     expect(awaitingFeedback?.textContent).not.toContain('...');
-    expect(awaitingFeedback?.getAttribute('aria-label')).toBe('Awaiting Feedback: 0');
-    expect(awaitingFeedback?.tagName).toBe('DIV');
+    expect(awaitingFeedback?.getAttribute('aria-label')).toBe('Show 0 Awaiting Feedback tasks');
+    expect(awaitingFeedback?.tagName).toBe('A');
+    expect((awaitingFeedback as HTMLAnchorElement)?.href).toContain(
+      '/projects/7/dashboard?taskStatus=ready_for_feedback',
+    );
     expect(host.querySelector('ngx-charts-number-card')).toBeNull();
     expect(host.querySelector('button')).toBeNull();
   });

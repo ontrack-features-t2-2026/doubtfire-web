@@ -10,6 +10,40 @@
   color: #c5c5c5;
 }
 
+.submission-view {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-rows: auto minmax(20rem, 1fr);
+  height: 100%;
+  min-height: 0;
+  padding: 0.75rem;
+}
+
+.submission-preview {
+  min-height: 20rem;
+  min-width: 0;
+}
+
+.submission-preview-placeholder {
+  align-items: center;
+  border: 1px dashed #a9b0bd;
+  border-radius: 0.75rem;
+  color: #5d6575;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 16rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.submission-preview-placeholder mat-icon {
+  font-size: 3rem;
+  height: 3rem;
+  width: 3rem;
+}
+
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
     justify-content: center;
@@ -28,5 +62,26 @@
   .mat-mdc-tab-list,
   .mat-mdc-tab-labels {
     width: max-content;
+  }
+}
+
+@media (max-width: 639.98px) {
+  // Details is a normal document on phones. PDF, submission, history and
+  // moderation views keep their purpose-built bounded viewers.
+  .task-dashboard-shell--document {
+    height: auto !important;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .task-dashboard-body--document {
+    min-height: 0;
+    flex: none;
+    overflow: visible;
+  }
+
+  .submission-view {
+    grid-template-rows: auto minmax(18rem, 1fr);
+    padding: 0.5rem;
   }
 }

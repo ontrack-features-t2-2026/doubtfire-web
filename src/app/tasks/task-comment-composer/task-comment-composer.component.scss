@@ -2,64 +2,154 @@
 
 $emoji-color: color.adjust(black, $lightness: 25%);
 
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: white;
+}
+
 .composer-container {
-  padding-bottom: 0;
   display: flex;
-  flex-grow: 1;
+  width: 100%;
+  align-items: flex-end;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 8px max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+    max(8px, env(safe-area-inset-left));
+
+  .composer-leading-actions,
+  .composer-trailing-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 2px;
+  }
+
   #textFieldContainer {
     background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 18px;
+    border: 1px solid transparent;
+    border-radius: 20px;
     display: flex;
-    flex: 1 1 auto;
-    flex-grow: 0;
-    width: 100%;
+    flex: 1 1 8rem;
+    align-items: flex-end;
+    min-width: 0;
     max-width: 100%;
-    margin: 8px 8px 8px 0;
-    padding: 0 8px 0 12px;
-    min-height: 39px;
+    min-height: 44px;
+    margin: 0;
+    padding: 0 12px;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
+  }
+
+  #textFieldContainer:focus-within {
+    border-color: #818cf8;
+    background-color: #f8fafc;
   }
 
   #textFieldContainer.recording {
     background-color: #3939ff;
+    padding: 0 8px;
   }
 
   #textField {
-    flex-grow: 0;
+    display: block;
+    flex: 1 1 auto;
     width: 100%;
     max-width: 100%;
-    font-size: 14px;
+    min-height: 24px;
     max-height: 144px;
-    min-height: 18px;
-    overflow-y: auto;
-    overflow-x: auto;
-    padding: 9px 0;
-    vertical-align: middle;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
     box-shadow: none;
-    border: none;
+    color: #111827;
+    font-size: 14px;
     resize: none;
-    outline: none;
     line-height: 1.5em;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    overflow-wrap: anywhere;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizelegibility;
-    white-space: pre-wrap;
+  }
+
+  #textField::placeholder {
+    color: #64748b;
+    opacity: 1;
+  }
+
+  .audio-recorder {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.composer-staff-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 4px max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+}
+
+.staged-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+}
+
+.staged-attachment {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.staged-attachment.upload-failed {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+
+.staged-attachment-details {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+
+  strong,
+  span {
+    overflow-wrap: anywhere;
+  }
+
+  span {
+    color: #475569;
+    font-size: 12px;
     word-break: break-word;
-    text-wrap: wrap;
-    user-select: text;
   }
 
-  #textField[placeholder]:empty::before {
-    padding: 9px 0;
-    -webkit-font-smoothing: antialiased;
-    content: attr(placeholder);
-    color: #555;
-    cursor: text;
+  .attachment-error {
+    color: #991b1b;
+    white-space: normal;
   }
+}
 
-  #textField.active {
-    max-height: 39px;
-    max-lines: 1;
-    overflow: hidden;
-  }
+.discard-draft-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
 }
 
 #textField.draft-loaded {
@@ -97,24 +187,36 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   }
 }
 
-#innerButtons {
-  align-items: flex-end;
-  display: flex;
-  padding: 6px 0 6px 2px;
-}
-
-#emojiButton {
-  height: 24px;
-  width: 24px;
-  cursor: pointer;
-  color: $emoji-color;
-}
-
-.emoji-picker {
+.emoji-picker-host {
   z-index: 1060;
   position: absolute;
-  right: 26px;
-  bottom: 150px;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: calc(100% + 4px);
+  left: max(8px, env(safe-area-inset-left));
+  display: flex;
+  max-height: min(420px, 60dvh);
+  justify-content: flex-end;
+  overflow: auto;
+}
+
+.emoji-picker-backdrop {
+  z-index: 1050;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.emoji-picker-host .emoji-picker {
+  max-width: 100%;
+}
+
+:host ::ng-deep .emoji-picker-host .emoji-mart {
+  width: min(352px, calc(100vw - 16px)) !important;
+  max-width: 100%;
 }
 
 #emojiSearchResults {
@@ -128,7 +230,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
   border-color: color.adjust($color: white, $lightness: -10%);
 }
 
-#replyContainer {
+.reply-container {
   margin: 0.4em 1em -0.2em 1em;
   font-size: 14px;
 
@@ -191,6 +293,7 @@ $emoji-color: color.adjust(black, $lightness: 25%);
 }
 
 form {
+  position: relative;
   display: flex;
   width: 100%;
 }
@@ -225,23 +328,47 @@ form {
   border-color: #ddd;
 }
 
-.composer-action-group {
-  margin-right: 6px;
-}
-
 button.btn-no-outline {
-  margin-left: -12px;
-  margin-right: -12px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px;
   color: $emoji-color;
   line-height: 1;
-  transform: scale(0.8);
+  transform: none;
+}
+
+button.btn-no-outline:focus-visible,
+.composer-send-button:focus-visible {
+  outline: 2px solid #3939ff;
+  outline-offset: 2px;
 }
 
 .message-inbox-icon {
   line-height: 1;
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.composer-send-button {
+  flex: 0 0 auto;
+  min-width: 58px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.composer-send-button:disabled {
+  color: #64748b;
+  background: #e2e8f0;
 }
 
 #commentComposerFoter {
@@ -250,24 +377,12 @@ button.btn-no-outline {
 
 @media (max-width: 639.98px) {
   .composer-container {
-    box-sizing: border-box;
-    gap: 4px;
-    padding-left: max(8px, env(safe-area-inset-left));
-    padding-right: max(8px, env(safe-area-inset-right));
+    gap: 2px;
 
     #textFieldContainer {
+      flex-basis: 4rem;
       min-height: 44px;
-      margin-right: 0;
     }
-  }
-
-  .composer-action-group {
-    flex: 0 0 auto;
-    margin-right: 0;
-  }
-
-  .composer-action-row {
-    gap: 4px;
   }
 
   button.btn-no-outline.composer-touch-action {
@@ -284,6 +399,13 @@ button.btn-no-outline {
     transform: none;
   }
 
+  button.btn-no-outline.composer-icon-action {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
   button.btn-no-outline.composer-touch-action:focus-visible {
     outline: 2px solid #3939ff;
     outline-offset: 2px;
@@ -293,5 +415,33 @@ button.btn-no-outline {
     width: 24px;
     height: 24px;
     font-size: 24px;
+  }
+
+  .composer-send-button {
+    min-width: 56px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 359.98px) {
+  .composer-container {
+    #textFieldContainer {
+      flex-basis: 3rem;
+      padding-right: 8px;
+      padding-left: 8px;
+    }
+  }
+
+  button.btn-no-outline.composer-touch-action,
+  button.btn-no-outline.composer-icon-action {
+    width: 44px;
+    min-width: 44px;
+  }
+
+  .composer-send-button {
+    min-width: 52px;
+    padding-right: 8px;
+    padding-left: 8px;
   }
 }

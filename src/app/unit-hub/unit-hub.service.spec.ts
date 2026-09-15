@@ -34,14 +34,16 @@ describe('Unit Hub API and demo isolation', () => {
     service = TestBed.inject(UnitHubService);
     http = TestBed.inject(HttpTestingController);
     demo = TestBed.inject(DemoModeStore);
+    // This branch's demo store only switches on for a loaded demo scenario.
+    demo.configureScenario('unit-hub-spec', 1);
   });
   afterEach(() => {
     http.verify();
     sessionStorage.clear();
   });
 
-  it('normal mode reads real content even when the unrelated development quiet mask is active', () => {
-    expect(demo.shouldMaskApiData).toBe(true);
+  it('normal mode reads real content while demo mode is off', () => {
+    expect(demo.enabled).toBe(false);
     let result: UnitHubFeed;
     service.feed().subscribe((value) => (result = value));
     http.expectOne(`${API_URL}/unit_hub`).flush(unitHubDemo());
@@ -147,6 +149,7 @@ describe('Unit Hub API and demo isolation', () => {
     demo = TestBed.inject(DemoModeStore);
     service = TestBed.inject(UnitHubService);
     http = TestBed.inject(HttpTestingController);
+    demo.configureScenario('unit-hub-spec', 1);
     demo.setEnabled(true);
     expect(demo.enabled).toBe(false);
     service.feed().subscribe();

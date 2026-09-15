@@ -1,6 +1,6 @@
-<div class="flex items-center justify-between p-3">
-  <div class="flex items-center gap-2">
-    <mat-slide-toggle [(ngModel)]="showDatesColumn">Show Task Dates</mat-slide-toggle>
+<div aria-label="Task planner display options" class="planner-toolbar p-3">
+  <div class="planner-toggles">
+    <mat-slide-toggle [(ngModel)]="showDatesColumn">Show task dates</mat-slide-toggle>
     <mat-slide-toggle
       [ngModel]="showTasksAboveTargetGrade"
       (ngModelChange)="setShowTasksAboveTargetGrade($event)"
@@ -9,9 +9,9 @@
     </mat-slide-toggle>
   </div>
   @if (unit.allowFlexibleDates) {
-    <div class="flex items-center gap-2">
+    <div class="planner-date-actions">
       <button color="primary" mat-button (click)="saveImage()">
-        <mat-icon>save_alt</mat-icon> Download Chart
+        <mat-icon>save_alt</mat-icon> Download chart
       </button>
       <button
         color="primary"
@@ -19,15 +19,92 @@
         [disabled]="!anyUnsavedChanges()"
         (click)="confirmSaveTargetDates()"
       >
-        Save Dates
+        Save dates
       </button>
-      <button mat-raised-button (click)="confirmResetTargetDates()">Reset To Unit Default</button>
+      <button mat-raised-button (click)="confirmResetTargetDates()">Reset to unit default</button>
     </div>
   }
 </div>
+
+<section aria-label="Tasks in this plan" class="mobile-planner">
+  @if (!items.length) {
+    <div class="mobile-planner-empty" role="status">No tasks match the selected target grade.</div>
+  }
+
+  @for (item of items; track item.id) {
+    <article class="mobile-task-card" [attr.data-task-definition-id]="item.id">
+      <header class="mobile-task-card__header">
+        <div class="min-w-0">
+          <p class="mobile-task-card__grade">
+            {{ gradeString(item.taskDefinition.targetGrade) }} task
+          </p>
+          <h3>{{ item.taskDefinition.abbreviation }} {{ item.taskDefinition.name }}</h3>
+        </div>
+        <div class="mobile-task-card__status">
+          <status-icon [compact]="true" [showTooltip]="false" [status]="item.task.status">
+          </status-icon>
+          <span>{{ statusLabel(item) }}</span>
+        </div>
+      </header>
+
+      <p class="mobile-task-card__date-summary">
+        {{ toDateString(item.start) }} to {{ toDateString(item.end) }}
+      </p>
+
+      @if (showDatesColumn) {
+        <dl class="mobile-task-card__dates">
+          <div>
+            <dt>Start date</dt>
+            <dd>{{ toDateString(item.start) }}</dd>
+          </div>
+          <div>
+            <dt>Target / due date</dt>
+            <dd>{{ toDateString(item.end) }}</dd>
+          </div>
+          <div>
+            <dt>Deadline</dt>
+            <dd>
+              {{
+                item.task.localDeadlineDate()
+                  ? toDateString(item.task.localDeadlineDate())
+                  : 'Not set'
+              }}
+            </dd>
+          </div>
+        </dl>
+      }
+
+      <div class="mobile-task-card__connections">
+        <mat-icon aria-hidden="true">account_tree</mat-icon>
+        <span>{{ connectionSummary(item) }}</span>
+      </div>
+
+      <div class="mobile-task-card__actions">
+        <button
+          mat-stroked-button
+          type="button"
+          [attr.aria-label]="
+            'View prerequisites and dependent tasks for ' + item.taskDefinition.abbreviation
+          "
+          (click)="barClick(item)"
+        >
+          View connections
+        </button>
+        <a
+          mat-button
+          [attr.aria-label]="'Open task ' + item.taskDefinition.abbreviation"
+          [routerLink]="['/projects', project.id, 'dashboard', item.taskDefinition.abbreviation]"
+        >
+          Open task
+        </a>
+      </div>
+    </article>
+  }
+</section>
+
 <ngx-gantt
   #gantt
-  class="h-full overflow-hidden"
+  class="desktop-planner h-full overflow-hidden"
   [async]="false"
   [baselineItems]="unit.allowFlexibleDates ? baselineItems : []"
   [class.flexible-dates]="overlayLines"

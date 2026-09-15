@@ -8,7 +8,90 @@
           capacity. If you are unable to enrol in a tutorial, please contact your unit coordinator.
         </p>
       </div>
+
+      @if (filteredTutorials.length === 0) {
+        <section class="tutorial-empty" role="status">
+          <mat-icon aria-hidden="true">event_busy</mat-icon>
+          <h3>No tutorials available</h3>
+          <p>No tutorials are available for your campus or current enrolment.</p>
+        </section>
+      }
+
+      <section aria-label="Available tutorials" class="tutorial-card-list">
+        @for (tutorial of filteredTutorials; track tutorial.id) {
+          <mat-card
+            appearance="outlined"
+            class="tutorial-card"
+            [attr.aria-label]="'Tutorial ' + tutorial.abbreviation"
+          >
+            <mat-card-header>
+              <mat-card-title>{{ tutorialValue(tutorial.abbreviation) }}</mat-card-title>
+              <mat-card-subtitle>{{ tutorialStreamLabel(tutorial) }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <dl class="tutorial-card__details">
+                <div>
+                  <dt>Campus</dt>
+                  <dd>{{ tutorialCampusLabel(tutorial) }}</dd>
+                </div>
+                <div>
+                  <dt>Day</dt>
+                  <dd>{{ tutorialValue(tutorial.meetingDay) }}</dd>
+                </div>
+                <div>
+                  <dt>Time</dt>
+                  <dd>{{ shortTime(tutorial.meetingTime) }}</dd>
+                </div>
+                <div>
+                  <dt>Room</dt>
+                  <dd>{{ tutorialValue(tutorial.meetingLocation) }}</dd>
+                </div>
+                <div class="tutorial-card__tutor">
+                  <dt>Tutor</dt>
+                  <dd>{{ tutorialValue(tutorial.tutorName) }}</dd>
+                </div>
+              </dl>
+            </mat-card-content>
+
+            <mat-card-actions class="tutorial-card__actions">
+              @if (project.isEnrolledIn(tutorial)) {
+                @if (unit.allowStudentChangeTutorial) {
+                  <button
+                    mat-raised-button
+                    type="button"
+                    [attr.aria-label]="'Withdraw from ' + tutorial.abbreviation"
+                    (click)="switchToTutorial(tutorial)"
+                  >
+                    Withdraw
+                  </button>
+                } @else {
+                  <span class="tutorial-card__enrolled" role="status">Enrolled</span>
+                }
+              } @else if (unit.allowStudentChangeTutorial) {
+                <button
+                  color="primary"
+                  mat-raised-button
+                  type="button"
+                  [attr.aria-label]="
+                    (tutorial.hasCapacity() ? 'Enrol in ' : 'No places available in ') +
+                    tutorial.abbreviation
+                  "
+                  [disabled]="!tutorial.hasCapacity()"
+                  (click)="switchToTutorial(tutorial)"
+                >
+                  {{ tutorial.hasCapacity() ? 'Enrol' : 'Full' }}
+                </button>
+              } @else {
+                <span class="tutorial-card__managed">Enrolment is managed by the unit team</span>
+              }
+            </mat-card-actions>
+          </mat-card>
+        }
+      </section>
+
       <table
+        class="tutorial-table"
         mat-table
         matSort
         matSortActive="stream"
@@ -74,9 +157,7 @@
           <td *matCellDef="let tutorial" mat-cell>
             @if (project.isEnrolledIn(tutorial)) {
               @if (unit.allowStudentChangeTutorial) {
-                <button mat-raised-button (click)="project.switchToTutorial(tutorial)">
-                  Withdraw
-                </button>
+                <button mat-raised-button (click)="switchToTutorial(tutorial)">Withdraw</button>
               } @else {
                 <div
                   class="text-green-600"
@@ -92,7 +173,7 @@
                 color="primary"
                 mat-raised-button
                 [disabled]="!tutorial.hasCapacity()"
-                (click)="project.switchToTutorial(tutorial)"
+                (click)="switchToTutorial(tutorial)"
               >
                 Enrol
               </button>
