@@ -208,22 +208,24 @@ a {
     flex: none;
   }
 
+  // small two-line cards: name, then what it is for
   a {
     flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    min-height: 40px;
-    height: auto;
-    padding: 4px 12px 4px 4px;
-    border-radius: var(--ot-radius-pill);
+    align-items: flex-start;
+    gap: 10px;
+    width: 232px;
+    min-height: 0;
+    height: 100%;
+    padding: 10px 28px 10px 10px;
+    border-radius: var(--ot-radius-md);
     overflow-wrap: normal;
-    white-space: nowrap;
   }
 
   .essential-icon {
+    flex: none;
     width: 32px;
     height: 32px;
-    border-radius: var(--ot-radius-circle);
+    border-radius: var(--ot-radius-sm);
 
     mat-icon {
       width: 18px;
@@ -233,19 +235,22 @@ a {
   }
 
   .essential-copy {
+    gap: 2px;
     padding-right: 0;
 
     strong {
       font-size: 0.85rem;
     }
 
-    > span:not(.visually-hidden) {
-      display: none;
+    > span {
+      font-size: 0.75rem;
+      line-height: 1.35;
     }
   }
 
   .external-icon {
-    position: static;
+    top: 10px;
+    right: 10px;
     width: 14px;
     height: 14px;
     font-size: 14px;
@@ -257,5 +262,9 @@ a {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+
+    a {
+      width: 200px;
+    }
   }
 }
