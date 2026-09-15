@@ -55,6 +55,7 @@
     </mat-tab-group>
 
     <app-panel-collapse-button buttonClass="shrink-0 text-ot-muted"></app-panel-collapse-button>
+    <app-panel-fullscreen-button buttonClass="shrink-0 text-ot-muted"></app-panel-fullscreen-button>
     <button
       aria-label="Task actions"
       class="shrink-0 text-ot-muted"
@@ -100,6 +101,7 @@
       @case (DashboardViews.details) {
         <div
           class="task-details task-dashboard-details mobile-scroll-target flex flex-col gap-3 p-3"
+          [class.dashboard-reading-measure]="readingMeasure"
         >
           <f-task-ilos-card
             [iloContextType]="'TaskDefinition'"
@@ -197,20 +199,20 @@
       }
       @case (DashboardViews.submission_history) {
         @if (canAccessStaffViews) {
-          <div class="h-full">
+          <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
             <f-task-overseer-report [task]="task"></f-task-overseer-report>
           </div>
         }
       }
       @case (DashboardViews.staff_notes) {
         @if (canAccessStaffViews) {
-          <div class="h-full">
+          <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
             <f-staff-notes-view [project]="task.project"></f-staff-notes-view>
           </div>
         }
       }
       @case (DashboardViews.tutor_notes) {
-        <div class="h-full">
+        <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
           @if (canAccessTutorNotes) {
             <f-tutor-notes-view [task]="task"></f-tutor-notes-view>
           }

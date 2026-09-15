@@ -4,6 +4,7 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {BehaviorSubject} from 'rxjs';
 import {PanelCollapseButtonComponent} from './panel-collapse-button.component';
+import {PanelFullscreenButtonComponent} from './panel-fullscreen-button.component';
 import {PanelLayoutComponent} from './panel-layout.component';
 import {PanelStateService} from './panel-state.service';
 import {PanelComponent} from './panel.component';
@@ -11,7 +12,12 @@ import {PanelComponent} from './panel.component';
 // The real template is set in the test module below, so this one stays empty.
 @Component({
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [PanelLayoutComponent, PanelComponent, PanelCollapseButtonComponent],
+  imports: [
+    PanelLayoutComponent,
+    PanelComponent,
+    PanelCollapseButtonComponent,
+    PanelFullscreenButtonComponent,
+  ],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: '',
 })
@@ -42,7 +48,11 @@ const hostTemplate = `
         [minWidth]="420"
         [showHeader]="false"
       >
-        <app-panel-collapse-button></app-panel-collapse-button>
+        <div class="work-tabs">
+          <app-panel-collapse-button></app-panel-collapse-button>
+          <app-panel-fullscreen-button buttonClass="work-fullscreen"></app-panel-fullscreen-button>
+        </div>
+        <button class="work-action" type="button">Act</button>
         <p>work</p>
       </app-panel>
       <app-panel
@@ -57,6 +67,7 @@ const hostTemplate = `
         <p>comments</p>
       </app-panel>
     </app-panel-layout>
+    <div class="outside-panel"><app-panel-fullscreen-button></app-panel-fullscreen-button></div>
   `;
 
 describe('PanelLayoutComponent', () => {
@@ -267,6 +278,97 @@ describe('PanelLayoutComponent', () => {
 
     expect(fixture.componentInstance.fullscreen).toBeNull();
     expect(panel('list').hasAttribute('inert')).toBe(false);
+  });
+
+  describe('full-screen button', () => {
+    const fullscreenButton = (): HTMLButtonElement =>
+      panel('work').querySelector('.work-tabs app-panel-fullscreen-button button');
+
+    it('toggles the panel it sits in, with a label, pressed state and icon to match', () => {
+      create();
+      const toggle = fullscreenButton();
+      const spy = vi.spyOn(instance<PanelComponent>('work'), 'toggleFullscreen');
+
+      expect(toggle.getAttribute('aria-label')).toBe('Open Selected task full screen');
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+      expect(toggle.classList).toContain('mat-mdc-icon-button');
+      expect(toggle.classList).toContain('work-fullscreen');
+      expect(toggle.textContent.trim()).toBe('open_in_full');
+
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance.fullscreen).toBe('work');
+      expect(panel('work').classList).toContain('app-panel--fullscreen');
+      expect(panel('list').hasAttribute('inert')).toBe(true);
+      expect(toggle.getAttribute('aria-label')).toBe('Exit full screen');
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      expect(toggle.textContent.trim()).toBe('close_fullscreen');
+
+      toggle.click();
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.fullscreen).toBeNull();
+      expect(panel('work').classList).not.toContain('app-panel--fullscreen');
+    });
+
+    it('renders nothing outside a panel', () => {
+      create();
+      const outside = fixture.nativeElement.querySelector('.outside-panel');
+      expect(outside.querySelector('app-panel-fullscreen-button')).not.toBeNull();
+      expect(outside.querySelector('button')).toBeNull();
+    });
+
+    it('renders nothing while the panels are stacked', () => {
+      create();
+      stacked$.next({matches: true, breakpoints: {}});
+      fixture.detectChanges();
+      expect(fullscreenButton()).toBeNull();
+    });
+
+    it('leaves full screen on Esc and puts focus back on the button', async () => {
+      create();
+      fullscreenButton().click();
+      fixture.detectChanges();
+      panel('work').querySelector<HTMLButtonElement>('.work-action').focus();
+      expect(document.activeElement).toBe(panel('work').querySelector('.work-action'));
+
+      document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
+      fixture.detectChanges();
+      // Focus moves once the check that saw full screen end has finished.
+      await Promise.resolve();
+
+      expect(fixture.componentInstance.fullscreen).toBeNull();
+      expect(panel('work').classList).not.toContain('app-panel--fullscreen');
+      expect(document.activeElement).toBe(fullscreenButton());
+    });
+
+    it('keeps one panel full screen at a time, swapping from comments to the task', async () => {
+      create();
+      const comments = button('comments', 'Full screen Comments');
+      comments.click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.fullscreen).toBe('comments');
+
+      fullscreenButton().click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.fullscreen).toBe('work');
+      expect(fixture.nativeElement.querySelectorAll('.app-panel--fullscreen').length).toBe(1);
+      expect(panel('comments').classList).not.toContain('app-panel--fullscreen');
+      expect(panel('comments').hasAttribute('inert')).toBe(true);
+      expect(panel('work').hasAttribute('inert')).toBe(false);
+
+      button('comments', 'Full screen Comments').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.fullscreen).toBe('comments');
+      expect(fixture.nativeElement.querySelectorAll('.app-panel--fullscreen').length).toBe(1);
+      expect(fullscreenButton().getAttribute('aria-pressed')).toBe('false');
+    });
   });
 
   it('shows one panel at a time behind tabs when stacked, and ignores collapse', () => {

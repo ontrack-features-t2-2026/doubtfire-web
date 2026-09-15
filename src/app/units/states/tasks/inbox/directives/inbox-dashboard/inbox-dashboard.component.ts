@@ -7,12 +7,14 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import {MatTabChangeEvent} from '@angular/material/tabs';
 import {UnitRole} from 'src/app/api/models/doubtfire-model';
 import {Task} from 'src/app/api/models/task';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 
 enum InboxDashboardTab {
   submission = 0,
@@ -42,6 +44,8 @@ export class InboxDashboardComponent implements OnChanges, DoCheck {
   public currentIndex = InboxDashboardTab.submission;
 
   private lastVisiblePdfUrl: string | null | undefined = undefined;
+  /** The layout panel this dashboard sits in. The phone layout has none. */
+  private readonly panel = inject(PanelComponent, {optional: true});
 
   constructor(
     private fileDownloader: FileDownloaderService,
@@ -82,6 +86,11 @@ export class InboxDashboardComponent implements OnChanges, DoCheck {
     }
 
     this.fileDownloader.downloadFile(this.task.submittedFilesUrl(), 'submitted-files.zip');
+  }
+
+  /** Full screen, the reading tabs keep a comfortable line length in the middle. */
+  public get readingMeasure(): boolean {
+    return !!this.panel?.isFullscreen;
   }
 
   public get overseerEnabled(): boolean {

@@ -1,6 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatMenuModule} from '@angular/material/menu';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
@@ -11,6 +12,8 @@ import {UnitRole} from 'src/app/api/models/unit-role';
 import {User} from 'src/app/api/models/user/user';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {PanelFullscreenButtonComponent} from 'src/app/common/panel-layout/panel-fullscreen-button.component';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 import {InboxDashboardComponent} from './inbox-dashboard.component';
 
 function user(id: number, name: string): User {
@@ -179,5 +182,82 @@ describe('InboxDashboardComponent', () => {
 
       expect(urls).toEqual([null, null]);
     });
+  });
+});
+
+describe('InboxDashboardComponent full screen', () => {
+  let fixture: ComponentFixture<InboxDashboardComponent>;
+  let panel: {
+    panelTitle: string;
+    isFullscreen: boolean;
+    stacked: boolean;
+    toggleFullscreen: ReturnType<typeof vi.fn>;
+  } | null;
+
+  async function render(withPanel: boolean): Promise<void> {
+    panel = withPanel
+      ? {
+          panelTitle: 'Selected task',
+          isFullscreen: false,
+          stacked: false,
+          toggleFullscreen: vi.fn(),
+        }
+      : null;
+    await TestBed.configureTestingModule({
+      declarations: [InboxDashboardComponent],
+      imports: [MatMenuModule, PanelFullscreenButtonComponent],
+      providers: [
+        {provide: UserService, useValue: {currentUser: null}},
+        {provide: FileDownloaderService, useValue: {}},
+        ...(panel ? [{provide: PanelComponent, useValue: panel}] : []),
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(InboxDashboardComponent);
+    fixture.componentInstance.task = unstreamedTask(new Unit(), null);
+    fixture.detectChanges();
+  }
+
+  const toggle = (): HTMLButtonElement | null =>
+    fixture.nativeElement.querySelector('app-panel-fullscreen-button button');
+
+  it('puts the full-screen button in the tab bar, just before the more actions menu', async () => {
+    await render(true);
+
+    expect(toggle().getAttribute('aria-label')).toBe('Open Selected task full screen');
+    expect(toggle().getAttribute('aria-pressed')).toBe('false');
+    expect(toggle().classList).toContain('text-ot-muted');
+    expect(
+      toggle().closest('app-panel-fullscreen-button').nextElementSibling.getAttribute('aria-label'),
+    ).toBe('More actions for this task');
+
+    toggle().click();
+    expect(panel.toggleFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders no full-screen button when the dashboard is not in a panel', async () => {
+    await render(false);
+
+    expect(fixture.nativeElement.querySelector('app-panel-fullscreen-button')).not.toBeNull();
+    expect(toggle()).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="More actions for this task"]'),
+    ).not.toBeNull();
+  });
+
+  it('keeps Student notes to a reading width only while full screen', async () => {
+    await render(true);
+    const component = fixture.componentInstance;
+    component.onTabChange({index: 4} as never);
+    fixture.detectChanges();
+    const notes = () =>
+      fixture.nativeElement.querySelector('f-staff-notes-view').parentElement as HTMLElement;
+    expect(notes().classList).not.toContain('dashboard-reading-measure');
+
+    panel.isFullscreen = true;
+    fixture.detectChanges();
+    expect(notes().classList).toContain('dashboard-reading-measure');
+    expect(component.currentTab).toBe(4);
   });
 });

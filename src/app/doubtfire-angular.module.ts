@@ -215,6 +215,7 @@ import {NotificationsPageComponent} from './common/notifications-page/notificati
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
 import {PageContainerComponent} from './common/page-container/page-container.component';
 import {PanelCollapseButtonComponent} from './common/panel-layout/panel-collapse-button.component';
+import {PanelFullscreenButtonComponent} from './common/panel-layout/panel-fullscreen-button.component';
 import {PanelLayoutComponent} from './common/panel-layout/panel-layout.component';
 import {PanelComponent} from './common/panel-layout/panel.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
@@ -821,6 +822,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     PanelLayoutComponent,
     PanelComponent,
     PanelCollapseButtonComponent,
+    PanelFullscreenButtonComponent,
     ThemeToggleComponent,
     EmptyStateComponent,
     FlexLayoutModule,

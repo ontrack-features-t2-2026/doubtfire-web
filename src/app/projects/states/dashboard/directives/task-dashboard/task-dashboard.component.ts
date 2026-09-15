@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import {MatTabChangeEvent} from '@angular/material/tabs';
 import {ActivatedRoute} from '@angular/router';
@@ -15,6 +16,7 @@ import {Task} from 'src/app/api/models/task';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 import {SelectedTaskService} from '../../selected-task.service';
 import {DashboardViews} from '../../selected-task.service';
 
@@ -57,6 +59,13 @@ export class TaskDashboardComponent implements OnInit, OnChanges, OnDestroy {
     DashboardViews.tutor_notes,
   ];
   private readonly destroy$: Subject<void> = new Subject<void>();
+  /** The layout panel this dashboard sits in, when it sits in one. */
+  private readonly panel = inject(PanelComponent, {optional: true});
+
+  /** Full screen, the reading tabs keep a comfortable line length in the middle. */
+  public get readingMeasure(): boolean {
+    return !!this.panel?.isFullscreen;
+  }
 
   onTabChange(event: MatTabChangeEvent) {
     const view = this.tabViews[event.index];

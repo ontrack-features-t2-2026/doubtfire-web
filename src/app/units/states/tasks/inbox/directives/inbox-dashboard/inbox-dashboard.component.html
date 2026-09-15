@@ -57,6 +57,9 @@
       </mat-tab-group>
 
       <app-panel-collapse-button buttonClass="shrink-0 text-ot-muted"></app-panel-collapse-button>
+      <app-panel-fullscreen-button
+        buttonClass="shrink-0 text-ot-muted"
+      ></app-panel-fullscreen-button>
       <button
         aria-label="More actions for this task"
         class="shrink-0 text-ot-muted"
@@ -132,14 +135,14 @@
           </div>
         }
         @case (InboxDashboardTab.staffNotes) {
-          <div class="h-full">
+          <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
             <f-staff-notes-view
               [project]="$safeNavigationMigration(task?.project)"
             ></f-staff-notes-view>
           </div>
         }
         @case (InboxDashboardTab.tutorNotes) {
-          <div class="h-full">
+          <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
             @if (canAccessTutorNotes) {
               <f-tutor-notes-view [task]="task"></f-tutor-notes-view>
             }
@@ -151,7 +154,7 @@
           </div>
         }
         @case (InboxDashboardTab.overseer) {
-          <div class="h-full">
+          <div class="h-full" [class.dashboard-reading-measure]="readingMeasure">
             <f-task-overseer-report [task]="task"></f-task-overseer-report>
           </div>
         }

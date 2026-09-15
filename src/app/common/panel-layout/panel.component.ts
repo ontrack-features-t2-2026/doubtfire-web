@@ -20,8 +20,9 @@ import {PanelStateService} from './panel-state.service';
  * One rounded card in an `app-panel-layout`. Project actions into `[panelActions]` and a
  * note beside the title into `[panelSubtitle]`; everything else becomes the body.
  *
- * A panel without a header puts an `app-panel-collapse-button` in its content's own
- * control row, which finds this panel and collapses it.
+ * A panel without a header puts an `app-panel-collapse-button` or an
+ * `app-panel-fullscreen-button` in its content's own control row, which finds this panel
+ * and collapses it or takes it full screen.
  */
 @Component({
   selector: 'app-panel',
