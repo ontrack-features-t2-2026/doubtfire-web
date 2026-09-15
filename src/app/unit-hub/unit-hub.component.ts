@@ -1,5 +1,13 @@
 import {CommonModule} from '@angular/common';
-import {ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, inject} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
@@ -100,6 +108,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   now = Date.now();
   private clock?: ReturnType<typeof setInterval>;
   private readonly zone = inject(NgZone);
+  private readonly changes = inject(ChangeDetectorRef);
   private readonly snackBar = inject(MatSnackBar);
   /** An announcement or session named in the URL, opened once the feed has loaded. */
   private pendingLink: {announcement: number; session: number} | null = null;
@@ -229,10 +238,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   markRead(row: UnitAnnouncement): void {
     if (this.announcements.includes(row)) {
       this.readStatus.markRead([row]);
+      // the read state lives outside Angular's inputs, so ask for a redraw now rather
+      // than on the next unrelated change
+      this.changes.markForCheck();
     }
   }
   markAllRead(): void {
     this.readStatus.markRead(this.announcements.filter((row) => this.readStatus.isUnread(row)));
+    this.changes.markForCheck();
   }
   isManagedExternally(row: UnitAnnouncement): boolean {
     return row.managed_externally === true || row.source_provider === 'microsoft_teams';

@@ -251,17 +251,32 @@
   }
 }
 
-// Experiment: a solid state fill. The card re-points the text, border and surface
-// tokens at the fill's on-colour, so chips, facts and buttons inside follow along.
+// Experiment: a solid state fill. The fill is painted on the card first, then the
+// text, border and surface tokens are re-pointed at the on-colour for its children
+// only. Re-pointing them on the card itself made var(--ot-color-primary) resolve to
+// the on-colour and painted the card white.
 @mixin solid-card($tone, $on) {
-  --ot-color-text: #{$on};
-  --ot-color-text-muted: color-mix(in srgb, #{$on} 82%, transparent);
-  --ot-color-link: #{$on};
-  --ot-color-primary: #{$on};
-  --ot-color-border: color-mix(in srgb, #{$on} 35%, transparent);
-  --ot-color-surface: color-mix(in srgb, #{$on} 14%, transparent);
-  --ot-color-surface-raised: color-mix(in srgb, #{$on} 18%, transparent);
   border-color: transparent;
   background: #{$tone};
   color: #{$on};
+
+  > * {
+    --ot-color-text: #{$on};
+    --ot-color-text-muted: color-mix(in srgb, #{$on} 82%, transparent);
+    --ot-color-link: #{$on};
+    --ot-color-primary: #{$on};
+    --ot-color-border: color-mix(in srgb, #{$on} 35%, transparent);
+    --ot-color-surface: color-mix(in srgb, #{$on} 14%, transparent);
+    --ot-color-surface-raised: color-mix(in srgb, #{$on} 18%, transparent);
+    --ot-color-selected: color-mix(in srgb, #{$on} 20%, transparent);
+    --ot-color-selected-text: #{$on};
+  }
+
+  // state and type chips drop their own hue on a fill: an on-colour glass chip, so a
+  // green "Happening now" never sits green on green
+  :where(.chip, .unit-badge, .kind-chip) {
+    border-color: color-mix(in srgb, #{$on} 40%, transparent);
+    background: color-mix(in srgb, #{$on} 20%, transparent);
+    color: #{$on};
+  }
 }
