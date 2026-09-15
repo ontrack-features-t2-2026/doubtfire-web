@@ -195,8 +195,9 @@
 
 // A headerless panel's collapse control, a small round button on its inner edge.
 .app-panel__edge-toggle {
+  // top corner of the column, clear of the column's own header controls
   position: absolute;
-  top: 50%;
+  top: 8px;
   z-index: 210;
   display: flex;
   width: 24px;
@@ -211,7 +212,6 @@
   color: var(--ot-color-text-muted);
   cursor: pointer;
   opacity: 0.7;
-  transform: translateY(-50%);
   transition:
     opacity 120ms ease,
     color 120ms ease;
@@ -235,9 +235,9 @@
 }
 
 .app-panel__edge-toggle--end {
-  right: -12px;
+  right: 8px;
 }
 
 .app-panel__edge-toggle--start {
-  left: -12px;
+  left: 8px;
 }
