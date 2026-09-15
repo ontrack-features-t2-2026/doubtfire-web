@@ -98,10 +98,13 @@ export class ExtensionModalComponent {
     return this.data.task.localDueDate();
   }
 
-  /** Whole days the task is past its due date, or 0 when it is not overdue. */
+  /**
+   * Whole days the task is past its due date, or 0 when it is not overdue. Rounds down,
+   * like the "Passed Due Date By" banner on the task page.
+   */
   public get daysPastDue(): number {
     const diff = Date.now() - this.dueDate.getTime();
-    return diff > 0 ? Math.ceil(diff / (1000 * 3600 * 24)) : 0;
+    return diff > 0 ? Math.floor(diff / (1000 * 3600 * 24)) : 0;
   }
 
   public get reasonLength(): number {
@@ -115,9 +118,17 @@ export class ExtensionModalComponent {
     return this.reasonLength >= this.reasonWarnLength ? 'warn' : 'ok';
   }
 
+  /**
+   * False once the final deadline has passed, when the earliest date is after the latest.
+   * The request then goes out for the earliest date, as it always has.
+   */
+  public get hasDateRange(): boolean {
+    return !this.maxDate || !isAfter(startOfDay(this.minDate), this.maxDate);
+  }
+
   /** The allowed range for the new due date, e.g. "Sat 12 Sep to Thu 1 Oct". */
   public get dateRangeText(): string {
-    if (!this.minDate || !this.maxDate) {
+    if (!this.minDate || !this.maxDate || !this.hasDateRange) {
       return '';
     }
     return `${this.formatShortDate(this.minDate)} to ${this.formatShortDate(this.maxDate)}`;
@@ -129,6 +140,9 @@ export class ExtensionModalComponent {
   }
 
   public get isDateInRange(): boolean {
+    if (!this.hasDateRange) {
+      return true;
+    }
     if (this.minDate && isBefore(this.extensionDate, startOfDay(this.minDate))) {
       return false;
     }
@@ -148,7 +162,7 @@ export class ExtensionModalComponent {
    * Requests are made in whole weeks, so the length is shown in weeks.
    */
   public get extensionSummary(): string {
-    if (!this.dateChanged || this.dateNeedsAttention) {
+    if ((!this.dateChanged && this.hasDateRange) || this.dateNeedsAttention) {
       return '';
     }
     const weeks = this.extensionDuration;
@@ -157,7 +171,10 @@ export class ExtensionModalComponent {
 
   public get canSubmit(): boolean {
     return (
-      this.extensionData.valid && this.dateChanged && !this.dateNeedsAttention && !this.submitting
+      this.extensionData.valid &&
+      (this.dateChanged || !this.hasDateRange) &&
+      !this.dateNeedsAttention &&
+      !this.submitting
     );
   }
 

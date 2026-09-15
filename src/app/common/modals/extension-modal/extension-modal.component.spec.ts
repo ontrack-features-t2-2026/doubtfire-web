@@ -163,9 +163,21 @@ describe('ExtensionModalComponent presentation', () => {
     expect(onTime.dateRangeText).toBe('Sat 12 Sep to Thu 1 Oct');
     expect(onTime.daysPastDue).toBe(0);
 
-    vi.setSystemTime(new Date(2026, 8, 19, 12, 0));
+    vi.setSystemTime(new Date(2026, 8, 20, 12, 0));
     const late = buildComponent(undefined, buildTask(DUE, DEADLINE)).component;
     expect(late.daysPastDue).toBe(8);
+  });
+
+  it('requests the earliest date without a pick once the final deadline has passed', () => {
+    vi.setSystemTime(new Date(2026, 9, 3, 12, 0));
+    const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+
+    expect(component.hasDateRange).toBe(false);
+    expect(component.dateRangeText).toBe('');
+    expect(component.extensionSummary).toBe('+4 weeks · Sun 4 Oct');
+
+    component.extensionData.controls.extensionReason.setValue(REASON);
+    expect(component.canSubmit).toBe(true);
   });
 
   it('keeps submit disabled until the reason and a date in range are both valid', () => {
@@ -196,7 +208,7 @@ describe('ExtensionModalComponent template', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers({toFake: ['Date']});
-    vi.setSystemTime(new Date(2026, 8, 19, 12, 0));
+    vi.setSystemTime(new Date(2026, 8, 20, 12, 0));
 
     await TestBed.configureTestingModule({
       declarations: [ExtensionModalComponent],

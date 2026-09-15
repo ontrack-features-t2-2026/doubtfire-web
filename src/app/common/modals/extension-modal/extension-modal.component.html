@@ -73,6 +73,8 @@
       <mat-datepicker #extensionDatePicker></mat-datepicker>
       @if (dateRangeText) {
         <mat-hint>Choose a date from {{ dateRangeText }}</mat-hint>
+      } @else if (!hasDateRange) {
+        <mat-hint>The final deadline has passed, so the earliest date is requested</mat-hint>
       }
     </mat-form-field>
 
