@@ -15,6 +15,7 @@ import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
 import {AnnouncementReadStore} from './announcement-read.store';
 import {HubMarkdownPipe, HubPlainTextPipe} from './hub-markdown';
+import {SeenInViewDirective} from './seen-in-view.directive';
 import {SessionTiming, sessionTiming, upNextSession} from './session-timing';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
@@ -51,6 +52,7 @@ import {UnitHubService} from './unit-hub.service';
     RouterLink,
     StudyEssentialsComponent,
     TeamsMeetingComposerComponent,
+    SeenInViewDirective,
     HubMarkdownPipe,
     HubPlainTextPipe,
   ],

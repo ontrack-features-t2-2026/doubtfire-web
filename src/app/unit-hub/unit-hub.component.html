@@ -734,6 +734,7 @@
               [class.is-pinned]="announcement.pinned"
               [class.is-read]="!unread"
               [class.is-unread]="unread"
+              (hubSeenInView)="unread && markRead(announcement)"
             >
               <div class="card-meta">
                 @if (unread) {
