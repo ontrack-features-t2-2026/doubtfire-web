@@ -115,13 +115,21 @@
   }
 }
 
-// A cancelled item: sunken toward the page ground, an error-tinted edge and a 4px error
-// accent bar on the left. No dashed edge and no elevation.
+// A state tint over the whole card: a wash of the state colour on the surface and an
+// edge in the same hue. Used instead of a side accent bar.
+@mixin tinted-card($tone, $wash: 10%, $edge: 45%) {
+  border-style: solid;
+  border-color: color-mix(in srgb, #{$tone} #{$edge}, var(--ot-color-border));
+  background: color-mix(in srgb, #{$tone} #{$wash}, var(--ot-color-surface));
+}
+
+// A cancelled item recedes: sunken toward the page, a plain edge, no elevation. The
+// banner and struck title say what happened, so the card itself stays quiet.
 @mixin cancelled-card {
   border-style: solid;
-  border-color: color-mix(in srgb, var(--ot-color-error) 40%, var(--ot-color-border));
-  background: color-mix(in srgb, var(--ot-color-surface) 40%, var(--ot-color-page));
-  box-shadow: inset 4px 0 0 var(--ot-color-error);
+  border-color: var(--ot-color-border);
+  background: color-mix(in srgb, var(--ot-color-surface) 45%, var(--ot-color-page));
+  box-shadow: none;
 
   :where(h2, h3, h4) {
     color: var(--ot-color-text);
@@ -138,12 +146,12 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 6px 10px;
-  border-radius: var(--ot-radius-sm);
-  background: color-mix(in srgb, var(--ot-color-error) 14%, var(--ot-color-surface));
-  color: color-mix(in srgb, var(--ot-color-error) 60%, var(--ot-color-text));
-  font-size: 0.86rem;
-  font-weight: 650;
+  // a quiet line, not a filled strip: the state is stated, not shouted
+  padding: 0;
+  background: none;
+  color: color-mix(in srgb, var(--ot-color-error) 55%, var(--ot-color-text));
+  font-size: 0.84rem;
+  font-weight: 600;
   line-height: 1.4;
 
   mat-icon {

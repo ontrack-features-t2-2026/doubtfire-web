@@ -119,9 +119,8 @@ small {
     margin: 0;
   }
 }
-// a cancelled session: accent bar and struck title in the header, the banner under it
+// a cancelled session: struck title in the header, the banner under it
 .details-header.is-cancelled {
-  box-shadow: inset 4px 0 0 var(--ot-color-error);
   h2[mat-dialog-title] {
     text-decoration: line-through;
     text-decoration-thickness: 1px;
