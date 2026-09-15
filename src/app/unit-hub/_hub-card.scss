@@ -130,6 +130,15 @@
   border-color: var(--ot-color-border);
   background: color-mix(in srgb, var(--ot-color-surface) 45%, var(--ot-color-page));
   box-shadow: none;
+  // faded back so live sessions lead; full strength again when someone points at
+  // it or tabs into it, so it is still easy to read on purpose
+  opacity: 0.55;
+  transition: opacity 160ms ease;
+
+  &:hover,
+  &:focus-within {
+    opacity: 1;
+  }
 
   :where(h2, h3, h4) {
     color: var(--ot-color-text);
@@ -240,4 +249,19 @@
       border-top: 1px solid var(--hub-card-border);
     }
   }
+}
+
+// Experiment: a solid state fill. The card re-points the text, border and surface
+// tokens at the fill's on-colour, so chips, facts and buttons inside follow along.
+@mixin solid-card($tone, $on) {
+  --ot-color-text: #{$on};
+  --ot-color-text-muted: color-mix(in srgb, #{$on} 82%, transparent);
+  --ot-color-link: #{$on};
+  --ot-color-primary: #{$on};
+  --ot-color-border: color-mix(in srgb, #{$on} 35%, transparent);
+  --ot-color-surface: color-mix(in srgb, #{$on} 14%, transparent);
+  --ot-color-surface-raised: color-mix(in srgb, #{$on} 18%, transparent);
+  border-color: transparent;
+  background: #{$tone};
+  color: #{$on};
 }

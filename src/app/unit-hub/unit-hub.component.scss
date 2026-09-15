@@ -826,8 +826,8 @@ fieldset {
 }
 .announcement-card.is-unread {
   // unread: the whole card takes a light primary wash and edge
-  @include hub.tinted-card(var(--ot-color-primary), 4%, 22%);
-  box-shadow: none;
+  @include hub.solid-card(var(--ot-color-primary), var(--ot-color-on-primary));
+  box-shadow: var(--ot-elevation-1);
   .details-title {
     font-weight: 750;
   }
@@ -966,12 +966,12 @@ fieldset {
   }
 }
 .session-card[data-timing='now'] {
-  @include hub.tinted-card(var(--ot-color-success), 7%, 32%);
+  @include hub.solid-card(var(--ot-status-complete), var(--ot-status-complete-on));
   box-shadow: var(--ot-elevation-1);
 }
 .session-card[data-timing='soon'] {
-  @include hub.tinted-card(var(--ot-color-primary), 4%, 22%);
-  box-shadow: none;
+  @include hub.solid-card(var(--ot-color-primary), var(--ot-color-on-primary));
+  box-shadow: var(--ot-elevation-1);
 }
 
 // ---- Up next ----
