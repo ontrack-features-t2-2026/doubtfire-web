@@ -13,6 +13,9 @@
   --hub-space-5: 24px;
   --hub-space-6: 32px;
   --hub-space-7: 48px;
+  // every Unit Hub button: the app's filled or outlined style, at a 44px touch height
+  --mat-button-filled-container-height: 44px;
+  --mat-button-outlined-container-height: 44px;
 }
 .unit-hub {
   max-width: 1240px;
@@ -144,23 +147,11 @@ mat-icon {
   align-items: center;
   gap: var(--hub-space-2);
 }
-// one height, radius and icon size for every header action, so outlined and
-// filled buttons read as one set
-.hub-action.mat-mdc-button-base {
-  height: 44px;
-  padding-inline: 16px;
-  border-radius: var(--ot-radius-pill);
-  font-weight: 600;
-  mat-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 6px;
-    font-size: 20px;
-  }
-}
-.hub-action--primary.mat-mdc-button-base:not(:disabled) {
-  background: var(--ot-color-primary);
-  color: var(--ot-color-on-primary, #fff);
+// one icon size for every header action; shape and colour come from the app button styles
+.hub-action.mat-mdc-button-base mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
 }
 .narrow-only {
   display: none;
@@ -632,9 +623,7 @@ mat-icon {
 }
 .show-more.mat-mdc-button-base {
   width: 100%;
-  height: 44px;
   margin-top: var(--hub-space-2);
-  border-radius: var(--ot-radius-pill);
 }
 
 // ---- Manage panel ----
@@ -838,7 +827,6 @@ fieldset {
 // ---- Read status (student feed only) ----
 .section-heading .mark-all-read.mat-mdc-button-base {
   margin-left: auto;
-  border-radius: var(--ot-radius-pill);
 }
 .announcement-card.is-unread {
   // a 4px primary accent bar on the left, inside the rounded edge

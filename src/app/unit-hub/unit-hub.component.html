@@ -46,7 +46,7 @@
             {{ managing ? 'View student feed' : 'Manage updates' }}
           </button>
           <button
-            class="hub-action hub-action--primary wide-only"
+            class="hub-action wide-only"
             mat-flat-button
             type="button"
             [disabled]="saving"
@@ -55,8 +55,8 @@
             <mat-icon aria-hidden="true">campaign</mat-icon> New announcement
           </button>
           <button
-            class="hub-action hub-action--primary wide-only"
-            mat-flat-button
+            class="hub-action wide-only"
+            mat-stroked-button
             type="button"
             [disabled]="saving"
             (click)="startSession()"
@@ -142,7 +142,9 @@
       <span class="state-icon"><mat-icon aria-hidden="true">cloud_off</mat-icon></span>
       <h2>Updates are unavailable</h2>
       <p>{{ loadError }}</p>
-      <button mat-flat-button type="button" (click)="reload()">Try again</button>
+      <button mat-flat-button type="button" (click)="reload()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>Try again
+      </button>
     </section>
   } @else if (managing) {
     <section aria-labelledby="manage-title" class="manage-panel">
@@ -752,7 +754,10 @@
               type="button"
               (click)="showAllAnnouncements = !showAllAnnouncements"
             >
-              {{
+              <mat-icon aria-hidden="true">{{
+                showAllAnnouncements ? 'expand_less' : 'expand_more'
+              }}</mat-icon
+              >{{
                 showAllAnnouncements
                   ? 'Show fewer'
                   : 'Show all ' + announcements.length + ' announcements'
@@ -934,7 +939,10 @@
               type="button"
               (click)="showAllSessionDays = !showAllSessionDays"
             >
-              {{
+              <mat-icon aria-hidden="true">{{
+                showAllSessionDays ? 'expand_less' : 'expand_more'
+              }}</mat-icon
+              >{{
                 showAllSessionDays
                   ? 'Show fewer days'
                   : 'Show all ' + sessionGroups.length + ' days'

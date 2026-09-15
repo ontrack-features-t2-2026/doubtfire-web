@@ -8,6 +8,9 @@
   min-height: 0;
   max-height: 90dvh;
   color: var(--ot-color-text);
+  // every Unit Hub button: the app's filled or outlined style, at a 44px touch height
+  --mat-button-filled-container-height: 44px;
+  --mat-button-outlined-container-height: 44px;
 }
 .details-header {
   display: flex;

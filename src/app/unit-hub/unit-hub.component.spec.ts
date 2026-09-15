@@ -129,8 +129,8 @@ describe('Unit Hub route, forms and rendered content', () => {
     const {harness, component, element} = await open();
     expect(element.textContent).toContain('Updates are unavailable');
     expect(component.sessions).toEqual([]);
-    const retry = Array.from(element.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Try again',
+    const retry = Array.from(element.querySelectorAll('button')).find((button) =>
+      button.textContent.trim().endsWith('Try again'),
     );
     retry.click();
     harness.detectChanges();

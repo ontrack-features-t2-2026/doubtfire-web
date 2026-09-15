@@ -5,6 +5,9 @@
 :host {
   display: block;
   min-width: 0;
+  // every Unit Hub button: the app's filled or outlined style, at a 44px touch height
+  --mat-button-filled-container-height: 44px;
+  --mat-button-outlined-container-height: 44px;
 }
 
 // One card. Inside it, labelled groups separated by spacing, never by rules.
