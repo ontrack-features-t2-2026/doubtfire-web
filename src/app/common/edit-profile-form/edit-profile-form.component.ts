@@ -90,6 +90,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       this.user.displayPeerProgress = true;
     }
 
+    // The same for Unit Hub updates, which are on in the bell and off everywhere
+    // else until the user opts in.
+    this.user.receiveUnitHubNotifications ??= true;
+    this.user.receiveUnitHubEmailNotifications ??= false;
+    this.user.receiveUnitHubPushNotifications ??= false;
+    this.user.receiveUnitHubSessionReminders ??= false;
+
     if (!this.user.hasRunFirstTimeSetup) {
       this.user.optInToResearch = false;
       this.user.receiveFeedbackNotifications = true;

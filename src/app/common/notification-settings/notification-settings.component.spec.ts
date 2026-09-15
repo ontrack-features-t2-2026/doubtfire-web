@@ -15,6 +15,10 @@ const makeUser = (): User =>
     receiveTaskNotifications: false,
     receiveFeedbackNotifications: false,
     receivePortfolioNotifications: false,
+    receiveUnitHubNotifications: true,
+    receiveUnitHubEmailNotifications: false,
+    receiveUnitHubPushNotifications: false,
+    receiveUnitHubSessionReminders: false,
   }) as User;
 
 describe('NotificationSettingsComponent', () => {
@@ -39,15 +43,70 @@ describe('NotificationSettingsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('shows the three notification preferences', async () => {
+  it('shows the four notification categories and the Unit Hub channels', async () => {
     const loader = TestbedHarnessEnvironment.loader(fixture);
     const checkboxes = await loader.getAllHarnesses(MatCheckboxHarness);
 
-    expect(checkboxes.length).toBe(3);
+    expect(await Promise.all(checkboxes.map((checkbox) => checkbox.getLabelText()))).toEqual([
+      'Task notifications',
+      'Feedback notifications',
+      'Portfolio notifications',
+      'Unit Hub updates',
+      'Email',
+      'Push',
+      'Session reminders',
+    ]);
+  });
 
-    expect(await checkboxes[0].getLabelText()).toBe('Task notifications');
-    expect(await checkboxes[1].getLabelText()).toBe('Feedback notifications');
-    expect(await checkboxes[2].getLabelText()).toBe('Portfolio notifications');
+  it('renders the Unit Hub row like the other categories', () => {
+    const rows: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.notification-setting'),
+    );
+    const hubRow = rows[3];
+
+    expect(rows.length).toBe(4);
+    expect(hubRow.querySelector('small')?.id).toBe('unit-hub-notification-description');
+    expect(hubRow.textContent).toContain('New and changed announcements');
+    expect(hubRow.querySelector('[role="group"]')?.getAttribute('aria-label')).toBe(
+      'Also send Unit Hub updates by',
+    );
+  });
+
+  it('starts Unit Hub updates in the app only, and saves each channel to its own field', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const hub = await loader.getHarness(MatCheckboxHarness.with({label: 'Unit Hub updates'}));
+    const email = await loader.getHarness(MatCheckboxHarness.with({label: 'Email'}));
+    const push = await loader.getHarness(MatCheckboxHarness.with({label: 'Push'}));
+    const reminders = await loader.getHarness(
+      MatCheckboxHarness.with({label: 'Session reminders'}),
+    );
+
+    expect(await hub.isChecked()).toBe(true);
+    expect(await email.isChecked()).toBe(false);
+    expect(await push.isChecked()).toBe(false);
+    expect(await reminders.isChecked()).toBe(false);
+
+    await email.check();
+    await reminders.check();
+
+    expect(component.user.receiveUnitHubEmailNotifications).toBe(true);
+    expect(component.user.receiveUnitHubPushNotifications).toBe(false);
+    expect(component.user.receiveUnitHubSessionReminders).toBe(true);
+  });
+
+  it('turns the Unit Hub channels off while the category is off', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const hub = await loader.getHarness(MatCheckboxHarness.with({label: 'Unit Hub updates'}));
+
+    await hub.uncheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.user.receiveUnitHubNotifications).toBe(false);
+    for (const label of ['Email', 'Push', 'Session reminders']) {
+      const channel = await loader.getHarness(MatCheckboxHarness.with({label}));
+      expect(await channel.isDisabled()).toBe(true);
+    }
   });
 
   it('updates the correct user preference when toggled', async () => {
@@ -85,19 +144,23 @@ describe('NotificationSettingsComponent', () => {
     expect(text).toContain('help requests and extension requests');
     expect(text).toContain('New comments, feedback, and review outcomes.');
     expect(text).toContain('Portfolio processing and assessment updates.');
+    expect(text).toContain('Session reminders arrive 30 minutes before a session starts.');
   });
 
   it('associates each checkbox with its help text', () => {
-    const inputs = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
-    const descriptions = fixture.nativeElement.querySelectorAll('.notification-setting small');
+    const inputs = fixture.nativeElement.querySelectorAll(
+      '.notification-setting > mat-checkbox input[type="checkbox"]',
+    );
+    const descriptions = fixture.nativeElement.querySelectorAll('.notification-setting small[id]');
     const descriptionIds = [
       'task-notification-description',
       'feedback-notification-description',
       'portfolio-notification-description',
+      'unit-hub-notification-description',
     ];
 
-    expect(inputs.length).toBe(3);
-    expect(descriptions.length).toBe(3);
+    expect(inputs.length).toBe(4);
+    expect(descriptions.length).toBe(4);
 
     descriptionIds.forEach((id, index) => {
       expect(descriptions[index].id).toBe(id);

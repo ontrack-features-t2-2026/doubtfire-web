@@ -59,4 +59,54 @@
       Portfolio processing and assessment updates.
     </small>
   </div>
+
+  <div class="notification-setting">
+    <mat-checkbox
+      aria-describedby="unit-hub-notification-description"
+      color="primary"
+      [ngModelOptions]="{standalone: true}"
+      [(ngModel)]="user.receiveUnitHubNotifications"
+    >
+      Unit Hub updates
+    </mat-checkbox>
+    <small class="notification-setting__help" id="unit-hub-notification-description">
+      New and changed announcements, and sessions that move or are cancelled. Shown here in OnTrack.
+      Choose below if you also want them sent to you.
+    </small>
+
+    <div
+      aria-label="Also send Unit Hub updates by"
+      class="notification-setting__channels"
+      role="group"
+    >
+      <mat-checkbox
+        color="primary"
+        [disabled]="!user.receiveUnitHubNotifications"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="user.receiveUnitHubEmailNotifications"
+      >
+        Email
+      </mat-checkbox>
+      <mat-checkbox
+        color="primary"
+        [disabled]="!user.receiveUnitHubNotifications"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="user.receiveUnitHubPushNotifications"
+      >
+        Push
+      </mat-checkbox>
+      <mat-checkbox
+        color="primary"
+        [disabled]="!user.receiveUnitHubNotifications"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="user.receiveUnitHubSessionReminders"
+      >
+        Session reminders
+      </mat-checkbox>
+    </div>
+    <small class="notification-setting__help">
+      Push only reaches browsers where push notifications are turned on. Session reminders arrive 30
+      minutes before a session starts.
+    </small>
+  </div>
 </section>

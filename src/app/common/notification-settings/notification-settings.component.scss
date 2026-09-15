@@ -36,6 +36,17 @@
   width: 100%;
 }
 
+.notification-setting__channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  padding-inline-start: 32px;
+}
+
+.notification-setting__channels mat-checkbox {
+  width: auto;
+}
+
 .notification-setting__help {
   color: var(--ot-color-text-muted);
   line-height: 1.4;
