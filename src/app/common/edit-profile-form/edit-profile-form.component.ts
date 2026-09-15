@@ -186,6 +186,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     this.authService.signOut();
   }
 
+  /** The name shown in the profile header: preferred or first name, then last name. */
+  public get displayName(): string {
+    const first = this.user?.nickname?.trim() || this.user?.firstName?.trim() || '';
+    const name = [first, this.user?.lastName?.trim()].filter(Boolean).join(' ');
+    return name || this.user?.username || '';
+  }
+
   public get newUser(): boolean {
     return this.mode === 'new';
   }

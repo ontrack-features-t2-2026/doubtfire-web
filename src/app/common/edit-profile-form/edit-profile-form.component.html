@@ -1,77 +1,131 @@
 <form
   #form="ngForm"
-  class="flex flex-col items-start justify-center"
-  [ngClass]="{'p-10': modal}"
+  class="profile-form"
+  [class.profile-form--modal]="modal"
   (ngSubmit)="submit(form)"
 >
-  <div class="main-container flex w-full flex-row items-start justify-start">
-    <div class="main flex w-full flex-col items-start justify-start">
-      <!-- avatar -->
-      <div class="mb-[25px] flex w-full flex-row items-center justify-between">
-        <div class="flex flex-row items-center justify-between">
-          <a
-            aria-label="Change your picture on Gravatar (opens in a new tab)"
-            class="ml-[20px]"
-            href="https://gravatar.com/connect/?source=_signup/"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <user-icon style="margin-right: 25px" [size]="80" [user]="user"></user-icon
-          ></a>
+  <div class="profile-stack">
+    <header class="profile-card profile-header">
+      <a
+        aria-label="Change your picture on Gravatar (opens in a new tab)"
+        class="profile-header__avatar"
+        href="https://gravatar.com/connect/?source=_signup/"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <user-icon [size]="64" [user]="user"></user-icon>
+      </a>
 
-          <div>
-            <h1>{{ user?.firstName }}</h1>
-            Set up your {{ externalName.value }} profile
-          </div>
-        </div>
+      <div class="profile-header__text">
+        <h1>{{ displayName }}</h1>
+        @if (mode === 'create') {
+          <p class="profile-header__subtitle">Set up your {{ externalName.value }} profile</p>
+        }
+        @if (user?.username || user?.email) {
+          <p class="profile-header__meta">
+            @if (user?.username) {
+              <span>{{ user.username }}</span>
+            }
+            @if (user?.email) {
+              <span>{{ user.email }}</span>
+            }
+          </p>
+        }
+      </div>
+    </header>
+
+    <section aria-labelledby="account-information-title" class="profile-card account-information">
+      <div class="profile-card__heading">
+        <h2 id="account-information-title"><mat-icon aria-hidden="true">badge</mat-icon>Account</h2>
+        @if (!newUser) {
+          <p>
+            These details identify your sign-in account. Student ID cannot be changed from your
+            profile.
+          </p>
+        }
       </div>
 
-      @if (newUser) {
-        <div class="m-0 flex size-full min-h-full min-w-full flex-row">
-          <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
+      @if (!newUser) {
+        <dl>
+          <div>
+            <dt>Username</dt>
+            <dd>{{ user.username }}</dd>
+          </div>
+          @if (user.systemRole === 'Student' && !canEditStudentId) {
+            <div>
+              <dt>Student ID</dt>
+              <dd>{{ user.studentId || 'Not supplied' }}</dd>
+            </div>
+          }
+          @if (!canEditEmail) {
+            <div>
+              <dt>Institutional / sign-in email</dt>
+              <dd>{{ user.email }}</dd>
+            </div>
+          }
+        </dl>
+      }
+
+      <div class="profile-fields">
+        @if (newUser) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Username</mat-label>
             <input autocomplete="username" matInput name="username" [(ngModel)]="user.username" />
           </mat-form-field>
-        </div>
-      } @else {
-        <section aria-labelledby="account-information-title" class="account-information">
-          <div>
-            <h2 id="account-information-title">Account information</h2>
-            <p>
-              These details identify your sign-in account. Student ID cannot be changed from your
-              profile.
-            </p>
-          </div>
-          <dl>
-            <div>
-              <dt>Username</dt>
-              <dd>{{ user.username }}</dd>
-            </div>
-            @if (user.systemRole === 'Student' && !canEditStudentId) {
-              <div>
-                <dt>Student ID</dt>
-                <dd>{{ user.studentId || 'Not supplied' }}</dd>
-              </div>
-            }
-            @if (!canEditEmail) {
-              <div>
-                <dt>Institutional / sign-in email</dt>
-                <dd>{{ user.email }}</dd>
-              </div>
-            }
-          </dl>
-          @if (user.institutionalIdentityManaged) {
-            <p class="account-information__managed">
-              Your institution manages sign-in identity changes. Contact support if these details
-              are incorrect.
-            </p>
-          }
-        </section>
-      }
+        }
 
-      <div class="profile-name-fields">
-        <mat-form-field appearance="outline">
-          <mat-label>First Name</mat-label>
+        @if (user.systemRole === 'Student') {
+          @if (canEditStudentId) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Student ID</mat-label>
+              <input
+                #studentIdModel="ngModel"
+                matInput
+                name="student_id"
+                required
+                [(ngModel)]="user.studentId"
+              />
+              @if (studentIdModel.hasError('required')) {
+                <mat-error>Student ID is required</mat-error>
+              }
+            </mat-form-field>
+          }
+        }
+
+        @if (canSeeSystemRole) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>System role</mat-label>
+            <mat-select
+              name="systemRole"
+              [disabled]="!canEditSystemRole"
+              [(ngModel)]="user.systemRole"
+            >
+              <mat-option value="Admin">Administrator</mat-option>
+              <mat-option value="Convenor">Convenor</mat-option>
+              <mat-option value="Tutor">Tutor</mat-option>
+              <mat-option value="Student">Student</mat-option>
+              <mat-option value="Auditor">Auditor</mat-option>
+            </mat-select>
+          </mat-form-field>
+        }
+      </div>
+
+      @if (!newUser && user.institutionalIdentityManaged) {
+        <p class="account-information__managed">
+          Your institution manages sign-in identity changes. Contact support if these details are
+          incorrect.
+        </p>
+      }
+    </section>
+
+    <section aria-labelledby="profile-name-title" class="profile-card">
+      <div class="profile-card__heading">
+        <h2 id="profile-name-title"><mat-icon aria-hidden="true">person</mat-icon>Your name</h2>
+      </div>
+
+      <div class="profile-fields profile-name-fields">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>First name</mat-label>
           <input
             #firstModel="ngModel"
             autocomplete="given-name"
@@ -86,8 +140,8 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Second Name</mat-label>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Last name</mat-label>
           <input
             #lastModel="ngModel"
             autocomplete="family-name"
@@ -97,14 +151,12 @@
             [(ngModel)]="user.lastName"
           />
           @if (lastModel.hasError('required')) {
-            <mat-error>Second name is required</mat-error>
+            <mat-error>Last name is required</mat-error>
           }
         </mat-form-field>
-      </div>
 
-      <div class="m-0 flex size-full min-h-full min-w-full flex-row">
-        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
-          <mat-label>Preferred Name</mat-label>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Preferred name</mat-label>
           <input
             autocomplete="nickname"
             matInput
@@ -112,118 +164,77 @@
             [(ngModel)]="user.nickname"
           />
         </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" [hidden]="!customPronouns">
+          <mat-label>Custom pronouns</mat-label>
+          <input
+            matInput
+            maxlength="25"
+            name="custom_pronouns"
+            type="text"
+            [required]="customPronouns"
+            [(ngModel)]="user.pronouns"
+          />
+        </mat-form-field>
       </div>
+    </section>
 
-      <mat-form-field
-        appearance="outline"
-        class="m-0 size-full min-h-full min-w-full"
-        [hidden]="!customPronouns"
-      >
-        <mat-label>Custom Pronouns</mat-label>
-        <input
-          matInput
-          maxlength="25"
-          name="custom_pronouns"
-          type="text"
-          [required]="customPronouns"
-          [(ngModel)]="user.pronouns"
-        />
-      </mat-form-field>
+    @if (canEditEmail) {
+      <section aria-labelledby="profile-contact-title" class="profile-card">
+        <div class="profile-card__heading">
+          <h2 id="profile-contact-title"><mat-icon aria-hidden="true">mail</mat-icon>Contact</h2>
+        </div>
 
-      @if (user.systemRole === 'Student') {
-        @if (canEditStudentId) {
-          <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
-            <mat-label>Student ID</mat-label>
+        <div class="profile-fields">
+          <mat-form-field
+            appearance="outline"
+            class="profile-fields__wide"
+            subscriptSizing="dynamic"
+          >
+            <mat-label>Email</mat-label>
             <input
-              #studentIdModel="ngModel"
+              #emailModel="ngModel"
+              autocomplete="email"
+              email
+              inputmode="email"
               matInput
-              name="student_id"
+              name="email"
               required
-              [(ngModel)]="user.studentId"
+              type="email"
+              [(ngModel)]="user.email"
             />
-            @if (studentIdModel.hasError('required')) {
-              <mat-error>Student ID is required</mat-error>
+            @if (emailModel.hasError('required')) {
+              <mat-error>Email is required</mat-error>
+            }
+            @if (emailModel.hasError('email')) {
+              <mat-error>Enter a valid email address</mat-error>
             }
           </mat-form-field>
-        }
-      }
-
-      @if (canEditEmail) {
-        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
-          <mat-label>Email</mat-label>
-          <input
-            #emailModel="ngModel"
-            autocomplete="email"
-            email
-            inputmode="email"
-            matInput
-            name="email"
-            required
-            type="email"
-            [(ngModel)]="user.email"
-          />
-          @if (emailModel.hasError('required')) {
-            <mat-error>Email is required</mat-error>
-          }
-          @if (emailModel.hasError('email')) {
-            <mat-error>Enter a valid email address</mat-error>
-          }
-        </mat-form-field>
-      }
-
-      @if (canSeeSystemRole) {
-        <mat-form-field appearance="outline" class="m-0 size-full min-h-full min-w-full">
-          <mat-label>System Role</mat-label>
-          <mat-select
-            name="systemRole"
-            [disabled]="!canEditSystemRole"
-            [(ngModel)]="user.systemRole"
-          >
-            <mat-option value="Admin">Administrator</mat-option>
-            <mat-option value="Convenor">Convenor</mat-option>
-            <mat-option value="Tutor">Tutor</mat-option>
-            <mat-option value="Student">Student</mat-option>
-            <mat-option value="Auditor">Auditor</mat-option>
-          </mat-select>
-        </mat-form-field>
-      }
-
-      @if (mode === 'edit' && managingOwnProfile) {
-        <f-additional-notification-email [user]="user"></f-additional-notification-email>
-      }
-
-      <f-notification-settings
-        [showNotificationsLink]="isOwnProfilePage"
-        [user]="user"
-      ></f-notification-settings>
-
-      <section
-        aria-labelledby="peer-progress-preference-title"
-        class="peer-progress-preference m-0 flex size-full min-h-full min-w-full flex-col"
-      >
-        <h3 id="peer-progress-preference-title">Peer progress</h3>
-        <mat-slide-toggle
-          aria-describedby="peer-progress-preference-description"
-          color="primary"
-          name="displayPeerProgress"
-          [(ngModel)]="user.displayPeerProgress"
-        >
-          Display anonymous peer progress statistics
-        </mat-slide-toggle>
-        <small id="peer-progress-preference-description">
-          This controls whether you see the privacy-protected widget below your submission details.
-          It does not opt your anonymous task status out of authorised cohort aggregation.
-        </small>
+        </div>
       </section>
+    }
 
-      <!--
-        Push opt-in. Subscribing has to come from a click: the browser only shows
-        its permission prompt in response to a user gesture, and the service
-        worker is not registered until six seconds after the page loads.
-      -->
-      <section
-        class="push-opt-in m-0 flex size-full min-h-full min-w-full flex-col items-start justify-center"
-      >
+    @if (mode === 'edit' && managingOwnProfile) {
+      <f-additional-notification-email [user]="user"></f-additional-notification-email>
+    }
+
+    <f-notification-settings
+      [showNotificationsLink]="isOwnProfilePage"
+      [user]="user"
+    ></f-notification-settings>
+
+    <!--
+      Push opt-in. Subscribing has to come from a click: the browser only shows
+      its permission prompt in response to a user gesture, and the service
+      worker is not registered until six seconds after the page loads.
+    -->
+    <section aria-labelledby="push-opt-in-title" class="profile-card push-opt-in">
+      <div class="profile-card__heading">
+        <h2 id="push-opt-in-title">
+          <mat-icon aria-hidden="true">devices</mat-icon>Push notifications
+        </h2>
+      </div>
+      <div class="push-opt-in__body">
         <button
           mat-stroked-button
           type="button"
@@ -249,69 +260,111 @@
         } @else if (pushSubscribed) {
           <small class="push-opt-in__hint">This device will receive push notifications.</small>
         }
-      </section>
-      <section class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start">
-        <mat-checkbox color="primary" name="optin" [(ngModel)]="user.optInToResearch"
+      </div>
+    </section>
+
+    <section
+      aria-labelledby="peer-progress-preference-title"
+      class="profile-card peer-progress-preference"
+    >
+      <div class="profile-card__heading">
+        <h2 id="peer-progress-preference-title">
+          <mat-icon aria-hidden="true">groups</mat-icon>Peer progress
+        </h2>
+      </div>
+      <div class="profile-setting">
+        <mat-slide-toggle
+          aria-describedby="peer-progress-preference-description"
+          color="primary"
+          labelPosition="before"
+          name="displayPeerProgress"
+          [(ngModel)]="user.displayPeerProgress"
+        >
+          Display anonymous peer progress statistics
+        </mat-slide-toggle>
+        <small id="peer-progress-preference-description">
+          This controls whether you see the privacy-protected widget below your submission details.
+          It does not opt your anonymous task status out of authorised cohort aggregation.
+        </small>
+      </div>
+    </section>
+
+    <section aria-labelledby="profile-consent-title" class="profile-card">
+      <div class="profile-card__heading">
+        <h2 id="profile-consent-title">
+          <mat-icon aria-hidden="true">fact_check</mat-icon>Consent
+        </h2>
+      </div>
+      <div class="profile-setting">
+        <mat-checkbox
+          color="primary"
+          labelPosition="before"
+          name="optin"
+          [(ngModel)]="user.optInToResearch"
           >Send anonymous research statistics
         </mat-checkbox>
-      </section>
+      </div>
 
       @if (tiiEnabled) {
-        <section
-          class="m-0 flex size-full min-h-full min-w-full flex-row items-center justify-start"
-        >
+        <div class="profile-setting">
           <mat-checkbox
             color="primary"
             disabled
+            labelPosition="before"
             name="acceptedTiiEula"
             [disableRipple]="true"
             [(ngModel)]="user.acceptedTiiEula"
             (click)="$event.preventDefault()"
             >Accepted TurnItIn EULA
           </mat-checkbox>
-        </section>
+        </div>
       }
-      <div class="profile-actions m-0 flex size-full min-h-full min-w-full flex-row">
-        <button
-          class="self-start"
-          mat-stroked-button
-          type="button"
-          [hidden]="mode === 'edit' || mode === 'new'"
-          (click)="signOut()"
-        >
-          Sign Out
-        </button>
-        <div class="flex-1"></div>
-        @if (mode === 'create') {
-          <button
-            class="self-end"
-            color="primary"
-            mat-flat-button
-            type="submit"
-            [disabled]="form.invalid || saving"
-          >
-            {{ saving ? 'Saving…' : 'Confirm account' }}
-          </button>
-        }
-        @if (mode === 'edit') {
-          <button
-            class="self-end"
-            color="primary"
-            mat-flat-button
-            type="submit"
-            [disabled]="form.invalid || form.pristine || saving"
-          >
-            {{ saving ? 'Saving…' : form.dirty ? 'Save profile' : 'Profile saved' }}
-          </button>
-        }
-      </div>
-      <div class="profile-save-status">
-        @if (form.invalid && form.dirty) {
-          <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
-        }
-        <p aria-live="polite" class="profile-save-status__success">{{ saveMessage }}</p>
-        <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
-      </div>
+    </section>
+  </div>
+
+  <div class="profile-actions">
+    <div class="profile-save-status">
+      @if (form.invalid && form.dirty) {
+        <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
+      }
+      <p aria-live="polite" class="profile-save-status__success" [class.sr-only]="mode === 'edit'">
+        {{ saveMessage }}
+      </p>
+      <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
     </div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      [hidden]="mode === 'edit' || mode === 'new'"
+      (click)="signOut()"
+    >
+      <mat-icon>logout</mat-icon>
+      Sign out
+    </button>
+    @if (mode === 'create') {
+      <button color="primary" mat-flat-button type="submit" [disabled]="form.invalid || saving">
+        <mat-icon>check</mat-icon>
+        {{ saving ? 'Saving…' : 'Confirm account' }}
+      </button>
+    }
+    @if (mode === 'edit') {
+      @if (form.dirty || saving) {
+        <button
+          color="primary"
+          mat-flat-button
+          type="submit"
+          [disabled]="form.invalid || form.pristine || saving"
+        >
+          <mat-icon>save</mat-icon>
+          {{ saving ? 'Saving…' : 'Save changes' }}
+        </button>
+      } @else {
+        <p class="profile-actions__saved">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          All changes saved
+        </p>
+      }
+    }
   </div>
 </form>

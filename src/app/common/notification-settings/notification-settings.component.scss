@@ -1,3 +1,7 @@
+@use '../edit-profile-form/profile-form' as profile;
+
+@include profile.theme;
+
 :host {
   display: block;
   min-width: 0;
@@ -5,56 +9,35 @@
 }
 
 .notification-settings {
-  border: 1px solid var(--ot-color-border);
-  border-radius: 12px;
-  gap: 10px;
-  margin-block: 16px;
-  padding: 16px;
-  width: 100%;
+  @include profile.card;
+  gap: 20px;
 }
 
-.notification-settings h3 {
-  color: var(--ot-color-text);
-  margin: 0;
+.notification-settings__heading {
+  @include profile.card-heading;
+
+  a {
+    color: var(--ot-color-link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
-.notification-settings__intro {
-  color: var(--ot-color-text-muted);
-  margin: 0;
-}
-
+// label and description on the left, the checkbox on the right; one gap between
+// rows instead of a box around each
 .notification-setting {
-  border: 1px solid var(--ot-color-divider);
-  border-radius: 10px;
-  display: grid;
-  gap: 2px;
-  min-height: 64px;
-  padding: 8px 10px;
-}
-
-.notification-setting mat-checkbox {
-  width: 100%;
+  @include profile.setting-row;
 }
 
 .notification-setting__channels {
   display: flex;
   flex-wrap: wrap;
   gap: 0 16px;
-  padding-inline-start: 32px;
+  margin-block: 4px 2px;
+  // line the boxes up with the text above, past the checkbox's touch padding
+  margin-inline-start: -11px;
 }
 
 .notification-setting__channels mat-checkbox {
   width: auto;
-}
-
-.notification-setting__help {
-  color: var(--ot-color-text-muted);
-  line-height: 1.4;
-  padding: 0 8px 4px 40px;
-}
-
-@media (max-width: 420px) {
-  .notification-settings {
-    padding: 14px;
-  }
 }

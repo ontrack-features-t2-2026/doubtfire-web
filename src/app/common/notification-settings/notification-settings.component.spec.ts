@@ -4,6 +4,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
+import {MatIconModule} from '@angular/material/icon';
 import {RouterModule} from '@angular/router';
 import {User} from 'src/app/api/models/user/user';
 import {NotificationSettingsComponent} from './notification-settings.component';
@@ -28,7 +29,7 @@ describe('NotificationSettingsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [NotificationSettingsComponent],
-      imports: [FormsModule, MatCheckboxModule, RouterModule.forRoot([])],
+      imports: [FormsModule, MatCheckboxModule, MatIconModule, RouterModule.forRoot([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationSettingsComponent);

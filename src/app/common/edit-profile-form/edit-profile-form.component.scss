@@ -1,76 +1,120 @@
+// Profile page, first-login form and the admin Users dialog. Cards stack with one
+// 16px rhythm and no rules between sections. Colours come only from --ot-* tokens.
+@use './profile-form' as profile;
+
+@include profile.theme;
+
 :host {
   display: block;
   height: auto;
+  min-width: 0;
+  // the save bar's height, so a control focused from the keyboard scrolls clear of it
+  --profile-actions-height: 68px;
 }
 
-form,
-.main-container,
-.main {
-  max-width: 100%;
-}
-
-.main {
-  gap: 4px;
-  padding: 16px clamp(16px, 4vw, 28px) calc(3rem + env(safe-area-inset-bottom));
-}
-
-
-h1 {
-  // THM-M01: was hardcoded black.
-  color: var(--ot-color-text, #000);
-  margin-top: 0;
-}
-
-a {
-  :hover {
-    text-decoration: none;
-    opacity: 0.6;
-  }
-}
-
-p {
-  color: var(--ot-color-text, #000);
-}
-
-.form-field {
-  margin: 5px;
-}
-
-section {
-  padding: 12px;
-}
-
-.account-information {
-  background: var(--ot-color-surface);
-  color: var(--ot-color-text);
-  border: 1px solid var(--ot-color-border);
-  border-radius: 12px;
-  display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px;
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding-inline: clamp(16px, 4vw, 28px);
+  color: var(--ot-color-text);
+}
 
-  h2,
-  p,
-  dl,
-  dd {
-    margin: 0;
+.profile-form--modal {
+  padding: 24px 24px 0;
+
+  @media (max-width: 599px) {
+    padding: 16px 16px 0;
   }
+}
 
-  h2 {
-    font-size: 1.125rem;
+.profile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding-block: 16px;
+
+  :is(input, textarea, button, a, mat-select, mat-checkbox, mat-slide-toggle) {
+    scroll-margin-block: 16px calc(var(--profile-actions-height) + 16px);
+  }
+}
+
+.profile-card {
+  @include profile.card;
+}
+
+.profile-card__heading {
+  @include profile.card-heading;
+}
+
+.profile-fields {
+  @include profile.field-grid;
+}
+
+.profile-fields__wide {
+  grid-column: 1 / -1;
+}
+
+// ---- Header ----
+.profile-header {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-header__avatar {
+  display: block;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--ot-radius-circle);
+  transition: opacity 160ms ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.profile-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  h1 {
+    margin: 0;
+    color: var(--ot-color-text);
+    font-size: 1.5rem;
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
   }
 
   p {
+    margin: 0;
     color: var(--ot-color-text-muted);
-    margin-top: 4px;
+    font-size: 0.9rem;
+    line-height: 1.45;
   }
+}
 
+.profile-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+}
+
+// ---- Account facts ----
+.account-information {
   dl {
     display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 24px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    margin: 0;
   }
 
   dl > div {
@@ -78,91 +122,115 @@ section {
   }
 
   dt {
+    margin: 0 0 4px;
     color: var(--ot-color-text-muted);
-    font-size: 0.8125rem;
+    font-size: 0.72rem;
     font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    text-transform: uppercase;
   }
 
   dd {
+    margin: 0;
+    color: var(--ot-color-text);
+    font-size: 0.95rem;
     overflow-wrap: anywhere;
   }
-
-  &__managed {
-    border-top: 1px solid var(--ot-color-divider);
-    padding-top: 10px;
-  }
 }
 
-/* checkbox */
-::ng-deep .mdc-form-field label {
-  font-weight: normal;
+.account-information__managed {
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.875rem;
 }
 
-.mat-icon {
-  width: 50px;
-  height: 50px;
-  font-size: 50px;
+// ---- Setting rows ----
+.profile-setting {
+  @include profile.setting-row;
 }
 
-.push-opt-in {
-  // The rule above sizes the profile avatar icon at 50px. Left alone it would
-  // apply to the icon inside this button too and blow the button apart.
-  .mat-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
-    margin-right: 6px;
-  }
-
-  &__hint {
-    display: block;
-    margin-top: 6px;
-    opacity: 0.7;
-  }
-}
-
-.peer-progress-preference {
-  // Divider token equals the raised surface in dark (#353c47), so this separator
-  // vanishes on the dialog. Use the border token in dark where it actually reads;
-  // keep the softer divider in light.
-  border-block: 1px solid var(--ot-color-divider);
-  :root[data-ot-theme='dark'] & {
-    border-block-color: var(--ot-color-border);
-  }
-  gap: 6px;
-  margin-block: 8px;
-  padding-block: 16px;
-
-  h3 {
-    margin: 0;
-  }
-
-  small {
-    color: var(--ot-color-text-muted);
-    max-width: 42rem;
-  }
-}
-
-.profile-actions {
-  background: var(--ot-color-surface-raised);
-  border-top: 1px solid var(--ot-color-divider);
-  bottom: 0;
-  padding: 12px clamp(16px, 4vw, 28px) max(12px, env(safe-area-inset-bottom));
-  position: sticky;
-  width: 100%;
-  z-index: 2;
+.push-opt-in__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 
   button {
+    max-width: 100%;
+    height: auto;
     min-height: 44px;
+    white-space: normal;
+  }
+}
+
+.push-opt-in__hint {
+  display: block;
+  color: var(--ot-color-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.push-opt-in__instructions {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--ot-color-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+// ---- Save bar ----
+// Sticky at the foot of the content column. It sits in flow after the last card, so
+// at the end of the page it never covers anything.
+.profile-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  box-sizing: border-box;
+  min-height: var(--profile-actions-height);
+  padding: 12px 20px max(12px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--hub-card-border);
+  background: var(--ot-color-surface);
+
+  @media (max-width: 599px) {
+    padding-inline: 16px;
+
+    > button {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.profile-actions__saved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.875rem;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
   }
 }
 
 .profile-save-status {
-  min-height: 24px;
-  width: 100%;
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
 
   p {
-    margin: 4px 0 0;
+    margin: 0;
   }
 
   &__success {
@@ -173,36 +241,5 @@ section {
   &__error {
     color: var(--ot-color-error);
     font-weight: 600;
-  }
-}
-
-.profile-name-fields {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-
-  mat-form-field {
-    min-width: 0;
-    width: 100%;
-  }
-}
-
-@media (max-width: 600px) {
-  .profile-name-fields {
-    gap: 0;
-    grid-template-columns: 1fr;
-  }
-
-  .main {
-    padding-inline: 16px;
-  }
-
-  .account-information dl {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-actions {
-    padding-inline: 16px;
   }
 }

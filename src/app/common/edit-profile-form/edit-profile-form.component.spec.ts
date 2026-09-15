@@ -407,3 +407,82 @@ describe('EditProfileFormComponent notifications page link', () => {
     expect(notificationsLink()).toBeNull();
   });
 });
+
+// The save bar swaps its action for a quiet status once nothing is left to save.
+@Directive({selector: 'form', exportAs: 'ngForm', standalone: false})
+class StubNgFormSaveBar {
+  public invalid = false;
+  public dirty = false;
+  public pristine = true;
+}
+
+describe('EditProfileFormComponent save bar and labels', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+
+  beforeEach(async () => {
+    const currentUser = makeUser({firstName: 'Ada', lastName: 'Lovelace', username: 'ada'});
+
+    await TestBed.configureTestingModule({
+      declarations: [EditProfileFormComponent, StubNgFormSaveBar, StubNotificationNgModel],
+      providers: [
+        {provide: AlertService, useValue: {error: vi.fn()}},
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: {currentUser}},
+        {provide: Router, useValue: {}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: null},
+        {provide: MatSnackBar, useValue: {}},
+        {provide: PushNotificationService, useValue: pushServiceStub},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    fixture.componentRef.setInput('mode', 'edit');
+    fixture.detectChanges();
+  });
+
+  const form = (): StubNgFormSaveBar =>
+    fixture.debugElement.children[0].injector.get(StubNgFormSaveBar);
+  const text = (): string => fixture.nativeElement.textContent;
+
+  it('shows a quiet saved status instead of a disabled button when clean', () => {
+    expect(fixture.nativeElement.querySelector('button[type="submit"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.profile-actions__saved')?.textContent).toContain(
+      'All changes saved',
+    );
+  });
+
+  it('shows the save action once the form has changes', () => {
+    form().dirty = true;
+    form().pristine = false;
+    fixture.detectChanges();
+
+    const submit: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(submit.textContent).toContain('Save changes');
+    expect(fixture.nativeElement.querySelector('.profile-actions__saved')).toBeNull();
+  });
+
+  it('labels the name fields in sentence case', () => {
+    const labels = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.profile-name-fields mat-label',
+      ) as NodeListOf<Element>,
+    ).map((label) => label.textContent.trim());
+
+    expect(labels).toEqual(['First name', 'Last name', 'Preferred name', 'Custom pronouns']);
+    expect(text()).not.toContain('Second Name');
+  });
+
+  it('puts the display name and username in the header', () => {
+    expect(fixture.nativeElement.querySelector('.profile-header h1').textContent.trim()).toBe(
+      'Ada Lovelace',
+    );
+    expect(fixture.nativeElement.querySelector('.profile-header__meta').textContent).toContain(
+      'ada',
+    );
+  });
+});

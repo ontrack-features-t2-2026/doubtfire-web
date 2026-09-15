@@ -1,7 +1,9 @@
 <section aria-labelledby="additional-email-title" class="additional-email">
   <div class="additional-email__heading">
     <div>
-      <h3 id="additional-email-title">Additional notification email</h3>
+      <h2 id="additional-email-title">
+        <mat-icon aria-hidden="true">alternate_email</mat-icon>Additional notification email
+      </h2>
       <p>
         Your institutional address remains the primary destination. A separate copy is sent here
         only after you verify ownership.
@@ -20,7 +22,7 @@
   @if (loading) {
     <p aria-live="polite">Loading additional email settings…</p>
   } @else {
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>Additional notification email</mat-label>
       <input
         #additionalEmail="ngModel"
@@ -42,23 +44,27 @@
 
     <div class="additional-email__actions">
       <button
-        color="primary"
-        mat-flat-button
+        mat-stroked-button
         type="button"
         [disabled]="busy || additionalEmail.invalid || !changed || !draftEmail.trim()"
         (click)="requestVerification()"
       >
+        <mat-icon>send</mat-icon>
         {{ busy ? 'Working…' : requestLabel }}
       </button>
 
       @if (state.status === 'pending') {
         <button mat-stroked-button type="button" [disabled]="busy" (click)="resend()">
+          <mat-icon>refresh</mat-icon>
           Resend verification
         </button>
       }
 
       @if (state.status !== 'none') {
-        <button mat-button type="button" [disabled]="busy" (click)="remove()">Remove</button>
+        <button mat-stroked-button type="button" [disabled]="busy" (click)="remove()">
+          <mat-icon>delete_outline</mat-icon>
+          Remove
+        </button>
       }
     </div>
   }
