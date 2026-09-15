@@ -1,7 +1,8 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
-import {provideRouter} from '@angular/router';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {Router, provideRouter} from '@angular/router';
 import {RouterTestingHarness} from '@angular/router/testing';
 import {Subject, of, throwError} from 'rxjs';
 import {UserService} from 'src/app/api/services/user.service';
@@ -555,5 +556,86 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(cancelled.querySelector('.details-link')).not.toBeNull();
     expect(cancelled.querySelector('a[href^="https://calendar.google.com"]')).toBeNull();
     expect(cards[0].querySelector('.cancelled-banner')).toBeNull();
+  });
+  describe('deep links, Up next and notifications', () => {
+    it('opens an announcement named in the URL, marks it read and clears the parameter', async () => {
+      const id = feed().announcements[1].id;
+      const {component} = await open(`/unit-hub?unit=111&announcement=${id}`);
+      const dialogs = TestBed.inject(MatDialog);
+      await vi.waitFor(() => expect(dialogs.openDialogs).toHaveLength(1));
+      const details = dialogs.openDialogs[0].componentInstance as UnitHubDetailsComponent;
+      expect(details.content.announcement.id).toBe(id);
+      expect(component.isUnread(component.announcements.find((row) => row.id === id))).toBe(false);
+      const url = TestBed.inject(Router).url;
+      expect(url).not.toContain('announcement=');
+      expect(url).toContain('unit=111');
+      // clearing the parameter does not reload the feed or close the dialog
+      expect(service.feed).toHaveBeenCalledTimes(1);
+      expect(dialogs.openDialogs).toHaveLength(1);
+    });
+
+    it('opens a session named in the URL', async () => {
+      const id = feed().sessions[0].id;
+      await open(`/unit-hub?session=${id}`);
+      const dialogs = TestBed.inject(MatDialog);
+      await vi.waitFor(() => expect(dialogs.openDialogs).toHaveLength(1));
+      const details = dialogs.openDialogs[0].componentInstance as UnitHubDetailsComponent;
+      expect(details.content.session.id).toBe(id);
+      expect(TestBed.inject(Router).url).not.toContain('session=');
+    });
+
+    it('explains when a linked update is no longer in the feed', async () => {
+      const snack = vi.spyOn(TestBed.inject(MatSnackBar), 'open');
+      await open('/unit-hub?announcement=987654');
+      await vi.waitFor(() =>
+        expect(snack).toHaveBeenCalledWith(
+          'That update is no longer available',
+          expect.anything(),
+          expect.anything(),
+        ),
+      );
+      expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
+      expect(TestBed.inject(Router).url).not.toContain('announcement=');
+    });
+
+    it('pins the next active session at the top of Upcoming and highlights starting soon', async () => {
+      const data = feed();
+      const base = data.sessions[0];
+      const inMinutes = (minutes: number) => new Date(Date.now() + minutes * 60000).toISOString();
+      data.sessions = [
+        {
+          ...base,
+          id: 801,
+          title: 'Cancelled first',
+          cancelled: true,
+          start_at: inMinutes(10),
+          end_at: inMinutes(70),
+        },
+        {...base, id: 802, title: 'Soon session', start_at: inMinutes(30), end_at: inMinutes(90)},
+      ];
+      service.feed.mockReturnValue(of(data));
+      const {component, element} = await open();
+      expect(component.upNext.id).toBe(802);
+      const upNext = element.querySelector('.up-next');
+      expect(upNext.querySelector('.details-title')?.textContent.trim()).toBe('Soon session');
+      expect(upNext.textContent).toMatch(/Starts in (29|30) min/);
+      const soonCard = Array.from(element.querySelectorAll('.session-card')).find((card) =>
+        card.textContent.includes('Soon session'),
+      );
+      expect(soonCard.getAttribute('data-timing')).toBe('soon');
+      expect(soonCard.querySelector('h4 .visually-hidden')?.textContent).toContain('Starts in');
+      const cancelledCard = Array.from(element.querySelectorAll('.session-card')).find((card) =>
+        card.textContent.includes('Cancelled first'),
+      );
+      expect(cancelledCard.getAttribute('data-timing')).toBe('cancelled');
+      expect(cancelledCard.querySelector('.chip-soon, .chip-now, .chip-today')).toBeNull();
+    });
+
+    it('links to the notification settings from the header', async () => {
+      const {element} = await open();
+      const link = element.querySelector('a[aria-label^="Get notified"]') as HTMLAnchorElement;
+      expect(link.textContent).toContain('Get notified');
+      expect(link.getAttribute('href')).toBe('/edit_profile#notification-settings-title');
+    });
   });
 });

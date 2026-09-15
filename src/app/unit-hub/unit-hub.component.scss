@@ -395,10 +395,6 @@ mat-icon {
     box-shadow: inset 0 0 0 1px var(--hub-card-border);
   }
 }
-.live-badge {
-  background: var(--ot-status-complete);
-  color: var(--ot-status-complete-on);
-}
 .preserve-lines {
   white-space: pre-wrap;
 }
@@ -937,4 +933,83 @@ fieldset {
       min-height: 44px;
     }
   }
+}
+
+// ---- Session timing ----
+// Tints at 14% on the surface with the tone pulled 40% toward the text colour clear 4.5:1:
+// success 6.7:1 light, 5.4:1 dark; warning 6.7:1 light, 5.9:1 dark.
+.chip-now {
+  background: color-mix(in srgb, var(--ot-color-success) 14%, var(--ot-color-surface));
+  color: color-mix(in srgb, var(--ot-color-success) 60%, var(--ot-color-text));
+}
+.chip-soon {
+  background: color-mix(in srgb, var(--ot-color-warning) 14%, var(--ot-color-surface));
+  color: color-mix(in srgb, var(--ot-color-warning) 60%, var(--ot-color-text));
+}
+.chip-today {
+  background: var(--ot-color-selected);
+  color: var(--ot-color-selected-text);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ot-radius-circle);
+  background: currentColor;
+  animation: hub-live 2s ease-in-out infinite;
+}
+@keyframes hub-live {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+.session-card[data-timing='now'] {
+  box-shadow:
+    inset 4px 0 0 var(--ot-color-success),
+    var(--ot-elevation-1);
+}
+.session-card[data-timing='soon'] {
+  box-shadow:
+    inset 4px 0 0 var(--ot-color-primary),
+    var(--ot-elevation-1);
+}
+
+// ---- Up next ----
+.up-next {
+  @include hub.card(page);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hub-space-2);
+  margin-bottom: var(--hub-space-4);
+  padding: var(--hub-space-4);
+  border-radius: var(--ot-radius-lg);
+  box-shadow:
+    inset 4px 0 0 var(--ot-color-link),
+    var(--ot-elevation-1);
+  overflow-wrap: anywhere;
+  &[data-timing='now'] {
+    box-shadow:
+      inset 4px 0 0 var(--ot-color-success),
+      var(--ot-elevation-1);
+  }
+  h3 {
+    font-size: 1rem;
+  }
+}
+.up-next-label {
+  @include hub.label;
+}
+.up-next-when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hub-space-1) var(--hub-space-3);
+  font-size: 0.86rem;
+}
+.up-next-relative {
+  font-weight: 650;
 }

@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, NgZone, OnDestroy, OnInit, inject} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
@@ -7,13 +7,15 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
-import {ActivatedRoute, NavigationStart, Router, RouterLink} from '@angular/router';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {ActivatedRoute, NavigationStart, ParamMap, Router, RouterLink} from '@angular/router';
 import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
 import {AnnouncementReadStore} from './announcement-read.store';
 import {HubMarkdownPipe, HubPlainTextPipe} from './hub-markdown';
+import {SessionTiming, sessionTiming, upNextSession} from './session-timing';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
@@ -92,6 +94,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   private staffRequest?: Subscription;
   private mutationRequest?: Subscription;
   private detailsRef?: MatDialogRef<UnitHubDetailsComponent>;
+  /** Refreshed every minute, so the time highlights and countdowns stay current. */
+  now = Date.now();
+  private clock?: ReturnType<typeof setInterval>;
+  private readonly zone = inject(NgZone);
+  private readonly snackBar = inject(MatSnackBar);
+  /** An announcement or session named in the URL, opened once the feed has loaded. */
+  private pendingLink: {announcement: number; session: number} | null = null;
+  private feedKey: string | null = null;
 
   readonly announcementForm;
   readonly sessionForm;
@@ -140,17 +150,36 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       }),
     );
     this.subscriptions.add(
-      combineLatest([this.demo.enabled$, this.route.queryParamMap]).subscribe(([, params]) => {
-        this.mutationRequest?.unsubscribe();
-        this.saving = false;
-        this.managing = false;
-        this.selectedUnitId = Number(params.get('unit')) || 0;
-        this.reload();
-      }),
+      combineLatest([this.demo.enabled$, this.route.queryParamMap]).subscribe(
+        ([enabled, params]) => {
+          const announcement = Number(params.get('announcement')) || 0;
+          const session = Number(params.get('session')) || 0;
+          if (announcement || session) {
+            this.pendingLink = {announcement, session};
+          }
+          // Clearing a deep link from the URL must not reload the feed or close its dialog.
+          const key = this.feedParamsKey(enabled, params);
+          if (key === this.feedKey && !this.loading && !this.loadError) {
+            this.openPendingLink();
+            return;
+          }
+          this.feedKey = key;
+          this.mutationRequest?.unsubscribe();
+          this.saving = false;
+          this.managing = false;
+          this.selectedUnitId = Number(params.get('unit')) || 0;
+          this.reload();
+        },
+      ),
     );
+    // outside Angular, so a pending timer never holds the zone open; it re-enters to update
+    this.zone.runOutsideAngular(() => {
+      this.clock = setInterval(() => this.zone.run(() => (this.now = Date.now())), 60_000);
+    });
   }
 
   ngOnDestroy(): void {
+    clearInterval(this.clock);
     this.closeDetails();
     this.subscriptions.unsubscribe();
     this.feedRequest?.unsubscribe();
@@ -260,11 +289,11 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       this.editSession();
     }
   }
-  sessionLive(session: LearningSession): boolean {
-    const now = Date.now();
-    return (
-      !session.cancelled && Date.parse(session.start_at) <= now && Date.parse(session.end_at) > now
-    );
+  timing(session: LearningSession): SessionTiming {
+    return sessionTiming(session, this.now);
+  }
+  get upNext(): LearningSession | null {
+    return upNextSession(this.sessions, this.now);
   }
 
   reload(): void {
@@ -288,8 +317,10 @@ export class UnitHubComponent implements OnInit, OnDestroy {
         if (this.managing) {
           this.loadStaff(this.managedUnitId);
         }
+        this.openPendingLink();
       },
       error: () => {
+        this.pendingLink = null;
         this.loadError =
           'We could not load your unit updates. Please try again. If this continues, contact your teaching team.';
         this.loading = false;
@@ -302,6 +333,54 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {unit: Number(value) || null},
       queryParamsHandling: 'merge',
+    });
+  }
+
+  private feedParamsKey(enabled: boolean, params: ParamMap): string {
+    const kept = params.keys
+      .filter((name) => name !== 'announcement' && name !== 'session')
+      .sort()
+      .map((name) => [name, params.getAll(name)]);
+    return JSON.stringify([enabled, kept]);
+  }
+
+  /**
+   * Opens the announcement or session named by ?announcement= or ?session= once, then removes
+   * those parameters with replaceUrl so a refresh does not open it again.
+   */
+  private openPendingLink(): void {
+    const link = this.pendingLink;
+    if (!link || this.loading || this.loadError) {
+      return;
+    }
+    this.pendingLink = null;
+    // after the current navigation settles; the URL change runs first because a router
+    // navigation closes any open details
+    setTimeout(() => {
+      void this.router
+        .navigate([], {
+          relativeTo: this.route,
+          queryParams: {announcement: null, session: null},
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        })
+        .finally(() => {
+          const announcement = link.announcement
+            ? this.announcements.find((row) => row.id === link.announcement)
+            : undefined;
+          const session =
+            !announcement && link.session
+              ? (this.sessions.find((row) => row.id === link.session && !row.cancelled) ??
+                this.sessions.find((row) => row.id === link.session))
+              : undefined;
+          if (announcement) {
+            this.openAnnouncement(announcement);
+          } else if (session) {
+            this.openSession(session);
+          } else {
+            this.snackBar.open('That update is no longer available', 'Dismiss', {duration: 6000});
+          }
+        });
     });
   }
 

@@ -64,6 +64,14 @@
             <mat-icon aria-hidden="true">event</mat-icon> New session
           </button>
         }
+        <a
+          aria-label="Get notified: manage Unit Hub notifications"
+          class="hub-action wide-only"
+          fragment="notification-settings-title"
+          mat-stroked-button
+          routerLink="/edit_profile"
+          ><mat-icon aria-hidden="true">notifications</mat-icon> Get notified</a
+        >
         <button
           aria-label="Unit Hub actions"
           class="hub-action narrow-only"
@@ -89,6 +97,14 @@
           <button mat-menu-item type="button" [disabled]="demo.enabled" (click)="openCalendar()">
             <mat-icon aria-hidden="true">date_range</mat-icon><span>Calendar settings</span>
           </button>
+          <a
+            aria-label="Get notified: manage Unit Hub notifications"
+            fragment="notification-settings-title"
+            mat-menu-item
+            routerLink="/edit_profile"
+          >
+            <mat-icon aria-hidden="true">notifications</mat-icon><span>Get notified</span>
+          </a>
         </mat-menu>
       </div>
     </div>
@@ -835,6 +851,70 @@
             <h2 id="sessions-title">Upcoming</h2>
             <span class="count">{{ sessions.length }}</span>
           </div>
+          @if (upNext; as next) {
+            @let nextWhen = timing(next);
+            <aside
+              aria-labelledby="up-next-title"
+              class="up-next"
+              [attr.data-timing]="nextWhen.state"
+            >
+              <p class="up-next-label" id="up-next-title">
+                <mat-icon aria-hidden="true">event</mat-icon>Up next
+              </p>
+              <h3>
+                <button class="details-title" type="button" (click)="openSession(next)">
+                  {{ next.title }}
+                </button>
+              </h3>
+              <p class="up-next-when">
+                <span class="fact"
+                  ><mat-icon aria-hidden="true">schedule</mat-icon
+                  ><span
+                    >{{ next.start_at | date: 'EEE d MMM, h:mm a' }} –
+                    {{ next.end_at | date: 'h:mm a' }}</span
+                  ></span
+                >
+                <span class="up-next-relative">
+                  @switch (nextWhen.state) {
+                    @case ('now') {
+                      Happening now
+                    }
+                    @case ('soon') {
+                      Starts in {{ nextWhen.minutes }} min
+                    }
+                    @case ('today') {
+                      Later today
+                    }
+                    @default {
+                      Starts {{ next.start_at | date: 'EEEE' }}
+                    }
+                  }
+                </span>
+              </p>
+              <div class="card-actions">
+                @if (joinUrl(next)) {
+                  <a
+                    mat-flat-button
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    [href]="joinUrl(next)"
+                    ><mat-icon aria-hidden="true">videocam</mat-icon
+                    >{{ demo.enabled ? 'Join hosted demo' : 'Join session' }}</a
+                  >
+                }
+                <a
+                  mat-stroked-button
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  [href]="googleUrl(next, unitCode(next.unit_id))"
+                  ><mat-icon aria-hidden="true">event</mat-icon
+                  >{{
+                    demo.enabled ? 'Preview DEMO in Google Calendar' : 'Add to Google Calendar'
+                  }}</a
+                >
+              </div>
+            </aside>
+          }
           <div class="notice info-notice time-note">
             <mat-icon aria-hidden="true">info</mat-icon>
             <p>
@@ -857,7 +937,12 @@
                 session of group.sessions;
                 track session.occurrence_id || session.id + session.start_at
               ) {
-                <article class="hub-card session-card" [class.is-cancelled]="session.cancelled">
+                @let when = timing(session);
+                <article
+                  class="hub-card session-card"
+                  [attr.data-timing]="when.state"
+                  [class.is-cancelled]="session.cancelled"
+                >
                   @if (session.cancelled) {
                     <p class="cancelled-banner">
                       <mat-icon aria-hidden="true">event_busy</mat-icon>Cancelled: this session will
@@ -866,13 +951,34 @@
                   }
                   <div class="card-meta">
                     <span class="unit-badge">{{ unitCode(session.unit_id) }}</span>
-                    @if (sessionLive(session)) {
-                      <span class="chip live-badge">On now</span>
+                    @switch (when.state) {
+                      @case ('now') {
+                        <span class="chip chip-now"
+                          ><span aria-hidden="true" class="live-dot"></span>Happening now</span
+                        >
+                      }
+                      @case ('soon') {
+                        <span class="chip chip-soon"
+                          ><mat-icon aria-hidden="true">schedule</mat-icon>Starts in
+                          {{ when.minutes }} min</span
+                        >
+                      }
+                      @case ('today') {
+                        <span class="chip chip-today">Today</span>
+                      }
                     }
                   </div>
                   <h4>
-                    @if (session.cancelled) {
-                      <span class="visually-hidden">Cancelled: </span>
+                    @switch (when.state) {
+                      @case ('cancelled') {
+                        <span class="visually-hidden">Cancelled: </span>
+                      }
+                      @case ('now') {
+                        <span class="visually-hidden">Happening now: </span>
+                      }
+                      @case ('soon') {
+                        <span class="visually-hidden">Starts in {{ when.minutes }} min: </span>
+                      }
                     }
                     <button class="details-title" type="button" (click)="openSession(session)">
                       {{ session.title }}
@@ -930,6 +1036,16 @@
                     }
                   }
                   <div class="card-actions">
+                    @if (when.state === 'now' && joinUrl(session)) {
+                      <a
+                        mat-flat-button
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        [href]="joinUrl(session)"
+                        ><mat-icon aria-hidden="true">videocam</mat-icon
+                        >{{ demo.enabled ? 'Join hosted demo' : 'Join session' }}</a
+                      >
+                    }
                     <button
                       class="details-link"
                       mat-stroked-button
@@ -939,7 +1055,7 @@
                     >
                       <mat-icon aria-hidden="true">info</mat-icon>View full details
                     </button>
-                    @if (!session.cancelled && joinUrl(session)) {
+                    @if (!session.cancelled && when.state !== 'now' && joinUrl(session)) {
                       <a
                         mat-stroked-button
                         rel="noopener noreferrer"
