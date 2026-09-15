@@ -127,33 +127,71 @@ $my-palette: mat.m2-define-palette($md-formatif);
   position: relative;
 }
 
-// The browser's own arrow sat cramped against the pill's edge and differed between
-// browsers, so the select draws none and the theme's chevron sits inside the pill.
-.task-status-control select {
+// The status picker keeps the search field's pill: same height, border and fill,
+// with Material's own arrow in the theme's muted colour.
+.task-status-select {
+  display: flex;
+  box-sizing: border-box;
   height: 40px;
-  width: 100%;
-  appearance: none;
+  align-items: center;
   border: 1px solid var(--ot-color-border);
   border-radius: 999px;
   background-color: var(--ot-color-surface);
-  padding: 0 2.5rem 0 0.875rem;
+  padding: 0 0.75rem 0 0.5rem;
   color: var(--ot-color-text);
   font-size: 0.875rem;
-  cursor: pointer;
 
-  &:focus-visible {
+  --mat-select-enabled-trigger-text-color: var(--ot-color-text);
+  --mat-select-enabled-arrow-color: var(--ot-color-text-muted);
+  --mat-select-focused-arrow-color: var(--ot-color-primary);
+
+  &:focus-visible,
+  &.mat-select-focused {
     outline: 2px solid var(--ot-color-focus);
     outline-offset: 1px;
   }
 }
 
-.task-status-chevron {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  translate: 0 -50%;
+.task-status-option {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-status-option__all {
+  width: 24px;
+  height: 20px;
+  flex: none;
   color: var(--ot-color-text-muted);
-  pointer-events: none;
+  font-size: 20px;
+}
+
+// status-icon is a 36px circle by default. In the pill and the menu it drops to
+// 24px so a row of options reads as a list, not a column of badges.
+:host ::ng-deep .task-status-option__icon .status-chip,
+::ng-deep .task-status-filter-panel .task-status-option__icon .status-chip {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+
+  mat-icon {
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+// The menu sits in the overlay, outside this component, so its colours are set on
+// the panel class. Both themes come from the tokens.
+::ng-deep .task-status-filter-panel {
+  --mat-select-panel-background-color: var(--ot-color-surface-raised);
+  --mat-option-label-text-color: var(--ot-color-text);
+  --mat-option-hover-state-layer-color: var(--ot-color-hover);
+  --mat-option-selected-state-layer-color: var(--ot-color-selected);
+  --mat-option-selected-state-label-text-color: var(--ot-color-text);
+  border: 1px solid var(--ot-color-divider);
+  border-radius: var(--ot-radius-md) !important;
 }
 
 .task-view-options {

@@ -155,20 +155,50 @@
           </span>
         </label>
 
-        <label class="task-status-control">
-          <span class="task-control-label">Task status</span>
-          <select
+        <!-- A themed picker, so each status shows its own circle and colour, as the
+             task rows do, instead of the browser's plain menu. -->
+        <div class="task-status-control">
+          <mat-select
             aria-label="Filter tasks by status"
+            class="task-status-select"
+            panelClass="task-status-filter-panel"
             [value]="activeStatusFilter ?? ''"
-            (change)="setStatusFilter($any($event.target).value)"
+            (selectionChange)="setStatusFilter($event.value)"
           >
-            <option value="">All statuses</option>
+            <mat-select-trigger>
+              <span class="task-status-option">
+                @if (activeStatusFilter) {
+                  <status-icon
+                    class="task-status-option__icon"
+                    [status]="activeStatusFilter"
+                  ></status-icon>
+                } @else {
+                  <mat-icon aria-hidden="true" class="task-status-option__all"
+                    >filter_list</mat-icon
+                  >
+                }
+                <span class="truncate">{{ activeStatusFilterLabel ?? 'All statuses' }}</span>
+              </span>
+            </mat-select-trigger>
+            <mat-option value="">
+              <span class="task-status-option">
+                <mat-icon aria-hidden="true" class="task-status-option__all">filter_list</mat-icon>
+                <span>All statuses</span>
+              </span>
+            </mat-option>
             @for (option of statusOptions; track option.status) {
-              <option [value]="option.status">{{ option.label }}</option>
+              <mat-option [value]="option.status">
+                <span class="task-status-option">
+                  <status-icon
+                    class="task-status-option__icon"
+                    [status]="option.status"
+                  ></status-icon>
+                  <span>{{ option.label }}</span>
+                </span>
+              </mat-option>
             }
-          </select>
-          <mat-icon aria-hidden="true" class="task-status-chevron">expand_more</mat-icon>
-        </label>
+          </mat-select>
+        </div>
 
         <button
           aria-label="Task list filters"
