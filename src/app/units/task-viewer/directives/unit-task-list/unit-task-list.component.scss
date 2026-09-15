@@ -137,7 +137,8 @@ $my-palette: mat.m2-define-palette($md-formatif);
   border: 1px solid var(--ot-color-border);
   border-radius: 999px;
   background-color: var(--ot-color-surface);
-  padding: 0 0.75rem 0 0.5rem;
+  // the 24px status circle sits 8px in from the pill edge, same as the text gap
+  padding: 0 0.75rem 0 8px;
   color: var(--ot-color-text);
   font-size: 0.875rem;
 
@@ -145,10 +146,13 @@ $my-palette: mat.m2-define-palette($md-formatif);
   --mat-select-enabled-arrow-color: var(--ot-color-text-muted);
   --mat-select-focused-arrow-color: var(--ot-color-primary);
 
+  // one focus ring: the pill border itself turns the focus colour, no second outline
   &:focus-visible,
-  &.mat-select-focused {
-    outline: 2px solid var(--ot-color-focus);
-    outline-offset: 1px;
+  &.mat-select-focused,
+  &.mat-mdc-select-focused {
+    outline: none;
+    border-color: var(--ot-color-focus);
+    box-shadow: 0 0 0 1px var(--ot-color-focus);
   }
 }
 
@@ -171,9 +175,10 @@ $my-palette: mat.m2-define-palette($md-formatif);
 // 24px so a row of options reads as a list, not a column of badges.
 :host ::ng-deep .task-status-option__icon .status-chip,
 ::ng-deep .task-status-filter-panel .task-status-option__icon .status-chip {
-  width: 24px;
-  height: 24px;
-  margin: 0;
+  // !important beats the size-9 utility status-icon puts on its own element
+  width: 24px !important;
+  height: 24px !important;
+  margin: 0 !important;
 
   mat-icon {
     width: 14px;
