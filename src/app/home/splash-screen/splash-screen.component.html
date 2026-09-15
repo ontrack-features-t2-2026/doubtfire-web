@@ -1,6 +1,7 @@
 @if (startupState$ | async; as state) {
   @if (state.status === 'loading' && state.phase === 'authentication') {
     <div
+      animate.leave="app-splash-leave"
       aria-label="OnTrack is starting"
       aria-live="polite"
       class="app-splash-screen"
@@ -8,12 +9,40 @@
       role="status"
     >
       <div class="app-splash-inner">
-        <div aria-hidden="true" class="app-splash-mark">
-          <span class="app-splash-glow"></span>
-          <img alt="" height="72" src="/assets/images/logo.svg" width="72" />
+        <div aria-hidden="true" class="app-splash-mark" data-testid="startup-mark">
+          <svg focusable="false" viewBox="0 0 294.58 171.12">
+            <path
+              class="app-splash-stroke app-splash-stroke-long"
+              d="M286.58,160.82h0a27.33,27.33,0,0,1-38.67,0l-139-139,9.87-9.87a40.72,40.72,0,0,1,57.57,0L286.58,122.17A27.33,27.33,0,0,1,286.58,160.82Z"
+              fill="#3691ff"
+            />
+            <path
+              class="app-splash-stroke app-splash-stroke-middle"
+              d="M164.29,159.22h0a27.33,27.33,0,0,1-38.65,0L48.55,82.14,87.2,43.49l77.09,77.07A27.33,27.33,0,0,1,164.29,159.22Z"
+              fill="#3939ff"
+            />
+            <path
+              class="app-splash-stroke app-splash-stroke-short"
+              d="M67.76,143.79l-.38.38L48.44,163.11a27.36,27.36,0,0,1-38.67,0L8,161.34a27.33,27.33,0,0,1,0-38.66L27,103.74l.38-.38Z"
+              fill="#5639ff"
+            />
+          </svg>
+          <span class="app-splash-sheen"><span></span></span>
         </div>
-        <div aria-hidden="true" class="app-splash-bar"><span></span></div>
-        <p>Checking your session…</p>
+        <div aria-hidden="true" class="app-splash-wordmark" data-testid="startup-wordmark">
+          OnTrack
+        </div>
+        <div class="app-splash-status">
+          @for (message of [state.message || 'Checking your session…']; track message) {
+            <p
+              animate.enter="app-splash-status-enter"
+              animate.leave="app-splash-status-leave"
+              data-testid="startup-status"
+            >
+              {{ message }}
+            </p>
+          }
+        </div>
       </div>
     </div>
   } @else if (state.status === 'loading') {
@@ -23,8 +52,10 @@
       data-testid="startup-data-loading"
       role="status"
     >
-      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      <span>{{ state.message }}</span>
+      <div aria-hidden="true" class="startup-progress-track"><span></span></div>
+      @if (state.message) {
+        <span class="startup-progress-caption">{{ state.message }}</span>
+      }
     </section>
   } @else if (state.status === 'error' || state.status === 'offline') {
     <section

@@ -226,12 +226,65 @@ body.split-pane-resizing pdf-viewer {
 // element, in its encapsulated styles, so every loading placeholder stayed light
 // in dark mode. Restate them there with the divider token the hand-built
 // skeletons use. The :root prefix outweighs the library's attribute selector.
-:root ngx-skeleton-loader .skeleton-loader {
-  --ngx-skeleton-loader-base-color: var(--ot-color-divider);
+//
+// The library also runs a separate 200px shimmer per placeholder, each on its
+// own clock, so a page of skeletons flickered out of step. Instead one shared
+// phase animates on the root, only while a skeleton is on the page, and every
+// placeholder moves a soft diagonal sheen by it. They all cross together.
+@property --ot-skeleton-sheen {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: -100%;
 }
 
-:root[data-ot-theme='dark'] ngx-skeleton-loader .skeleton-loader {
-  --ngx-skeleton-loader-light-mode-color: rgba(255, 255, 255, 0.08);
+@keyframes ot-skeleton-sheen {
+  from {
+    --ot-skeleton-sheen: -100%;
+  }
+  to {
+    --ot-skeleton-sheen: 100%;
+  }
+}
+
+:root:has(ngx-skeleton-loader .skeleton-loader.progress) {
+  animation: ot-skeleton-sheen 1.6s linear infinite;
+}
+
+:root ngx-skeleton-loader .skeleton-loader {
+  --ngx-skeleton-loader-base-color: var(--ot-color-divider);
+  --ot-skeleton-sheen-color: color-mix(in srgb, var(--ot-color-divider), #fff 14%);
+}
+
+@supports (color: oklch(from red l c h)) {
+  :root ngx-skeleton-loader .skeleton-loader {
+    --ot-skeleton-sheen-color: oklch(from var(--ot-color-divider) calc(l + 0.06) c h);
+  }
+}
+
+:root ngx-skeleton-loader .skeleton-loader.progress::before {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    105deg,
+    transparent 25%,
+    var(--ot-skeleton-sheen-color) 50%,
+    transparent 75%
+  );
+  background-size: 100% 100%;
+  transform: translateX(var(--ot-skeleton-sheen));
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:has(ngx-skeleton-loader .skeleton-loader.progress) {
+    animation: none;
+  }
+
+  :root ngx-skeleton-loader .skeleton-loader.progress::before {
+    display: none;
+  }
 }
 
 // Gantt (ngx-gantt) dark theme. The library paints from var(--gantt-color-*,

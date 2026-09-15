@@ -1,5 +1,15 @@
 // Theme tokens only. These screens show on every start, before any page, in
 // whichever theme the pre-boot script in index.html picked.
+//
+// The layout and timings below are mirrored by the pre-boot loader in
+// src/index.html. Change one and change the other, or the hand-off jumps.
+
+$ease-draw: cubic-bezier(0.77, 0, 0.175, 1);
+$ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+// Fast sessions never see the splash, so it does not flash on every start.
+$appear-delay: 180ms;
+
 .app-splash-screen {
   background: var(--ot-color-page);
   position: fixed;
@@ -16,114 +26,233 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  // fast sessions never see it, so it doesnt flash on every start
   opacity: 0;
-  animation: splash-fade-in 240ms ease-out 180ms forwards;
-
-  p {
-    margin: 0;
-    color: var(--ot-color-text-muted);
-    font-size: 0.9375rem;
-    letter-spacing: 0.01em;
-  }
+  animation: splash-appear 1ms linear $appear-delay forwards;
 }
 
 .app-splash-mark {
   position: relative;
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
+  width: 88px;
+  height: 51px;
 
-  img {
-    position: relative;
-    width: 72px;
-    height: 72px;
-    animation: splash-breathe 1.8s ease-in-out infinite;
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   }
 }
 
-.app-splash-glow {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--ot-color-primary, #3939ff) 35%, transparent) 0%,
-    transparent 70%
-  );
-  animation: splash-glow 1.8s ease-in-out infinite;
+// The three strokes draw along their own direction, short one first. Each is
+// clipped to nothing and the clip opens from the end the stroke starts at.
+.app-splash-stroke {
+  animation: splash-draw-down 360ms $ease-draw both;
 }
 
-.app-splash-bar {
-  position: relative;
+.app-splash-stroke-short {
+  animation-name: splash-draw-up;
+  animation-delay: $appear-delay;
+}
+
+.app-splash-stroke-middle {
+  animation-delay: $appear-delay + 120ms;
+}
+
+.app-splash-stroke-long {
+  animation-delay: $appear-delay + 240ms;
+}
+
+// A soft band of light crossing the mark every 2.4s, cut to the logo shape.
+.app-splash-sheen {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  width: 160px;
-  height: 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ot-color-text-muted) 20%, transparent);
+  pointer-events: none;
+  -webkit-mask: url('/assets/images/logo.svg') center / contain no-repeat;
+  mask: url('/assets/images/logo.svg') center / contain no-repeat;
 
   span {
     position: absolute;
     inset-block: 0;
-    left: -40%;
+    left: 0;
     width: 40%;
-    border-radius: inherit;
-    background: var(--ot-color-primary, #3939ff);
-    animation: splash-slide 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      color-mix(in srgb, var(--ot-color-on-primary) 45%, transparent) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: splash-sheen 2.4s linear $appear-delay + 900ms infinite;
   }
 }
 
-@keyframes splash-fade-in {
-  to {
-    opacity: 1;
+.app-splash-wordmark {
+  margin-top: 18px;
+  color: var(--ot-color-text);
+  font-family: Inter, 'open-sans', Roboto, system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  animation: splash-rise 200ms $ease-out $appear-delay + 520ms both;
+}
+
+.app-splash-status {
+  display: grid;
+  min-height: 20px;
+  margin-top: 16px;
+  opacity: 0;
+  animation: splash-fade 200ms $ease-out $appear-delay + 600ms both;
+
+  // Messages share one cell so the outgoing and incoming text crossfade in place.
+  p {
+    grid-area: 1 / 1;
+    margin: 0;
+    color: var(--ot-color-text-muted);
+    font-family: Inter, 'open-sans', Roboto, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.01em;
+    text-align: center;
   }
 }
 
-@keyframes splash-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.06);
-  }
+.app-splash-status-enter {
+  animation: splash-status-in 200ms $ease-out both;
 }
 
-@keyframes splash-glow {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
+.app-splash-status-leave {
+  animation: splash-status-out 150ms $ease-out both;
 }
 
-@keyframes splash-slide {
-  to {
-    left: 100%;
-  }
-}
+// Leaving is quicker than arriving. The page underneath is already there.
+.app-splash-leave {
+  pointer-events: none;
+  animation: splash-fade-out 150ms $ease-out both;
 
-@media (prefers-reduced-motion: reduce) {
+  // The appear animation stays in the list so a splash that leaves before its
+  // delay is up never shows its content on the way out.
   .app-splash-inner {
+    animation:
+      splash-appear 1ms linear $appear-delay forwards,
+      splash-shrink 150ms $ease-out forwards;
+  }
+}
+
+// The pre-boot loader in index.html already drew the mark and wordmark, so pick
+// up where it left off instead of drawing them again.
+:host-context([data-ot-boot-splash]) {
+  .app-splash-inner,
+  .app-splash-wordmark {
     opacity: 1;
     animation: none;
   }
 
-  .app-splash-mark img,
-  .app-splash-glow {
+  .app-splash-stroke {
     animation: none;
   }
 
-  .app-splash-bar span {
-    left: 30%;
-    animation: none;
+  .app-splash-sheen span {
+    animation-delay: 400ms;
+  }
+
+  .app-splash-status {
+    animation-delay: 0ms;
+  }
+
+  .app-splash-leave .app-splash-inner {
+    animation: splash-shrink 150ms $ease-out both;
+  }
+}
+
+@keyframes splash-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes splash-draw-down {
+  from {
+    clip-path: inset(0 100% 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes splash-draw-up {
+  from {
+    clip-path: inset(100% 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes splash-sheen {
+  0% {
+    transform: translateX(-100%);
+    animation-timing-function: $ease-in-out;
+  }
+  45%,
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes splash-status-in {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes splash-status-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes splash-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes splash-shrink {
+  to {
+    transform: scale(0.98);
   }
 }
 
@@ -133,15 +262,122 @@
   right: 0;
   left: 0;
   z-index: 90;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--ot-color-divider);
+  height: 0;
+  pointer-events: none;
+}
+
+// A thin indeterminate line on the top edge of the content. The track is fixed
+// edge to edge and one segment travels along it.
+.startup-progress-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ot-color-primary) 18%, transparent);
+
+  span {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 36%;
+    background: var(--ot-color-primary);
+    transform: translateX(-100%);
+    animation: startup-progress-travel 1.4s $ease-in-out infinite;
+  }
+}
+
+// Only worth reading when the wait is long, so it arrives after 1.5s.
+.startup-progress-caption {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  padding: 2px 10px;
+  border: 1px solid var(--ot-color-divider);
+  border-radius: 999px;
   background: var(--ot-color-surface);
-  color: var(--ot-color-text);
-  box-shadow: var(--ot-elevation-1);
-  text-align: center;
+  color: var(--ot-color-text-muted);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-50%);
+  animation: splash-fade 200ms $ease-out 1500ms both;
+}
+
+@keyframes startup-progress-travel {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(278%);
+  }
+}
+
+@keyframes startup-progress-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+// No movement at all. The mark and wordmark are simply there, the bar breathes
+// in opacity, and the only thing kept is the short delay before anything shows.
+@media (prefers-reduced-motion: reduce) {
+  .app-splash-stroke,
+  :host-context([data-ot-boot-splash]) .app-splash-stroke {
+    animation: none;
+  }
+
+  .app-splash-sheen {
+    display: none;
+  }
+
+  .app-splash-wordmark,
+  .app-splash-status {
+    animation-name: splash-fade;
+    animation-duration: 1ms;
+    animation-timing-function: linear;
+    animation-delay: $appear-delay;
+  }
+
+  :host-context([data-ot-boot-splash]) .app-splash-status {
+    animation-delay: 0ms;
+  }
+
+  .app-splash-status-enter,
+  .app-splash-status-leave {
+    animation-name: splash-fade;
+    filter: none;
+  }
+
+  .app-splash-status-leave {
+    animation-name: splash-fade-out;
+  }
+
+  .app-splash-leave .app-splash-inner {
+    animation: splash-appear 1ms linear $appear-delay forwards;
+  }
+
+  :host-context([data-ot-boot-splash]) .app-splash-leave .app-splash-inner {
+    animation: none;
+  }
+
+  .startup-progress-track {
+    background: var(--ot-color-primary);
+    animation: startup-progress-pulse 2s ease-in-out infinite;
+
+    span {
+      display: none;
+    }
+  }
+
+  .startup-progress-caption {
+    animation-duration: 1ms;
+  }
 }
 
 .startup-recovery {
