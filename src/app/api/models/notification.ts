@@ -27,6 +27,22 @@ export class Notification extends Entity {
   link: string | null;
 
   /**
+   * The ids of the page this is about, sent beside link by newer apis.
+   *
+   * Left undefined when the api did not send them at all, which is how an older
+   * api is told apart from a newer one saying the record is gone (null). Do not
+   * give these a default, or that difference is lost.
+   */
+  unitId?: number | null;
+  projectId?: number | null;
+  studentId?: number | null;
+  taskDefinitionId?: number | null;
+  taskDefinitionAbbr?: string | null;
+  taskId?: number | null;
+  commentId?: number | null;
+  groupId?: number | null;
+
+  /**
    * When the user read this, or null while it is still unread.
    */
   readAt: Date | null;
