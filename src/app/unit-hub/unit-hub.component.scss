@@ -219,6 +219,22 @@ button:disabled {
 .announcement-card {
   border-top: 3px solid var(--ot-color-primary);
 }
+.announcement-card,
+.session-card {
+  position: relative;
+  isolation: isolate;
+
+  &:hover {
+    border-color: var(--ot-color-link);
+  }
+
+  // Keep separate actions above the native button's full-card hit area.
+  a,
+  button:not(.details-title) {
+    position: relative;
+    z-index: 2;
+  }
+}
 .card-meta {
   gap: 8px;
   font-size: 0.76rem;
@@ -503,6 +519,8 @@ fieldset {
 }
 
 .details-title {
+  // The card, rather than this button, contains the stretched hit area.
+  position: static;
   display: block;
   width: 100%;
   background: none;
@@ -515,15 +533,24 @@ fieldset {
   cursor: pointer;
   overflow-wrap: anywhere;
 }
+.details-title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 14px;
+}
 .details-title:hover {
   color: var(--ot-color-link);
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 .details-title:focus-visible {
+  outline: none;
+}
+.details-title:focus-visible::after {
   outline: 3px solid var(--ot-color-focus);
   outline-offset: 3px;
-  border-radius: 3px;
 }
 .card-preview {
   display: -webkit-box;

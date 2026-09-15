@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 :host {
   display: block;
   min-width: 0;
@@ -5,10 +7,10 @@
 
 .teams-composer {
   padding: 1rem;
-  border: 1px solid #b9c9df;
+  border: 1px solid var(--ot-color-border);
   border-radius: 0.75rem;
-  background: #f5f8fd;
-  color: #20344d;
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
   overflow-wrap: anywhere;
 }
 
@@ -37,12 +39,17 @@ textarea {
   width: 100%;
   min-width: 0;
   padding: 0.65rem;
-  border: 1px solid #8498b2;
+  border: 1px solid var(--ot-color-border);
   border-radius: 0.35rem;
-  background: white;
-  color: #172b43;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
   font: inherit;
   font-weight: 400;
+
+  &::placeholder {
+    color: var(--ot-color-text-muted);
+    opacity: 1;
+  }
 }
 
 textarea {
@@ -58,13 +65,24 @@ small,
   font-weight: 600;
 }
 .draft-error {
-  color: #9b241a;
+  color: var(--ot-color-error);
 }
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid #215da6;
+  outline: 3px solid var(--ot-color-focus);
   outline-offset: 2px;
+}
+
+[mat-flat-button] {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--ot-color-primary),
+      filled-label-text-color: var(--ot-color-on-primary),
+      filled-disabled-container-color: var(--ot-color-disabled-surface),
+      filled-disabled-label-text-color: var(--ot-color-disabled-text),
+    )
+  );
 }
 
 @media (max-width: 480px) {

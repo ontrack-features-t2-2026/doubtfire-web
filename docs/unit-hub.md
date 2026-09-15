@@ -8,7 +8,7 @@ The normal version reads the signed-in user's authorised `/api/unit_hub` respons
 
 The feed displays published, unexpired announcements and a bounded window of published session occurrences. The page shows the server's window end and warns when the announcement list is truncated. Content is plain text. Original-post links and meeting links open in a separate tab and must use HTTPS. A Teams meeting can still require the student's university sign-in.
 
-Click an announcement title or **Read full announcement** to open the complete post. Click a session title or **View full details** to see its full description, dates, time zone, recurrence, source and joining/calendar choices. The dialog opens only records in the current authorised feed and clears its selected content when the route, unit, feed or demo mode changes. It supports keyboard focus, Escape and a visible close button. It does not create a public sharing URL.
+Click anywhere on an announcement or session card to open its full details, including the text, dates and blank space. Original-post, Join and calendar actions remain separate controls. Keyboard users can activate the title or **Read full announcement** / **View full details** button; the title's focus indicator outlines the whole card. The dialog opens only records in the current authorised feed and clears its selected content when the route, unit, feed or demo mode changes. It supports keyboard focus, Escape and a visible close button. It does not create a public sharing URL.
 
 ## Study essentials
 

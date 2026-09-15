@@ -6,7 +6,8 @@
 $my-palette: mat.m2-define-palette($md-formatif);
 
 :host {
-  --background-gray: rgba(0, 0, 0, 0.04);
+  --background-gray: var(--ot-color-selected);
+  color: var(--ot-color-text);
   padding-right: 8px;
 }
 
@@ -36,6 +37,8 @@ $my-palette: mat.m2-define-palette($md-formatif);
 }
 
 .omnisearch {
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
   font-size: 15px;
   padding-right: 10px;
   text-align: left;
@@ -47,7 +50,17 @@ $my-palette: mat.m2-define-palette($md-formatif);
   .search {
     background-color: transparent;
     border: hidden;
-    outline: none;
+    color: var(--ot-color-text);
+
+    &::placeholder {
+      color: var(--ot-color-text-muted);
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ot-color-focus);
+      outline-offset: 2px;
+    }
   }
 
   .mdc-icon-button {
@@ -105,4 +118,30 @@ $my-palette: mat.m2-define-palette($md-formatif);
 
 .tasks-viewport {
   height: 100%;
+}
+
+.task-list-muted {
+  color: var(--ot-color-text-muted);
+}
+
+.task-list-text {
+  color: var(--ot-color-text);
+}
+
+.task-list-border {
+  border-color: var(--ot-color-divider);
+}
+
+.task-list-hover:hover {
+  background: var(--ot-color-hover);
+}
+
+.task-list-selected,
+.task-list-selected:hover {
+  background: var(--ot-color-selected);
+  color: var(--ot-color-selected-text);
+}
+
+.task-list-reset:not(:disabled) {
+  color: var(--ot-color-link);
 }

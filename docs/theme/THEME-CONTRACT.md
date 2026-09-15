@@ -9,6 +9,46 @@ anything.
 
 Read sections 4, 6, 7 and 10 before writing any style code. The rest is why.
 
+## 14 September 2026 correction handover
+
+This note records the scoped correction candidate in the Unit Hub release branch. The audit below
+remains a historical snapshot of its named August revision; this note does not approve the full
+theme MVP or change its palette. The fixes consume the existing `--ot-color-*` tokens.
+
+| Surface                                       | Correction to verify                                                                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-project dashboard (`/dashboard`)        | Native date/search fields, placeholders, filter controls and quieter dark unit headers                                                             |
+| Project dashboard (`/projects/:id/dashboard`) | Progress container, grade fields, learning outcomes, engagement/peer summary text, planner links, task search, selected rows and mobile panes/tabs |
+| Progress burndown                             | SVG axis labels, grid lines and legend states; the scoped chart rule reaches the library's child SVG                                               |
+| Task Planner and tutorials                    | Gantt surfaces/text and toolbar controls; tutorial cards and empty states                                                                          |
+| Calendar, About and demo controls             | Dialog fields, links, headings, cards and the demo banner                                                                                          |
+
+The final frontend regression run passed **1,050 tests across 141 files** on Node 22.
+Full lint, typecheck, deployment configuration validation and the production build passed.
+The build retains its existing stylesheet-size and dependency warnings; budgets were not raised.
+The old test requiring a permanently white search field now checks its label, placeholder,
+search type and keyboard focus. Planner regressions exercise the library's English locale
+and supported empty template.
+
+Browser checks used fictional local accounts in the installed in-app browser:
+
+- Dark dashboard date/search controls, progress panels, chart labels, tutorials, About,
+  calendar tabs/download action and PPI/push previews were inspected after rebuilding.
+- Light-mode comparison covered the same shared tokens and core planner, dashboard,
+  calendar and preview surfaces. Theme switching updated existing page colours.
+- Phone layout checks included 320 CSS pixels for About, PPI/push previews and the
+  dashboard, and a phone-width planner with its English empty state visible. The
+  tutorials table stays inside a keyboard-scrollable region. Mobile overview/task-list
+  navigation remained usable.
+- Announcement and session blank areas opened their detail views. Keyboard activation
+  worked; separate Join, calendar and download controls remained independent.
+
+Record the final component revisions and local evidence in the release handover. These checks
+are a scoped correction check, not full theme-MVP acceptance or accessibility certification.
+Physical iOS/Android devices and operating-system-driven System-theme changes still need the
+receiving team's acceptance. Live tenant and personal-calendar acceptance are separate from
+this styling correction; no real meeting invitation or enrolment was changed.
+
 ---
 
 ## 1. Missing inputs, and what is provisional because of them
@@ -312,11 +352,11 @@ semantic token layer on top now, and move Material onto tokens per component gro
 
 ### The three options
 
-| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Option                                                           | What it means                                                                             | Verdict                                                                                                                                                                             |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A. Stay on M2, add a second `m2-define-dark-theme` under a class | One extra `@include mat.all-component-colors($dark)` in a `.dark` block                   | Rejected. Roughly doubles emitted CSS, gives no token vocabulary for the 233 loose hexes outside the three palette files, and locks us further into an API Angular is winding down. |
-| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                          |
-| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                   |
+| B. Uncomment `m3-theme.scss` and switch wholesale                | Swap M2 for the generated M3 light and dark themes                                        | Rejected. See below.                                                                                                                                                                |
+| **C. Staged bridge**                                             | Ship `--ot-*` tokens and the state machine first; migrate Material component groups after | **Chosen.**                                                                                                                                                                         |
 
 ### Why B is rejected
 
@@ -590,12 +630,12 @@ is the rule that decides the migration, so it is written as a table rather than 
 "has a preference" as "holds one of the three allowlisted strings"; anything else is treated as
 absent, per 6.1.
 
-| Local preference | Account preference | Outcome                                                                        |
-| ---------------- | ------------------ | ------------------------------------------------------------------------------ |
-| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.     |
-| absent           | present            | Adopt the account value and write it locally. Rule 4.                          |
+| Local preference | Account preference | Outcome                                                                                 |
+| ---------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| absent           | absent             | Nothing is stored on either side. Follow `system`. Write nothing anywhere.              |
+| absent           | present            | Adopt the account value and write it locally. Rule 4.                                   |
 | **present**      | **absent**         | **Keep the local value, upload it, and stamp `updatedAt` at the moment of the upload.** |
-| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                        |
+| present          | present            | Compare timestamps. Newer wins, tie goes to the account.                                |
 
 Only the fourth row consults a timestamp. So "a local timestamp that is missing, unparseable or
 in the future counts as older, and the account value is taken" applies **inside that row only**,
@@ -629,7 +669,7 @@ Two consequences that follow from the third row and are intended:
 `localStorage` means nothing to compare, so the account value is adopted, written locally, and
 the next boot on that device is flash-free. Until the response lands, that first session follows
 `system`. One repaint, on the first session on a new device, is the accepted cost of rule 1. It
-is stated behaviour, not a defect for THM-Q01 to raise. Where the account is *also* empty, row
+is stated behaviour, not a defect for THM-Q01 to raise. Where the account is _also_ empty, row
 one of the table applies and nothing is written at all — a brand-new user is not given a stored
 preference they never chose.
 
@@ -796,13 +836,13 @@ tint, it just had no name.
 | The status **identity**, meaning which hue means `complete`                                | Green means complete in both themes. Teaching staff read these chips daily and re-learning them in dark mode is a real cost. |
 | `#da532c`, `$doubtfire-color` in `variables.scss`                                          | Legacy brand colour. Keep or retire it, do not theme it.                                                                     |
 
-| Theme-aware                                                 | Why                                                                                                                                |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Theme-aware                                                 | Why                                                                                                                                                                                                                               |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--ot-color-primary`, `--ot-color-link`, `--ot-color-focus` | `#3939ff` is 6.28:1 on the light page, 2.83:1 on the dark page and 2.20:1 on the worst-case dark raised surface. It misses 4.5:1 for text and 3:1 for a focus ring, so the brand blue cannot be the dark-mode interactive colour. |
-| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                      |
-| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                    |
-| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                      |
-| The `theme-color` meta tag                                  | Section 12.                                                                                                                        |
+| Every status **fill and foreground**                        | The hue stays recognisable; the lightness has to move or the chip is unreadable. Section 8.1.                                                                                                                                     |
+| All surfaces, text, borders, dividers, shadows, scrims      | Definitionally.                                                                                                                                                                                                                   |
+| Chart series                                                | A series colour is a graphical object under WCAG 1.4.11 and needs 3:1 against its own ground.                                                                                                                                     |
+| The `theme-color` meta tag                                  | Section 12.                                                                                                                                                                                                                       |
 
 The distinction in one sentence: **the brand mark is fixed, the brand as an interface colour is
 theme-aware.**
@@ -1318,6 +1358,7 @@ Visual regression
   reporting it is a fingerprinting signal and this feature does not do it. If analytics is added
   to OnTrack later, the theme preference stays out of it, and that is a review gate rather than a
   preference.
+
 - **Not an authorisation or identity control.** `data-ot-theme` and
   `ontrack.theme.preference` are presentation state. They are attacker-controlled by definition,
   since any user can edit `localStorage`. **No permission check, no role check, no route guard,

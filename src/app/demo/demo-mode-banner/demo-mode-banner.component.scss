@@ -1,8 +1,8 @@
 .demo-mode-banner {
   align-items: center;
-  background: #fff4cc;
-  border-bottom: 1px solid #9a6700;
-  color: #5f3b00;
+  background: var(--ot-color-surface-raised);
+  border-bottom: 1px solid var(--ot-color-warning);
+  color: var(--ot-color-text);
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -13,4 +13,8 @@
 .demo-mode-banner a,
 .demo-mode-banner button {
   color: inherit;
+}
+
+.demo-mode-banner mat-icon {
+  color: var(--ot-color-warning);
 }
