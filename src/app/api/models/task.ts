@@ -4,6 +4,7 @@ import {HttpClient} from '@angular/common/http';
 import {LOCALE_ID} from '@angular/core';
 import {Observable, finalize, firstValueFrom, map} from 'rxjs';
 import {AppInjector} from 'src/app/app-injector';
+import {SubmissionCelebrationService} from 'src/app/common/celebrate/submission-celebration.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GradeTaskModalService} from 'src/app/tasks/modals/grade-task-modal/grade-task-modal.service';
@@ -123,6 +124,9 @@ export class Task extends Entity {
   public readonly testAttemptCache: EntityCache<TestAttempt> = new EntityCache<TestAttempt>();
 
   suggestedTaskStatus;
+
+  /** Status held before the student's current submission began. Cleared once it settles. */
+  private statusBeforeSubmission?: TaskStatusEnum;
 
   private _unit: Unit;
 
@@ -978,6 +982,9 @@ export class Task extends Entity {
     isTestSubmission: boolean = false,
   ) {
     const oldStatus = this.status;
+    // A new submission remembers where it came from, so a resubmission reads as one.
+    // New evidence and test submissions are not status changes and are not celebrated.
+    this.statusBeforeSubmission = !reuploadEvidence && !isTestSubmission ? oldStatus : undefined;
 
     if (!isTestSubmission) {
       this.status = status;
@@ -987,6 +994,7 @@ export class Task extends Entity {
     const modal = uploadModal.show(this, reuploadEvidence, isTestSubmission);
     // Modal failed to present
     if (!modal) {
+      this.statusBeforeSubmission = undefined;
       if (!isTestSubmission) {
         this.status = oldStatus;
       }
@@ -1000,6 +1008,7 @@ export class Task extends Entity {
       },
       // Grade was not selected (modal was dismissed)
       (_dismissed) => {
+        this.statusBeforeSubmission = undefined;
         if (!isTestSubmission) {
           this.status = oldStatus;
         }
@@ -1021,14 +1030,31 @@ export class Task extends Entity {
       );
     }
 
+    const previousStatus = this.statusBeforeSubmission;
+    this.statusBeforeSubmission = undefined;
+    const celebrated =
+      submissionCompleted &&
+      expectedStatus === 'ready_for_feedback' &&
+      previousStatus !== undefined &&
+      this.celebrateSubmission(previousStatus);
+
     if (this.status !== expectedStatus) {
       alerts.message(`Status changed to ${this.statusLabel()}.`, 4000);
-    } else {
+    } else if (!celebrated) {
+      // The submission confirmation already says this, so it replaces the snackbar.
       alerts.success(`Status changed to ${this.statusLabel()}.`);
     }
     this.getSubmissionDetails().subscribe();
     const taskService: TaskService = AppInjector.get(TaskService);
     taskService.notifyTransitionComplete(this, submissionCompleted);
+  }
+
+  private celebrateSubmission(previousStatus: TaskStatusEnum): boolean {
+    try {
+      return AppInjector.get(SubmissionCelebrationService).celebrate(this, previousStatus);
+    } catch {
+      return false;
+    }
   }
 
   public async markAsDiscussed(reasonText?: string) {
@@ -1152,6 +1178,7 @@ export class Task extends Entity {
               this.project.taskCache.delete(this.definition.abbreviation);
               this.project.taskCache.add(this);
             }
+            this.statusBeforeSubmission = submissionCompleted ? oldStatus : undefined;
             this.processTaskStatusChange(status, alerts, submissionCompleted);
             taskService.notifyStatusChange(this);
           },
