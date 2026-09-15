@@ -423,6 +423,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       return;
     }
     this.readStatus.markRead([announcement]);
+    this.changes.markForCheck();
     this.showDetails({
       unitCode: unit.code,
       unitName: unit.name,
