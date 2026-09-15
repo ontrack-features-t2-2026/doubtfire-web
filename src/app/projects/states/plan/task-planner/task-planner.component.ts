@@ -1,5 +1,8 @@
 import {
+  GANTT_GLOBAL_CONFIG,
+  GANTT_I18N_LOCALE_TOKEN,
   GanttBaselineItem,
+  GanttConfigService,
   GanttDate,
   GanttItem,
   GanttLink,
@@ -8,6 +11,7 @@ import {
   GanttViewOptions,
   GanttViewType,
   NgxGanttComponent,
+  enUsLocale,
 } from '@worktile/gantt';
 import {
   AfterViewInit,
@@ -25,10 +29,12 @@ import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
 import {TaskPrerequisite} from 'src/app/api/models/task-prerequisite';
+import {TaskStatus} from 'src/app/api/models/task-status';
 import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {taskPlannerGanttConfig} from './task-planner-gantt.config';
 import {TaskPlannerPrerequisitesModalService} from './task-planner-prerequisites-modal/task-planner-prerequisites-modal.service';
 
 interface TaskGanttItem extends GanttItem {
@@ -44,7 +50,12 @@ interface TaskGanttItem extends GanttItem {
   selector: 'f-task-planner',
   templateUrl: './task-planner.component.html',
   styleUrl: './task-planner.component.scss',
-  providers: [GanttPrintService],
+  providers: [
+    GanttPrintService,
+    GanttConfigService,
+    {provide: GANTT_GLOBAL_CONFIG, useValue: taskPlannerGanttConfig},
+    {provide: GANTT_I18N_LOCALE_TOKEN, useValue: [enUsLocale]},
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -190,6 +201,49 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     const td = item.taskDefinition;
     const prereqs = this.taskPrerequisites.filter((p) => p.prerequisiteId === td.id);
     this.taskPlannerPrerequisitesModal.show(this.project, td, prereqs);
+  }
+
+  public statusLabel(item: TaskGanttItem): string {
+    return TaskStatus.STATUS_LABELS.get(item.task.status) ?? 'Not Started';
+  }
+
+  public prerequisitesFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.taskDefinitionId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.prerequisite ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.prerequisiteId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public dependentsFor(item: TaskGanttItem): TaskDefinition[] {
+    return this.taskPrerequisites
+      .filter((prerequisite) => prerequisite.prerequisiteId === item.taskDefinition.id)
+      .map(
+        (prerequisite) =>
+          prerequisite.taskDefinition ??
+          this.unit.taskDefinitions.find(
+            (taskDefinition) => taskDefinition.id === prerequisite.taskDefinitionId,
+          ),
+      )
+      .filter((taskDefinition): taskDefinition is TaskDefinition => !!taskDefinition);
+  }
+
+  public connectionSummary(item: TaskGanttItem): string {
+    const prerequisiteCount = this.prerequisitesFor(item).length;
+    const dependentCount = this.dependentsFor(item).length;
+
+    if (!prerequisiteCount && !dependentCount) {
+      return 'No prerequisite or dependent tasks';
+    }
+
+    const prerequisiteLabel = `${prerequisiteCount} prerequisite${prerequisiteCount === 1 ? '' : 's'}`;
+    const dependentLabel = `${dependentCount} dependent${dependentCount === 1 ? '' : 's'}`;
+    return `${prerequisiteLabel}; ${dependentLabel}`;
   }
 
   setShowTasksAboveTargetGrade(value: boolean) {
@@ -398,6 +452,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const originalStyle = {
+      flex: ganttEl.style.flex,
       width: ganttEl.style.width,
       height: ganttEl.style.height,
       overflow: ganttEl.style.overflow,
@@ -427,6 +482,9 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       const fullHeight =
         ganttEl.offsetHeight - mainContainer.offsetHeight + mainContainer.scrollHeight;
 
+      // The chart is a flex item that may shrink to fit the page, which would cut the
+      // rows below the fold out of the image, so hold it at its full size while capturing.
+      ganttEl.style.flex = '0 0 auto';
       ganttEl.style.width = `${fullWidth}px`;
       ganttEl.style.height = `${fullHeight}px`;
       ganttEl.style.overflow = 'visible';
@@ -439,6 +497,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.style.flex = originalStyle.flex;
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

@@ -1,83 +1,276 @@
-@use 'styles/mixins/scrollable' as *;
-
-#pdfContainer {
-  flex-direction: column;
+:host {
+  display: block;
   height: 100%;
-  min-height: 100%;
-  min-width: 100%;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
+}
+
+.pdf-viewer {
+  background: #ffffff;
+  border: 1px solid #c9cad4;
+  border-radius: 0.625rem;
   box-sizing: border-box;
   display: flex;
-  place-content: center;
-  align-items: center;
-}
-
-#actionBar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-object {
+  flex-direction: column;
   height: 100%;
-  min-width: 100%;
+  min-height: 18rem;
+  min-width: 0;
+  overflow: hidden;
   width: 100%;
 }
 
-#pdfViewActions {
-  padding-top: 1rem;
-  padding-left: 1rem;
-  margin-right: auto;
+.pdf-viewer__toolbar {
+  background: #ffffff;
+  border-bottom: 1px solid #d9d9e2;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  padding: 0.625rem;
+}
 
-  button {
-    margin-bottom: 28px;
+.pdf-viewer__file-heading {
+  align-items: center;
+  color: #171725;
+  display: flex;
+  flex: 1 1 16rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  min-width: 0;
+
+  span {
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
-#pdfActions {
-  padding-top: 1rem;
-  padding-right: 1rem;
-  margin-left: auto;
+.pdf-viewer__toolbar-row {
+  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
 
-  ::ng-deep .mdc-notched-outline__leading {
-    min-width: 28px !important;
-    border-top-left-radius: 28px !important;
-    border-bottom-left-radius: 28px !important;
-  }
-  ::ng-deep .mdc-notched-outline__notch {
-    border-radius: 28px 0 0 28px !important;
-  }
-  ::ng-deep .mdc-notched-outline__trailing {
-    border-radius: 0 28px 28px 0 !important;
-  }
-  ::ng-deep .mat-form-field-outline-end {
-    border-radius: 0 28px 28px 0 !important;
-  }
-  ::ng-deep .mat-mdc-form-field-flex {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
+.pdf-viewer__primary-actions {
+  justify-content: flex-end;
+}
+
+.pdf-viewer__document-actions {
+  flex: 1 0 100%;
+}
+
+.pdf-viewer__control,
+.pdf-viewer__icon-control,
+.pdf-viewer__state-actions button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #595969;
+  border-radius: 0.5rem;
+  color: #20202d;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 600;
+  gap: 0.375rem;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.625rem;
+
+  &:hover:not(:disabled) {
+    background: #eeeefe;
+    border-color: #3939ff;
   }
 
-  button {
-    margin-left: -12px;
+  &:focus-visible {
+    outline: 3px solid #4f4fff;
+    outline-offset: 2px;
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.pdf-viewer__icon-control {
+  min-width: 2.75rem;
+  padding: 0.25rem;
+}
+
+.pdf-viewer__search {
+  align-items: center;
+  border: 1px solid #595969;
+  border-radius: 0.5rem;
+  display: flex;
+  flex: 1 1 15rem;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  min-width: 8rem;
+  padding-inline: 0.625rem;
+
+  &:focus-within {
+    outline: 3px solid #4f4fff;
+    outline-offset: 2px;
+  }
+
+  input {
+    border: 0;
+    color: #171725;
+    flex: 1 1 auto;
+    font: inherit;
+    min-width: 0;
+    outline: 0;
+    width: 100%;
+  }
+}
+
+.pdf-viewer__zoom {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+
+  output {
+    color: #171725;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.25rem;
+    text-align: center;
+  }
+}
+
+.pdf-viewer__content {
+  background: #e9eaf0;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  position: relative;
+}
+
+.pdf-viewer__document,
+.pdf-viewer__native-document {
+  border: 0;
+  display: block;
+  height: 100%;
+  min-height: 18rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.pdf-viewer__document--loading {
+  opacity: 0;
 }
 
 pdf-viewer {
-  width: 100%;
-  height: 100%;
-
-  .ng2-pdf-viewer-container {
-    overflow-x: hidden;
-    overflow-y: visible;
+  ::ng-deep .ng2-pdf-viewer-container {
+    overflow: auto;
   }
 }
 
-.ng2-pdf-viewer-container {
-  overflow-x: hidden;
-  overflow-y: visible;
+.pdf-viewer__state {
+  align-items: center;
+  color: #282838;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.625rem;
+  justify-content: center;
+  min-height: 16rem;
+  padding: 1.25rem;
+  text-align: center;
+
+  h3,
+  p {
+    margin: 0;
+    max-width: 34rem;
+    overflow-wrap: anywhere;
+  }
+
+  > mat-icon {
+    font-size: 2.5rem;
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
+
+.pdf-viewer__state--overlay {
+  background: rgba(247, 247, 251, 0.97);
+  inset: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.pdf-viewer__state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.sr-only {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (max-width: 720px) {
+  .pdf-viewer {
+    border-radius: 0.375rem;
+  }
+
+  .pdf-viewer__toolbar {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .pdf-viewer__file-heading,
+  .pdf-viewer__primary-actions,
+  .pdf-viewer__document-actions,
+  .pdf-viewer__search {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .pdf-viewer__file-heading span {
+    white-space: normal;
+  }
+
+  .pdf-viewer__primary-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    .pdf-viewer__control {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      padding-inline: 0.375rem;
+    }
+  }
+
+  .pdf-viewer__document-actions {
+    align-items: center;
+  }
+
+  .pdf-viewer__zoom {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 359px) {
+  .pdf-viewer__primary-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf-viewer__control {
+    justify-content: flex-start;
+    width: 100%;
+  }
 }

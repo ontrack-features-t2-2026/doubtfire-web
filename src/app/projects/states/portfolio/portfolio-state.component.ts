@@ -2,7 +2,6 @@ import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@ang
 import {ActivatedRoute} from '@angular/router';
 import {Observable, Subscription, of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
-import {GlobalStateService} from '../index/global-state.service';
 
 interface PortfolioStepTab {
   title: string;
@@ -56,10 +55,7 @@ export class PortfolioStateComponent implements OnInit, OnDestroy {
 
   private projectSub?: Subscription;
 
-  constructor(
-    private globalStateService: GlobalStateService,
-    private route: ActivatedRoute,
-  ) {}
+  constructor(private route: ActivatedRoute) {}
 
   public get selectedTabIndex(): number {
     return Math.max(0, (this.activeTab?.seq ?? 1) - 1);
@@ -146,11 +142,18 @@ export class PortfolioStateComponent implements OnInit, OnDestroy {
     });
   }
 
+  public canAdvanceActiveTab(advanceBy: 1 | -1): boolean {
+    const newSeq = (this.activeTab?.seq ?? 1) + advanceBy;
+    const nextTab = this.orderedTabs.find((tab) => tab.seq === newSeq);
+
+    return Boolean(nextTab && !this.isTabDisabled(nextTab));
+  }
+
   public advanceActiveTab(advanceBy: 1 | -1): void {
     const newSeq = (this.activeTab?.seq ?? 1) + advanceBy;
     const nextTab = this.orderedTabs.find((tab) => tab.seq === newSeq);
 
-    if (nextTab) {
+    if (nextTab && !this.isTabDisabled(nextTab)) {
       this.setActiveTab(nextTab);
     }
   }

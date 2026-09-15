@@ -28,7 +28,7 @@
 
     <button
       aria-controls="dashboard-secondary-filters"
-      class="flex min-h-12 w-full items-center justify-between rounded border border-gray-400 bg-white px-4 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
+      class="dashboard-native-control flex min-h-12 w-full items-center justify-between rounded border px-4 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
       data-mobile-global-filter-toggle
       type="button"
       [attr.aria-expanded]="mobileGlobalFiltersExpanded"
@@ -37,7 +37,7 @@
       <span>More filters</span>
       <span class="flex items-center gap-2">
         @if (mobileSecondaryFilterCount > 0) {
-          <span class="rounded-full bg-formatif-blue px-2 py-0.5 text-sm text-white">
+          <span class="dashboard-active-count rounded-full px-2 py-0.5 text-sm">
             {{ mobileSecondaryFilterCount }} active
           </span>
         }
@@ -93,7 +93,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-start-date">Start date</label>
         <input
-          class="h-12 min-w-0 rounded border border-gray-400 bg-white px-3"
+          class="dashboard-native-control h-12 min-w-0 rounded border px-3"
           id="dashboard-start-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -105,7 +105,7 @@
       <div class="flex min-w-0 flex-col gap-1 sm:pb-5">
         <label class="font-medium" for="dashboard-end-date">End date</label>
         <input
-          class="h-12 min-w-0 rounded border border-gray-400 bg-white px-3"
+          class="dashboard-native-control h-12 min-w-0 rounded border px-3"
           id="dashboard-end-date"
           type="date"
           [attr.aria-describedby]="isDateRangeInvalid ? 'date-range-error' : null"
@@ -115,7 +115,7 @@
         />
       </div>
       <button
-        class="h-12 rounded border border-gray-400 bg-white px-4 font-medium disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
+        class="dashboard-native-control h-12 rounded border px-4 font-medium disabled:cursor-not-allowed disabled:opacity-50 sm:mb-5"
         type="button"
         [disabled]="!startDate && !endDate"
         (click)="clearDateRange()"
@@ -124,7 +124,7 @@
       </button>
 
       @if (isDateRangeInvalid) {
-        <p class="text-red-700 sm:mb-5" id="date-range-error" role="alert">
+        <p class="dashboard-filter-error sm:mb-5" id="date-range-error" role="alert">
           Start date must be on or before end date.
         </p>
       }
@@ -139,13 +139,12 @@
         [attr.aria-label]="unit.code + ' project tasks'"
       >
         <div
-          class="flex w-full shrink-0 flex-col p-4 sm:flex-row sm:items-center sm:gap-4"
-          [class.bg-formatif-blue]="!unit.isPrevious"
-          [class.bg-green-600]="unit.isPrevious"
+          class="dashboard-unit-header flex w-full shrink-0 flex-col p-4 sm:flex-row sm:items-center sm:gap-4"
+          [class.is-previous]="unit.isPrevious"
         >
           <h2 class="m-0 sm:hidden">
             <button
-              class="flex min-h-12 w-full min-w-0 items-center gap-3 rounded text-left text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              class="flex min-h-12 w-full min-w-0 items-center gap-3 rounded text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               data-mobile-unit-toggle
               type="button"
               [attr.aria-controls]="
@@ -161,7 +160,7 @@
                 <span class="block text-lg leading-tight font-semibold break-words">
                   {{ unit.code }}
                 </span>
-                <span class="mt-1 block text-sm leading-tight break-words text-white/90">
+                <span class="dashboard-unit-subtitle mt-1 block text-sm leading-tight break-words">
                   {{ unit.name }} · {{ unit.isPrevious ? 'Previous' : 'Active' }}
                 </span>
                 <span class="mt-2 flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-sm">
@@ -186,12 +185,12 @@
 
           <div class="hidden min-w-0 grow sm:block">
             <a
-              class="m-0 mt-2 block truncate text-xl font-semibold text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              class="m-0 mt-2 block truncate text-xl font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               [routerLink]="['/projects', unit.projectId, 'dashboard']"
             >
               {{ unit.code }}
             </a>
-            <p class="m-0 truncate text-xl font-normal text-white">
+            <p class="m-0 truncate text-xl font-normal">
               {{ unit.isPrevious ? 'Previous' : 'Active' }}
             </p>
           </div>
@@ -202,7 +201,7 @@
             [id]="'dashboard-unit-controls-' + unit.projectId"
           >
             <a
-              class="rounded py-2 text-sm font-semibold text-white underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:hidden"
+              class="rounded py-2 text-sm font-semibold underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:hidden"
               [routerLink]="['/projects', unit.projectId, 'dashboard']"
             >
               Open {{ unit.code }} dashboard
@@ -210,7 +209,7 @@
 
             <input
               autocomplete="off"
-              class="text-md h-12 min-w-0 rounded-md bg-white p-2 px-4 text-gray-900 placeholder:text-gray-600 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:h-full sm:w-56"
+              class="text-md dashboard-native-control h-12 min-w-0 rounded-md p-2 px-4 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:h-full sm:w-56"
               placeholder="Search tasks..."
               type="search"
               [attr.aria-label]="'Search tasks in ' + unit.code"
@@ -224,7 +223,7 @@
                 [attr.aria-label]="'Sort tasks in ' + unit.code"
                 [matMenuTriggerFor]="sortmenu"
               >
-                <mat-icon style="color: white">sort</mat-icon>
+                <mat-icon>sort</mat-icon>
               </button>
               <mat-menu #sortmenu="matMenu">
                 @for (mode of sortOptions; track mode) {
@@ -239,7 +238,7 @@
                 [attr.aria-label]="'Filter tasks in ' + unit.code"
                 [matMenuTriggerFor]="filtermenu"
               >
-                <mat-icon style="color: white">filter_list_alt</mat-icon>
+                <mat-icon>filter_list_alt</mat-icon>
               </button>
               <mat-menu #filtermenu="matMenu">
                 @for (mode of filterOptions; track mode) {
@@ -263,7 +262,7 @@
         >
           @if (unit.gradeSummaries.length > 0) {
             <div
-              class="border-x border-gray-300 bg-gray-50 px-4 py-3"
+              class="dashboard-border dashboard-raised-surface border-x px-4 py-3"
               [attr.aria-label]="'Grade task completion for ' + unit.code"
             >
               <p class="m-0 text-sm font-semibold">Grade task completion</p>
@@ -284,13 +283,13 @@
 
           <div class="flex min-h-0 flex-col overflow-visible sm:overflow-y-auto">
             @for (task of unit.tasks; track task.abbreviation) {
-              <div class="min-w-0 border-b border-gray-300">
+              <div class="dashboard-border min-w-0 border-b">
                 <f-dashboard-list-item [task]="task"></f-dashboard-list-item>
               </div>
             }
 
             @if (unit.tasks.length === 0) {
-              <div class="border border-t-0 border-gray-300 p-6 text-center" role="status">
+              <div class="dashboard-border border border-t-0 p-6 text-center" role="status">
                 @if (hasActiveTaskCriteria(unit.projectId)) {
                   <p class="m-0">No tasks match the current search and filters.</p>
                 } @else {
@@ -310,7 +309,7 @@
       !previousUnitsLoadError
     ) {
       <div
-        class="flex w-full max-w-2xl shrink-0 items-center self-start rounded border border-gray-300 bg-white p-6"
+        class="dashboard-border dashboard-surface flex w-full max-w-2xl shrink-0 items-center self-start rounded border p-6"
         role="status"
       >
         <p class="m-0">No tasks match the current global search and filters.</p>
@@ -319,7 +318,7 @@
 
     @if (unitScope !== 'active' && loadingPreviousUnits) {
       <div
-        class="flex w-full shrink-0 items-center self-start rounded border border-gray-300 p-6 sm:w-80"
+        class="dashboard-border flex w-full shrink-0 items-center self-start rounded border p-6 sm:w-80"
       >
         Loading previous units...
       </div>
@@ -327,7 +326,7 @@
 
     @if (unitScope !== 'active' && previousUnitsLoadError) {
       <div
-        class="flex w-full shrink-0 flex-col self-start rounded border border-gray-300 p-6 sm:w-96"
+        class="dashboard-border flex w-full shrink-0 flex-col self-start rounded border p-6 sm:w-96"
       >
         <h3 class="mt-0">Previous units</h3>
         <p class="mb-0">Previous units could not be loaded.</p>
@@ -342,10 +341,10 @@
       !hasGlobalTaskCriteria
     ) {
       <div class="flex w-full shrink-0 flex-col self-start overflow-hidden rounded shadow sm:w-96">
-        <div class="bg-green-600 p-4 text-white">
+        <div class="dashboard-unit-header is-previous p-4">
           <h3 class="m-0">Previous units</h3>
         </div>
-        <div class="border border-t-0 border-gray-300 p-6">
+        <div class="dashboard-border border border-t-0 p-6">
           <p class="m-0">No previous units are available.</p>
         </div>
       </div>

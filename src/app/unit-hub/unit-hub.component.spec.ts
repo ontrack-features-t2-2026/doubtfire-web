@@ -46,6 +46,7 @@ describe('Unit Hub route, forms and rendered content', () => {
       ],
     });
     demo = TestBed.inject(DemoModeStore);
+    demo.configureScenario('all-features', 111);
   });
   afterEach(() => {
     TestBed.inject(MatDialog).closeAll();

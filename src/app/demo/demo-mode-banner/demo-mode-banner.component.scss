@@ -1,8 +1,10 @@
 .demo-mode-banner {
   align-items: center;
-  background: #fff4cc;
-  border-bottom: 1px solid #9a6700;
-  color: #5f3b00;
+  // A warning tint, not a plain surface. In light mode the raised surface is the same
+  // white as the page, and demo data has to be obvious at a glance in both themes.
+  background: color-mix(in srgb, var(--ot-color-warning) 14%, var(--ot-color-surface-raised));
+  border-bottom: 1px solid var(--ot-color-warning);
+  color: var(--ot-color-text);
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -13,4 +15,22 @@
 .demo-mode-banner a,
 .demo-mode-banner button {
   color: inherit;
+  min-height: 44px;
+}
+
+@media (max-width: 600px) {
+  .demo-mode-banner {
+    gap: 0.35rem 0.65rem;
+    justify-content: flex-start;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .demo-mode-banner span {
+    flex: 1 1 calc(100% - 3rem);
+    line-height: 1.3;
+  }
+}
+
+.demo-mode-banner mat-icon {
+  color: var(--ot-color-warning);
 }

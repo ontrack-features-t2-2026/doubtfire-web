@@ -12,6 +12,8 @@ import {
   BaseAudioRecorderComponent,
   RecordingEvent,
 } from 'src/app/common/audio-recorder/audio/base-audio-recorder';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
+import {AudioPlaybackCoordinatorService} from 'src/app/common/services/audio-playback-coordinator.service';
 import {MediaRecorderService} from 'src/app/common/services/recorder-service';
 
 @Component({
@@ -38,8 +40,10 @@ export class IntelligentDiscussionRecorderComponent
   constructor(
     private mediaRecorderService: MediaRecorderService,
     private taskCommentService: TaskCommentService,
+    playbackCoordinator: AudioPlaybackCoordinatorService,
+    appLifecycle: AppLifecycleService,
   ) {
-    super(mediaRecorderService);
+    super(mediaRecorderService, playbackCoordinator, appLifecycle);
   }
 
   ngAfterViewInit() {
@@ -70,6 +74,25 @@ export class IntelligentDiscussionRecorderComponent
     }
   }
 
+  /** Ends the take without producing a recording, so nothing is posted. */
+  cancelRecording(): void {
+    this.isPlaying = false;
+    if (this.isRecording || this.isRequestingPermission) {
+      this.mediaRecorder.cancelRecording();
+      this.isRecording = false;
+      this.isRequestingPermission = false;
+      this.stopVisualisation();
+      this.clearWaveform();
+    }
+  }
+
+  // A stop posts the take as the student's reply, and the API marks the
+  // discussion complete. A backgrounded take is only part of an answer, so it
+  // is dropped instead and the dialog asks the student to start again.
+  protected onLifecyclePause(): void {
+    this.cancelRecording();
+  }
+
   sendRecording() {
     if (this.blob && this.blob.size > 0) {
       this.isSending = true;
@@ -96,7 +119,7 @@ export class IntelligentDiscussionRecorderComponent
 
       this.canvas.width = WIDTH = this.canvas.clientWidth;
       this.canvas.height = HEIGHT = this.canvas.clientHeight;
-      requestAnimationFrame(draw);
+      this.scheduleVisualisationFrame(draw);
       analyser.getByteTimeDomainData(dataArray);
       analyser.getByteFrequencyData(dataArray);
 

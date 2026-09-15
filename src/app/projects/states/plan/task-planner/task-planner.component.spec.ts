@@ -1,8 +1,14 @@
-import {GanttPrintService} from '@worktile/gantt';
-import {afterEach, beforeEach, describe, expect, it} from 'vitest';
+import {
+  GanttConfigService,
+  GanttPrintService,
+  GanttViewType,
+  NgxGanttTableComponent,
+} from '@worktile/gantt';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {EmbeddedViewRef, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {By} from '@angular/platform-browser';
 import {ActivatedRoute, Router} from '@angular/router';
 import {EMPTY} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
@@ -39,6 +45,25 @@ describe('TaskPlannerComponent target-grade filtering', () => {
     expect(component.taskDefs()).toEqual([passTask, creditTask]);
   });
 
+  it('rebuilds the visible planner data when the beyond-target toggle changes', () => {
+    const passTask = taskDefinition(1, 0);
+    const creditTask = taskDefinition(2, 1);
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    component.project = {
+      id: 15,
+      unit: {taskDefinitions: [passTask, creditTask]},
+      findTaskForDefinition: () => null,
+    } as unknown as Project;
+    component.targetGrade = 0;
+    component.showTasksAboveTargetGrade = false;
+    const refreshItems = vi.spyOn(component, 'refreshItems').mockImplementation(() => undefined);
+
+    component.setShowTasksAboveTargetGrade(true);
+
+    expect(component.taskDefs()).toEqual([passTask, creditTask]);
+    expect(refreshItems).toHaveBeenCalledWith(false);
+  });
+
   it('reveals an above-target task requested by a direct planner link', () => {
     const passTask = taskDefinition(1, 0);
     const creditTask = taskDefinition(2, 1);
@@ -58,6 +83,43 @@ describe('TaskPlannerComponent target-grade filtering', () => {
 
     expect(component.showTasksAboveTargetGrade).toBe(true);
     expect(component.taskDefs()).toEqual([passTask, creditTask]);
+  });
+});
+
+describe('TaskPlannerComponent chart download', () => {
+  it('holds the chart at full size while it is captured and restores it after', async () => {
+    const ganttEl = document.createElement('div');
+    ganttEl.style.flex = '1 1 auto';
+    const side = document.createElement('div');
+    side.className = 'gantt-side';
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'gantt-main-container';
+    // jsdom has no element scrolling.
+    mainContainer.scrollTo = () => undefined;
+    ganttEl.append(side, mainContainer);
+
+    let flexDuringCapture = '';
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    Object.defineProperty(component, 'unit', {value: {code: 'SIT101'}});
+    Object.assign(component, {
+      ganttComponent: {element: ganttEl, view: {width: 400}},
+      ganttPrintService: {
+        html2canvas: async () => {
+          flexDuringCapture = ganttEl.style.flex;
+          return document.createElement('canvas');
+        },
+      },
+      alertService: {error: () => undefined},
+      renderAllGanttBars: async () => undefined,
+      waitForStableLayout: async () => undefined,
+      nextAnimationFrame: async () => undefined,
+      downloadCanvas: () => undefined,
+    });
+
+    await component.saveImage();
+
+    expect(flexDuringCapture).toBe('0 0 auto');
+    expect(ganttEl.style.flex).toBe('1 1 auto');
   });
 });
 
@@ -200,7 +262,7 @@ function plannerItem(id: string) {
     start,
     end: start + day,
     links: [] as {link: string; color: {active: string; default: string}}[],
-    taskDefinition: {id: 1, targetGrade: 0},
+    taskDefinition: {id: 1, abbreviation: 'A1', name: 'Assignment 1', targetGrade: 0},
     task: {
       status: 'not_started',
       startDate: new Date(start * 1000),
@@ -247,9 +309,15 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
 
     await TestBed.configureTestingModule({
       declarations: [TaskPlannerComponent],
-      imports: [CommonModule],
+      imports: [CommonModule, NgxGanttTableComponent],
       providers: [
-        {provide: GradeService, useValue: emptyProvider},
+        {
+          provide: GradeService,
+          useValue: {
+            gradeLabel: () => 'Pass',
+            gradeValuesFor: () => [0],
+          },
+        },
         {provide: AlertService, useValue: emptyProvider},
         {provide: ConfirmationModalService, useValue: emptyProvider},
         {provide: TaskPlannerPrerequisitesModalService, useValue: prerequisitesModal},
@@ -267,7 +335,7 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
       id: 1,
       unit: {
         allowFlexibleDates: false,
-        taskDefinitions: [],
+        taskDefinitions: [{id: 1, abbreviation: 'A1', name: 'Assignment 1', targetGrade: 0}],
         gradeDefinitions: [],
         getTaskPrerequisites: () => EMPTY,
       },
@@ -284,6 +352,32 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
   afterEach(() => {
     bar?.remove();
     view?.destroy();
+  });
+
+  it('uses English labels and date formats for every Gantt view', () => {
+    const config = fixture.debugElement.injector.get(GanttConfigService);
+    const views = config.getViewsLocale();
+    expect(views[GanttViewType.hour].label).toBe('Hourly');
+    expect(views[GanttViewType.day].label).toBe('Daily');
+    expect(views[GanttViewType.week].label).toBe('Weekly');
+    expect(views[GanttViewType.month].label).toBe('Monthly');
+    expect(views[GanttViewType.quarter].label).toBe('Quarterly');
+    expect(views[GanttViewType.year].label).toBe('Yearly');
+    expect(views[GanttViewType.day].tickFormats.period).toBe('MMM yyyy');
+    expect(JSON.stringify(views)).not.toMatch(/[\u3400-\u9fff]/);
+  });
+
+  it('supplies the real Gantt empty slot with an English target-grade explanation', () => {
+    const table = fixture.debugElement.query(By.directive(NgxGanttTableComponent))
+      .componentInstance as NgxGanttTableComponent;
+    const emptyTemplate = table.tableEmptyTemplate();
+    expect(emptyTemplate).toBeDefined();
+    const emptyView = emptyTemplate.createEmbeddedView({});
+    emptyView.detectChanges();
+    const content = emptyView.rootNodes.map((node: Node) => node.textContent).join(' ');
+    expect(content).toContain('No tasks to show for this target grade.');
+    expect(content).not.toMatch(/[\u3400-\u9fff]/);
+    emptyView.destroy();
   });
 
   it('gives the bar a role and a tab stop, so a keyboard can reach it', () => {
@@ -322,5 +416,87 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     bar.dispatchEvent(new FocusEvent('focus'));
 
     expect(component.overlayLines).toBe(true);
+  });
+
+  it('keeps a phone-first task card alongside the richer desktop timeline', () => {
+    component.showDatesColumn = true;
+    fixture.detectChanges();
+
+    const mobileCard: HTMLElement = fixture.nativeElement.querySelector('.mobile-task-card');
+    const desktopPlanner: HTMLElement = fixture.nativeElement.querySelector('.desktop-planner');
+    const text = mobileCard.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(mobileCard).not.toBeNull();
+    expect(desktopPlanner).not.toBeNull();
+    expect(text).toContain('Pass task');
+    expect(text).toContain('A1 Assignment 1');
+    expect(text).toContain('Not Started');
+    expect(text).toContain('Start date');
+    expect(text).toContain('Target / due date');
+    expect(text).toContain('Deadline');
+    expect(text).toContain('No prerequisite or dependent tasks');
+  });
+
+  it('shows a compact date range when task-date detail is off and labelled dates when it is on', () => {
+    component.showDatesColumn = false;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.mobile-task-card__date-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.mobile-task-card__dates')).toBeNull();
+
+    component.showDatesColumn = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.mobile-task-card__dates dt').length).toBe(3);
+  });
+
+  it('summarises both directions and opens the full task-connections view', () => {
+    const prerequisiteDefinition = {
+      id: 2,
+      abbreviation: 'P1',
+      name: 'Prerequisite',
+      targetGrade: 0,
+    };
+    const dependentDefinition = {
+      id: 3,
+      abbreviation: 'D1',
+      name: 'Dependent',
+      targetGrade: 0,
+    };
+    const mutableUnit = component.project.unit as unknown as {
+      taskDefinitions: TaskDefinition[];
+    };
+    mutableUnit.taskDefinitions = [
+      component.items[0].taskDefinition,
+      prerequisiteDefinition,
+      dependentDefinition,
+    ] as never;
+    component.taskPrerequisites = [
+      {
+        id: 1,
+        taskDefinitionId: 1,
+        prerequisiteId: 2,
+        prerequisite: prerequisiteDefinition,
+      },
+      {
+        id: 2,
+        taskDefinitionId: 3,
+        prerequisiteId: 1,
+        taskDefinition: dependentDefinition,
+      },
+    ] as never;
+    fixture.detectChanges();
+
+    const connections: HTMLElement = fixture.nativeElement.querySelector(
+      '.mobile-task-card__connections',
+    );
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button[aria-label^="View prerequisites"]',
+    );
+
+    expect(connections.textContent).toContain('1 prerequisite; 1 dependent');
+    button.click();
+    expect(prerequisitesModal.shown.length).toBe(1);
+    expect(prerequisitesModal.shown[0][1]).toBe(component.items[0].taskDefinition);
   });
 });

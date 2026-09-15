@@ -1,0 +1,96 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: block;
+  min-width: 0;
+  color: var(--ot-color-text);
+  background-color: var(--ot-color-surface);
+
+  @include mat.dialog-overrides(
+    (
+      supporting-text-color: var(--ot-color-text),
+    )
+  );
+}
+
+h1,
+h2 {
+  color: var(--ot-color-text);
+}
+
+a {
+  color: var(--ot-color-link);
+}
+
+.contributor-profile {
+  color: var(--ot-color-text);
+
+  &:hover {
+    color: var(--ot-color-link);
+  }
+}
+
+.about-footer {
+  color: var(--ot-color-text-muted);
+}
+
+.contributors-table-wrap {
+  max-width: 100%;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.25rem;
+}
+
+table {
+  min-width: 42rem;
+
+  @include mat.table-overrides(
+    (
+      background-color: var(--ot-color-surface),
+      header-headline-color: var(--ot-color-text),
+      row-item-label-text-color: var(--ot-color-text),
+      row-item-outline-color: var(--ot-color-divider),
+    )
+  );
+}
+
+[mat-header-row] {
+  background-color: var(--ot-color-surface-raised);
+}
+
+[mat-sort-header] {
+  @include mat.sort-overrides(
+    (
+      arrow-color: var(--ot-color-text-muted),
+    )
+  );
+}
+
+button[mat-stroked-button] {
+  @include mat.button-overrides(
+    (
+      outlined-label-text-color: var(--ot-color-link),
+      outlined-outline-color: var(--ot-color-border),
+      outlined-state-layer-color: var(--ot-color-link),
+    )
+  );
+  background-color: var(--ot-color-surface);
+}
+
+a:focus-visible,
+.contributors-table-wrap:focus-visible {
+  outline: 2px solid var(--ot-color-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .about-brand {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    h1 {
+      overflow-wrap: anywhere;
+    }
+  }
+}

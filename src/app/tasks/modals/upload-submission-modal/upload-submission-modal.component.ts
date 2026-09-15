@@ -57,6 +57,7 @@ export type UploadSubmissionModalResult =
 @Component({
   selector: 'f-upload-submission-modal',
   templateUrl: './upload-submission-modal.component.html',
+  styleUrls: ['./upload-submission-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -91,6 +92,7 @@ export class UploadSubmissionModalComponent implements OnInit {
 
   private uploadResponse: UploadSubmissionResponse | null = null;
   private startUpload?: () => void;
+  private closingAfterUpload = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: UploadSubmissionModalData,
@@ -109,7 +111,6 @@ export class UploadSubmissionModalComponent implements OnInit {
       : this.data.reuploadEvidence
         ? 'reupload_evidence'
         : this.task.status;
-
     this.resetUploadState();
   }
 
@@ -218,9 +219,35 @@ export class UploadSubmissionModalComponent implements OnInit {
   }
 
   public cancel = (): void => {
-    this.uploadSubmitLocked = false;
     this.dialogRef.close({dismissed: true});
   };
+
+  public canClose(): boolean {
+    // The close predicate also runs on the closes this component makes once the
+    // server has answered, and those must not be held back or asked about.
+    if (this.closingAfterUpload) {
+      return true;
+    }
+    // The uploader keeps isUploading set after a response. Only a failed
+    // response hands control back to the student. A successful one is still
+    // being applied to the task and closes the dialog itself.
+    if (this.isUploading && !this.uploadFailed) {
+      return false;
+    }
+    if (!this.isDirty) {
+      return true;
+    }
+
+    return window.confirm('Discard the files and details selected for this submission?');
+  }
+
+  public get isDirty(): boolean {
+    // The dialog may be dismissed freely until a local file has actually been
+    // selected. This avoids warning on an untouched dialog (or after merely
+    // inspecting submission options) while protecting the only state that the
+    // browser cannot reconstruct after close.
+    return this.fileUploader?.hasSelectedFiles() === true;
+  }
 
   public onReadyChange(isReady: boolean): void {
     this.isUploaderReady = isReady;
@@ -229,6 +256,13 @@ export class UploadSubmissionModalComponent implements OnInit {
   public onUploaderReady(startUpload: () => void): void {
     this.startUpload = startUpload;
   }
+
+  public onUploadCancelled = (): void => {
+    this.uploadSubmitLocked = false;
+    this.uploadStarted = false;
+    this.uploadResponse = null;
+    this.currentStage = 'details';
+  };
 
   public onBeforeUpload = (): void => {
     Object.keys(this.payload).forEach((key) => delete this.payload[key]);
@@ -257,6 +291,10 @@ export class UploadSubmissionModalComponent implements OnInit {
   public onUploadSuccess = (response: unknown): void => {
     if (this.isValidUploadResponse(response)) {
       this.uploadResponse = response;
+      this.task.processingPdf = true;
+      this.task.hasPdf = false;
+      this.task.submissionProcessingState = 'queued';
+      this.task.submissionRetryable = false;
 
       if (this.data.isTestSubmission) {
         this.projectService.loadProject(response.project_id, this.task.unit).subscribe({
@@ -270,7 +308,7 @@ export class UploadSubmissionModalComponent implements OnInit {
     }
 
     console.error('Invalid response', response);
-    this.dialogRef.close({value: this.task});
+    this.closeAfterUpload();
     this.alertService.error(
       'Upload failed. Please try again, or contact your tutor if the issue continues.',
       8000,
@@ -285,13 +323,8 @@ export class UploadSubmissionModalComponent implements OnInit {
     }
 
     const response = this.uploadResponse;
-    this.dialogRef.close({value: this.task});
 
-    window.setTimeout(() => {
-      if (this.data.isTestSubmission) {
-        return;
-      }
-
+    if (!this.data.isTestSubmission) {
       const expectedStatus =
         this.submissionType === 'need_help' || this.submissionType === 'ready_for_feedback'
           ? this.submissionType
@@ -299,7 +332,9 @@ export class UploadSubmissionModalComponent implements OnInit {
 
       this.task.updateFromJson(response, this.taskService.mapping);
       this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService, true);
-    }, 1500);
+    }
+
+    this.closeAfterUpload();
   };
 
   public uploadButtonClicked(): void {
@@ -311,6 +346,16 @@ export class UploadSubmissionModalComponent implements OnInit {
     this.uploadStarted = true;
     this.currentStage = 'details';
     this.startUpload?.();
+  }
+
+  private get uploadFailed(): boolean {
+    const info = this.fileUploader?.uploadingInfo;
+    return info?.complete === true && info.success === false;
+  }
+
+  private closeAfterUpload(): void {
+    this.closingAfterUpload = true;
+    this.dialogRef.close({value: this.task});
   }
 
   private buildSubmissionTypeOptions(): UploadSubmissionTypeOption[] {

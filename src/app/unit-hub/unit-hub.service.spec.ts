@@ -34,14 +34,16 @@ describe('Unit Hub API and demo isolation', () => {
     service = TestBed.inject(UnitHubService);
     http = TestBed.inject(HttpTestingController);
     demo = TestBed.inject(DemoModeStore);
+    demo.configureScenario('all-features', 111);
   });
   afterEach(() => {
     http.verify();
     sessionStorage.clear();
   });
 
-  it('normal mode reads real content even when the unrelated development quiet mask is active', () => {
-    expect(demo.shouldMaskApiData).toBe(true);
+  it('normal mode reads real content when the available demo is switched off', () => {
+    expect(demo.available).toBe(true);
+    expect(demo.enabled).toBe(false);
     let result: UnitHubFeed;
     service.feed().subscribe((value) => (result = value));
     http.expectOne(`${API_URL}/unit_hub`).flush(unitHubDemo());

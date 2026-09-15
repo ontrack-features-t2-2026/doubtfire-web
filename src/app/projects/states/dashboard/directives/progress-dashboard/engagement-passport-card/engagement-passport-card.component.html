@@ -25,7 +25,7 @@
   <mat-card-content>
     <div aria-label="Engagement stamp legend" class="mb-4 flex flex-wrap gap-x-5 gap-y-2">
       @for (item of legend; track item.type) {
-        <div class="flex items-center gap-1.5 text-sm text-gray-600">
+        <div class="engagement-muted flex items-center gap-1.5 text-sm">
           <span
             class="inline-flex size-6 shrink-0 items-center justify-center rounded-full border"
             [ngClass]="item.classes"
@@ -47,12 +47,12 @@
       <div class="overflow-x-auto pb-1">
         <div
           aria-label="Engagement stamps across the semester"
-          class="flex min-w-[812px] border-b border-gray-300"
+          class="engagement-border flex min-w-[812px] border-b"
         >
           @for (week of weeks; track week.week) {
             <div
-              class="flex flex-1 flex-col border-r border-gray-200 first:border-l"
-              [class.bg-blue-50]="week.week === currentWeek"
+              class="engagement-border flex flex-1 flex-col border-r first:border-l"
+              [class.engagement-current-week]="week.week === currentWeek"
               [style.min-width.px]="weekWidth(week.stamps)"
             >
               <div class="flex min-h-[210px] flex-1 items-end justify-center gap-[5px] px-2 py-2.5">
@@ -77,8 +77,8 @@
               </div>
 
               <div
-                class="flex flex-col items-center border-t border-gray-300 px-0.5 py-[7px] text-[11px] leading-[1.15] text-gray-500"
-                [class.!text-blue-700]="week.week === currentWeek"
+                class="engagement-border engagement-muted flex flex-col items-center border-t px-0.5 py-[7px] text-[11px] leading-[1.15]"
+                [class.engagement-current-label]="week.week === currentWeek"
               >
                 <span>Week</span>
                 <strong class="mt-0.5 text-sm text-current">{{ week.week }}</strong>
@@ -90,10 +90,10 @@
     }
 
     @if (loadFailed) {
-      <p class="mt-3 text-sm text-red-600">Unable to load engagement stamps.</p>
+      <p class="engagement-error mt-3 text-sm">Unable to load engagement stamps.</p>
     }
 
-    <p class="mt-3 text-sm font-light text-gray-500">
+    <p class="engagement-muted mt-3 text-sm font-light">
       Each stamp records a moment of engagement. Hover over or focus a stamp for more detail.
     </p>
   </mat-card-content>

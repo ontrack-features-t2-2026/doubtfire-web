@@ -355,7 +355,7 @@ describe('CrossDashboardComponent', () => {
     }
   });
 
-  it('renders per-unit search with an explicit readable surface and placeholder', async () => {
+  it('renders labelled per-unit search with its placeholder and keyboard focus', async () => {
     projectsSubject.next([makeProject(1, 'SIT764', true)]);
 
     await syncView();
@@ -364,10 +364,10 @@ describe('CrossDashboardComponent', () => {
       'input[aria-label="Search tasks in SIT764"]',
     ) as HTMLInputElement;
 
-    expect(searchInput.classList.contains('bg-white')).toBe(true);
-    expect(searchInput.classList.contains('text-gray-900')).toBe(true);
-    expect(searchInput.classList.contains('placeholder:text-gray-600')).toBe(true);
-    expect(searchInput.classList.contains('placeholder:opacity-100')).toBe(true);
+    expect(searchInput.placeholder).toBe('Search tasks...');
+    expect(searchInput.type).toBe('search');
+    searchInput.focus();
+    expect(document.activeElement).toBe(searchInput);
   });
 
   it('does not confuse Australian dates that contain the same numbers in another order', () => {

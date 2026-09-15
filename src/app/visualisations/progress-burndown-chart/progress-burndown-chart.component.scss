@@ -1,5 +1,6 @@
 :host {
   display: block;
+  color: var(--ot-color-text);
   width: 100%;
   min-width: 0;
 }
@@ -34,6 +35,38 @@
   min-width: 0;
 }
 
+.progress-burndown__summary {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+
+  > div {
+    background: var(--ot-color-surface-raised);
+    border: 1px solid var(--ot-color-divider);
+    border-radius: 0.5rem;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+  }
+
+  dt {
+    align-items: center;
+    color: var(--ot-color-text-muted);
+    display: flex;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.4rem;
+    margin: 0;
+  }
+
+  dd {
+    color: var(--ot-color-text);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0.25rem 0 0;
+  }
+}
+
 .progress-burndown__legend-item {
   display: inline-flex;
   align-items: center;
@@ -41,17 +74,15 @@
   min-width: 0;
   max-width: 100%;
   padding: 0.4rem 0.6rem;
-  border: 1px solid rgba(127, 127, 127, 0.35);
+  border: 1px solid var(--ot-color-border);
   border-radius: 0.4rem;
-  background: rgba(127, 127, 127, 0.08);
+  background: var(--ot-color-surface-raised);
   color: inherit;
   font: inherit;
   line-height: 1.25;
   cursor: pointer;
-
-  &:hover {
-    background: rgba(127, 127, 127, 0.16);
-  }
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 
   &:focus-visible {
     outline: 2px solid currentColor;
@@ -59,9 +90,17 @@
   }
 }
 
+// Hover only where a pointer can hover. A phone keeps :hover after a tap, which would
+// cover the hidden state of the series just switched off.
+@media (hover: hover) and (pointer: fine) {
+  .progress-burndown__legend-item:hover {
+    background: var(--ot-color-hover);
+  }
+}
+
 .progress-burndown__legend-item--hidden {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text-muted);
 
   .progress-burndown__legend-label {
     text-decoration: line-through;
@@ -90,7 +129,7 @@
   box-sizing: border-box;
   padding: 0.65rem 0.75rem;
   border-radius: 0.45rem;
-  background: rgba(127, 127, 127, 0.1);
+  background: var(--ot-color-surface-raised);
   font-size: 0.875rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -129,6 +168,10 @@
     gap: 0.4rem;
   }
 
+  .progress-burndown__summary {
+    grid-template-columns: 1fr;
+  }
+
   .progress-burndown__legend-item {
     width: 100%;
 
@@ -145,5 +188,16 @@
 
   .progress-burndown__legend-item:last-child:nth-child(odd) {
     grid-column: auto;
+  }
+}
+
+// ngx-charts renders its SVG in child components, beyond Angular's scoped selectors.
+:host ::ng-deep .progress-burndown-chart {
+  text {
+    fill: var(--ot-color-text);
+  }
+
+  .gridline-path {
+    stroke: var(--ot-color-divider);
   }
 }

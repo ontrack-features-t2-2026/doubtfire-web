@@ -1,5 +1,5 @@
 <section class="notification-settings flex size-full flex-col">
-  <h3>Notification Settings</h3>
+  <h3>Notification settings</h3>
 
   <p class="notification-settings__intro">
     Choose which notification categories you want to receive.
@@ -18,10 +18,13 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receiveTaskNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Task notifications
     </mat-checkbox>
-    <small id="task-notification-description">Receive notifications for task-related events.</small>
+    <small class="notification-setting__help" id="task-notification-description">
+      Due dates, changed dates, and task status updates.
+    </small>
   </div>
 
   <div class="notification-setting">
@@ -30,11 +33,12 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receiveFeedbackNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Feedback notifications
     </mat-checkbox>
-    <small id="feedback-notification-description">
-      Receive notifications for feedback-related events.
+    <small class="notification-setting__help" id="feedback-notification-description">
+      New comments, feedback, and review outcomes.
     </small>
   </div>
 
@@ -44,11 +48,12 @@
       color="primary"
       [ngModelOptions]="{standalone: true}"
       [(ngModel)]="user.receivePortfolioNotifications"
+      (ngModelChange)="preferencesChange.emit()"
     >
       Portfolio notifications
     </mat-checkbox>
-    <small id="portfolio-notification-description">
-      Receive notifications for portfolio-related events.
+    <small class="notification-setting__help" id="portfolio-notification-description">
+      Portfolio processing and assessment updates.
     </small>
   </div>
 </section>

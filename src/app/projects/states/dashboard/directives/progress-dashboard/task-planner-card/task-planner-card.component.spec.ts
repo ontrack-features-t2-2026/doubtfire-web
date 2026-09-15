@@ -59,14 +59,14 @@ describe('TaskPlannerCardComponent', () => {
   let component: TaskPlannerCardComponent;
   let fixture: ComponentFixture<TaskPlannerCardComponent>;
   let fileDownloaderStub: {
-    downloadBlobToFile: ReturnType<typeof vi.fn>;
+    downloadBlobToFileWithFeedback: ReturnType<typeof vi.fn>;
     releaseBlob: ReturnType<typeof vi.fn>;
   };
   let matDialogStub: {open: ReturnType<typeof vi.fn>};
 
   beforeEach(async () => {
     fileDownloaderStub = {
-      downloadBlobToFile: vi.fn(),
+      downloadBlobToFileWithFeedback: vi.fn(),
       releaseBlob: vi.fn(),
     };
     matDialogStub = {open: vi.fn()};
@@ -142,7 +142,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadIcs();
 
-    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).not.toHaveBeenCalled();
     expect(fileDownloaderStub.releaseBlob).not.toHaveBeenCalled();
   });
 
@@ -164,7 +164,7 @@ describe('TaskPlannerCardComponent', () => {
     const [blobArg] = createObjectURLSpy.mock.calls[0];
     expect((blobArg as Blob).type).toBe('text/calendar;charset=utf-8');
     // Default project.targetGrade is 0 (Pass, abbreviation 'P').
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P.ics',
     );
@@ -244,7 +244,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadIcs();
 
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-C.ics',
     );
@@ -300,7 +300,7 @@ describe('TaskPlannerCardComponent', () => {
       .spyOn(window.URL, 'createObjectURL')
       .mockReturnValue('blob:mock-url');
     component.downloadIcs();
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P-outstanding.ics',
     );
@@ -391,15 +391,15 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadDirection = 'upTo';
     component.downloadIcs();
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-D.ics',
     );
 
-    fileDownloaderStub.downloadBlobToFile.mockClear();
+    fileDownloaderStub.downloadBlobToFileWithFeedback.mockClear();
     component.downloadDirection = 'andAbove';
     component.downloadIcs();
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-D-and-above.ics',
     );
@@ -424,7 +424,7 @@ describe('TaskPlannerCardComponent', () => {
     expect(matDialogStub.open).toHaveBeenCalledOnce();
     expect(component.selectedDownloadGrade).toBe(3);
     expect(component.downloadDirection).toBe('andAbove');
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-HD-and-above.ics',
     );
@@ -440,7 +440,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.openDownloadDialog();
 
-    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).not.toHaveBeenCalled();
   });
 
   it('appends -outstanding to the filename when excludeCompleted is on', () => {
@@ -454,7 +454,7 @@ describe('TaskPlannerCardComponent', () => {
 
     component.downloadIcs();
 
-    expect(fileDownloaderStub.downloadBlobToFile).toHaveBeenCalledWith(
+    expect(fileDownloaderStub.downloadBlobToFileWithFeedback).toHaveBeenCalledWith(
       'blob:mock-url',
       'COS10001-tasks-P-outstanding.ics',
     );

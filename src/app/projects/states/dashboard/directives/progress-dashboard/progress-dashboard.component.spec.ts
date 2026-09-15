@@ -24,12 +24,14 @@ describe('ProgressDashboardComponent', () => {
   let projectServiceUpdate: ReturnType<typeof vi.fn>;
   let alertSuccess: ReturnType<typeof vi.fn>;
   let alertError: ReturnType<typeof vi.fn>;
+  let getScenarioUnitSummary: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     project = {
       id: 18,
       targetGrade: 0,
       unit: {
+        id: 11,
         myRole: 'Student',
         gradeDefinitions: [
           {value: 0, label: 'Pass'},
@@ -45,6 +47,19 @@ describe('ProgressDashboardComponent', () => {
     projectServiceUpdate = vi.fn().mockReturnValue(of(project));
     alertSuccess = vi.fn();
     alertError = vi.fn();
+    getScenarioUnitSummary = vi.fn().mockReturnValue(
+      of({
+        unitId: 11,
+        targetGrade: 0,
+        studentPercentage: 33,
+        submittedPercentage: 60,
+        isSuppressed: false,
+        isStale: false,
+        isFeatureEnabled: true,
+        lastUpdatedAt: '2026-08-31T00:00:00Z',
+        unavailableMessage: '',
+      }),
+    );
 
     await TestBed.configureTestingModule({
       declarations: [ProgressDashboardComponent],
@@ -60,7 +75,7 @@ describe('ProgressDashboardComponent', () => {
         },
         {
           provide: PeerProgressIndicatorService,
-          useValue: {getDemoUnitSummary: vi.fn().mockReturnValue(of(null))},
+          useValue: {getScenarioUnitSummary},
         },
         {provide: DemoModeStore, useValue: {enabled: true}},
         {provide: ProjectService, useValue: {update: projectServiceUpdate}},
@@ -175,6 +190,16 @@ describe('ProgressDashboardComponent', () => {
 
     expect(fixture.nativeElement.querySelector('f-peer-progress-unit-summary')).toBeNull();
   });
+
+  it('loads the current unit hook and derives student progress from the same project', () => {
+    component.ngOnInit();
+
+    expect(getScenarioUnitSummary).toHaveBeenCalledWith(18, 11, 0, 33);
+    expect(component.peerProgressView.data).toMatchObject({
+      studentPercentage: 33,
+      submittedPercentage: 60,
+    });
+  });
 });
 
 describe('ProgressDashboardComponent route reuse', () => {
@@ -187,7 +212,7 @@ describe('ProgressDashboardComponent route reuse', () => {
         gradeValuesFor,
       } as unknown as GradeService,
       {
-        getDemoUnitSummary: vi.fn().mockReturnValue(of(null)),
+        getScenarioUnitSummary: vi.fn().mockReturnValue(of(null)),
       } as unknown as PeerProgressIndicatorService,
       {} as ProjectService,
       {} as AlertService,

@@ -78,12 +78,32 @@ describe('NotificationSettingsComponent', () => {
     expect(component.user.receivePortfolioNotifications).toBe(true);
   });
 
+  // The profile form listens for this to enable Save profile, because these
+  // standalone checkboxes never mark that form dirty themselves.
+  it('reports each toggle so the enclosing form can be marked dirty', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    let changes = 0;
+    component.preferencesChange.subscribe(() => changes++);
+
+    const taskCheckbox = await loader.getHarness(
+      MatCheckboxHarness.with({label: 'Task notifications'}),
+    );
+    const portfolioCheckbox = await loader.getHarness(
+      MatCheckboxHarness.with({label: 'Portfolio notifications'}),
+    );
+
+    await taskCheckbox.check();
+    await portfolioCheckbox.check();
+
+    expect(changes).toBe(2);
+  });
+
   it('shows help text for each notification category', () => {
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Receive notifications for task-related events.');
-    expect(text).toContain('Receive notifications for feedback-related events.');
-    expect(text).toContain('Receive notifications for portfolio-related events.');
+    expect(text).toContain('Due dates, changed dates, and task status updates.');
+    expect(text).toContain('New comments, feedback, and review outcomes.');
+    expect(text).toContain('Portfolio processing and assessment updates.');
   });
 
   it('associates each checkbox with its help text', () => {

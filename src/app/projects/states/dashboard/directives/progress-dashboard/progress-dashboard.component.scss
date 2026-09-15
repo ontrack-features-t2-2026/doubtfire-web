@@ -1,0 +1,37 @@
+:host {
+  color: var(--ot-color-text);
+}
+
+.progress-dashboard-surface {
+  background: var(--ot-color-surface);
+}
+
+.progress-dashboard-heading {
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
+}
+
+.progress-dashboard-muted {
+  color: var(--ot-color-text-muted);
+}
+
+a {
+  color: var(--ot-color-link);
+  text-underline-offset: 3px;
+
+  &:focus-visible {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 3px;
+  }
+}
+
+mat-form-field {
+  --mat-form-field-filled-container-color: var(--ot-color-surface-raised);
+  --mat-form-field-filled-disabled-container-color: var(--ot-color-disabled-surface);
+  --mat-form-field-filled-label-text-color: var(--ot-color-text-muted);
+  --mat-form-field-filled-hover-label-text-color: var(--ot-color-text);
+  --mat-form-field-filled-input-text-color: var(--ot-color-text);
+  --mat-form-field-filled-input-text-placeholder-color: var(--ot-color-text-muted);
+  --mat-form-field-filled-active-indicator-color: var(--ot-color-border);
+  --mat-form-field-filled-hover-active-indicator-color: var(--ot-color-text-muted);
+}

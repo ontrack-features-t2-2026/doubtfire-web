@@ -8,12 +8,13 @@ import {Entity} from 'ngx-entity-service';
  * the first three against the receive_*_notifications columns, so the web app
  * never has to check a preference before rendering one of these.
  *
- * The api also records an `event` naming the specific thing that happened, but
- * NotificationEntity does not expose it, so it is deliberately absent here.
+ * `event` is the stable, specific hook (for example `task_comment_created`).
+ * Presentation can vary by event without inferring meaning from message text.
  */
 export class Notification extends Entity {
   id: number;
   notificationType: string;
+  event: string;
   message: string;
 
   /**
