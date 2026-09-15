@@ -3,6 +3,11 @@
 @use '@worktile/gantt/styles/index';
 @use 'theme' as *;
 @use 'styles/common/typeface';
+// Theme foundation (THM-F01): the --ot-* token layer. These two partials are the
+// only place a colour value is declared. Light is the bare :root default so the
+// app stays correct even if the pre-hydration marker script (THM-F04) never runs.
+@use 'styles/tokens/light';
+@use 'styles/tokens/dark';
 @use 'tailwindcss';
 @config '../tailwind.config.js';
 
@@ -63,7 +68,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
   &.selectable {
     .mat-mdc-row:hover .mat-mdc-cell {
-      background-color: rgb(243, 243, 243);
+      background-color: var(--ot-color-hover);
     }
     .mat-mdc-row .mat-mdc-cell {
       cursor: pointer;
@@ -73,7 +78,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
 .table-selectable {
   .mat-mdc-row:hover .mat-mdc-cell {
-    background-color: rgb(243, 243, 243);
+    background-color: var(--ot-color-hover);
   }
   .mat-mdc-row .mat-mdc-cell {
     cursor: pointer;
@@ -100,4 +105,11 @@ body.split-pane-resizing pdf-viewer {
 
 .mat-badge-accent .mat-badge-content {
   color: white;
+}
+
+// SPIKE (THM-M01): page frame follows the resolved theme in dark. The Material
+// dark theme (theme.scss) handles component chrome; this covers the raw body.
+:root[data-ot-theme='dark'] body {
+  background-color: var(--ot-color-page);
+  color: var(--ot-color-text);
 }

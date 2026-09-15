@@ -1,22 +1,22 @@
 <div
   appDragDrop
-  class="comments-panel h-full min-h-[350px]"
-  fxLayout="column"
+  class="comments-panel flex h-full min-h-0 flex-col"
   (fileDropped)="uploadFiles($event)"
 >
   <div
     #commentsBody
-    class="comments-body"
-    fxFlex
-    fxLayout="column"
+    class="comments-body flex flex-1 flex-col"
     style="place-content: stretch !important"
   >
-    <div class="h-full" fxLayout="row" fxLayoutAlign="center center" [hidden]="!loading">
+    <div class="flex h-full flex-row items-center justify-center" [hidden]="!loading">
       <mat-spinner color="accent" diameter="100" strokeWidth="2"></mat-spinner>
     </div>
 
-    @if (!task || task.comments.length === 0) {
-      <div fxFlexFill fxLayout="column" fxLayoutAlign="center center">
+    @if (!loading && (!task || task.comments.length === 0)) {
+      <div
+        class="m-0 flex size-full min-h-full min-w-full flex-col items-center justify-center px-3 text-center"
+        role="status"
+      >
         <mat-icon aria-hidden="true" id="noView">forum</mat-icon>
         <p>No comments on this task yet.</p>
       </div>
@@ -26,12 +26,7 @@
       <div class="comments-scroll-content" [hidden]="loading">
         <span>
           @for (comment of task.comments; track comment) {
-            <div
-              class="anchor"
-              id="comment-{{ comment.id }}"
-              (mouseout)="comment.hover = false"
-              (mouseover)="comment.hover = true"
-            >
+            <div class="anchor" id="comment-{{ comment.id }}">
               @if (comment.shouldShowTimestamp) {
                 <p
                   id="commentTimestamp"
@@ -44,10 +39,10 @@
                 </p>
               }
               <div
-                class="comment"
-                fxLayoutAlign="start end"
-                [fxLayout]="comment.authorIsMe ? 'row-reverse' : 'row'"
+                class="comment flex items-end justify-start"
                 [ngClass]="{
+                  'flex-row-reverse': comment.authorIsMe,
+                  'flex-row': !comment.authorIsMe,
                   'comment-by-other-user': !comment.authorIsMe,
                   'new-comment': comment.isNew,
                 }"
@@ -68,9 +63,8 @@
                 }
 
                 <div
-                  class="comment-container"
-                  fxLayoutAlign="start center"
-                  [fxLayout]="comment.authorIsMe ? 'row-reverse' : 'row'"
+                  class="comment-container flex items-center justify-start"
+                  [ngClass]="comment.authorIsMe ? 'flex-row-reverse' : 'flex-row'"
                 >
                   @switch (comment.commentType) {
                     @case ('status') {
@@ -162,7 +156,7 @@
                     }
 
                     @case ('assessment') {
-                      <div class="comment-assessment mx-auto max-w-[350px] overflow-x-scroll">
+                      <div class="comment-assessment mx-auto max-w-87.5 overflow-x-scroll">
                         @if (
                           overseerEnabled && asAssessmentComment(comment);
                           as assessmentComment
@@ -188,7 +182,8 @@
                     @if (!!comment.replyToId) {
                       <a
                         class="original-comment"
-                        (click)="scrollToComment(comment.originalComment.id)"
+                        [class.disabled]="!comment.originalComment"
+                        (click)="scrollToComment(comment.originalComment?.id)"
                       >
                         <p class="reply-text">
                           <mat-icon inline>reply</mat-icon>
@@ -280,7 +275,6 @@
                     <div class="comment-overflow">
                       <comment-bubble-action
                         [comment]="comment"
-                        [hidden]="!comment.hover"
                         [sharedData]="sharedCommentComposerData"
                       ></comment-bubble-action>
                     </div>

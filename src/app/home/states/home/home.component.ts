@@ -18,7 +18,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   unitRoles: UnitRole[];
   showSpinner: boolean;
   dataLoaded: boolean;
-  notEnrolled: boolean;
   ifAdmin: boolean;
   ifConvenor: boolean;
   loadingUnitRoles: boolean;
@@ -65,8 +64,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       }),
     );
 
-    this.notEnrolled = this.checkEnrolled();
-
     if (this.currentUser.role === 'Auditor') {
       this.router.navigateByUrl('/admin/units');
     }
@@ -87,17 +84,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   projectsLoaded(projects: Project[]): void {
     this.projects = projects;
     this.loadingProjects = false;
-  }
-
-  checkEnrolled(): boolean {
-    if (this.unitRoles != null || this.projects != null) {
-      return false;
-    }
-
-    return (
-      (this.unitRoles?.length === 0 && this.currentUser.role === 'Tutor') ||
-      (this.projects?.length === 0 && this.currentUser.role === 'Student')
-    );
   }
 
   showDate = this.DateService.showDate;

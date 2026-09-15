@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
 import {GroupSet, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
 import {GroupSetService} from 'src/app/api/services/group-set.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {
   CsvResult,
   CsvResultModalService,
@@ -54,6 +55,7 @@ export class UnitGroupSetEditorComponent implements OnInit {
     private alertService: AlertService,
     private fileDownloaderService: FileDownloaderService,
     private csvResultModal: CsvResultModalService,
+    private confirmationModal: ConfirmationModalService,
   ) {}
 
   ngOnInit(): void {
@@ -134,15 +136,24 @@ export class UnitGroupSetEditorComponent implements OnInit {
   }
 
   removeGroupSet(groupSet: GroupSet): void {
-    this.groupSetService.delete(groupSet, {cache: this.unit.groupSetsCache}).subscribe({
-      next: () => {
-        if (groupSet === this.selectedGroupSet) {
-          this.selectGroupSet(this.unit.groupSets[0] ?? null);
-        }
-        this.alertService.success('Group set deleted.', 2000);
+    this.confirmationModal.show(
+      `Delete ${groupSet.name}`,
+      'This deletes every group in this set and removes all student memberships. This cannot be undone.',
+      () => {
+        this.groupSetService.delete(groupSet, {cache: this.unit.groupSetsCache}).subscribe({
+          next: () => {
+            if (groupSet === this.selectedGroupSet) {
+              this.selectGroupSet(this.unit.groupSets[0] ?? null);
+            }
+            this.alertService.success('Group set deleted.', 2000);
+          },
+          error: (message) =>
+            this.alertService.error(`Failed to delete group set. ${message}`, 6000),
+        });
       },
-      error: (message) => this.alertService.error(`Failed to delete group set. ${message}`, 6000),
-    });
+      undefined,
+      'Delete',
+    );
   }
 
   selectGroupSet(groupSet: GroupSet | null): void {

@@ -1,5 +1,5 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, Input} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Router} from '@angular/router';
 import {ProjectService, User} from 'src/app/api/models/doubtfire-model';
 import {Unit} from 'src/app/api/models/unit';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
@@ -21,7 +21,6 @@ import {AlertService} from 'src/app/common/services/alert.service';
 export class LtiDashboardComponent implements AfterViewInit {
   constructor(
     private router: Router,
-    private route: ActivatedRoute,
     private ltiService: LtiService,
     private userService: UserService,
     private authenticationService: AuthenticationService,
@@ -47,7 +46,7 @@ export class LtiDashboardComponent implements AfterViewInit {
   isSyncingEnrolments: boolean;
 
   ngAfterViewInit(): void {
-    this.ltik = this.ltik ?? this.route.snapshot.queryParamMap.get('ltik');
+    this.ltik = this.ltik ?? this.userService.currentUser.ltik;
 
     // Scroll to the bottom of the page in case the header is visible
     // Ensures our action buttons are centered
@@ -101,7 +100,7 @@ export class LtiDashboardComponent implements AfterViewInit {
   }
 
   goToLinkUnit(): void {
-    this.router.navigate(['/lti/link'], {queryParams: {ltik: this.ltik}});
+    this.router.navigateByUrl('/lti/link');
   }
 
   removeLink(): void {
@@ -213,6 +212,6 @@ export class LtiDashboardComponent implements AfterViewInit {
     );
   }
   public launchApplication(): void {
-    window.open('http://localhost:4200/home', '_blank');
+    window.open('/home', '_blank');
   }
 }

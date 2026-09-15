@@ -1,3 +1,15 @@
+const {networkInterfaces} = require('node:os');
+
+function localIpv4Address() {
+  for (const addresses of Object.values(networkInterfaces())) {
+    const address = addresses?.find(({family, internal}) => family === 'IPv4' && !internal);
+
+    if (address) return address.address;
+  }
+
+  return '127.0.0.1';
+}
+
 module.exports = {
   env: {
     options: {
@@ -9,7 +21,7 @@ module.exports = {
       // Use the computer's IP address -- if using localhost then
       // testing on mobile devices will fail as it cannot point to
       // localhost (this would be the device itself!)
-      API_URL: 'http://' + require('ip').address() + ':3000/api',
+      API_URL: 'http://' + localIpv4Address() + ':3000/api',
     },
 
     production: {

@@ -75,3 +75,7 @@ export * from '../services/communication-condition.service';
 export * from '../services/communication-action.service';
 export * from '../services/engagement.service';
 export * from '../services/engagement-comment.service';
+
+// Peer progress -- anonymous cohort progress for a project's target grade
+export * from './peer-progress';
+export * from '../services/peer-progress.service';

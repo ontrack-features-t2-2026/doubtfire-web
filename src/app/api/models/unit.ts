@@ -195,7 +195,7 @@ export class Unit extends Entity {
   }
 
   public findStudent(id: number): Project {
-    return this.students.find((s) => s.id === id);
+    return this.studentCache.get(id);
   }
 
   public studentEnrolled(id: number): boolean {

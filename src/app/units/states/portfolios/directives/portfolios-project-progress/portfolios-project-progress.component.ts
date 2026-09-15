@@ -5,6 +5,7 @@ import {
   HostListener,
   Input,
   OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
@@ -76,8 +77,8 @@ export class PortfoliosProjectProgressComponent implements OnChanges {
     scrollContainer.scrollBy({top: event.deltaY});
   }
 
-  ngOnChanges(): void {
-    if (this.project) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.project && this.project) {
       this.project$.next(this.project);
     }
   }

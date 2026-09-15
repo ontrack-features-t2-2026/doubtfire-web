@@ -8,7 +8,7 @@ interface FileDownloaderData {
   success: (url: string, response: HttpResponse<Blob>) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   failure: (error: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   binaryData: Blob[];
 }
 
@@ -153,13 +153,13 @@ export class FileDownloaderService {
     this.downloadBlob(
       url,
       (resourceUrl: string, response: HttpResponse<Blob>) => {
-        const filenameRegex = /filename[^;=\n]*=((['']).*?\2|[^;\n]*)/;
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
 
         const matches = filenameRegex.exec(response.headers.get('Content-Disposition'));
         let filename: string;
 
         if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['']/g, '');
+          filename = matches[1].replace(/['"]/g, '');
         } else {
           filename = defaultFilename;
         }
