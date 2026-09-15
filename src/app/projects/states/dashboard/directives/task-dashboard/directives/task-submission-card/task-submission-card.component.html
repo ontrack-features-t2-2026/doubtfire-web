@@ -80,13 +80,13 @@
       </button>
     }
     @if (canRegeneratePdf) {
-      <button mat-button type="button" (click)="regeneratePdf()">
+      <button mat-stroked-button type="button" (click)="regeneratePdf()">
         <mat-icon aria-hidden="true">refresh</mat-icon>
         Regenerate PDF
       </button>
     }
     @if (task?.inSubmittedState()) {
-      <button mat-button type="button" (click)="uploadAlternateFiles()">
+      <button mat-stroked-button type="button" (click)="uploadAlternateFiles()">
         <mat-icon aria-hidden="true">upload</mat-icon>
         Upload new files
       </button>
