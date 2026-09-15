@@ -101,6 +101,30 @@ describe('PpiWidgetComponent', () => {
     expect(fixture.nativeElement.querySelector('.ppi-fill').style.width).toBe('0%');
   });
 
+  it('shows the headline percentage once, with submitted as a single secondary line', () => {
+    load(of(NORMAL_STATE));
+
+    const card = fixture.nativeElement.querySelector('.ppi-card') as HTMLElement;
+    expect(card.textContent.match(/(^|\D)10%/g)?.length).toBe(1);
+    expect(card.querySelector('.ppi-value strong')?.textContent).toBe('10%');
+    expect(card.querySelector('.ppi-secondary')?.textContent.trim()).toBe('60% have submitted');
+    expect(card.querySelectorAll('.ppi-track').length).toBe(1);
+    expect(card.querySelector('.ppi-metric')).toBeNull();
+    expect(card.querySelector('.ppi-scale')).toBeNull();
+  });
+
+  it('renders the suppressed state as a calm message with no bars', () => {
+    load(of(SUPPRESSED_STATE));
+
+    const card = fixture.nativeElement.querySelector('.ppi-card') as HTMLElement;
+    expect(card.querySelector('.ppi-state mat-icon')?.textContent).toContain('privacy_tip');
+    expect(card.textContent).toContain('Progress is hidden to protect privacy');
+    expect(card.querySelector('.ppi-track')).toBeNull();
+    expect(card.querySelector('.ppi-distribution')).toBeNull();
+    expect(card.querySelector('[role="progressbar"]')).toBeNull();
+    expect(card.querySelector('button[role="switch"]')).toBeNull();
+  });
+
   it('shows the API-provided hidden message for a suppressed response', () => {
     load(of(SUPPRESSED_STATE));
     expect(component.view.state).toBe('hidden');
@@ -282,7 +306,7 @@ describe('PpiWidgetComponent', () => {
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Task status breakdown');
+    expect(text).toContain('Where peers are');
     expect(text).toContain('Redo');
     expect(text).toContain('Resubmit');
     expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeTruthy();
@@ -301,6 +325,86 @@ describe('PpiWidgetComponent', () => {
       'Complete',
       'Fail',
     ]);
+  });
+
+  it('lists every non-zero status with its percentage in the legend and the bar label', () => {
+    load(of(NORMAL_STATE));
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const rows = Array.from<HTMLElement>(
+      fixture.nativeElement.querySelectorAll('.ppi-legend li'),
+    ).map((row) => [
+      row.querySelector('.ppi-name')?.textContent.trim(),
+      row.querySelector('strong')?.textContent.trim(),
+    ]);
+    expect(rows).toEqual([
+      ['Not Started', '20%'],
+      ['Working On It', '20%'],
+      ['Ready for Feedback', '20%'],
+      ['Resubmit', '10%'],
+      ['Redo', '10%'],
+      ['Complete', '10%'],
+      ['Fail', '10%'],
+    ]);
+
+    const bar = fixture.nativeElement.querySelector('.ppi-distribution') as HTMLElement;
+    expect(bar.getAttribute('role')).toBe('img');
+    const label = bar.getAttribute('aria-label') ?? '';
+    rows.forEach(([name, percentage]) => {
+      expect(label).toContain(`${name} ${percentage}`);
+    });
+    expect(label).not.toContain('Discuss');
+    expect(fixture.nativeElement.querySelectorAll('.ppi-segment').length).toBe(7);
+  });
+
+  it('highlights the matching segment while a legend row is hovered or focused', () => {
+    load(of(NORMAL_STATE));
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const breakdown = fixture.nativeElement.querySelector('.ppi-breakdown') as HTMLElement;
+    const row = fixture.nativeElement.querySelector(
+      '.ppi-legend li[data-status="redo"]',
+    ) as HTMLElement;
+
+    row.dispatchEvent(new MouseEvent('mouseenter'));
+    fixture.detectChanges();
+
+    expect(component.highlightedStatus).toBe('redo');
+    expect(breakdown.classList).toContain('is-hover-highlighting');
+    expect(
+      fixture.nativeElement.querySelector('.ppi-segment[data-status="redo"]').classList,
+    ).toContain('is-active');
+    expect(
+      fixture.nativeElement.querySelector('.ppi-segment[data-status="complete"]').classList,
+    ).not.toContain('is-active');
+    expect(fixture.nativeElement.querySelector('.ppi-tooltip').textContent.trim()).toBe(
+      'Redo · 10%',
+    );
+
+    row.dispatchEvent(new MouseEvent('mouseleave'));
+    fixture.detectChanges();
+    expect(component.highlightedStatus).toBeNull();
+    expect(fixture.nativeElement.querySelector('.ppi-tooltip')).toBeNull();
+
+    row.dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+    expect(component.highlightedStatus).toBe('redo');
+    expect(breakdown.classList).toContain('is-focus-highlighting');
+    expect(row.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('plays the entrance only for the first result, not on a refresh', () => {
+    load(of(NORMAL_STATE));
+    expect(component.animateEntry).toBe(true);
+    expect(fixture.nativeElement.querySelector('.ppi-summary').classList).toContain('is-entering');
+
+    load(of(NORMAL_STATE));
+    expect(component.animateEntry).toBe(false);
+    expect(fixture.nativeElement.querySelector('.ppi-summary').classList).not.toContain(
+      'is-entering',
+    );
   });
 
   it.each([
