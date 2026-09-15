@@ -62,12 +62,22 @@ h2[mat-dialog-title]::before {
   min-width: 0;
 }
 dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--ot-color-text-muted);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 4px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: var(--ot-color-link);
+  }
 }
 dd {
   margin: 0;
@@ -82,8 +92,6 @@ small {
 }
 .full-content {
   line-height: 1.7;
-  border-top: 1px solid var(--ot-color-divider);
-  padding-top: 16px;
 }
 .full-content p {
   white-space: pre-wrap;
@@ -190,4 +198,14 @@ button:focus-visible {
 
 .full-content p {
   font-size: 0.95rem;
+}
+
+.calendar-guidance h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    color: var(--ot-color-link);
+  }
 }
