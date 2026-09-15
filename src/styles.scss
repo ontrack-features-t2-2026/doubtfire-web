@@ -193,6 +193,35 @@ body.split-pane-resizing pdf-viewer {
   background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
 }
 
+// Filled buttons. Without a color input Material fills them with a neutral grey,
+// which in dark mode reads as a disabled box rather than the main action. Give
+// every filled button the primary fill and the same shape as outlined ones, so
+// the app has two clear button styles: filled for the main action, outlined for
+// the rest. Buttons that set color="warn" keep their own fill.
+.mat-mdc-unelevated-button:not(:disabled):not(.mat-warn) {
+  --mat-button-filled-container-color: var(--ot-color-primary);
+  --mat-button-filled-label-text-color: var(--ot-color-on-primary);
+  --mat-button-filled-container-shape: var(--ot-radius-md);
+  box-shadow: none;
+
+  .mat-icon {
+    color: inherit;
+  }
+}
+
+.mat-mdc-unelevated-button:disabled {
+  --mat-button-filled-container-shape: var(--ot-radius-md);
+}
+
+.mat-mdc-unelevated-button:not(:disabled),
+.mat-mdc-outlined-button:not(:disabled) {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
 // ngx-skeleton-loader sets a fixed light grey and a white shimmer on its own
 // element, in its encapsulated styles, so every loading placeholder stayed light
 // in dark mode. Restate them there with the divider token the hand-built
