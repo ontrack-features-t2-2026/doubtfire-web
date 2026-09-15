@@ -99,16 +99,21 @@ mat-icon {
   }
 }
 .hub-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  // title and unit picker share the top row, the actions sit on their own row
+  // under the title, so nothing floats or wraps into a ragged edge
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title picker'
+    'actions actions';
+  align-items: end;
   gap: var(--hub-space-4) var(--hub-space-5);
   margin-bottom: var(--hub-space-5);
   padding-bottom: var(--hub-space-5);
   border-bottom: 1px solid var(--ot-color-divider);
 }
 .hub-title {
+  grid-area: title;
   min-width: 0;
   max-width: 620px;
   display: flex;
@@ -127,15 +132,12 @@ mat-icon {
   font-size: 0.95rem;
 }
 .heading-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--hub-space-3);
-  min-width: 0;
+  display: contents;
 }
 .action-row {
+  grid-area: actions;
   display: flex;
+  justify-content: flex-start;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--hub-space-2);
@@ -227,6 +229,8 @@ mat-icon {
   resize: vertical;
 }
 .unit-filter {
+  grid-area: picker;
+  justify-self: end;
   width: min(100%, 300px);
   margin: 0;
   // sit on the same line as the action buttons
@@ -740,17 +744,19 @@ fieldset {
   .narrow-only {
     display: inline-flex;
   }
-  .heading-actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+  // phones: title on top, then the picker and the Actions menu on one row
+  .hub-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title title'
+      'picker actions';
   }
   .unit-filter {
-    flex: 1;
+    justify-self: stretch;
     width: auto;
   }
   .action-row {
-    margin-left: auto;
+    justify-content: flex-end;
   }
 }
 @media (max-width: 599px) {
