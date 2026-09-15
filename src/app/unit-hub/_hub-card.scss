@@ -1,0 +1,116 @@
+// Shared grouping styles for the Unit Hub page, its dialogs and the Study essentials strip.
+// Colours come only from --ot-* tokens.
+//
+// A card must stand apart from whatever it sits on. The divider token equals the raised
+// surface in dark, so it is never used for a card edge here.
+
+// Emits the card edge token for a component. Include once at the top level of the stylesheet.
+// Light keeps the soft edge it had before (the border token toned toward the surface).
+// Dark needs the full border token, because the surfaces there sit close together.
+@mixin card-theme {
+  :host {
+    --hub-card-border: color-mix(in srgb, var(--ot-color-border) 30%, var(--ot-color-surface));
+  }
+  :host-context([data-ot-theme='dark']) {
+    --hub-card-border: var(--ot-color-border);
+  }
+}
+
+// $on names the surface the card sits on:
+//   page    - the page ground, e.g. feed cards and the manage panel
+//   raised  - a raised surface, e.g. anything inside a dialog
+//   surface - inside another card that already uses the surface token
+@mixin card($on: page) {
+  box-sizing: border-box;
+  border: 1px solid var(--hub-card-border);
+  border-radius: var(--ot-radius-md);
+  @if $on == surface {
+    background: var(--ot-color-surface-raised);
+  } @else {
+    background: var(--ot-color-surface);
+  }
+}
+
+// Small uppercase label with a 16px icon, as used for facts and group headings.
+@mixin label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: var(--ot-color-link);
+  }
+}
+
+// A heading inside a card with a leading icon in the link colour.
+@mixin icon-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.4;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--ot-color-link);
+  }
+}
+
+// One callout style for notices: leading icon, text beside it.
+@mixin callout($on: page) {
+  @include card($on);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+
+  > mat-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    font-size: 20px;
+    color: var(--ot-color-link);
+  }
+}
+
+// Footer row of outlined or filled buttons. Wraps together, full width on phones.
+@mixin action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  > a {
+    text-decoration: none;
+  }
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    > a,
+    > button {
+      width: 100%;
+      min-height: 44px;
+    }
+  }
+}

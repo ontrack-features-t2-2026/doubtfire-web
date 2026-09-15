@@ -1,3 +1,7 @@
+@use '../unit-hub/hub-card' as hub;
+
+@include hub.card-theme;
+
 :host {
   display: block;
   min-width: 0;
@@ -5,10 +9,9 @@
 }
 
 .study-essentials {
+  @include hub.card(page);
   padding: 24px;
-  border: 1px solid var(--ot-color-divider);
   border-radius: var(--ot-radius-lg);
-  background: var(--ot-color-surface);
 }
 
 .essentials-heading {
@@ -26,9 +29,20 @@ p {
 }
 
 h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.15rem;
   font-weight: 650;
   line-height: 1.35;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--ot-color-link);
+  }
 }
 
 p,
@@ -62,9 +76,8 @@ a {
   min-height: 112px;
   box-sizing: border-box;
   padding: 16px;
-  border: 1px solid var(--ot-color-divider);
-  border-radius: var(--ot-radius-md);
-  background: var(--ot-color-surface-raised);
+  // nested inside the section card, so the link cards take the raised surface
+  @include hub.card(surface);
   color: inherit;
   text-decoration: none;
   touch-action: manipulation;
@@ -192,6 +205,12 @@ a {
     h2 {
       font-size: 0.9rem;
       white-space: nowrap;
+
+      mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+      }
     }
   }
 
