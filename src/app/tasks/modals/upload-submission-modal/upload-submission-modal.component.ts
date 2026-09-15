@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component, Inject, OnInit, ViewChild} from '@an
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MemberContribution} from 'src/app/api/models/groups/group';
 import {Task} from 'src/app/api/models/task';
-import {TaskStatusEnum} from 'src/app/api/models/task-status';
+import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {FileUploaderComponent} from 'src/app/common/file-uploader/file-uploader.component';
@@ -15,6 +15,11 @@ type UploadSubmissionType = TaskStatusEnum | 'reupload_evidence' | 'test_submiss
 
 interface UploadSubmissionTypeOption {
   id: UploadSubmissionType;
+  label: string;
+}
+
+export interface UploadSubmissionStep {
+  stage: UploadStage;
   label: string;
 }
 
@@ -165,6 +170,87 @@ export class UploadSubmissionModalComponent implements OnInit {
     }
 
     return 'Make a comment...';
+  }
+
+  /** The steps this submission goes through, in order. */
+  public get steps(): UploadSubmissionStep[] {
+    const steps: UploadSubmissionStep[] = [];
+    if (this.showGroupSection) {
+      steps.push({stage: 'group', label: 'Rate team'});
+    }
+    steps.push({stage: 'details', label: 'Upload files'});
+    if (this.showCommentsSection) {
+      steps.push({
+        stage: 'comments',
+        label: this.submissionType === 'need_help' ? 'Ask for help' : 'Comments',
+      });
+    }
+    return steps;
+  }
+
+  public get currentStepIndex(): number {
+    return Math.max(
+      0,
+      this.steps.findIndex((step) => step.stage === this.currentStage),
+    );
+  }
+
+  /** The task's due or target date, or null when it cannot be worked out. */
+  public get dueDate(): Date | null {
+    try {
+      const date = this.task.localDueDate?.();
+      return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public get isPastDue(): boolean {
+    try {
+      return this.task.isPastDueDate?.() === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** A task status for the icon beside a submission type, when that type is a status. */
+  public statusFor(type: UploadSubmissionType): TaskStatusEnum | null {
+    return TaskStatus.STATUS_KEYS.includes(type as TaskStatusEnum)
+      ? (type as TaskStatusEnum)
+      : null;
+  }
+
+  public get selectedSubmissionTypeLabel(): string {
+    return (
+      this.submissionTypeOptions.find((option) => option.id === this.submissionType)?.label ?? ''
+    );
+  }
+
+  /** Says why the forward button is disabled, or null when it is enabled. */
+  public get continueHint(): string | null {
+    if (this.isGroupStage) {
+      return this.shouldDisableNext() ? 'Rate a team member to continue' : null;
+    }
+
+    const forwardDisabled =
+      this.isDetailsStage && this.showCommentsSection
+        ? this.shouldDisableNext()
+        : this.shouldDisableSubmit();
+    if (!forwardDisabled) {
+      return null;
+    }
+
+    if (!this.isUploaderReady) {
+      return this.task.definition.uploadRequirements.length > 1
+        ? 'Add the required files to continue'
+        : 'Add the required file to continue';
+    }
+
+    if (this.requiresComment && this.comment.trim().length < this.minCommentLength) {
+      return `Add a comment of at least ${this.minCommentLength} characters`;
+    }
+
+    return null;
   }
 
   public get hasRatedTeamMember(): boolean {

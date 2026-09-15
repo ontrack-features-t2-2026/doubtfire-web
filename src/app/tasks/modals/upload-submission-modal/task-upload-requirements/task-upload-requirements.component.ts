@@ -43,6 +43,25 @@ export class TaskUploadRequirementsComponent implements OnChanges {
     return this.summaries.length;
   }
 
+  public get requiredFileCountLabel(): string {
+    const count = this.requiredFileCount;
+    return `${count} ${count === 1 ? 'file' : 'files'} required`;
+  }
+
+  /** Joins a list as "A, B or C". */
+  public formatList(items: readonly string[]): string {
+    if (items.length <= 1) {
+      return items.join('');
+    }
+    return `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
+  }
+
+  /** The file's own description, only when it says more than the type name does. */
+  public showDescription(summary: UploadRequirementSummary): boolean {
+    const name = summary.name?.trim().toLowerCase();
+    return !!name && name !== summary.categoryLabel.toLowerCase();
+  }
+
   public isExpanded(summary: UploadRequirementSummary): boolean {
     return this.expandedKeys.has(summary.key);
   }

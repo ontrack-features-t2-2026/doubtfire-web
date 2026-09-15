@@ -89,6 +89,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   public shownUploadZones: UploadZone[] = [];
   public uploadZones: UploadZone[] = [];
   public dropSupported: boolean = true;
+  /** The zone a file is being dragged over, for the drag-over style only. */
+  public dragOverZone: UploadZone | null = null;
 
   constructor(
     private userService: UserService,
@@ -128,19 +130,22 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     this.uploadingInfo = null;
   }
 
-  public onDragOver(event: DragEvent) {
+  public onDragOver(event: DragEvent, upload?: UploadZone) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = upload ?? null;
   }
 
   public onDragLeave(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = null;
   }
 
   public onFileDropped(event: DragEvent, upload: UploadZone) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = null;
 
     const file = event.dataTransfer?.files?.[0];
     if (file) {
@@ -321,6 +326,45 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     this.uploadingInfo = null;
     this.isUploading = false;
     this.onCancelUpload?.();
+  }
+
+  /** What the drop zone asks for, e.g. "PDF" or "code file". */
+  public dropNoun(upload: UploadZone): string {
+    const type = upload.display.type;
+    if (type === 'PDF' || type === 'image') {
+      return type;
+    }
+    return `${type === 'zip' ? 'ZIP' : type} file`;
+  }
+
+  /** The accepted formats in words, e.g. "PDF or PS", shortened when the list is long. */
+  public acceptedFormatsLabel(upload: UploadZone): string {
+    const formats = upload.accepts.map((ext) => ext.toUpperCase());
+    const previewLimit = 4;
+    if (formats.length > previewLimit) {
+      const rest = formats.length - previewLimit;
+      return `${formats.slice(0, previewLimit).join(', ')} and ${rest} more`;
+    }
+    if (formats.length <= 1) {
+      return formats.join('');
+    }
+    return `${formats.slice(0, -1).join(', ')} or ${formats[formats.length - 1]}`;
+  }
+
+  /** A file size in words, e.g. "1.2 MB". */
+  public formatSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes)) {
+      return '';
+    }
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    const kb = bytes / 1024;
+    if (kb < 1024) {
+      return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
+    }
+    const mb = kb / 1024;
+    return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
   }
 
   // onClickFailureCancelInternal() {

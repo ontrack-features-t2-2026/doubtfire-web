@@ -110,4 +110,27 @@ describe('UploadSubmissionModalComponent', () => {
     expect(component.uploadSubmitLocked).toBe(false);
     expect(component.currentStage).toBe('details');
   });
+
+  it('lists the steps and marks the current one', () => {
+    expect(component.steps.map((step) => step.label)).toEqual(['Upload files', 'Comments']);
+    expect(component.currentStepIndex).toBe(0);
+
+    component.onReadyChange(true);
+    component.goToCommentsStage();
+    expect(component.currentStepIndex).toBe(1);
+  });
+
+  it('explains a disabled forward button and clears once the file is chosen', () => {
+    expect(component.shouldDisableNext()).toBe(true);
+    expect(component.continueHint).toBe('Add the required file to continue');
+
+    component.onReadyChange(true);
+    expect(component.continueHint).toBeNull();
+  });
+
+  it('shows a status icon only for submission types that are task statuses', () => {
+    expect(component.statusFor('ready_for_feedback')).toBe('ready_for_feedback');
+    expect(component.statusFor('reupload_evidence')).toBeNull();
+    expect(component.selectedSubmissionTypeLabel).toBe('');
+  });
 });

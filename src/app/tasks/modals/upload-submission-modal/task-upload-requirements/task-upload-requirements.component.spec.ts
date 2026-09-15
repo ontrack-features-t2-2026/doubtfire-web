@@ -1,4 +1,5 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatIconModule} from '@angular/material/icon';
 import {UploadRequirement} from 'src/app/api/models/task-definition';
 import {TaskUploadRequirementsComponent} from './task-upload-requirements.component';
 
@@ -8,6 +9,7 @@ describe('TaskUploadRequirementsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      imports: [MatIconModule],
       declarations: [TaskUploadRequirementsComponent],
     }).compileComponents();
 
@@ -41,14 +43,30 @@ describe('TaskUploadRequirementsComponent', () => {
       ]);
 
       const text = (fixture.nativeElement as HTMLElement).textContent;
-      expect(text).toContain('Files required:');
-      expect(text).toContain('2');
+      expect(text).toContain('What to upload');
+      expect(text).toContain('2 files required');
       expect(text).toContain('Document');
       expect(text).toContain('PDF');
       expect(text).toContain('Spreadsheet');
       expect(text).toContain('CSV');
       expect(text).toContain('XLS');
       expect(text).toContain('XLSX');
+    });
+
+    it('reads as icon rows: count, then type and formats, then a differing description', () => {
+      setRequirements([{key: 'file0', name: 'Demo document', type: 'document'}]);
+
+      const text = (fixture.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
+      expect(text).toContain('1 file required');
+      expect(text).toContain('Document · PDF or PS');
+      expect(text).toContain('Demo document');
+      expect(fixture.nativeElement.querySelectorAll('.requirement-row mat-icon').length).toBe(2);
+    });
+
+    it('hides the description when it only repeats the type name', () => {
+      setRequirements([{key: 'file0', name: 'Document', type: 'document'}]);
+
+      expect(fixture.nativeElement.querySelector('.requirement-name')).toBeNull();
     });
 
     it('does not show an expand control when the extension list is short', () => {
@@ -101,8 +119,20 @@ describe('TaskUploadRequirementsComponent', () => {
       setRequirements([{key: 'file0', name: 'Report', type: 'document'}]);
 
       const text = (fixture.nativeElement as HTMLElement).textContent;
-      expect(text).toContain('Maximum size:');
-      expect(text).toContain('Not provided by the server');
+      expect(component.summaries[0].maxSizeLabel).toBeNull();
+      expect(fixture.nativeElement.querySelector('.requirement-max-size')).toBeNull();
+      expect(text).not.toContain('Not provided by the server');
+      expect(text).not.toMatch(/\d+\s?(KB|MB|GB)/);
+    });
+
+    it('shows a size limit only when one is provided', () => {
+      setRequirements([{key: 'file0', name: 'Report', type: 'document'}]);
+      component.summaries[0].maxSizeLabel = '10 MB';
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.requirement-max-size').textContent).toContain(
+        '10 MB',
+      );
     });
   });
 

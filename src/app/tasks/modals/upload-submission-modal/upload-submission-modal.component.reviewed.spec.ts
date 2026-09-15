@@ -58,7 +58,7 @@ describe('UploadSubmissionModalComponent upload guidance', () => {
     const button = root.querySelector<HTMLButtonElement>('.file-drop-zone')!;
     const input = root.querySelector<HTMLInputElement>('input[type=file]')!;
     const help = root.querySelector<HTMLElement>('.task-upload-requirements')!;
-    expect(help.textContent).toContain('Files required: 1');
+    expect(help.textContent).toContain('1 file required');
     expect(button.getAttribute('aria-describedby')).toBe(help.id);
     expect(input.getAttribute('aria-describedby')).toBe(help.id);
     expect(help.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

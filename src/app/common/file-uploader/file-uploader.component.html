@@ -1,5 +1,5 @@
-<mat-card class="file-uploader-card" [class.shadow-none]="true">
-  <mat-card-content class="file-uploader-content">
+<div class="file-uploader-card">
+  <div class="file-uploader-content">
     @if (!showUploader) {
       <button class="w-full" color="primary" mat-raised-button (click)="showUploader = true">
         <mat-icon>upload</mat-icon>
@@ -7,52 +7,58 @@
       </button>
     }
 
-    <div class="flex flex-col gap-1 sm:flex-row">
+    <div class="file-uploader-layout" [class.file-uploader-layout--split]="singleDropZone">
       @if (showUploader && uploadingInfo === null && shownUploadZones.length) {
-        <div class="w-full">
+        <div class="file-uploader-zones">
           @for (upload of shownUploadZones; track upload) {
             @if (!singleDropZone && showName) {
-              <h5>
+              <h5 class="file-uploader-label">
                 {{ uploadZones.length === 1 ? '' : $index + 1 + ' - ' }}
                 {{ upload.display.name }}
               </h5>
             }
 
             @if (singleDropZone && showName) {
-              <h5>Select {{ upload.display.name }}</h5>
+              <h5 class="file-uploader-label">{{ upload.display.name }}</h5>
             }
 
             <div [hidden]="upload.model || upload.model?.length">
               <button
-                class="file-drop-zone min-h-[250px] w-full"
+                class="file-drop-zone"
                 type="button"
                 [attr.aria-describedby]="describedBy"
+                [class.file-drop-zone--error]="upload.display.error"
+                [class.file-drop-zone--over]="dragOverZone === upload"
                 (click)="fileInput.click()"
                 (dragleave)="onDragLeave($event)"
-                (dragover)="onDragOver($event)"
+                (dragover)="onDragOver($event, upload)"
                 (drop)="onFileDropped($event, upload)"
               >
                 @if (!upload.display.error) {
-                  <mat-icon>{{ upload.display.icon }}</mat-icon>
-                  @if (dropSupported) {
-                    <span class="text-center select-none">
-                      Drop {{ upload.display.type }} file here <br /><small
-                        >or click to select</small
-                      >
-                    </span>
-                  } @else {
-                    <span class="select-none">Click to select {{ upload.display.type }} file</span>
-                  }
-                } @else {
-                  <span
-                    class="flex !w-full flex-col items-center justify-center text-base !text-ot-error"
-                  >
-                    <mat-icon>block</mat-icon>
-                    <span>Invalid file provided</span>
-                    <small class="w-full text-center"
-                      >Accepted: {{ upload.accept.split(',').join(', ') }}</small
-                    >
+                  <span aria-hidden="true" class="file-drop-zone__icon">
+                    <mat-icon>upload_file</mat-icon>
                   </span>
+                  @if (dropSupported) {
+                    <span class="file-drop-zone__title select-none"
+                      >Drop your {{ dropNoun(upload) }} here</span
+                    >
+                    <span class="file-drop-zone__browse select-none">or browse files</span>
+                  } @else {
+                    <span class="file-drop-zone__title select-none"
+                      >Click to select {{ dropNoun(upload) }}</span
+                    >
+                  }
+                  <small class="file-drop-zone__formats">{{ acceptedFormatsLabel(upload) }}</small>
+                } @else {
+                  <span aria-hidden="true" class="file-drop-zone__icon file-drop-zone__icon--error">
+                    <mat-icon>block</mat-icon>
+                  </span>
+                  <span class="file-drop-zone__title file-drop-zone__error"
+                    >Invalid file provided</span
+                  >
+                  <small class="file-drop-zone__formats"
+                    >Accepted: {{ upload.accept.split(',').join(', ') }}</small
+                  >
                 }
               </button>
 
@@ -67,9 +73,18 @@
             </div>
 
             @if (!singleDropZone && upload.model?.length > 0) {
-              <div class="selected-upload">
-                <mat-icon aria-hidden="true">{{ upload.display.icon }}</mat-icon>
-                <span class="selected-upload__name">{{ upload.model[0].name }}</span>
+              <div class="selected-upload upload-file-row">
+                <mat-icon aria-hidden="true" class="upload-file-row__icon">{{
+                  upload.display.icon
+                }}</mat-icon>
+                <span class="upload-file-row__text">
+                  <span
+                    class="selected-upload__name upload-file-row__name"
+                    [title]="upload.model[0].name"
+                    >{{ upload.model[0].name }}</span
+                  >
+                  <span class="upload-file-row__meta">{{ formatSize(upload.model[0].size) }}</span>
+                </span>
                 <button
                   mat-icon-button
                   type="button"
@@ -85,31 +100,55 @@
       }
 
       @if (showUploader && singleDropZone && uploadingInfo === null) {
-        <div class="w-full">
-          <h5>Upload Summary</h5>
+        <div class="file-uploader-summary">
+          <h5 class="file-uploader-label">Selected files</h5>
 
-          @for (upload of uploadZones; track upload) {
-            <div class="upload-summary-row">
-              <div class="upload-summary-row__label">
-                <mat-icon aria-hidden="true">{{ upload.display.icon }}</mat-icon>
-                <strong>{{ upload.display.name }}</strong>
-              </div>
-
+          <ul class="upload-file-list">
+            @for (upload of uploadZones; track upload) {
               @if (upload.model?.length > 0) {
-                <em class="selected-upload__name">{{ upload.model[0].name }}</em>
-                <button
-                  mat-icon-button
-                  type="button"
-                  [attr.aria-label]="'Remove ' + upload.model[0].name"
-                  (click)="clearEnqueuedUpload(upload)"
-                >
-                  <mat-icon aria-hidden="true">close</mat-icon>
-                </button>
+                <li class="upload-file-row">
+                  <mat-icon aria-hidden="true" class="upload-file-row__icon">{{
+                    upload.display.icon
+                  }}</mat-icon>
+                  <span class="upload-file-row__text">
+                    <span
+                      class="selected-upload__name upload-file-row__name"
+                      [title]="upload.model[0].name"
+                      >{{ upload.model[0].name }}</span
+                    >
+                    <span class="upload-file-row__meta"
+                      >{{ upload.display.name }} &middot;
+                      {{ formatSize(upload.model[0].size) }}</span
+                    >
+                  </span>
+                  <span class="upload-chip upload-chip--success">Ready</span>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Remove ' + upload.model[0].name"
+                    (click)="clearEnqueuedUpload(upload)"
+                  >
+                    <mat-icon aria-hidden="true">close</mat-icon>
+                  </button>
+                </li>
               } @else {
-                <em class="selected-upload__name">File pending</em>
+                <li class="upload-file-row upload-file-row--placeholder">
+                  <mat-icon aria-hidden="true" class="upload-file-row__icon"
+                    >insert_drive_file</mat-icon
+                  >
+                  <span class="upload-file-row__text">
+                    <span class="upload-file-row__name">{{ upload.display.name }}</span>
+                    <span class="upload-file-row__meta">{{ acceptedFormatsLabel(upload) }}</span>
+                  </span>
+                  @if (upload.display.error) {
+                    <span class="upload-chip upload-chip--error">Wrong type</span>
+                  } @else {
+                    <span class="upload-chip">Waiting for file</span>
+                  }
+                </li>
               }
-            </div>
-          }
+            }
+          </ul>
         </div>
       }
     </div>
@@ -186,5 +225,5 @@
         </div>
       }
     }
-  </mat-card-content>
-</mat-card>
+  </div>
+</div>
