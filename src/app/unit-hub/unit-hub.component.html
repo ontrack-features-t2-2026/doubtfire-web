@@ -109,6 +109,7 @@
       </div>
     </aside>
   }
+  <f-study-essentials class="hub-essentials" [compact]="true" />
   <p class="status" role="status">{{ status }}</p>
 
   @if (loading) {
@@ -559,7 +560,7 @@
               updates.
             </p>
           }
-          @for (announcement of announcements; track announcement.id) {
+          @for (announcement of visibleAnnouncements; track announcement.id) {
             <article class="hub-card announcement-card" [class.is-pinned]="announcement.pinned">
               <div class="card-meta">
                 <span class="unit-badge">{{ unitCode(announcement.unit_id) }}</span>
@@ -629,6 +630,20 @@
               }
             </div>
           }
+          @if (announcements.length > announcementPage) {
+            <button
+              class="show-more"
+              mat-stroked-button
+              type="button"
+              (click)="showAllAnnouncements = !showAllAnnouncements"
+            >
+              {{
+                showAllAnnouncements
+                  ? 'Show fewer'
+                  : 'Show all ' + announcements.length + ' announcements'
+              }}
+            </button>
+          }
         </section>
       }
       @if (tab !== 'announcements') {
@@ -644,7 +659,7 @@
               Scheduled sessions through {{ feed.window_end | date: 'd MMM yyyy' }}.
             }
           </p>
-          @for (group of sessionGroups; track group.key) {
+          @for (group of visibleSessionGroups; track group.key) {
             <div class="day-group">
               <h3 class="day-heading">
                 @if (group.label) {
@@ -809,6 +824,20 @@
               }
             </div>
           }
+          @if (sessionGroups.length > sessionDayPage) {
+            <button
+              class="show-more"
+              mat-stroked-button
+              type="button"
+              (click)="showAllSessionDays = !showAllSessionDays"
+            >
+              {{
+                showAllSessionDays
+                  ? 'Show fewer days'
+                  : 'Show all ' + sessionGroups.length + ' days'
+              }}
+            </button>
+          }
           <aside class="calendar-note">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
             <div>
@@ -831,7 +860,6 @@
       }
     </div>
   }
-  <f-study-essentials />
   @if (showFeed) {
     <p class="hub-footer">
       Only members of a unit can see its updates. Content comes from your teaching team or connected

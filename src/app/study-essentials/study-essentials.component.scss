@@ -171,3 +171,91 @@ a {
     right: 12px;
   }
 }
+
+// compact: a single row of pill links under the page header
+.study-essentials.compact {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 12px 10px 16px;
+
+  .essentials-heading {
+    flex: none;
+    margin: 0;
+
+    p,
+    .external-note {
+      display: none;
+    }
+
+    h2 {
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+  }
+
+  .essentials-links {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding-block: 2px;
+  }
+
+  li {
+    flex: none;
+  }
+
+  a {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    height: auto;
+    padding: 4px 12px 4px 4px;
+    border-radius: var(--ot-radius-pill);
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  .essential-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ot-radius-circle);
+
+    mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+  }
+
+  .essential-copy {
+    padding-right: 0;
+
+    strong {
+      font-size: 0.85rem;
+    }
+
+    > span:not(.visually-hidden) {
+      display: none;
+    }
+  }
+
+  .external-icon {
+    position: static;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 599px) {
+  .study-essentials.compact {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}

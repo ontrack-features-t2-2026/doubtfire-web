@@ -62,6 +62,11 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   selectedUnitId = 0;
   unavailableUnit = false;
   tab: 'all' | 'announcements' | 'sessions' = 'all';
+  // long feeds show a first page so the rest of the hub stays in reach
+  readonly announcementPage = 6;
+  readonly sessionDayPage = 4;
+  showAllAnnouncements = false;
+  showAllSessionDays = false;
   managing = false;
   managedUnitId = 0;
   staffLoading = false;
@@ -150,6 +155,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
   get manageableUnits(): HubUnit[] {
     return this.demo.enabled ? [] : this.units.filter((unit) => unit.can_manage);
+  }
+  get visibleAnnouncements(): UnitAnnouncement[] {
+    const rows = this.announcements;
+    return this.showAllAnnouncements ? rows : rows.slice(0, this.announcementPage);
+  }
+  get visibleSessionGroups() {
+    const groups = this.sessionGroups;
+    return this.showAllSessionDays ? groups : groups.slice(0, this.sessionDayPage);
   }
   get announcements(): UnitAnnouncement[] {
     return this.feed.announcements.filter(

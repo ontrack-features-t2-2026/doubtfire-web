@@ -633,8 +633,14 @@ mat-icon {
   color: var(--ot-color-text-muted);
   font-size: 0.8rem;
 }
-f-study-essentials {
-  margin-top: var(--hub-space-6);
+.hub-essentials {
+  margin-bottom: var(--hub-space-5);
+}
+.show-more.mat-mdc-button-base {
+  width: 100%;
+  height: 44px;
+  margin-top: var(--hub-space-2);
+  border-radius: var(--ot-radius-pill);
 }
 
 // ---- Manage panel ----
