@@ -179,3 +179,78 @@ describe('notificationTarget when there is nothing to open', () => {
     });
   });
 });
+
+describe('notificationTarget for Unit Hub updates', () => {
+  function hubEvent(event: string, extra: Partial<Notification> = {}): Notification {
+    return notification({
+      event,
+      notificationType: 'unit_hub',
+      link: '/unit-hub?unit=3&announcement=12',
+      unitId: UNIT,
+      projectId: null,
+      studentId: null,
+      taskDefinitionAbbr: null,
+      announcementId: null,
+      sessionId: null,
+      ...extra,
+    });
+  }
+
+  it.each(['unit_announcement_published', 'unit_announcement_updated'])(
+    '%s opens the hub on that announcement for students and staff',
+    (event) => {
+      const expected: NotificationTarget = {
+        kind: 'route',
+        audience: 'member',
+        commands: ['/unit-hub'],
+        queryParams: {unit: UNIT, announcement: 12},
+      };
+
+      expect(notificationTarget(hubEvent(event, {announcementId: 12}), STUDENT)).toEqual(expected);
+      expect(notificationTarget(hubEvent(event, {announcementId: 12}), TUTOR)).toEqual(expected);
+    },
+  );
+
+  it.each(['unit_session_changed', 'unit_session_starting_soon'])(
+    '%s opens the hub on that session',
+    (event) => {
+      expect(notificationTarget(hubEvent(event, {sessionId: 40}), STUDENT)).toEqual({
+        kind: 'route',
+        audience: 'member',
+        commands: ['/unit-hub'],
+        queryParams: {unit: UNIT, session: 40},
+      });
+    },
+  );
+
+  it('reports a deleted announcement or session as unavailable', () => {
+    expect(
+      notificationTarget(hubEvent('unit_announcement_published', {unitId: null}), STUDENT),
+    ).toEqual({kind: 'unavailable'});
+    expect(notificationTarget(hubEvent('unit_session_changed', {unitId: null}), STUDENT)).toEqual({
+      kind: 'unavailable',
+    });
+  });
+
+  it('opens the hub on the unit for a Unit Hub event it does not know yet', () => {
+    expect(notificationTarget(hubEvent('unit_hub_future_event'), STUDENT)).toEqual({
+      kind: 'route',
+      audience: 'member',
+      commands: ['/unit-hub'],
+      queryParams: {unit: UNIT},
+    });
+  });
+
+  it('follows the link from an api that sends no Unit Hub ids', () => {
+    const legacy = notification({
+      event: 'unit_announcement_published',
+      notificationType: 'unit_hub',
+      link: '/unit-hub?unit=3&announcement=12',
+    });
+
+    expect(notificationTarget(legacy, STUDENT)).toEqual({
+      kind: 'link',
+      link: '/unit-hub?unit=3&announcement=12',
+    });
+  });
+});

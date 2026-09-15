@@ -151,6 +151,26 @@ describe('NotificationOpenService', () => {
     expect(alerts.error).toHaveBeenCalledWith(NOTIFICATION_UNAVAILABLE_MESSAGE);
   });
 
+  it('opens a Unit Hub announcement on the hub without asking for a staff role', async () => {
+    users.currentUser = {id: 7, role: 'Tutor'};
+    loading.next(true);
+
+    const notification = fields({
+      event: 'unit_announcement_published',
+      notificationType: 'unit_hub',
+      link: '/unit-hub?unit=3&announcement=12',
+      projectId: null,
+      studentId: null,
+      taskDefinitionAbbr: null,
+      announcementId: 12,
+      sessionId: null,
+    });
+
+    await expect(service.open(notification)).resolves.toBe(true);
+
+    expect(routes.navigateToTarget).toHaveBeenCalledWith('/unit-hub?unit=3&announcement=12');
+  });
+
   it('follows the link from an older api that sends no ids', async () => {
     const legacy = Object.assign(new Notification(), {
       event: 'task_comment_created',

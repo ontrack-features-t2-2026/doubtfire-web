@@ -41,6 +41,8 @@ describe('NotificationRouteService', () => {
       '/projects/23/dashboard/P-2.21',
       '/projects/23/dashboard/D-9.568',
       '/projects/23/dashboard/C-4.602',
+      '/unit-hub?unit=3&announcement=12',
+      '/unit-hub?unit=3&session=40',
     ];
 
     for (const route of approved) {
@@ -118,6 +120,14 @@ describe('NotificationRouteService', () => {
       '/projects/1/dashboard/1.1P?token=secret',
       '/projects/1/dashboard/1.1P#feedback',
       '/notifications?student=Alice',
+      '/unit-hub',
+      '/unit-hub?unit=3',
+      '/unit-hub?announcement=12&unit=3',
+      '/unit-hub?unit=0&announcement=12',
+      '/unit-hub?unit=3&announcement=12&next=//evil.test',
+      '/unit-hub?unit=3&session=40#details',
+      '/unit-hub?unit=3&task=12',
+      '/unit-hub?unit=3&session=%34%30',
     ];
 
     for (const value of invalid) {

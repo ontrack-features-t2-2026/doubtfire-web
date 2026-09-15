@@ -6,6 +6,8 @@ import {Notification} from 'src/app/api/models/notification';
  *
  * - `route`: go to `commands` with `queryParams`. `audience` says whose page it
  *   is, so the caller can check a staff member still teaches that unit first.
+ *   `member` is a page for anyone in the unit, such as the Unit Hub, which
+ *   checks access itself.
  * - `link`: the api is too old to send ids, so follow its link as before.
  * - `unavailable`: the thing it was about is gone. Say so and stay put.
  * - `none`: nothing to open, for example a general announcement.
@@ -13,7 +15,7 @@ import {Notification} from 'src/app/api/models/notification';
 export type NotificationTarget =
   | {
       kind: 'route';
-      audience: 'student' | 'staff';
+      audience: 'student' | 'staff' | 'member';
       commands: (string | number)[];
       queryParams?: Params;
     }
@@ -37,6 +39,16 @@ const PORTFOLIO_EVENTS: ReadonlySet<string> = new Set([
   'portfolio_submitted',
 ]);
 
+const UNIT_HUB_ANNOUNCEMENT_EVENTS: ReadonlySet<string> = new Set([
+  'unit_announcement_published',
+  'unit_announcement_updated',
+]);
+
+const UNIT_HUB_SESSION_EVENTS: ReadonlySet<string> = new Set([
+  'unit_session_changed',
+  'unit_session_starting_soon',
+]);
+
 /**
  * One place that decides where every notification goes, for either role.
  *
@@ -49,6 +61,10 @@ export function notificationTarget(
   notification: Notification,
   viewer: NotificationViewer,
 ): NotificationTarget {
+  if (notification.notificationType === 'unit_hub') {
+    return unitHubTarget(notification);
+  }
+
   const hasIds = notification.projectId !== undefined;
 
   if (!hasIds) {
@@ -87,6 +103,35 @@ export function notificationTarget(
     notification.studentId,
     abbreviation,
   );
+}
+
+/**
+ * A Unit Hub announcement or session opens the hub on its unit, naming the one
+ * it is about in the query so the hub can open its details.
+ */
+function unitHubTarget(notification: Notification): NotificationTarget {
+  const event = notification.event;
+  const isSession = UNIT_HUB_SESSION_EVENTS.has(event);
+  const isAnnouncement = UNIT_HUB_ANNOUNCEMENT_EVENTS.has(event);
+
+  // An api that sends no ids at all sends neither of these.
+  if (notification.announcementId === undefined && notification.sessionId === undefined) {
+    return notification.link ? {kind: 'link', link: notification.link} : {kind: 'none'};
+  }
+
+  const id = isSession ? notification.sessionId : notification.announcementId;
+  if (notification.unitId == null || ((isSession || isAnnouncement) && id == null)) {
+    return {kind: 'unavailable'};
+  }
+
+  const queryParams: Params = {unit: notification.unitId};
+  if (isSession) {
+    queryParams.session = id;
+  } else if (isAnnouncement) {
+    queryParams.announcement = id;
+  }
+
+  return {kind: 'route', audience: 'member', commands: ['/unit-hub'], queryParams};
 }
 
 function studentTarget(
