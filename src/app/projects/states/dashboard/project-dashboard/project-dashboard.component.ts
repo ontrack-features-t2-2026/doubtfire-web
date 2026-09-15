@@ -1,3 +1,4 @@
+import {environment} from 'src/environments/environment';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
@@ -8,6 +9,7 @@ import {
   OnInit,
   Output,
   ViewChild,
+  isDevMode,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, takeUntil} from 'rxjs';
@@ -22,6 +24,7 @@ import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {MilestoneCelebrationService} from 'src/app/common/celebrate/milestone-celebration.service';
 import {ConversationLandingService} from 'src/app/tasks/task-comments-viewer/conversation-landing.service';
 import {FUnitTaskListComponent} from 'src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
@@ -69,6 +72,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
 
   projectTasks = [];
 
+  private milestoneCheckedProjectId: number | null = null;
+  private destroyed = false;
+
   constructor(
     private currentUser: UserService,
     private projectService: ProjectService,
@@ -80,6 +86,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private angularRouter: Router,
     private notificationFeedbackIntents?: NotificationFeedbackRouteIntentService,
     private conversationLanding?: ConversationLandingService,
+    private milestones?: MilestoneCelebrationService,
   ) {}
 
   /**
@@ -252,6 +259,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.projectLoadCancel$.next();
     this.projectLoadCancel$.complete();
     this.destroy$.next();
@@ -457,5 +465,46 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.projectReady = true;
     this.globalStateService.setView(ViewType.PROJECT, project);
     this.projectSubject.next(project);
+    this.checkMilestones(project);
+  }
+
+  /**
+   * Once per opened project, shows the signed off dialog when tasks became complete
+   * since the student last looked. The staff portfolio view embeds this page and
+   * never checks. The service itself also refuses anyone who is not the student.
+   */
+  private checkMilestones(project: Project): void {
+    if (
+      !this.milestones ||
+      this.taskSelectionUrlBase ||
+      this.milestoneCheckedProjectId === project.id
+    ) {
+      return;
+    }
+    this.milestoneCheckedProjectId = project.id;
+
+    void this.milestones
+      .checkProject(project, {preview: this.milestonePreviewRequested()})
+      .then((result) => {
+        if (result !== 'view' || this.destroyed || this.activeProjectId !== project.id) {
+          return;
+        }
+
+        void this.angularRouter.navigate([], {
+          relativeTo: this.route,
+          queryParams: {taskStatus: 'complete', taskView: 'tasks'},
+          queryParamsHandling: 'merge',
+        });
+      })
+      .catch(() => undefined);
+  }
+
+  /** `?celebrate=preview` replays the dialog locally. A production build ignores it. */
+  private milestonePreviewRequested(): boolean {
+    return (
+      isDevMode() &&
+      environment.production === false &&
+      this.route.snapshot?.queryParamMap?.get('celebrate') === 'preview'
+    );
   }
 }

@@ -188,6 +188,79 @@ describe('ProjectDashboardComponent route reuse', () => {
     component.ngOnDestroy();
   });
 
+  describe('signed off check', () => {
+    const build = (options: {view?: boolean; taskSelectionUrlBase?: unknown[] | null} = {}) => {
+      const navigate = vi.fn().mockResolvedValue(true);
+      const checkProject = vi.fn().mockResolvedValue(options.view ? 'view' : null);
+      const component = new ProjectDashboardComponent(
+        {} as UserService,
+        {
+          get: (
+            params: {id: number},
+            callbacks: {mappingCompleteCallback: (project: Project) => void},
+          ) => {
+            callbacks.mappingCompleteCallback(firstProject);
+            return of(firstProject);
+          },
+        } as unknown as ProjectService,
+        {taskSubmissionCompleted$: new Subject<Task>()} as unknown as TaskService,
+        {get: () => of(firstUnit)} as unknown as UnitService,
+        {setView: vi.fn()} as unknown as GlobalStateService,
+        {
+          parent: {
+            data: of({project: firstProject}),
+            snapshot: {paramMap: convertToParamMap({projectId: firstProject.id})},
+          },
+        } as unknown as ActivatedRoute,
+        {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+        {navigate} as unknown as Router,
+        undefined,
+        undefined,
+        {checkProject} as never,
+      );
+      component.taskSelectionUrlBase = options.taskSelectionUrlBase ?? null;
+      component.project$ = of(firstProject);
+      return {component, checkProject, navigate};
+    };
+
+    it('checks once when the project has loaded, without a preview by default', () => {
+      const {component, checkProject} = build();
+
+      component.ngOnInit();
+      component.retryProjectLoad();
+
+      expect(checkProject).toHaveBeenCalledTimes(1);
+      expect(checkProject).toHaveBeenCalledWith(firstProject, {preview: false});
+      component.ngOnDestroy();
+    });
+
+    it('never checks inside the staff portfolio view', () => {
+      const {component, checkProject} = build({taskSelectionUrlBase: ['/units', 1]});
+
+      component.ngOnInit();
+
+      expect(checkProject).not.toHaveBeenCalled();
+      component.ngOnDestroy();
+    });
+
+    it('filters the task list to completed tasks when asked to view them', async () => {
+      const {component, navigate} = build({view: true});
+
+      component.ngOnInit();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {taskStatus: 'complete', taskView: 'tasks'},
+          queryParamsHandling: 'merge',
+        }),
+      );
+      component.ngOnDestroy();
+    });
+  });
+
   // A wrong or stale link, or no access, left the page on its skeleton forever.
   it('shows a failed load instead of the skeleton, and loads again on retry', () => {
     const projectGet = vi
