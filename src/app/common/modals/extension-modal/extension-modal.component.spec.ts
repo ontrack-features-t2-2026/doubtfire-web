@@ -1,17 +1,37 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
-import {MatDialogRef} from '@angular/material/dialog';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {LOCALE_ID} from '@angular/core';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ReactiveFormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {provideNativeDateAdapter} from '@angular/material/core';
+import {MatDatepickerInputEvent, MatDatepickerModule} from '@angular/material/datepicker';
+import {MAT_DIALOG_DATA, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {of, throwError} from 'rxjs';
 import {Task, TaskCommentService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from '../../services/alert.service';
 import {ExtensionModalComponent} from './extension-modal.component';
 
-function buildComponent(requestExtension = vi.fn(() => of({}))) {
+function buildTask(
+  dueDate = new Date('2026-09-01T00:00:00Z'),
+  deadlineDate = new Date('2026-10-01T00:00:00Z'),
+): Task {
+  return {
+    definition: {abbreviation: '1.1P', name: 'Hello World'},
+    localDueDate: () => dueDate,
+    localDeadlineDate: () => deadlineDate,
+  } as unknown as Task;
+}
+
+function pickDate(component: ExtensionModalComponent, value: Date | null): void {
+  component.addEvent('input', {value} as MatDatepickerInputEvent<Date>);
+}
+
+function buildComponent(requestExtension = vi.fn(() => of({})), task = buildTask()) {
   const close = vi.fn();
   const afterApplication = vi.fn();
-  const task = {
-    localDueDate: () => new Date('2026-09-01T00:00:00Z'),
-    localDeadlineDate: () => new Date('2026-10-01T00:00:00Z'),
-  } as Task;
   const alerts = {success: vi.fn(), error: vi.fn()};
   const component = new ExtensionModalComponent(
     {close} as unknown as MatDialogRef<ExtensionModalComponent>,
@@ -93,5 +113,170 @@ describe('ExtensionModalComponent', () => {
     }).not.toThrow();
 
     vi.useRealTimers();
+  });
+});
+
+// Local dates, so the weekday labels hold in any time zone. 11 Sep 2026 is a Friday.
+const DUE = new Date(2026, 8, 11, 23, 59);
+const DEADLINE = new Date(2026, 9, 1, 23, 59);
+const REASON = 'I was unwell for three days and missed the lab';
+
+describe('ExtensionModalComponent presentation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(2026, 8, 5, 12, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('turns the counter to warning at 230 characters and error at the limit', () => {
+    const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+    const reason = component.extensionData.controls.extensionReason;
+
+    reason.setValue('a'.repeat(229));
+    expect(component.reasonCounterState).toBe('ok');
+    reason.setValue('a'.repeat(230));
+    expect(component.reasonCounterState).toBe('warn');
+    reason.setValue('a'.repeat(256));
+    expect(component.reasonCounterState).toBe('limit');
+  });
+
+  it('summarises a picked date against the current due date in requested weeks', () => {
+    const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+
+    expect(component.extensionSummary).toBe('');
+
+    pickDate(component, new Date(2026, 8, 17));
+    expect(component.extensionDays).toBe(6);
+    expect(component.extensionSummary).toBe('+1 week · Thu 17 Sep');
+
+    pickDate(component, new Date(2026, 8, 21));
+    expect(component.extensionDays).toBe(10);
+    expect(component.extensionSummary).toBe('+2 weeks · Mon 21 Sep');
+  });
+
+  it('shows the due date, the allowed range and how far past due the task is', () => {
+    const onTime = buildComponent(undefined, buildTask(DUE, DEADLINE)).component;
+    expect(onTime.formatShortDate(onTime.dueDate)).toBe('Fri 11 Sep');
+    expect(onTime.dateRangeText).toBe('Sat 12 Sep to Thu 1 Oct');
+    expect(onTime.daysPastDue).toBe(0);
+
+    vi.setSystemTime(new Date(2026, 8, 19, 12, 0));
+    const late = buildComponent(undefined, buildTask(DUE, DEADLINE)).component;
+    expect(late.daysPastDue).toBe(8);
+  });
+
+  it('keeps submit disabled until the reason and a date in range are both valid', () => {
+    const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+
+    expect(component.canSubmit).toBe(false);
+    component.extensionData.controls.extensionReason.setValue(REASON);
+    expect(component.canSubmit).toBe(false);
+
+    pickDate(component, new Date(2026, 9, 20));
+    expect(component.dateNeedsAttention).toBe(true);
+    expect(component.canSubmit).toBe(false);
+
+    pickDate(component, null);
+    expect(component.canSubmit).toBe(false);
+
+    pickDate(component, new Date(2026, 8, 17));
+    expect(component.canSubmit).toBe(true);
+
+    component.submitting = true;
+    expect(component.canSubmit).toBe(false);
+  });
+});
+
+describe('ExtensionModalComponent template', () => {
+  let fixture: ComponentFixture<ExtensionModalComponent>;
+  let component: ExtensionModalComponent;
+
+  beforeEach(async () => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(2026, 8, 19, 12, 0));
+
+    await TestBed.configureTestingModule({
+      declarations: [ExtensionModalComponent],
+      imports: [
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatDatepickerModule,
+        MatDialogModule,
+        MatIconModule,
+        MatInputModule,
+        MatProgressSpinnerModule,
+      ],
+      providers: [
+        provideNativeDateAdapter(),
+        {provide: MatDialogRef, useValue: {close: vi.fn()}},
+        {provide: MAT_DIALOG_DATA, useValue: {task: buildTask(DUE, DEADLINE)}},
+        {provide: LOCALE_ID, useValue: 'en-US'},
+        {provide: AlertService, useValue: {success: vi.fn(), error: vi.fn()}},
+        {provide: TaskCommentService, useValue: {requestExtension: vi.fn(() => of({}))}},
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ExtensionModalComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const el = () => fixture.nativeElement as HTMLElement;
+  const submitButton = () => el().querySelector<HTMLButtonElement>('button.ext-submit');
+
+  it('renders the title, task context, past due callout and new copy', () => {
+    expect(el().querySelector('[mat-dialog-title]')?.textContent?.trim()).toBe(
+      'Request an extension',
+    );
+    expect(el().querySelector('.ext-context')?.textContent).toContain('1.1P');
+    expect(el().querySelector('.ext-context')?.textContent).toContain('Hello World');
+    expect(el().querySelector('.ext-context__due')?.textContent?.trim()).toContain(
+      'Due Fri 11 Sep',
+    );
+    expect(el().querySelector('.ext-callout')?.textContent?.replace(/\s+/g, ' ').trim()).toContain(
+      'This task is 8 days past its due date',
+    );
+    expect(el().querySelector('.ext-description')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      "Tell your teaching team why you need more time. They'll review your request and reply in the task comments.",
+    );
+  });
+
+  it('labels the primary action without the date and enables it once valid', () => {
+    expect(submitButton()?.textContent?.trim()).toBe('send Request extension');
+    expect(submitButton()?.disabled).toBe(true);
+
+    component.extensionData.controls.extensionReason.setValue(REASON);
+    pickDate(component, new Date(2026, 8, 25));
+    fixture.detectChanges();
+
+    expect(submitButton()?.disabled).toBe(false);
+    expect(el().querySelector('.ext-summary')?.textContent?.trim()).toBe('+2 weeks · Fri 25 Sep');
+  });
+
+  it('marks the counter as a warning from 230 characters', () => {
+    const counter = () => el().querySelector('.ext-counter');
+    component.extensionData.controls.extensionReason.setValue('a'.repeat(230));
+    fixture.detectChanges();
+
+    expect(counter()?.textContent?.trim()).toBe('230 / 256');
+    expect(counter()?.classList).toContain('ext-counter--warn');
+  });
+
+  it('shows a spinner and disables both actions while submitting', () => {
+    component.submitting = true;
+    fixture.detectChanges();
+
+    expect(el().querySelector('.ext-submit__spinner')).not.toBeNull();
+    const buttons = Array.from(
+      el().querySelectorAll<HTMLButtonElement>('.task-dialog-actions button'),
+    );
+    expect(buttons.every((button) => button.disabled)).toBe(true);
   });
 });
