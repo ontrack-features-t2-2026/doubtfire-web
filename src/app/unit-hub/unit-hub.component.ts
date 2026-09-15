@@ -370,7 +370,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
             : undefined;
           const session =
             !announcement && link.session
-              ? (this.sessions.find((row) => row.id === link.session && !row.cancelled) ??
+              ? // a weekly session repeats with the same id, so open its next occurrence
+                (this.sessions.find(
+                  (row) =>
+                    row.id === link.session &&
+                    !row.cancelled &&
+                    Date.parse(row.end_at) >= Date.now(),
+                ) ??
+                this.sessions.find((row) => row.id === link.session && !row.cancelled) ??
                 this.sessions.find((row) => row.id === link.session))
               : undefined;
           if (announcement) {
