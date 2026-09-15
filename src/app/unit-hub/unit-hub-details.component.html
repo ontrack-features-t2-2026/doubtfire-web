@@ -67,24 +67,27 @@
         }
       </dl>
       <section aria-label="Full announcement" class="full-content">
+        <h3 class="content-label"><mat-icon aria-hidden="true">notes</mat-icon>Announcement</h3>
         <p>{{ announcement.body }}</p>
       </section>
       @if (safeUrl(announcement.source_url)) {
         <a
           class="detail-source"
+          mat-stroked-button
           rel="noopener noreferrer"
           target="_blank"
           [href]="safeUrl(announcement.source_url)"
-          >Open original post <mat-icon aria-hidden="true">open_in_new</mat-icon></a
+          ><mat-icon aria-hidden="true">open_in_new</mat-icon>Open original post</a
         >
       }
     }
 
     @if (detail.session; as session) {
       @if (session.cancelled) {
-        <p class="cancelled-notice" role="status">
-          <strong>Cancelled</strong> · this session will not run.
-        </p>
+        <div class="cancelled-notice" role="status">
+          <mat-icon aria-hidden="true">event_busy</mat-icon>
+          <p><strong>Cancelled</strong> · this session will not run.</p>
+        </div>
       }
       <dl class="detail-facts">
         <div>
@@ -138,15 +141,17 @@
         </div>
       </dl>
       <section aria-label="Full session description" class="full-content">
+        <h3 class="content-label"><mat-icon aria-hidden="true">notes</mat-icon>Description</h3>
         <p>{{ session.description || 'Your teaching team has not added any further details.' }}</p>
       </section>
       @if (safeUrl(session.source_url)) {
         <a
           class="detail-source"
+          mat-stroked-button
           rel="noopener noreferrer"
           target="_blank"
           [href]="safeUrl(session.source_url)"
-          >View original session details <mat-icon aria-hidden="true">open_in_new</mat-icon></a
+          ><mat-icon aria-hidden="true">open_in_new</mat-icon>View original session details</a
         >
       }
       @if (!session.cancelled) {
@@ -207,6 +212,8 @@
         </button>
       }
     }
-    <button mat-stroked-button type="button" (click)="close()">Close</button>
+    <button mat-stroked-button type="button" (click)="close()">
+      <mat-icon aria-hidden="true">close</mat-icon>Close
+    </button>
   </mat-dialog-actions>
 }

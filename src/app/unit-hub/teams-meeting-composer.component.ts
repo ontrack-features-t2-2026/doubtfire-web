@@ -2,12 +2,13 @@ import {CommonModule} from '@angular/common';
 import {ChangeDetectionStrategy, Component, Input, OnChanges} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
 import {TeamsMeetingDraft, teamsMeetingContent, teamsMeetingDraftUrl} from './teams-meeting-draft';
 
 @Component({
   selector: 'f-teams-meeting-composer',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule],
   templateUrl: './teams-meeting-composer.component.html',
   styleUrl: './teams-meeting-composer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,

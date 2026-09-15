@@ -1,3 +1,7 @@
+@use './hub-card' as hub;
+
+@include hub.card-theme;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -40,7 +44,11 @@ h2[mat-dialog-title] {
 h2[mat-dialog-title]::before {
   display: none;
 }
+// grouping comes from cards and one vertical rhythm, not rules between sections
 .details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   min-height: 0;
   flex: 1;
   max-height: none;
@@ -48,36 +56,24 @@ h2[mat-dialog-title]::before {
   color: inherit;
   overflow-wrap: anywhere;
 }
+.details-content > * {
+  margin: 0;
+}
+// the dialog is a raised surface, so every card here takes the surface token
 .detail-facts {
+  @include hub.card(raised);
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px 24px;
-  margin: 16px 0 24px;
+  margin-top: 10px;
   padding: 16px;
-  border: 1px solid var(--ot-color-divider);
-  border-radius: var(--ot-radius-md);
-  background: var(--ot-color-surface-raised);
 }
 .detail-facts > div {
   min-width: 0;
 }
 dt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ot-color-text-muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  @include hub.label;
   margin-bottom: 4px;
-
-  mat-icon {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    color: var(--ot-color-link);
-  }
 }
 dd {
   margin: 0;
@@ -90,83 +86,62 @@ small {
   font-size: 0.76rem;
   margin-top: 3px;
 }
+// the body gets its own quiet card on the same inset as the facts card
 .full-content {
+  @include hub.card(raised);
+  padding: 16px;
   line-height: 1.7;
+}
+.content-label {
+  @include hub.label;
+  margin-bottom: 8px;
 }
 .full-content p {
   white-space: pre-wrap;
   margin: 0;
+  font-size: 0.95rem;
 }
 .detail-notice,
+.cancelled-notice {
+  @include hub.callout(raised);
+  p {
+    margin: 0;
+  }
+}
+.cancelled-notice {
+  border-color: color-mix(in srgb, var(--ot-color-error) 60%, var(--hub-card-border));
+  > mat-icon {
+    color: color-mix(in srgb, var(--ot-color-error) 80%, var(--ot-color-text));
+  }
+}
 .calendar-guidance {
-  background: var(--ot-color-surface-raised);
+  @include hub.card(raised);
   padding: 16px;
-  border: 1px solid var(--ot-color-divider);
-  border-radius: var(--ot-radius-md);
-  margin: 6px 0 18px;
   font-size: 0.84rem;
   line-height: 1.6;
 }
-.detail-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.detail-notice mat-icon {
-  flex-shrink: 0;
-}
-.detail-notice p {
-  margin: 0;
-}
-.calendar-guidance {
-  margin: 24px 0 0;
-}
 .calendar-guidance h3 {
-  font-size: 1rem;
-  font-weight: 650;
-  margin: 0 0 8px;
+  @include hub.icon-heading;
+  margin-bottom: 8px;
 }
 .calendar-guidance p {
-  margin: 0 0 8px;
-}
-.cancelled-notice {
-  color: var(--ot-color-text);
-  border: 1px solid var(--ot-color-error);
-  border-left-width: 4px;
-  padding: 12px 16px;
-  border-radius: var(--ot-radius-sm);
+  margin: 0 0 12px;
 }
 .detail-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 22px;
-  color: var(--ot-color-link);
-  text-underline-offset: 3px;
-}
-.detail-source mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  align-self: flex-start;
+  text-decoration: none;
 }
 .details-actions {
-  display: flex;
-  flex-wrap: wrap;
+  @include hub.action-row;
   flex-shrink: 0;
   justify-content: flex-end;
-  gap: 8px;
-  border-top: 1px solid var(--ot-color-divider);
   padding: 14px 24px;
-}
-.details-actions a {
-  text-decoration: none;
 }
 .detail-status:empty {
   display: none;
 }
 .detail-status {
   font-size: 0.84rem;
-  margin-top: 14px;
 }
 a:focus-visible,
 button:focus-visible {
@@ -184,28 +159,13 @@ button:focus-visible {
     padding: 12px 18px;
   }
   .detail-facts {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
   h2[mat-dialog-title] {
     font-size: 1.22rem;
   }
-  .details-actions a,
-  .details-actions button {
-    min-height: 44px;
-  }
-}
-
-.full-content p {
-  font-size: 0.95rem;
-}
-
-.calendar-guidance h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  mat-icon {
-    color: var(--ot-color-link);
+  .detail-source {
+    align-self: stretch;
   }
 }
