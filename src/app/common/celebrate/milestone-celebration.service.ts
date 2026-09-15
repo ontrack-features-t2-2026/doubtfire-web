@@ -201,7 +201,7 @@ export class MilestoneCelebrationService {
   }
 
   /**
-   * Share of the target grade's task weighting that is signed off, before and after.
+   * Share of the target grade's tasks that are signed off, before and after.
    * Before comes from the stored statuses. A preview has none, so it takes the
    * listed tasks back out instead.
    */
@@ -215,29 +215,17 @@ export class MilestoneCelebrationService {
       return {from: 0, to: 0};
     }
 
-    const anyWeighted = targets.some((definition) => definition.weighting > 0);
-    const weight = (definition: {weighting: number}) =>
-      anyWeighted ? Math.max(0, definition.weighting || 0) : 1;
-    const total = targets.reduce((sum, definition) => sum + weight(definition), 0);
-    if (total <= 0) {
-      return {from: 0, to: 0};
-    }
-
+    // Counted by task, the same way the progress dashboard says "4 of 16 tasks
+    // complete", so the two numbers on screen agree.
+    const total = targets.length;
     const statusOf = (id: number): TaskStatusEnum | undefined =>
       project.findTaskForDefinition(id)?.status;
 
-    const done = targets
-      .filter((definition) => statusOf(definition.id) === 'complete')
-      .reduce((sum, definition) => sum + weight(definition), 0);
+    const done = targets.filter((definition) => statusOf(definition.id) === 'complete').length;
 
     const before = previous
-      ? targets
-          .filter((definition) => previous[String(definition.id)] === 'complete')
-          .reduce((sum, definition) => sum + weight(definition), 0)
-      : done -
-        targets
-          .filter((definition) => completedSet.has(definition.id))
-          .reduce((sum, definition) => sum + weight(definition), 0);
+      ? targets.filter((definition) => previous[String(definition.id)] === 'complete').length
+      : done - targets.filter((definition) => completedSet.has(definition.id)).length;
 
     return {
       from: Math.round((Math.max(0, before) / total) * 100),

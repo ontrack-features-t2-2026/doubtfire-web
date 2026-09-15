@@ -179,8 +179,8 @@ describe('MilestoneCelebrationService.prepare', () => {
     expect(data?.alsoChanged).toEqual([
       {taskDefinitionId: 3, abbreviation: '3.1C', name: 'Sorting', label: 'Needs changes'},
     ]);
-    expect(data?.progressFrom).toBe(25);
-    expect(data?.progressTo).toBe(50);
+    expect(data?.progressFrom).toBe(33);
+    expect(data?.progressTo).toBe(67);
     expect(data?.unitCode).toBe('SIT374');
 
     // Recorded when shown, so the same change does not play again.
@@ -206,7 +206,7 @@ describe('MilestoneCelebrationService.prepare', () => {
     });
 
     expect(data?.completed.length).toBe(2);
-    expect(data?.progressTo).toBe(75);
+    expect(data?.progressTo).toBe(67);
     expect(data?.progressFrom).toBe(0);
     expect(seen.read(5, 12)).toBeNull();
   });
