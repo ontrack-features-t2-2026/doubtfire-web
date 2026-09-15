@@ -129,7 +129,7 @@ mat-icon {
 .heading-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--hub-space-3);
   min-width: 0;
@@ -137,7 +137,26 @@ mat-icon {
 .action-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--hub-space-2);
+}
+// one height, radius and icon size for every header action, so outlined and
+// filled buttons read as one set
+.hub-action.mat-mdc-button-base {
+  height: 44px;
+  padding-inline: 16px;
+  border-radius: var(--ot-radius-pill);
+  font-weight: 600;
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    font-size: 20px;
+  }
+}
+.hub-action--primary.mat-mdc-button-base:not(:disabled) {
+  background: var(--ot-color-primary);
+  color: var(--ot-color-on-primary, #fff);
 }
 .narrow-only {
   display: none;
@@ -208,11 +227,15 @@ mat-icon {
   resize: vertical;
 }
 .unit-filter {
-  width: min(100%, 320px);
+  width: min(100%, 300px);
   margin: 0;
-  color: var(--ot-color-text-muted);
-  select {
-    color: var(--ot-color-text);
+  // sit on the same line as the action buttons
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    height: 44px;
+  }
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 44px;
+    padding-block: 10px;
   }
 }
 

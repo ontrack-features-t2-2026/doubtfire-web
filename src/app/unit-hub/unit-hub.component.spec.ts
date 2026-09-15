@@ -292,7 +292,9 @@ describe('Unit Hub route, forms and rendered content', () => {
     ];
     service.feed.mockReturnValue(of(data));
     const {component, harness, element} = await open('/unit-hub?unit=222');
-    expect((element.querySelector('#hub-unit') as HTMLSelectElement).value).toBe('222');
+    // the feed filter is a mat-select now, so check what it shows
+    expect(component.selectedUnitId).toBe(222);
+    expect(element.querySelector('#hub-unit')?.textContent).toContain('SIT222');
     component.toggleManage();
     harness.detectChanges();
     expect((element.querySelector('#manage-unit') as HTMLSelectElement).value).toBe('222');

@@ -10,45 +10,43 @@
     </div>
     <div class="heading-actions">
       @if (showFeed) {
-        <label class="field unit-filter" for="hub-unit"
-          >Showing updates for
-          <select
+        <mat-form-field appearance="outline" class="unit-filter" subscriptSizing="dynamic">
+          <mat-label>Showing updates for</mat-label>
+          <mat-select
             id="hub-unit"
-            [value]="selectedUnitId"
-            (change)="selectUnit($any($event.target).value)"
+            [value]="selectedUnitId || 0"
+            (selectionChange)="selectUnit($event.value)"
           >
-            <option value="0" [selected]="!selectedUnitId">All my units</option>
+            <mat-option [value]="0">All my units</mat-option>
             @for (unit of units; track unit.id) {
-              <option [selected]="unit.id === selectedUnitId" [value]="unit.id">
-                {{ unit.code }} · {{ unit.name }}
-              </option>
+              <mat-option [value]="unit.id">{{ unit.code }} · {{ unit.name }}</mat-option>
             }
-          </select>
-        </label>
+          </mat-select>
+        </mat-form-field>
       }
       <div class="action-row">
         <button
-          class="wide-only"
+          class="hub-action wide-only"
           mat-stroked-button
           type="button"
           [disabled]="demo.enabled"
           (click)="openCalendar()"
         >
-          <mat-icon aria-hidden="true">calendar_add_on</mat-icon> Calendar settings
+          <mat-icon aria-hidden="true">date_range</mat-icon> Calendar settings
         </button>
         @if (manageableUnits.length) {
           <button
-            class="wide-only"
+            class="hub-action wide-only"
             mat-stroked-button
             type="button"
             [disabled]="saving"
             (click)="toggleManage()"
           >
-            <mat-icon aria-hidden="true">edit_calendar</mat-icon>
+            <mat-icon aria-hidden="true">{{ managing ? 'visibility' : 'edit_calendar' }}</mat-icon>
             {{ managing ? 'View student feed' : 'Manage updates' }}
           </button>
           <button
-            class="wide-only"
+            class="hub-action hub-action--primary wide-only"
             mat-flat-button
             type="button"
             [disabled]="saving"
@@ -57,7 +55,7 @@
             <mat-icon aria-hidden="true">campaign</mat-icon> New announcement
           </button>
           <button
-            class="wide-only"
+            class="hub-action hub-action--primary wide-only"
             mat-flat-button
             type="button"
             [disabled]="saving"
@@ -68,7 +66,7 @@
         }
         <button
           aria-label="Unit Hub actions"
-          class="narrow-only"
+          class="hub-action narrow-only"
           mat-stroked-button
           type="button"
           [matMenuTriggerFor]="hubActions"
@@ -84,12 +82,12 @@
               <mat-icon aria-hidden="true">event</mat-icon><span>New session</span>
             </button>
             <button mat-menu-item type="button" [disabled]="saving" (click)="toggleManage()">
-              <mat-icon aria-hidden="true">edit_calendar</mat-icon
+              <mat-icon aria-hidden="true">{{ managing ? 'visibility' : 'edit_calendar' }}</mat-icon
               ><span>{{ managing ? 'View student feed' : 'Manage updates' }}</span>
             </button>
           }
           <button mat-menu-item type="button" [disabled]="demo.enabled" (click)="openCalendar()">
-            <mat-icon aria-hidden="true">calendar_add_on</mat-icon><span>Calendar settings</span>
+            <mat-icon aria-hidden="true">date_range</mat-icon><span>Calendar settings</span>
           </button>
         </mat-menu>
       </div>
@@ -733,8 +731,8 @@
                           rel="noopener noreferrer"
                           target="_blank"
                           [href]="googleUrl(session, unitCode(session.unit_id))"
-                          ><mat-icon aria-hidden="true">calendar_add_on</mat-icon>Preview DEMO in
-                          Google Calendar</a
+                          ><mat-icon aria-hidden="true">event</mat-icon>Preview DEMO in Google
+                          Calendar</a
                         >
                         <button mat-button type="button" (click)="downloadSession(session)">
                           <mat-icon aria-hidden="true">download</mat-icon>Download DEMO .ics
@@ -760,8 +758,7 @@
                           rel="noopener noreferrer"
                           target="_blank"
                           [href]="googleUrl(session, unitCode(session.unit_id))"
-                          ><mat-icon aria-hidden="true">calendar_add_on</mat-icon>Add to Google
-                          Calendar</a
+                          ><mat-icon aria-hidden="true">event</mat-icon>Add to Google Calendar</a
                         >
                         <button mat-button type="button" (click)="downloadSession(session)">
                           <mat-icon aria-hidden="true">download</mat-icon>Download .ics

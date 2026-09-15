@@ -3,8 +3,10 @@ import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/co
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
 import {ActivatedRoute, NavigationStart, Router, RouterLink} from '@angular/router';
 import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
@@ -40,6 +42,8 @@ import {UnitHubService} from './unit-hub.service';
     MatDialogModule,
     MatIconModule,
     MatMenuModule,
+    MatFormFieldModule,
+    MatSelectModule,
     RouterLink,
     StudyEssentialsComponent,
     TeamsMeetingComposerComponent,
