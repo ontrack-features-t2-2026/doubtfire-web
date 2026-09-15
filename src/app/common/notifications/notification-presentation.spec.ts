@@ -44,6 +44,14 @@ describe('notification presentation', () => {
     });
   });
 
+  it('draws the staff portfolio notification apart from the student receipt', () => {
+    expect(presentationFor(notification('portfolio_submitted', 'portfolio'))).toMatchObject({
+      icon: 'inventory',
+      label: 'Portfolio submitted',
+      tone: 'portfolio',
+    });
+  });
+
   it('uses a category fallback for a new event and a generic fallback for a new category', () => {
     expect(presentationFor(notification('future_feedback_event', 'feedback'))).toMatchObject({
       icon: 'chat_bubble',

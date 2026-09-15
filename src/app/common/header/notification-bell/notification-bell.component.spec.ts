@@ -14,8 +14,8 @@ import {NavigationEnd, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, config, defer, of, throwError} from 'rxjs';
 import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
-import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
+import {NotificationOpenService} from 'src/app/common/notifications/notification-open.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
 import {NotificationBellComponent} from './notification-bell.component';
@@ -59,7 +59,7 @@ describe('NotificationBellComponent', () => {
   let confirmationModal: {show: ReturnType<typeof vi.fn>};
   let alerts: {success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>};
   let router: {events: unknown; navigateByUrl: ReturnType<typeof vi.fn>};
-  let notificationRoutes: {navigate: ReturnType<typeof vi.fn>};
+  let notificationOpener: {open: ReturnType<typeof vi.fn>};
 
   /**
    * A stand-in that records whether anybody actually subscribed.
@@ -164,7 +164,7 @@ describe('NotificationBellComponent', () => {
     confirmationModal = {show: vi.fn()};
     alerts = {success: vi.fn(), error: vi.fn()};
     router = {events: routerEvents.asObservable(), navigateByUrl: vi.fn()};
-    notificationRoutes = {navigate: vi.fn().mockResolvedValue(true)};
+    notificationOpener = {open: vi.fn().mockResolvedValue(true)};
 
     await TestBed.configureTestingModule({
       declarations: [NotificationBellComponent],
@@ -184,7 +184,7 @@ describe('NotificationBellComponent', () => {
         {provide: ConfirmationModalService, useValue: confirmationModal},
         {provide: AlertService, useValue: alerts},
         {provide: Router, useValue: router},
-        {provide: NotificationRouteService, useValue: notificationRoutes},
+        {provide: NotificationOpenService, useValue: notificationOpener},
       ],
     }).compileComponents();
 
@@ -535,7 +535,7 @@ describe('NotificationBellComponent', () => {
       expect(panel().textContent).toContain('may be out of date');
     });
 
-    it('marks a row read and follows its link when it is clicked', () => {
+    it('marks a row read and opens it when it is clicked', () => {
       openMenu();
       list.next([notification(1, {link: '/projects/9/dashboard'})]);
       fixture.detectChanges();
@@ -545,7 +545,8 @@ describe('NotificationBellComponent', () => {
       expect(notificationService.markRead).toHaveBeenCalledTimes(1);
       expect(notificationService.markRead.mock.calls[0][0].id).toBe(1);
       expect(subscribedTo.has('markRead')).toBe(true);
-      expect(notificationRoutes.navigate).toHaveBeenCalledWith('/projects/9/dashboard');
+      expect(notificationOpener.open).toHaveBeenCalledTimes(1);
+      expect(notificationOpener.open.mock.calls[0][0].id).toBe(1);
     });
 
     it('does not mark a row read twice', () => {
@@ -559,7 +560,7 @@ describe('NotificationBellComponent', () => {
       // so a second call would do nothing except tell the service to take one
       // off a count that never included it.
       expect(notificationService.markRead).not.toHaveBeenCalled();
-      expect(notificationRoutes.navigate).toHaveBeenCalledTimes(1);
+      expect(notificationOpener.open).toHaveBeenCalledTimes(1);
     });
 
     it('marks a row read even when it has nowhere to go', () => {
@@ -570,9 +571,10 @@ describe('NotificationBellComponent', () => {
       rows()[0].click();
 
       // link is nullable on the api. Refusing to mark it read would leave a
-      // number on the bell that the user has no way to clear.
+      // number on the bell that the user has no way to clear. Whether there is
+      // anywhere to go is the opener's call, so it is still asked.
       expect(notificationService.markRead).toHaveBeenCalledTimes(1);
-      expect(notificationRoutes.navigate).not.toHaveBeenCalled();
+      expect(notificationOpener.open).toHaveBeenCalledTimes(1);
     });
 
     it('says so when a notification could not be marked as read', () => {
