@@ -258,13 +258,30 @@ a {
 }
 
 @media (max-width: 599px) {
+  // phones: no sideways scroll, a two-column grid of the same cards
   .study-essentials.compact {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    padding: 12px;
+
+    .essentials-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      overflow: visible;
+    }
 
     a {
-      width: 200px;
+      flex-direction: column;
+      gap: 6px;
+      width: auto;
+      padding: 10px 24px 10px 10px;
     }
+  }
+}
+
+@media (max-width: 339px) {
+  .study-essentials.compact .essentials-links {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
