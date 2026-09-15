@@ -1,8 +1,18 @@
 @if (content; as detail) {
-  <header class="details-header">
+  <header class="details-header" [class.is-cancelled]="cancelled">
     <div>
       <p class="detail-unit">{{ detail.unitCode }} · {{ detail.unitName }}</p>
-      <h2 id="unit-hub-detail-title" mat-dialog-title tabindex="-1">{{ title }}</h2>
+      <h2 id="unit-hub-detail-title" mat-dialog-title tabindex="-1">
+        @if (cancelled) {
+          <span class="visually-hidden">Cancelled: </span>
+        }
+        {{ title }}
+      </h2>
+      @if (cancelled) {
+        <p class="cancelled-banner" role="status">
+          <mat-icon aria-hidden="true">event_busy</mat-icon>Cancelled: this session will not run
+        </p>
+      }
     </div>
     <button aria-label="Close details" mat-icon-button type="button" (click)="close()">
       <mat-icon aria-hidden="true">close</mat-icon>
@@ -94,12 +104,6 @@
     }
 
     @if (detail.session; as session) {
-      @if (session.cancelled) {
-        <div class="cancelled-notice" role="status">
-          <mat-icon aria-hidden="true">event_busy</mat-icon>
-          <p><strong>Cancelled</strong> · this session will not run.</p>
-        </div>
-      }
       <dl class="detail-facts">
         <div>
           <dt><mat-icon aria-hidden="true">category</mat-icon>Session</dt>

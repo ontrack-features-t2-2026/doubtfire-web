@@ -115,6 +115,46 @@
   }
 }
 
+// A cancelled item: sunken toward the page ground, an error-tinted edge and a 4px error
+// accent bar on the left. No dashed edge and no elevation.
+@mixin cancelled-card {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ot-color-error) 40%, var(--ot-color-border));
+  background: color-mix(in srgb, var(--ot-color-surface) 40%, var(--ot-color-page));
+  box-shadow: inset 4px 0 0 var(--ot-color-error);
+
+  :where(h2, h3, h4) {
+    color: var(--ot-color-text);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+}
+
+// One banner row stating the cancellation in words, with an icon.
+// Error at 14% on the surface behind error pulled 40% toward the text colour:
+// 6.8:1 in light and 5.4:1 in dark.
+@mixin cancelled-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: var(--ot-radius-sm);
+  background: color-mix(in srgb, var(--ot-color-error) 14%, var(--ot-color-surface));
+  color: color-mix(in srgb, var(--ot-color-error) 60%, var(--ot-color-text));
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.4;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: inherit;
+  }
+}
+
 // Rendered markdown for announcement bodies and session descriptions.
 // Links and text use theme tokens, so it reads the same in light and dark.
 // Include it on the element that receives the rendered HTML.

@@ -858,16 +858,22 @@
                 track session.occurrence_id || session.id + session.start_at
               ) {
                 <article class="hub-card session-card" [class.is-cancelled]="session.cancelled">
+                  @if (session.cancelled) {
+                    <p class="cancelled-banner">
+                      <mat-icon aria-hidden="true">event_busy</mat-icon>Cancelled: this session will
+                      not run
+                    </p>
+                  }
                   <div class="card-meta">
                     <span class="unit-badge">{{ unitCode(session.unit_id) }}</span>
                     @if (sessionLive(session)) {
                       <span class="chip live-badge">On now</span>
                     }
-                    @if (session.cancelled) {
-                      <span class="chip chip-cancelled">Cancelled</span>
-                    }
                   </div>
                   <h4>
+                    @if (session.cancelled) {
+                      <span class="visually-hidden">Cancelled: </span>
+                    }
                     <button class="details-title" type="button" (click)="openSession(session)">
                       {{ session.title }}
                     </button>
@@ -886,7 +892,9 @@
                         }
                       </span></span
                     >
-                    <span class="chip kind-chip" [attr.data-tone]="kindTone(session.kind)"
+                    <span
+                      class="chip kind-chip"
+                      [attr.data-tone]="session.cancelled ? 'cancelled' : kindTone(session.kind)"
                       ><mat-icon aria-hidden="true">{{ kindIcon(session.kind) }}</mat-icon
                       >{{ kindLabel(session.kind) }}</span
                     >
@@ -907,9 +915,6 @@
                       >
                     }
                   </div>
-                  @if (session.cancelled) {
-                    <p class="cancelled-label">Cancelled · this session will not run</p>
-                  }
                   @if (session.description) {
                     <p class="card-preview">{{ session.description | hubPlainText }}</p>
                   }

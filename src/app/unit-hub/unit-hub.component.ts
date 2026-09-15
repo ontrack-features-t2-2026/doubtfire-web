@@ -238,6 +238,10 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       }
       group.sessions.push(session);
     }
+    // cancelled sessions follow the active ones on the same day; the sort is stable
+    for (const group of groups) {
+      group.sessions.sort((a, b) => Number(a.cancelled) - Number(b.cancelled));
+    }
     return groups;
   }
   startAnnouncement(): void {

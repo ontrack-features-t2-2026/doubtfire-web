@@ -113,18 +113,34 @@ small {
 .body-toggle {
   margin-top: 12px;
 }
-.detail-notice,
-.cancelled-notice {
+.detail-notice {
   @include hub.callout(raised);
   p {
     margin: 0;
   }
 }
-.cancelled-notice {
-  border-color: color-mix(in srgb, var(--ot-color-error) 60%, var(--hub-card-border));
-  > mat-icon {
-    color: color-mix(in srgb, var(--ot-color-error) 80%, var(--ot-color-text));
+// a cancelled session: accent bar and struck title in the header, the banner under it
+.details-header.is-cancelled {
+  box-shadow: inset 4px 0 0 var(--ot-color-error);
+  h2[mat-dialog-title] {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
   }
+}
+.cancelled-banner {
+  @include hub.cancelled-banner;
+  margin-top: 10px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .calendar-guidance {
   @include hub.card(raised);

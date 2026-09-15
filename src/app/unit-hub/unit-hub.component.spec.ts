@@ -532,4 +532,28 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(preview.getAttribute('aria-pressed')).toBe('true');
     expect(component.announcementForm.controls.body.value).toBe('**Bold** text');
   });
+  it('marks cancelled sessions with one banner, a neutral type chip and sorts them last in their day', async () => {
+    const data = feed();
+    const active = data.sessions[0];
+    data.sessions = [
+      {...active, id: 900, title: 'Cancelled one', cancelled: true},
+      {...active, id: 901, title: 'Active one', cancelled: false},
+    ];
+    service.feed.mockReturnValue(of(data));
+    const {element} = await open();
+    const cards = Array.from(element.querySelectorAll('.session-card'));
+    expect(cards.map((card) => card.querySelector('.details-title').textContent.trim())).toEqual([
+      'Active one',
+      'Cancelled one',
+    ]);
+    const cancelled = cards[1];
+    expect(cancelled.querySelector('.cancelled-banner')?.textContent).toContain(
+      'Cancelled: this session will not run',
+    );
+    expect(cancelled.querySelector('h4 .visually-hidden')?.textContent).toContain('Cancelled');
+    expect(cancelled.querySelector('.kind-chip')?.getAttribute('data-tone')).toBe('cancelled');
+    expect(cancelled.querySelector('.details-link')).not.toBeNull();
+    expect(cancelled.querySelector('a[href^="https://calendar.google.com"]')).toBeNull();
+    expect(cards[0].querySelector('.cancelled-banner')).toBeNull();
+  });
 });

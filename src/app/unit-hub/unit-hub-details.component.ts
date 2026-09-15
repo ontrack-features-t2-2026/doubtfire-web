@@ -85,6 +85,10 @@ export class UnitHubDetailsComponent {
     return this.content?.announcement?.title ?? this.content?.session?.title ?? '';
   }
 
+  get cancelled(): boolean {
+    return this.content?.session?.cancelled === true;
+  }
+
   get sourceLabel(): string {
     const announcement = this.content?.announcement;
     return announcement?.managed_externally || announcement?.source_provider === 'microsoft_teams'

@@ -377,10 +377,6 @@ mat-icon {
   color: var(--ot-color-text);
   border: 1px solid var(--hub-card-border);
 }
-.chip-cancelled {
-  background: var(--ot-color-error);
-  color: var(--ot-color-on-error);
-}
 .kind-chip {
   background: var(--ot-status-ready-for-feedback);
   color: var(--ot-status-ready-for-feedback-on);
@@ -391,6 +387,12 @@ mat-icon {
   &[data-tone='lecture'] {
     background: var(--ot-status-need-help);
     color: var(--ot-status-need-help-on);
+  }
+  // cancelled items drop the type colour, so the cancelled state is the only colour signal
+  &[data-tone='cancelled'] {
+    background: var(--ot-color-surface-raised);
+    color: var(--ot-color-text);
+    box-shadow: inset 0 0 0 1px var(--hub-card-border);
   }
 }
 .live-badge {
@@ -499,19 +501,17 @@ mat-icon {
   margin: 0;
   color: var(--ot-color-text-muted);
 }
-.is-cancelled {
-  border-style: dashed;
-  box-shadow: none;
-  h4 {
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
+// Cancelled: a sunken card with an error edge and accent bar, so it recedes next to
+// active ones and still reads clearly. The banner carries the state in words.
+.session-card.is-cancelled {
+  @include hub.cancelled-card;
+  .card-preview,
+  .fact {
+    color: var(--ot-color-text-muted);
   }
 }
-.cancelled-label {
-  // Pulled toward the text colour so it clears 4.5:1 on the surface in both themes.
-  color: color-mix(in srgb, var(--ot-color-error) 80%, var(--ot-color-text));
-  font-weight: 650;
-  font-size: 0.86rem;
+.cancelled-banner {
+  @include hub.cancelled-banner;
 }
 .help-text {
   margin: var(--hub-space-2) 0;
