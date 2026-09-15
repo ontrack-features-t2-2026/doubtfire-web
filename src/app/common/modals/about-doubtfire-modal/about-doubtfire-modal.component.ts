@@ -12,6 +12,7 @@ import {GithubProfile} from './github-profile';
 @Component({
   selector: 'about-doubtfire-dialog',
   templateUrl: 'about-doubtfire-modal-content.component.html',
+  styleUrls: ['about-doubtfire-modal.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
