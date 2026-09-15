@@ -259,6 +259,21 @@ describe('ProjectDashboardComponent route reuse', () => {
       );
       component.ngOnDestroy();
     });
+
+    it('opens a collapsed task list when a status card filters it', () => {
+      vi.useFakeTimers();
+      const {component} = build({view: true});
+      const expandFromRail = vi.fn();
+      (component as unknown as {taskListPanel: {expandFromRail: () => void}}).taskListPanel = {
+        expandFromRail,
+      };
+
+      (component as unknown as {revealTaskList: () => void}).revealTaskList();
+      vi.runAllTimers();
+
+      expect(expandFromRail).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
+    });
   });
 
   // A wrong or stale link, or no access, left the page on its skeleton forever.

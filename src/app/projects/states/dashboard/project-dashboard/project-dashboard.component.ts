@@ -25,6 +25,7 @@ import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {MilestoneCelebrationService} from 'src/app/common/celebrate/milestone-celebration.service';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 import {ConversationLandingService} from 'src/app/tasks/task-comments-viewer/conversation-landing.service';
 import {FUnitTaskListComponent} from 'src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
@@ -38,6 +39,7 @@ import {GlobalStateService, ViewType} from '../../index/global-state.service';
 })
 export class ProjectDashboardComponent implements OnInit, OnDestroy {
   @ViewChild('leftPanel') private leftPanel?: FUnitTaskListComponent;
+  @ViewChild('taskListPanel') private taskListPanel?: PanelComponent;
 
   @Input() public project$: Observable<Project>;
   @Input() public defaultTaskListCollapsed = false;
@@ -218,6 +220,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         // than leaving the phone on the overview or stale task pane.
         this.selectedTaskDefinition$.next(null);
         this.mobilePane = 'task';
+        this.revealTaskList();
       } else if (wasTaskFilterNavigation) {
         // The companion view marker lets browser Back restore the Overview pane,
         // while a user-cleared status retains taskView=tasks and stays in Tasks.
@@ -256,6 +259,15 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       );
 
     window.dispatchEvent(new Event('resize'));
+  }
+
+  /**
+   * A status card filters the task list, so open that list if it is collapsed or
+   * railed for space. Deferred a tick so it also works on first load, before the
+   * panel exists.
+   */
+  private revealTaskList(): void {
+    setTimeout(() => this.taskListPanel?.expandFromRail());
   }
 
   ngOnDestroy(): void {
