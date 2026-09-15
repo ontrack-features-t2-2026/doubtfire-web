@@ -52,7 +52,7 @@
   @let calendarUrl = googleCalendarUrl;
   @let canEditPlan = allowsFlexibleDates && !!task?.project;
   @if (taskDef?.hasTaskSheet || taskDef?.hasTaskResources || calendarUrl || canEditPlan) {
-    <mat-card-actions class="flex flex-wrap gap-2">
+    <mat-card-actions class="task-actions">
       @if (taskDef?.hasTaskSheet) {
         <button mat-stroked-button type="button" (click)="downloadTaskSheet()">
           <mat-icon aria-hidden="true">download</mat-icon>

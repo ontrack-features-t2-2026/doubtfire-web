@@ -61,12 +61,16 @@
           [disabled]="(task?.blockedByPrerequisiteTasks() && !isTutor) || isSubmittedForPortfolio()"
           (click)="uploadSubmission()"
         >
+          <mat-icon aria-hidden="true">upload</mat-icon>
           Upload submission
         </button>
       }
 
       @if (task?.canApplyForExtension()) {
-        <button mat-stroked-button (click)="applyForExtension()">Request extension</button>
+        <button mat-stroked-button (click)="applyForExtension()">
+          <mat-icon aria-hidden="true">more_time</mat-icon>
+          Request extension
+        </button>
       }
       @if (showUploadNewFiles) {
         <button
@@ -74,6 +78,7 @@
           [disabled]="submissionActionPending"
           (click)="updateFilesInSubmission()"
         >
+          <mat-icon aria-hidden="true">upload_file</mat-icon>
           Upload new files
         </button>
       }

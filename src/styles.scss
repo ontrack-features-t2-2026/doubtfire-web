@@ -169,20 +169,28 @@ body.split-pane-resizing pdf-viewer {
   color: var(--ot-color-text);
 }
 
-// Make stroked/outlined buttons read clearly as buttons in both themes. A plain
-// surface fill matched the card body and disappeared, so give them a control fill
-// that is a distinct step lighter than any surface (mixing in the text colour),
-// a clearly visible border, and a small shadow for affordance. Material's own
-// state layer keeps the hover/focus feedback on top.
+// Outlined buttons, in both themes: a thin token outline over a faint primary wash,
+// the theme's text colour for the label and primary for the icon, a consistent
+// radius and no shadow. The old grey fill with a drop shadow read as a legacy
+// raised box in light mode. Material's own state layer handles hover and focus.
 .mat-mdc-outlined-button:not(:disabled) {
-  --mdc-outlined-button-outline-color: color-mix(in srgb, var(--ot-color-text) 26%, transparent);
-  --mdc-outlined-button-label-text-color: var(--ot-color-text);
-  background-color: color-mix(in srgb, var(--ot-color-text) 12%, var(--ot-color-surface-raised));
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --mat-button-outlined-outline-color: color-mix(
+    in srgb,
+    var(--ot-color-primary) 35%,
+    var(--ot-color-border)
+  );
+  --mat-button-outlined-label-text-color: var(--ot-color-text);
+  --mat-button-outlined-container-shape: var(--ot-radius-md);
+  background-color: color-mix(in srgb, var(--ot-color-primary) 5%, transparent);
+  box-shadow: none;
+
+  .mat-icon {
+    color: var(--ot-color-primary);
+  }
 }
 
 .mat-mdc-outlined-button:not(:disabled):hover {
-  background-color: color-mix(in srgb, var(--ot-color-text) 20%, var(--ot-color-surface-raised));
+  background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
 }
 
 // ngx-skeleton-loader sets a fixed light grey and a white shimmer on its own

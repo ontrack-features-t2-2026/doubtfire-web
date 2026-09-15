@@ -69,9 +69,11 @@
 // colour. Works for every status token and both themes; disabled buttons keep
 // Material's muted treatment.
 ::ng-deep f-task-status-card .mat-mdc-card-actions .mat-mdc-outlined-button:not(:disabled) {
-  --mdc-outlined-button-outline-color: color-mix(in srgb, var(--tsc) 55%, var(--ot-color-border));
-  --mdc-outlined-button-label-text-color: var(--ot-color-text);
+  --mat-button-outlined-outline-color: color-mix(in srgb, var(--tsc) 55%, var(--ot-color-border));
+  --mat-button-outlined-label-text-color: var(--ot-color-text);
+  min-height: 44px;
   background-color: color-mix(in srgb, var(--tsc) 12%, var(--ot-color-surface-raised));
+  box-shadow: none;
 }
 
 ::ng-deep f-task-status-card .mat-mdc-card-actions .mat-mdc-outlined-button:not(:disabled):hover {
