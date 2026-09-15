@@ -245,7 +245,7 @@
     <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
       <mat-label>Add a note</mat-label>
       <textarea
-        cdkAutosizeMaxRows="6"
+        cdkAutosizeMaxRows="8"
         cdkAutosizeMinRows="2"
         cdkTextareaAutosize
         class="resize-none"
@@ -264,6 +264,7 @@
         [disabledInteractive]="true"
         (click)="submitNote()"
       >
+        <mat-icon aria-hidden="true">save</mat-icon>
         Submit
       </button>
     </div>

@@ -169,8 +169,13 @@ describe('StaffNotesComponent states', () => {
 
   function buttonLabelled(label: string): HTMLButtonElement | undefined {
     return Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).find(
-      (button) => button.textContent.trim() === label,
+      (button) => labelOf(button) === label,
     );
+  }
+
+  // The button's own label, without the text of an icon beside it.
+  function labelOf(button: HTMLButtonElement): string {
+    return (button.querySelector('.mdc-button__label') ?? button).textContent.trim();
   }
 
   it('says there are no notes yet once an empty list loads', () => {
@@ -201,6 +206,8 @@ describe('StaffNotesComponent states', () => {
     const save = buttonLabelled('Save note');
 
     expect(save.getAttribute('type')).toBe('button');
+    expect(save.classList).toContain('mat-mdc-unelevated-button');
+    expect(save.querySelector('mat-icon')?.textContent.trim()).toBe('save');
     expect(save.hasAttribute('disabled')).toBe(false);
     expect(save.getAttribute('aria-disabled')).toBe('true');
 
@@ -213,6 +220,15 @@ describe('StaffNotesComponent states', () => {
     component.noteText = 'Talked about the extension';
     fixture.detectChanges();
     expect(save.getAttribute('aria-disabled')).toBeNull();
+  });
+
+  it('labels the note field and lets it grow from two to eight rows', () => {
+    render();
+    const field = fixture.nativeElement.querySelector('textarea[cdkTextareaAutosize]');
+
+    expect(field.closest('mat-form-field').textContent).toContain('Add a note');
+    expect(field.getAttribute('cdkAutosizeMinRows')).toBe('2');
+    expect(field.getAttribute('cdkAutosizeMaxRows')).toBe('8');
   });
 
   it('drops a reply, an edit and a draft meant for the previous student', () => {
