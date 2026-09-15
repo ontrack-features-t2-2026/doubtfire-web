@@ -12,9 +12,13 @@
       <mat-spinner color="accent" diameter="100" strokeWidth="2"></mat-spinner>
     </div>
 
-    @if (!task || task.comments.length === 0) {
-      <div class="m-0 flex size-full min-h-full min-w-full flex-col items-center justify-center">
-        <mat-icon id="noView">forum</mat-icon>
+    @if (!loading && (!task || task.comments.length === 0)) {
+      <div
+        class="m-0 flex size-full min-h-full min-w-full flex-col items-center justify-center px-3 text-center"
+        role="status"
+      >
+        <mat-icon aria-hidden="true" id="noView">forum</mat-icon>
+        <p>No comments on this task yet.</p>
       </div>
     }
 

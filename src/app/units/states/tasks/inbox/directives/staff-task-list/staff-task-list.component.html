@@ -261,10 +261,14 @@
     </div>
   }
 
-  <div class="center-task-list" [hidden]="loading || filteredTasks?.length !== 0 || isNarrow">
-    <mat-icon>done_all</mat-icon>
+  <div
+    class="center-task-list text-center"
+    role="status"
+    [hidden]="loading || filteredTasks?.length !== 0"
+  >
+    <mat-icon aria-hidden="true">done_all</mat-icon>
+    <p [class.sr-only]="isNarrow">No tasks match these filters.</p>
   </div>
-
   <!--/search-options-->
   @if (filteredTasks && !loading) {
     <cdk-virtual-scroll-viewport class="tasks-viewport scrollable" itemSize="60">
