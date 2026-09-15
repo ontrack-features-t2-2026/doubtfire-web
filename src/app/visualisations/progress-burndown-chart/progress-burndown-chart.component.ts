@@ -1,17 +1,22 @@
-import {Color, ScaleType} from '@swimlane/ngx-charts';
+import {Color, LineChartComponent, ScaleType} from '@swimlane/ngx-charts';
 import {formatDate} from '@angular/common';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DoCheck,
+  ElementRef,
   HostListener,
   Inject,
   Input,
   LOCALE_ID,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
+  Optional,
   SimpleChanges,
+  ViewChild,
   ViewContainerRef,
 } from '@angular/core';
 import {Subscription} from 'rxjs';
@@ -26,16 +31,52 @@ import {
 import {ChartBaseComponent} from 'src/app/common/chart-base/chart-base-component/chart-base-component.component';
 import {ThemeColorService} from 'src/app/common/theme/theme-color.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
+import {
+  BurndownPoint,
+  BurndownSeries,
+  BurndownTooltip,
+  TARGET_SERIES,
+  buildTooltip,
+  burndownDates,
+  describeTooltip,
+  nearestIndex,
+  nearestSeriesAt,
+  stepIndex,
+} from './burndown-hover';
 
-interface BurndownPoint {
+interface BurndownDot {
   name: string;
-  value: number;
+  color: string;
+  transform: string;
+  visible: boolean;
 }
 
-interface BurndownSeries {
-  name: string;
-  series: BurndownPoint[];
+/** Where the plot sits inside the chart wrapper, in CSS pixels. */
+interface PlotGeometry {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  wrapperWidth: number;
+  wrapperLeft: number;
+  wrapperTop: number;
+  dates: string[];
+  positions: number[];
+  /** ys[series][date] for each series in `data`; undefined where it has no point. */
+  ys: (number | undefined)[][];
 }
+
+interface PendingPointer {
+  clientX: number;
+  clientY: number;
+  pointerType: string;
+}
+
+/** How close, in pixels, the pointer has to be to a line to emphasise it. */
+const LINE_HIT_TOLERANCE = 8;
+const TOOLTIP_OFFSET = 12;
+const TOOLTIP_FALLBACK_WIDTH = 200;
+const TOOLTIP_FALLBACK_HEIGHT = 120;
 
 interface BurndownSummary {
   name: 'Projected' | 'To Submit' | 'To Complete';
@@ -61,8 +102,13 @@ function prefersReducedMotion(): boolean {
 })
 export class ProgressBurndownChartComponent
   extends ChartBaseComponent
-  implements DoCheck, OnChanges, OnDestroy, OnInit
+  implements AfterViewInit, DoCheck, OnChanges, OnDestroy, OnInit
 {
+  @ViewChild('root', {static: true}) rootRef?: ElementRef<HTMLElement>;
+  @ViewChild('plot', {static: true}) plotRef?: ElementRef<HTMLElement>;
+  @ViewChild('tooltipPanel', {static: true}) tooltipRef?: ElementRef<HTMLElement>;
+  @ViewChild(LineChartComponent, {static: true}) lineChart?: LineChartComponent;
+
   @Input() project: Project;
   @Input() unit: Unit;
   @Input() grade: number;
@@ -113,12 +159,36 @@ export class ProgressBurndownChartComponent
   private initialised: boolean = false;
   private renderedTheme?: string;
 
+  // Hover state. Everything the template reads is only replaced when the snapped date
+  // or the emphasised series changes, so pointer movement does not run change detection.
+  /** Index into the current dates of the crosshair, or null when it is hidden. */
+  hoverIndex: number | null = null;
+  crosshairVisible: boolean = false;
+  crosshairTransform: string = 'translate3d(0, 0, 0)';
+  crosshairHeight: number = 0;
+  dots: BurndownDot[] = [];
+  /** Kept after hiding so the panel can fade out with its last content. */
+  tooltip: BurndownTooltip | null = null;
+  tooltipTransform: string = 'translate3d(0, 0, 0)';
+  tooltipFlipped: boolean = false;
+  liveText: string = '';
+  /** Bound to the chart; ngx-charts marks the listed series active and the rest inactive. */
+  activeEntries: {name: string}[] = [];
+
+  private legendEmphasis: string | null = null;
+  private lineEmphasis: string | null = null;
+  private pendingPointer: PendingPointer | null = null;
+  private pendingLeave: boolean = false;
+  private frame: number = 0;
+  private readonly teardown: (() => void)[] = [];
+
   constructor(
     public viewContainerRef: ViewContainerRef,
     private peerProgressService: PeerProgressService,
     readonly demoMode: DemoModeStore,
     @Inject(LOCALE_ID) private locale: string,
     private themeColor: ThemeColorService,
+    @Optional() private zone?: NgZone,
   ) {
     super(viewContainerRef);
     this.data = [];
@@ -191,11 +261,23 @@ export class ProgressBurndownChartComponent
   @HostListener('window:resize')
   onViewportResize(): void {
     this.updateResponsiveAxisLabels();
+    // The scale is rebuilt on resize, so the crosshair would point at stale pixels.
+    this.hideCrosshair();
+  }
+
+  ngAfterViewInit(): void {
+    this.listenForPointer();
   }
 
   ngOnDestroy(): void {
     this.peerMedianRequestVersion++;
     this.activePeerMedianRequest?.unsubscribe();
+    this.teardown.splice(0).forEach((remove) => remove());
+
+    if (this.frame && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(this.frame);
+    }
+    this.frame = 0;
   }
 
   private updateResponsiveAxisLabels(): void {
@@ -405,6 +487,16 @@ export class ProgressBurndownChartComponent
       ...this.colorScheme,
       domain: shown.map((entry) => this.seriesColor(entry.index)),
     };
+
+    // One dot per line on show, kept in the DOM so it can fade in and out.
+    this.dots = this.data.map((series, index) => ({
+      name: series.name,
+      color: this.colorScheme.domain[index],
+      transform: 'translate3d(0, 0, 0)',
+      visible: false,
+    }));
+    this.hideCrosshair();
+    this.syncEmphasis();
   }
 
   isLegend(event: string | BurndownPoint): event is string {
@@ -421,5 +513,385 @@ export class ProgressBurndownChartComponent
 
   public formatPerc(input: number): string {
     return `${input}%`;
+  }
+
+  /** Name the plot by what it currently says, for anyone who cannot see the lines. */
+  get plotAriaLabel(): string {
+    const summary = this.summaries
+      .map((entry) => `${entry.name} ${entry.remaining}% remaining`)
+      .join(', ');
+
+    return [
+      'Progress burndown chart of work remaining over time',
+      summary,
+      'Use the left and right arrow keys to read the values for each date',
+    ]
+      .filter((part) => part.length > 0)
+      .join('. ');
+  }
+
+  /** The series drawn at full strength while the others fade, or null. */
+  get emphasisedSeries(): string | null {
+    return this.activeEntries[0]?.name ?? null;
+  }
+
+  isDimmed(name: string): boolean {
+    const emphasised = this.emphasisedSeries;
+
+    return emphasised !== null && emphasised !== name;
+  }
+
+  /** Legend chip or summary tile hover. Pass null when the pointer leaves it. */
+  emphasiseSeries(name: string | null): void {
+    this.legendEmphasis = name;
+    this.syncEmphasis();
+  }
+
+  /**
+   * ngx-charts clears its own active entries when the pointer leaves the chart. Its
+   * mouseleave fires after the pointerover that set a legend emphasis, so hand it a
+   * fresh array to put the emphasis back.
+   */
+  onChartDeactivate(): void {
+    if (this.emphasisedSeries !== null) {
+      this.activeEntries = [...this.activeEntries];
+    }
+  }
+
+  onPlotKeydown(event: KeyboardEvent): void {
+    const count = burndownDates(this.data).length;
+    let next: number | null;
+
+    switch (event.key) {
+      case 'ArrowRight':
+        next = stepIndex(this.crosshairVisible ? this.hoverIndex : null, 1, count);
+        break;
+      case 'ArrowLeft':
+        next = stepIndex(this.crosshairVisible ? this.hoverIndex : null, -1, count);
+        break;
+      case 'Home':
+        next = count > 0 ? 0 : null;
+        break;
+      case 'End':
+        next = count > 0 ? count - 1 : null;
+        break;
+      case 'Escape':
+        if (this.crosshairVisible) {
+          event.preventDefault();
+          this.hideCrosshair();
+        }
+        return;
+      default:
+        return;
+    }
+
+    if (next === null) {
+      return;
+    }
+
+    event.preventDefault();
+    this.showCrosshairAt(next);
+  }
+
+  onPlotBlur(): void {
+    this.hideCrosshair();
+  }
+
+  /** Snap the crosshair, dots and tooltip to a date index. */
+  showCrosshairAt(index: number, geometry: PlotGeometry | null = this.measurePlot()): void {
+    const dates = geometry?.dates ?? burndownDates(this.data);
+    const target = this.temp.find((series) => series.name === TARGET_SERIES);
+    const tooltip = buildTooltip(this.data, this.colorScheme.domain, dates, index, target);
+
+    if (!tooltip) {
+      this.hideCrosshair();
+      return;
+    }
+
+    this.hoverIndex = index;
+    this.tooltip = tooltip;
+    this.liveText = describeTooltip(tooltip);
+    this.crosshairVisible = true;
+
+    if (!geometry) {
+      this.dots = this.dots.map((dot) => ({
+        ...dot,
+        visible: tooltip.rows.some((row) => row.name === dot.name),
+      }));
+      return;
+    }
+
+    const x = geometry.left + geometry.positions[index];
+    this.crosshairTransform = `translate3d(${x}px, ${geometry.top}px, 0)`;
+    this.crosshairHeight = geometry.height;
+
+    const pointYs: number[] = [];
+    this.dots = this.dots.map((dot, seriesIndex) => {
+      const y = geometry.ys[seriesIndex]?.[index];
+
+      if (y === undefined) {
+        return {...dot, visible: false};
+      }
+
+      pointYs.push(geometry.top + y);
+
+      return {...dot, visible: true, transform: `translate3d(${x}px, ${geometry.top + y}px, 0)`};
+    });
+
+    const panel = this.tooltipRef?.nativeElement;
+    const width = Math.max(panel?.offsetWidth || 0, TOOLTIP_FALLBACK_WIDTH);
+    const height = Math.max(panel?.offsetHeight || 0, TOOLTIP_FALLBACK_HEIGHT);
+    const middle =
+      pointYs.length > 0
+        ? (Math.min(...pointYs) + Math.max(...pointYs)) / 2
+        : geometry.top + geometry.height / 2;
+    const maxTop = Math.max(geometry.top, geometry.top + geometry.height - height);
+    const top = Math.min(maxTop, Math.max(geometry.top, middle - height / 2));
+
+    this.tooltipFlipped = x + TOOLTIP_OFFSET + width > geometry.wrapperWidth;
+    this.tooltipTransform = this.tooltipFlipped
+      ? `translate3d(${x - TOOLTIP_OFFSET}px, ${top}px, 0) translateX(-100%)`
+      : `translate3d(${x + TOOLTIP_OFFSET}px, ${top}px, 0)`;
+  }
+
+  hideCrosshair(): void {
+    if (!this.crosshairVisible && this.hoverIndex === null) {
+      return;
+    }
+
+    this.hoverIndex = null;
+    this.crosshairVisible = false;
+    this.liveText = '';
+    this.dots = this.dots.map((dot) => (dot.visible ? {...dot, visible: false} : dot));
+  }
+
+  private syncEmphasis(): void {
+    const name = this.legendEmphasis ?? this.lineEmphasis;
+    const shown = name !== null && this.data.some((series) => series.name === name);
+    const next = shown ? name : null;
+
+    if (next !== this.emphasisedSeries) {
+      this.activeEntries = next === null ? [] : [{name: next}];
+    }
+  }
+
+  private inZone(work: () => void): void {
+    if (this.zone) {
+      this.zone.run(work);
+    } else {
+      work();
+    }
+  }
+
+  private listenForPointer(): void {
+    const plot = this.plotRef?.nativeElement;
+    const root = this.rootRef?.nativeElement;
+
+    if (!plot || !root || typeof document === 'undefined') {
+      return;
+    }
+
+    const listen = <K extends keyof HTMLElementEventMap>(
+      target: HTMLElement | Document,
+      type: K,
+      handler: (event: HTMLElementEventMap[K]) => void,
+      options?: AddEventListenerOptions,
+    ): void => {
+      target.addEventListener(type, handler as EventListener, options);
+      this.teardown.push(() => target.removeEventListener(type, handler as EventListener, options));
+    };
+
+    const register = (): void => {
+      listen(plot, 'pointermove', (event) => this.queuePointer(event), {passive: true});
+      listen(plot, 'pointerdown', (event) => this.queuePointer(event), {passive: true});
+      listen(plot, 'pointerleave', (event) => {
+        // A finger lifting also fires pointerleave; touch keeps the reading until a tap elsewhere.
+        if (event.pointerType === 'mouse') {
+          this.pendingPointer = null;
+          this.pendingLeave = true;
+          this.scheduleFrame();
+        }
+      });
+      listen(
+        document,
+        'pointerdown',
+        (event) => {
+          if (this.crosshairVisible && !plot.contains(event.target as Node)) {
+            this.inZone(() => this.hideCrosshair());
+          }
+        },
+        {passive: true, capture: true},
+      );
+      listen(root, 'pointerover', (event) => this.onSeriesPointer(event, true));
+      listen(root, 'pointerout', (event) => this.onSeriesPointer(event, false));
+    };
+
+    if (this.zone) {
+      this.zone.runOutsideAngular(register);
+    } else {
+      register();
+    }
+  }
+
+  /** Legend chips and summary tiles carry data-series; hovering one emphasises its line. */
+  private onSeriesPointer(event: PointerEvent, entering: boolean): void {
+    if (event.pointerType !== 'mouse' || !this.canHover()) {
+      return;
+    }
+
+    const from = (event.target as Element | null)?.closest?.('[data-series]');
+
+    if (!from) {
+      return;
+    }
+
+    const related = (event.relatedTarget as Element | null)?.closest?.('[data-series]');
+
+    if (!entering && related === from) {
+      return;
+    }
+
+    const name = entering ? from.getAttribute('data-series') : null;
+
+    if (name !== this.legendEmphasis) {
+      this.inZone(() => this.emphasiseSeries(name));
+    }
+  }
+
+  private canHover(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches
+    );
+  }
+
+  private queuePointer(event: PointerEvent): void {
+    this.pendingPointer = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerType: event.pointerType,
+    };
+    this.pendingLeave = false;
+    this.scheduleFrame();
+  }
+
+  private scheduleFrame(): void {
+    if (this.frame || typeof requestAnimationFrame !== 'function') {
+      return;
+    }
+
+    this.frame = requestAnimationFrame(() => {
+      this.frame = 0;
+      this.flushPointer();
+    });
+  }
+
+  private flushPointer(): void {
+    const pointer = this.pendingPointer;
+    this.pendingPointer = null;
+
+    if (this.pendingLeave || !pointer) {
+      this.pendingLeave = false;
+
+      if (this.crosshairVisible || this.lineEmphasis !== null) {
+        this.inZone(() => {
+          this.lineEmphasis = null;
+          this.syncEmphasis();
+          this.hideCrosshair();
+        });
+      }
+      return;
+    }
+
+    const geometry = this.measurePlot();
+
+    if (!geometry || geometry.positions.length === 0) {
+      return;
+    }
+
+    const x = pointer.clientX - geometry.wrapperLeft - geometry.left;
+    const y = pointer.clientY - geometry.wrapperTop - geometry.top;
+    const {positions} = geometry;
+    const halfStep = positions.length > 1 ? (positions[1] - positions[0]) / 2 : LINE_HIT_TOLERANCE;
+    const inside =
+      x >= positions[0] - halfStep &&
+      x <= positions[positions.length - 1] + halfStep &&
+      y >= 0 &&
+      y <= geometry.height;
+
+    if (!inside) {
+      if (
+        pointer.pointerType === 'mouse' &&
+        (this.crosshairVisible || this.lineEmphasis !== null)
+      ) {
+        this.inZone(() => {
+          this.lineEmphasis = null;
+          this.syncEmphasis();
+          this.hideCrosshair();
+        });
+      }
+      return;
+    }
+
+    const index = nearestIndex(positions, x);
+    const lineIndex =
+      pointer.pointerType === 'mouse' && this.canHover()
+        ? nearestSeriesAt(positions, geometry.ys, x, y, LINE_HIT_TOLERANCE)
+        : -1;
+    const lineName = lineIndex >= 0 ? this.data[lineIndex].name : null;
+
+    if (index === this.hoverIndex && this.crosshairVisible && lineName === this.lineEmphasis) {
+      return;
+    }
+
+    this.inZone(() => {
+      this.lineEmphasis = lineName;
+      this.syncEmphasis();
+      this.showCrosshairAt(index, geometry);
+    });
+  }
+
+  /** Reads the chart's own scales, so the overlay lines up with what ngx-charts drew. */
+  private measurePlot(): PlotGeometry | null {
+    const chart = this.lineChart;
+    const plot = this.plotRef?.nativeElement;
+    const svg = plot?.querySelector('svg.ngx-charts');
+
+    if (!chart?.xScale || !chart.yScale || !chart.dims || !plot || !svg) {
+      return null;
+    }
+
+    const dates = burndownDates(this.data);
+    const positions = dates.map((date) => chart.xScale(date) as number | undefined);
+
+    // The chart redraws after change detection, so its scale can briefly trail the data.
+    if (positions.some((position) => typeof position !== 'number' || Number.isNaN(position))) {
+      return null;
+    }
+
+    const wrapperRect = plot.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    const ys = this.data.map((series) => {
+      const values = new Map(series.series.map((point) => [point.name, point.value]));
+
+      return dates.map((date) => {
+        const value = values.get(date);
+
+        return value === undefined ? undefined : (chart.yScale(value) as number);
+      });
+    });
+
+    return {
+      left: svgRect.left - wrapperRect.left + chart.dims.xOffset,
+      top: svgRect.top - wrapperRect.top + (chart.margin?.[0] ?? 0),
+      width: chart.dims.width,
+      height: chart.dims.height,
+      wrapperWidth: wrapperRect.width,
+      wrapperLeft: wrapperRect.left,
+      wrapperTop: wrapperRect.top,
+      dates,
+      positions: positions as number[],
+      ys,
+    };
   }
 }

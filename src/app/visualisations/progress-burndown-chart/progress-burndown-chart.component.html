@@ -1,7 +1,16 @@
-<div class="progress-burndown">
-  <div class="progress-burndown__chart">
+<div #root class="progress-burndown">
+  <div
+    #plot
+    class="progress-burndown__chart"
+    role="application"
+    tabindex="0"
+    [attr.aria-label]="plotAriaLabel"
+    (blur)="onPlotBlur()"
+    (keydown)="onPlotKeydown($event)"
+  >
     <ngx-charts-line-chart
       class="progress-burndown-chart"
+      [activeEntries]="activeEntries"
       [animations]="animations"
       [legend]="legend"
       [results]="data"
@@ -17,15 +26,77 @@
       [yAxisTickFormatting]="formatPerc"
       [yScaleMax]="yScaleMax"
       [yScaleMin]="yScaleMin"
+      (deactivate)="onChartDeactivate()"
       (select)="onSelect($event)"
     >
     </ngx-charts-line-chart>
+
+    <div
+      aria-hidden="true"
+      class="progress-burndown__crosshair"
+      [class.is-visible]="crosshairVisible"
+      [style.height.px]="crosshairHeight"
+      [style.transform]="crosshairTransform"
+    ></div>
+
+    @for (dot of dots; track dot.name) {
+      <div
+        aria-hidden="true"
+        class="progress-burndown__dot-anchor"
+        [style.transform]="dot.transform"
+      >
+        <span
+          class="progress-burndown__dot"
+          [class.is-dimmed]="isDimmed(dot.name)"
+          [class.is-visible]="crosshairVisible && dot.visible"
+          [style.background-color]="dot.color"
+        ></span>
+      </div>
+    }
+
+    <div
+      aria-hidden="true"
+      class="progress-burndown__tooltip-anchor"
+      [class.is-flipped]="tooltipFlipped"
+      [style.transform]="tooltipTransform"
+    >
+      <div
+        #tooltipPanel
+        class="progress-burndown__tooltip"
+        [class.is-visible]="crosshairVisible && !!tooltip"
+      >
+        @if (tooltip) {
+          <p class="progress-burndown__tooltip-date">{{ tooltip.date }}</p>
+          <dl class="progress-burndown__tooltip-rows">
+            @for (row of tooltip.rows; track row.name) {
+              <div class="progress-burndown__tooltip-row">
+                <dt>
+                  <span
+                    class="progress-burndown__legend-swatch"
+                    [style.background-color]="row.color"
+                  ></span>
+                  {{ row.name }}
+                </dt>
+                <dd>
+                  <span class="progress-burndown__tooltip-value">{{ row.valueLabel }}</span>
+                  @if (row.gap) {
+                    <span class="progress-burndown__tooltip-gap">{{ row.gap.label }}</span>
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+        }
+      </div>
+    </div>
+
+    <p aria-live="polite" class="progress-burndown__live">{{ liveText }}</p>
   </div>
 
   @if (summaries.length > 0) {
     <dl aria-label="Current burndown summary" class="progress-burndown__summary">
       @for (summary of summaries; track summary.name) {
-        <div [attr.data-series]="summary.name">
+        <div class="progress-burndown__summary-tile" [attr.data-series]="summary.name">
           <dt>
             <span
               aria-hidden="true"
@@ -51,6 +122,7 @@
           class="progress-burndown__legend-item"
           type="button"
           [attr.aria-pressed]="isDataShown(series.name)"
+          [attr.data-series]="series.name"
           [attr.title]="'Show or hide ' + series.name"
           [class.progress-burndown__legend-item--hidden]="!isDataShown(series.name)"
           (click)="onSelect(series.name)"
