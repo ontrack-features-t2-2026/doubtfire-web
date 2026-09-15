@@ -184,7 +184,7 @@
       @if (staffError) {
         <p class="notice error-notice" role="alert">
           {{ staffError }}
-          <button mat-button type="button" (click)="loadStaff(managedUnitId)">Retry</button>
+          <button mat-stroked-button type="button" (click)="loadStaff(managedUnitId)">Retry</button>
         </p>
       }
       @if (staffLoading) {
@@ -378,7 +378,12 @@
               <div class="actions">
                 <button mat-flat-button type="submit" [disabled]="saving">
                   {{ saving ? 'Saving…' : 'Save changes' }}</button
-                ><button mat-button type="button" [disabled]="saving" (click)="editor = null">
+                ><button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="saving"
+                  (click)="editor = null"
+                >
                   Cancel editing
                 </button>
               </div>
@@ -749,7 +754,7 @@
                           ><mat-icon aria-hidden="true">event</mat-icon>Preview DEMO in Google
                           Calendar</a
                         >
-                        <button mat-button type="button" (click)="downloadSession(session)">
+                        <button mat-stroked-button type="button" (click)="downloadSession(session)">
                           <mat-icon aria-hidden="true">download</mat-icon>Download DEMO .ics
                         </button>
                       } @else {
@@ -775,7 +780,7 @@
                           [href]="googleUrl(session, unitCode(session.unit_id))"
                           ><mat-icon aria-hidden="true">event</mat-icon>Add to Google Calendar</a
                         >
-                        <button mat-button type="button" (click)="downloadSession(session)">
+                        <button mat-stroked-button type="button" (click)="downloadSession(session)">
                           <mat-icon aria-hidden="true">download</mat-icon>Download .ics
                         </button>
                       }
@@ -851,7 +856,13 @@
                 For Google, set up the subscription in a desktop browser; it will then appear in
                 your mobile calendar. Calendar providers control refresh times.
               </p>
-              <button mat-button type="button" [disabled]="demo.enabled" (click)="openCalendar()">
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="demo.enabled"
+                (click)="openCalendar()"
+              >
+                <mat-icon aria-hidden="true">date_range</mat-icon>
                 Open calendar settings
               </button>
             </div>

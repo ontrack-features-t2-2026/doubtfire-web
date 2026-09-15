@@ -162,7 +162,8 @@
             }
           </p>
           @if (!detail.demo) {
-            <button mat-button type="button" (click)="calendarSettings()">
+            <button mat-stroked-button type="button" (click)="calendarSettings()">
+              <mat-icon aria-hidden="true">date_range</mat-icon>
               Open calendar settings
             </button>
           }
@@ -193,15 +194,17 @@
           rel="noopener noreferrer"
           target="_blank"
           [href]="safeUrl(detail.googleCalendarUrl)"
+          ><mat-icon aria-hidden="true">event</mat-icon
           >{{ detail.demo ? 'Preview DEMO in Google Calendar' : 'Add to Google Calendar' }}</a
         >
       }
       @if (detail.download) {
-        <button mat-button type="button" (click)="download()">
+        <button mat-stroked-button type="button" (click)="download()">
+          <mat-icon aria-hidden="true">download</mat-icon>
           {{ detail.demo ? 'Download DEMO .ics' : 'Download .ics' }}
         </button>
       }
     }
-    <button mat-button type="button" (click)="close()">Close</button>
+    <button mat-stroked-button type="button" (click)="close()">Close</button>
   </mat-dialog-actions>
 }
