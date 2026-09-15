@@ -137,8 +137,8 @@ $my-palette: mat.m2-define-palette($md-formatif);
   border: 1px solid var(--ot-color-border);
   border-radius: 999px;
   background-color: var(--ot-color-surface);
-  // the 24px status circle sits 8px in from the pill edge, same as the text gap
-  padding: 0 0.75rem 0 8px;
+  // the status circle sits 12px in from the pill edge, same as the text inset
+  padding: 0 0.75rem 0 12px;
   color: var(--ot-color-text);
   font-size: 0.875rem;
 
@@ -184,6 +184,19 @@ $my-palette: mat.m2-define-palette($md-formatif);
     width: 14px;
     height: 14px;
     font-size: 14px;
+  }
+}
+
+// In the closed pill the circle is only a hint of the colour, not a badge: 20px with a
+// 12px glyph, so it sits inside the pill's padding instead of filling its height.
+:host ::ng-deep .task-status-select .task-status-option__icon .status-chip {
+  width: 20px !important;
+  height: 20px !important;
+
+  mat-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
   }
 }
 
