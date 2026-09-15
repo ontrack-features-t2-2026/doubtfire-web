@@ -65,7 +65,18 @@ export class NotificationRouteService {
   }
 
   public navigate(link: unknown): Promise<boolean> {
-    const target = this.resolve(link);
+    return this.navigateToTarget(this.resolve(link));
+  }
+
+  /**
+   * Go to an in-app url that was built here from ids, not taken from a link.
+   *
+   * NotificationTargetService builds these with the router from numeric ids and
+   * a task abbreviation the router encodes, so there is no raw text to screen
+   * and the allow-list above, which only knows the api's link shapes, would
+   * turn away the staff pages it needs.
+   */
+  public navigateToTarget(target: string): Promise<boolean> {
     const feedbackIntent = this.createFeedbackIntent(target);
 
     // A service-worker click can reach an already-open anonymous client after

@@ -24,6 +24,8 @@ const EVENT_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = 
   // an extension so it reads as one in the list.
   extension_requested: {icon: 'more_time', label: 'Extension request', tone: 'extension'},
   portfolio_received: {icon: 'collections_bookmark', label: 'Portfolio', tone: 'portfolio'},
+  // Staff side of the same submission, told apart from the student's receipt.
+  portfolio_submitted: {icon: 'inventory', label: 'Portfolio submitted', tone: 'portfolio'},
   group_membership_changed: {icon: 'groups', label: 'Group update', tone: 'general'},
   tutorial_changed: {icon: 'event_repeat', label: 'Tutorial update', tone: 'general'},
 };
