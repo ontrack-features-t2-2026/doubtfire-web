@@ -871,3 +871,70 @@ fieldset {
     flex-wrap: wrap;
   }
 }
+
+// ---- Markdown ----
+.format-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hub-space-2) var(--hub-space-3);
+  margin: 0 0 var(--hub-space-3);
+  .format-hint {
+    margin: 0;
+    color: var(--ot-color-text-muted);
+  }
+}
+// the same segmented control as the feed filter, at field scale
+.write-preview {
+  display: inline-flex;
+  gap: var(--hub-space-1);
+  padding: 2px;
+  border: 1px solid var(--hub-card-border);
+  border-radius: var(--ot-radius-md);
+  background: var(--ot-color-surface);
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hub-space-1);
+    min-height: 36px;
+    padding: 0 var(--hub-space-3);
+    border: 0;
+    border-radius: var(--ot-radius-sm);
+    background: transparent;
+    color: var(--ot-color-text);
+    font: inherit;
+    font-size: 0.84rem;
+    &:hover {
+      background: var(--ot-color-hover);
+    }
+    &[aria-pressed='true'] {
+      background: var(--ot-color-primary);
+      color: var(--ot-color-on-primary);
+      font-weight: 650;
+    }
+    mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+    }
+  }
+}
+.markdown-preview {
+  @include hub.card(page);
+  @include hub.markdown;
+  max-width: none;
+  min-height: 96px;
+  margin-bottom: var(--hub-space-4);
+  padding: var(--hub-space-3) var(--hub-space-4);
+}
+@media (max-width: 599px) {
+  .write-preview {
+    width: 100%;
+    button {
+      flex: 1;
+      justify-content: center;
+      min-height: 44px;
+    }
+  }
+}

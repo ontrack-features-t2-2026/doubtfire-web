@@ -234,13 +234,44 @@
                     <label class="field" for="announcement-body"
                       >Announcement
                       <textarea
+                        aria-describedby="announcement-body-hint"
                         formControlName="body"
                         id="announcement-body"
                         maxlength="20000"
                         required
                         rows="6"
+                        [hidden]="announcementPreview"
                       ></textarea>
                     </label>
+                    <div class="format-row">
+                      <p class="help-text format-hint" id="announcement-body-hint">
+                        Supports simple formatting: **bold**, *italic*, lists, links
+                      </p>
+                      <div aria-label="Announcement editor view" class="write-preview" role="group">
+                        <button
+                          type="button"
+                          [attr.aria-pressed]="!announcementPreview"
+                          (click)="announcementPreview = false"
+                        >
+                          <mat-icon aria-hidden="true">edit</mat-icon>Write
+                        </button>
+                        <button
+                          type="button"
+                          [attr.aria-pressed]="announcementPreview"
+                          (click)="announcementPreview = true"
+                        >
+                          <mat-icon aria-hidden="true">visibility</mat-icon>Preview
+                        </button>
+                      </div>
+                    </div>
+                    @if (announcementPreview) {
+                      <div
+                        aria-live="polite"
+                        class="markdown-preview"
+                        id="announcement-body-preview"
+                        [innerHTML]="announcementForm.controls.body.value | hubMarkdown"
+                      ></div>
+                    }
                   </div>
                   <div aria-labelledby="announcement-group-link" class="form-group" role="group">
                     <h4 class="group-heading" id="announcement-group-link">
@@ -307,12 +338,43 @@
                     <label class="field" for="session-description"
                       >Description (optional)
                       <textarea
+                        aria-describedby="session-description-hint"
                         formControlName="description"
                         id="session-description"
                         maxlength="20000"
                         rows="3"
+                        [hidden]="sessionPreview"
                       ></textarea>
                     </label>
+                    <div class="format-row">
+                      <p class="help-text format-hint" id="session-description-hint">
+                        Supports simple formatting: **bold**, *italic*, lists, links
+                      </p>
+                      <div aria-label="Description editor view" class="write-preview" role="group">
+                        <button
+                          type="button"
+                          [attr.aria-pressed]="!sessionPreview"
+                          (click)="sessionPreview = false"
+                        >
+                          <mat-icon aria-hidden="true">edit</mat-icon>Write
+                        </button>
+                        <button
+                          type="button"
+                          [attr.aria-pressed]="sessionPreview"
+                          (click)="sessionPreview = true"
+                        >
+                          <mat-icon aria-hidden="true">visibility</mat-icon>Preview
+                        </button>
+                      </div>
+                    </div>
+                    @if (sessionPreview) {
+                      <div
+                        aria-live="polite"
+                        class="markdown-preview"
+                        id="session-description-preview"
+                        [innerHTML]="sessionForm.controls.description.value | hubMarkdown"
+                      ></div>
+                    }
                   </div>
                   <div aria-labelledby="session-group-when" class="form-group" role="group">
                     <h4 class="group-heading" id="session-group-when">
@@ -707,7 +769,7 @@
                     {{ announcement.title }}
                   </button>
                 </h3>
-                <p class="preserve-lines card-preview">{{ announcement.body }}</p>
+                <p class="card-preview">{{ announcement.body | hubPlainText }}</p>
               </div>
               <div class="card-actions">
                 <button
@@ -849,7 +911,7 @@
                     <p class="cancelled-label">Cancelled · this session will not run</p>
                   }
                   @if (session.description) {
-                    <p class="preserve-lines card-preview">{{ session.description }}</p>
+                    <p class="card-preview">{{ session.description | hubPlainText }}</p>
                   }
                   @if (!session.cancelled) {
                     @if (demo.enabled && !joinUrl(session)) {

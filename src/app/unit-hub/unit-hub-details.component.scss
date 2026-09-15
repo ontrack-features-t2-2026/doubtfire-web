@@ -99,10 +99,19 @@ small {
   @include hub.label;
   margin-bottom: 8px;
 }
-.full-content p {
-  white-space: pre-wrap;
-  margin: 0;
-  font-size: 0.95rem;
+// markdown body: a comfortable measure and rhythm for long announcements
+.markdown-body {
+  @include hub.markdown;
+}
+.markdown-body.is-clamped {
+  max-height: 40vh;
+  overflow: hidden;
+  // fades the last lines out so it reads as continuing; a mask, so no colour is involved
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent);
+  mask-image: linear-gradient(to bottom, black 70%, transparent);
+}
+.body-toggle {
+  margin-top: 12px;
 }
 .detail-notice,
 .cancelled-notice {

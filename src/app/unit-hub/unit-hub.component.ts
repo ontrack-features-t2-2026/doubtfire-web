@@ -13,6 +13,7 @@ import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calenda
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
 import {AnnouncementReadStore} from './announcement-read.store';
+import {HubMarkdownPipe, HubPlainTextPipe} from './hub-markdown';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
@@ -48,6 +49,8 @@ import {UnitHubService} from './unit-hub.service';
     RouterLink,
     StudyEssentialsComponent,
     TeamsMeetingComposerComponent,
+    HubMarkdownPipe,
+    HubPlainTextPipe,
   ],
   templateUrl: './unit-hub.component.html',
   styleUrl: './unit-hub.component.scss',
@@ -77,6 +80,9 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   editor: 'announcement' | 'session' | null = null;
   editingId?: number;
   editingPublishedAt: string | null = null;
+  // Write / Preview for the markdown fields in the staff editor
+  announcementPreview = false;
+  sessionPreview = false;
   saving = false;
   formError = '';
   status = '';
@@ -493,6 +499,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       return;
     }
     this.editor = 'announcement';
+    this.announcementPreview = false;
     this.editingId = row?.id;
     this.editingPublishedAt = row?.published_at ?? null;
     this.formError = '';
@@ -511,6 +518,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       return;
     }
     this.editor = 'session';
+    this.sessionPreview = false;
     this.editingId = row?.id;
     this.formError = '';
     const timezone = row?.timezone ?? 'Australia/Melbourne';

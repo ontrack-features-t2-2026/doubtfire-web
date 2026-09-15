@@ -1,8 +1,19 @@
 import {CommonModule} from '@angular/common';
-import {ChangeDetectionStrategy, Component, Inject} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Inject,
+  Injector,
+  ViewChild,
+  afterNextRender,
+  inject,
+} from '@angular/core';
 import {MatButtonModule} from '@angular/material/button';
 import {MAT_DIALOG_DATA, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
+import {HubMarkdownPipe} from './hub-markdown';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {safeHttpsUrl} from './unit-hub-calendar';
 import {LearningSession, SESSION_KINDS, UnitAnnouncement} from './unit-hub.models';
@@ -28,6 +39,7 @@ export interface UnitHubDetailsData {
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    HubMarkdownPipe,
     TeamsMeetingComposerComponent,
   ],
   templateUrl: './unit-hub-details.component.html',
@@ -39,12 +51,34 @@ export class UnitHubDetailsComponent {
   readonly safeUrl = safeHttpsUrl;
   content: UnitHubDetailsData | null;
   status = '';
+  /** A body taller than this share of the viewport starts clamped behind a toggle. */
+  readonly clampShare = 0.4;
+  bodyCollapsible = false;
+  bodyExpanded = false;
+  @ViewChild('bodyText') private bodyText?: ElementRef<HTMLElement>;
+  private readonly changes = inject(ChangeDetectorRef);
 
   constructor(
     @Inject(MAT_DIALOG_DATA) data: UnitHubDetailsData,
     private dialogRef: MatDialogRef<UnitHubDetailsComponent>,
   ) {
     this.content = data;
+    afterNextRender(() => this.measureBody(), {injector: inject(Injector)});
+  }
+
+  /** Decides whether the body is long enough to clamp. Its full height is kept while clamped. */
+  measureBody(): void {
+    const body = this.bodyText?.nativeElement;
+    const limit = window.innerHeight * this.clampShare;
+    const collapsible = !!body && body.scrollHeight > limit;
+    if (collapsible !== this.bodyCollapsible) {
+      this.bodyCollapsible = collapsible;
+      this.changes.detectChanges();
+    }
+  }
+
+  toggleBody(): void {
+    this.bodyExpanded = !this.bodyExpanded;
   }
 
   get title(): string {

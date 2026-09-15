@@ -121,4 +121,29 @@ describe('Unit Hub full details', () => {
     expect(calendarSettings).toHaveBeenCalledOnce();
     expect(close).toHaveBeenCalledOnce();
   });
+  it('renders a markdown body and clamps a long one behind an expand toggle', async () => {
+    const announcement = {
+      ...unitHubDemo(new Date('2026-09-14T06:00:00Z')).announcements[0],
+      body: '**Bold** start\n\n[Guide](https://example.test/guide)',
+    };
+    const {component, fixture, element} = await render({announcement});
+    const body = element.querySelector('#unit-hub-detail-body') as HTMLElement;
+    expect(body.querySelector('strong')?.textContent).toBe('Bold');
+    expect(body.querySelector('a')?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(element.querySelector('.body-toggle')).toBeNull();
+
+    Object.defineProperty(body, 'scrollHeight', {configurable: true, value: 5000});
+    component.measureBody();
+    fixture.detectChanges();
+    const toggle = element.querySelector('.body-toggle') as HTMLButtonElement;
+    expect(toggle.textContent).toContain('Show full announcement');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBe('unit-hub-detail-body');
+    expect(body.classList).toContain('is-clamped');
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(body.classList).not.toContain('is-clamped');
+    expect(toggle.textContent).toContain('Show less');
+  });
 });

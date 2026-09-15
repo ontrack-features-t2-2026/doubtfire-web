@@ -68,7 +68,18 @@
       </dl>
       <section aria-label="Full announcement" class="full-content">
         <h3 class="content-label"><mat-icon aria-hidden="true">notes</mat-icon>Announcement</h3>
-        <p>{{ announcement.body }}</p>
+        <div
+          #bodyText
+          class="markdown-body"
+          id="unit-hub-detail-body"
+          [class.is-clamped]="bodyCollapsible && !bodyExpanded"
+          [innerHTML]="announcement.body | hubMarkdown"
+        ></div>
+        @if (bodyCollapsible) {
+          <ng-container
+            *ngTemplateOutlet="bodyToggle; context: {label: 'Show full announcement'}"
+          ></ng-container>
+        }
       </section>
       @if (safeUrl(announcement.source_url)) {
         <a
@@ -142,7 +153,21 @@
       </dl>
       <section aria-label="Full session description" class="full-content">
         <h3 class="content-label"><mat-icon aria-hidden="true">notes</mat-icon>Description</h3>
-        <p>{{ session.description || 'Your teaching team has not added any further details.' }}</p>
+        <div
+          #bodyText
+          class="markdown-body"
+          id="unit-hub-detail-body"
+          [class.is-clamped]="bodyCollapsible && !bodyExpanded"
+          [innerHTML]="
+            session.description || 'Your teaching team has not added any further details.'
+              | hubMarkdown
+          "
+        ></div>
+        @if (bodyCollapsible) {
+          <ng-container
+            *ngTemplateOutlet="bodyToggle; context: {label: 'Show full description'}"
+          ></ng-container>
+        }
       </section>
       @if (safeUrl(session.source_url)) {
         <a
@@ -181,6 +206,19 @@
       }
     }
     <p class="detail-status" role="status">{{ status }}</p>
+    <ng-template #bodyToggle let-label="label">
+      <button
+        aria-controls="unit-hub-detail-body"
+        class="body-toggle"
+        mat-stroked-button
+        type="button"
+        [attr.aria-expanded]="bodyExpanded"
+        (click)="toggleBody()"
+      >
+        <mat-icon aria-hidden="true">{{ bodyExpanded ? 'expand_less' : 'expand_more' }}</mat-icon
+        >{{ bodyExpanded ? 'Show less' : label }}
+      </button>
+    </ng-template>
   </mat-dialog-content>
 
   <mat-dialog-actions class="details-actions">

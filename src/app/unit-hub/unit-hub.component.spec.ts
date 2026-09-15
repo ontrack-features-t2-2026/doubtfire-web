@@ -505,4 +505,31 @@ describe('Unit Hub route, forms and rendered content', () => {
       expect(element.textContent).not.toContain('Mark all as read');
     });
   });
+  it('shows card excerpts as plain text with no markdown symbols', async () => {
+    const data = feed();
+    data.announcements[0].body = '## Week 3\n\n**Bring** your *questions*\n\n- one\n- two';
+    service.feed.mockReturnValue(of(data));
+    const {element} = await open();
+    const preview = element.querySelector('.announcement-card .card-preview');
+    expect(preview.textContent).toBe('Week 3 Bring your questions one two');
+    expect(preview.textContent).not.toMatch(/[*#]/);
+    expect(preview.querySelector('strong, h3, li')).toBeNull();
+  });
+
+  it('offers a Write and Preview toggle that renders the announcement body', async () => {
+    const {component, harness, element} = await openManager();
+    component.editAnnouncement();
+    component.announcementForm.patchValue({body: '**Bold** text'});
+    harness.detectChanges();
+    expect(element.textContent).toContain('Supports simple formatting');
+    const preview = Array.from(element.querySelectorAll('.write-preview button')).find((button) =>
+      button.textContent.includes('Preview'),
+    ) as HTMLButtonElement;
+    preview.click();
+    harness.detectChanges();
+    expect(element.querySelector('#announcement-body-preview strong')?.textContent).toBe('Bold');
+    expect((element.querySelector('#announcement-body') as HTMLTextAreaElement).hidden).toBe(true);
+    expect(preview.getAttribute('aria-pressed')).toBe('true');
+    expect(component.announcementForm.controls.body.value).toBe('**Bold** text');
+  });
 });
