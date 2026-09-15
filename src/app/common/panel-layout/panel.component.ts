@@ -19,6 +19,9 @@ import {PanelStateService} from './panel-state.service';
 /**
  * One rounded card in an `app-panel-layout`. Project actions into `[panelActions]` and a
  * note beside the title into `[panelSubtitle]`; everything else becomes the body.
+ *
+ * A panel without a header puts an `app-panel-collapse-button` in its content's own
+ * control row, which finds this panel and collapses it.
  */
 @Component({
   selector: 'app-panel',
@@ -33,7 +36,7 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
   @Input() public icon: string | null = null;
   @Input() public count: number | null = null;
 
-  /** Without a header the collapse control sits on the panel's edge instead. */
+  /** Without a header, the content carries an `app-panel-collapse-button` instead. */
   @Input() public showHeader = true;
   @Input() public collapsible = true;
   @Input() public fullscreenable = false;
@@ -43,11 +46,15 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
 
   /** A number is pixels, a string any CSS width. A remembered width wins over it. */
   @Input() public width: number | string | null = null;
+  /** Resizing, restored widths and the layout's space rule all keep the panel at least this wide. */
   @Input() public minWidth = 200;
   @Input() public maxWidth = 640;
 
   /** Which edge carries the drag handle, the one facing the flexible panel. */
   @Input() public resizeEdge: 'start' | 'end' | null = null;
+
+  /** Starts collapsed when the user has no remembered choice for this panel. */
+  @Input() public defaultCollapsed = false;
 
   @Input() public bodyClass = '';
 
@@ -84,10 +91,22 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
     return !!this.panelId && this.layout?.fullscreenPanel === this.panelId;
   }
 
+  /** Railed by the layout because the page is too narrow, not by the user. */
+  public get autoRailed(): boolean {
+    return !!this.panelId && !!this.layout?.isAutoRailed(this.panelId);
+  }
+
   /** Collapsing is a desktop idea: stacked panels already show one at a time. */
   @HostBinding('class.app-panel--collapsed')
   public get showRail(): boolean {
-    return this.collapsible && this.collapsed && !this.stacked && !this.isFullscreen;
+    return (
+      this.collapsible && (this.collapsed || this.autoRailed) && !this.stacked && !this.isFullscreen
+    );
+  }
+
+  /** Whether a collapse control makes sense right now, in the header or the content. */
+  public get canCollapse(): boolean {
+    return this.collapsible && !this.showRail && !this.stacked && !this.isFullscreen;
   }
 
   @HostBinding('class.app-panel--flex')
@@ -120,6 +139,14 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
     return typeof this.width === 'number' ? `${this.width}px` : this.width;
   }
 
+  @HostBinding('style.min-width')
+  public get hostMinWidth(): string | null {
+    if (this.stacked || this.isFullscreen || this.showRail) {
+      return null;
+    }
+    return `${this.minWidth}px`;
+  }
+
   public get canResize(): boolean {
     return !!this.resizeEdge && !this.flex && !this.stacked && !this.isFullscreen && !this.showRail;
   }
@@ -142,8 +169,9 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
       return;
     }
     const saved = this.state.read(this.layout.page, this.panelId);
-    if (this.collapsible && typeof saved.collapsed === 'boolean') {
-      this.collapsed = saved.collapsed;
+    if (this.collapsible) {
+      this.collapsed =
+        typeof saved.collapsed === 'boolean' ? saved.collapsed : this.defaultCollapsed;
     }
     if (this.resizeEdge && !this.flex && saved.width) {
       this.width = this.clamp(saved.width);
@@ -164,7 +192,17 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
     this.collapsedChange.emit(collapsed);
     if (this.layout) {
       this.state.write(this.layout.page, this.panelId, {collapsed});
+      this.layout.updateAutoRails();
       this.layout.notifyResize();
+    }
+  }
+
+  /** The rail's button: undo the user's collapse, or open a panel the layout railed for space. */
+  public expandFromRail(): void {
+    if (this.collapsed) {
+      this.setCollapsed(false);
+    } else if (this.autoRailed) {
+      this.layout?.releaseAutoRail(this.panelId);
     }
   }
 
@@ -242,6 +280,8 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
   }
 
   private clamp(width: number): number {
-    return Math.round(Math.min(this.maxWidth, Math.max(this.minWidth, width)));
+    const room = this.layout ? this.layout.maxWidthFor(this) : Number.POSITIVE_INFINITY;
+    const max = Math.min(this.maxWidth, room);
+    return Math.round(Math.max(this.minWidth, Math.min(max, width)));
   }
 }

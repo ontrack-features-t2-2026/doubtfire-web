@@ -82,6 +82,12 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private conversationLanding?: ConversationLandingService,
   ) {}
 
+  /**
+   * The narrowest each desktop panel goes. The task column needs room for its tab bar,
+   * a four-date timeline and a row of action buttons; below these the layout rails the
+   * list, then comments, instead of squeezing.
+   */
+  public readonly panelMinWidths = {list: 280, task: 420, comments: 320} as const;
   public readonly taskListCollapsedWidth = 75;
   public readonly taskListExpandedWidth = 400;
   public readonly taskListCollapseThreshold = 125;
@@ -211,10 +217,6 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         this.mobilePane = 'overview';
       }
     });
-
-    if (this.defaultTaskListCollapsed) {
-      this.leftWidth = this.taskListCollapsedWidth;
-    }
 
     this.taskService.taskSubmissionCompleted$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
       const activeProject = this.projectSubject.value;

@@ -10,6 +10,9 @@
   min-height: 0;
   gap: var(--app-panel-gap);
   padding: var(--app-panel-gap);
+  // Panels keep their minimum widths. The layout rails side panels before that runs
+  // out, so this only scrolls when the user opens a rail on a page too narrow for it.
+  overflow-x: auto;
 }
 
 :host(.app-panel-layout--stacked) {

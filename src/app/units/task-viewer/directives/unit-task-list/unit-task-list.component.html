@@ -185,6 +185,9 @@
             >tune</mat-icon
           >
         </button>
+        <app-panel-collapse-button
+          buttonClass="task-panel-collapse text-ot-muted"
+        ></app-panel-collapse-button>
         <mat-menu #taskListFiltersMenu="matMenu" class="task-list-filters-menu" xPosition="after">
           <div class="px-3 py-2" (click)="$event.stopPropagation()">
             <div class="mb-1 text-xs font-bold tracking-normal text-ot-muted uppercase">

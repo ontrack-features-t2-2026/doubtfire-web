@@ -209,7 +209,10 @@
             {{ listSummary }}
           </p>
         </div>
-        <ng-container *ngTemplateOutlet="ListActions"></ng-container>
+        <div class="flex shrink-0 items-center">
+          <ng-container *ngTemplateOutlet="ListActions"></ng-container>
+          <app-panel-collapse-button></app-panel-collapse-button>
+        </div>
       </div>
       <ng-container *ngTemplateOutlet="SearchTemplate; context: {collapsable: true}"></ng-container>
     </header>

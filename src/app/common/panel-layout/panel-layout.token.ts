@@ -10,12 +10,24 @@ export interface PanelLayoutHost {
   unregister(panel: PanelRegistration): void;
   toggleFullscreen(panelId: string): void;
   notifyResize(): void;
+  /** Re-check whether every expanded panel still fits, after a panel collapses or expands. */
+  updateAutoRails(): void;
+  /** True while the layout shows this panel as a rail only because the page is too narrow. */
+  isAutoRailed(panelId: string): boolean;
+  /** Opens a panel the layout railed for space. It stays open until everything fits again. */
+  releaseAutoRail(panelId: string): void;
+  /** The widest this panel can grow before another panel would drop below its minimum. */
+  maxWidthFor(panel: PanelRegistration): number;
 }
 
 export interface PanelRegistration {
   readonly panelId: string;
   readonly panelTitle: string;
   readonly icon: string | null;
+  readonly collapsible: boolean;
+  /** The user's own choice, as remembered. Not set by the layout's space rule. */
+  readonly collapsed: boolean;
+  readonly minWidth: number;
 }
 
 export const PANEL_LAYOUT: InjectionToken<PanelLayoutHost> = new InjectionToken('PANEL_LAYOUT');

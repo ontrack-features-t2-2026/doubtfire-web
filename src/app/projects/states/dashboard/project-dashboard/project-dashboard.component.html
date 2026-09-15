@@ -189,8 +189,9 @@
           panelId="list"
           panelTitle="Tasks"
           resizeEdge="end"
+          [defaultCollapsed]="defaultTaskListCollapsed"
           [maxWidth]="500"
-          [minWidth]="taskListCollapsedWidth"
+          [minWidth]="panelMinWidths.list"
           [showHeader]="false"
           [width]="leftWidth"
           (widthChange)="leftWidth = $event"
@@ -218,6 +219,7 @@
           [collapsible]="false"
           [flex]="true"
           [icon]="selectedTaskDefinition ? 'assignment' : 'insights'"
+          [minWidth]="panelMinWidths.task"
           [panelId]="'task'"
           [panelTitle]="selectedTaskDefinition ? 'Selected task' : 'Overview'"
           [showHeader]="false"
@@ -251,7 +253,7 @@
             resizeEdge="start"
             [fullscreenable]="true"
             [maxWidth]="640"
-            [minWidth]="280"
+            [minWidth]="panelMinWidths.comments"
             [width]="'25%'"
           >
             @if (fullscreenPanel === 'comments') {

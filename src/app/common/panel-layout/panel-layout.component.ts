@@ -1,12 +1,15 @@
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   HostBinding,
   HostListener,
   Input,
+  NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -23,6 +26,11 @@ import {PANEL_LAYOUT, PanelLayoutHost, PanelRegistration} from './panel-layout.t
  *
  * Below the stack breakpoint only one panel shows at a time, picked from a row of tabs, so
  * nothing scrolls sideways on a small screen.
+ *
+ * Above it, every expanded panel keeps its minimum width. When the page cannot fit them
+ * all, the lowest-priority side panels (the first collapsible ones, so the list and then
+ * comments) show as rails until there is room again. That is the layout's call alone and
+ * never written over the user's remembered choice.
  */
 @Component({
   selector: 'app-panel-layout',
@@ -32,7 +40,10 @@ import {PANEL_LAYOUT, PanelLayoutHost, PanelRegistration} from './panel-layout.t
   imports: [MatIconModule],
   providers: [{provide: PANEL_LAYOUT, useExisting: forwardRef(() => PanelLayoutComponent)}],
 })
-export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy {
+export class PanelLayoutComponent implements PanelLayoutHost, OnInit, AfterViewInit, OnDestroy {
+  /** The width of a collapsed panel's rail, matching `.app-panel--collapsed`. */
+  public static readonly railWidth = 44;
+
   /** Namespaces the remembered panel state, as in `ontrack.panels.<page>.<panel>`. */
   @Input({required: true}) public page: string;
 
@@ -61,9 +72,17 @@ export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy 
   public stacked = false;
   public panels: PanelRegistration[] = [];
 
+  /** The width the panels have to share, or null before it has been measured. */
+  public availableWidth: number | null = null;
+
   private _activePanel: string | null = null;
+  private autoRailed: ReadonlySet<string> = new Set();
+  private readonly releasedRails: Set<string> = new Set();
+  private resizeObserver: ResizeObserver | null = null;
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly zone = inject(NgZone);
   private readonly destroy$: Subject<void> = new Subject();
 
   @HostBinding('class.app-panel-layout--stacked')
@@ -86,11 +105,26 @@ export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy 
         if (matches && this.fullscreenPanel) {
           this.setFullscreen(null);
         }
+        this.updateAutoRails();
         this.notifyResize();
       });
   }
 
+  public ngAfterViewInit(): void {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const width = entries[entries.length - 1]?.contentRect.width;
+      if (typeof width === 'number') {
+        this.zone.run(() => this.setAvailableWidth(width));
+      }
+    });
+    this.resizeObserver.observe(this.host.nativeElement);
+  }
+
   public ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -98,11 +132,14 @@ export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy 
   public register(panel: PanelRegistration): void {
     if (!this.panels.includes(panel)) {
       this.panels = [...this.panels, panel];
+      this.scheduleAutoRails();
     }
   }
 
   public unregister(panel: PanelRegistration): void {
     this.panels = this.panels.filter((candidate) => candidate !== panel);
+    this.releasedRails.delete(panel.panelId);
+    this.scheduleAutoRails();
     if (this.fullscreenPanel === panel.panelId) {
       this.setFullscreen(null);
     }
@@ -122,6 +159,60 @@ export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy 
     this.notifyResize();
   }
 
+  public setAvailableWidth(width: number): void {
+    this.availableWidth = Math.max(0, width);
+    this.updateAutoRails();
+  }
+
+  public isAutoRailed(panelId: string): boolean {
+    return this.autoRailed.has(panelId);
+  }
+
+  public releaseAutoRail(panelId: string): void {
+    this.releasedRails.add(panelId);
+    this.updateAutoRails();
+    this.notifyResize();
+  }
+
+  public maxWidthFor(panel: PanelRegistration): number {
+    if (this.availableWidth === null || this.stacked) {
+      return Number.POSITIVE_INFINITY;
+    }
+    const others = this.panels
+      .filter((candidate) => candidate !== panel)
+      .reduce((sum, candidate) => sum + this.widthNeeded(candidate, this.autoRailed), 0);
+    return this.availableWidth - others - this.gapTotal();
+  }
+
+  /**
+   * Rails the first collapsible panels, in order, until every expanded panel fits at its
+   * minimum. A panel the user opened from its rail is skipped until everything fits.
+   */
+  public updateAutoRails(): void {
+    const next: Set<string> = new Set();
+    const available = this.availableWidth;
+    if (available !== null && !this.stacked && !this.fullscreenPanel) {
+      if (this.requiredWidth(next) <= available) {
+        this.releasedRails.clear();
+      }
+      const candidates = this.panels.filter(
+        (panel) => panel.collapsible && !panel.collapsed && !this.releasedRails.has(panel.panelId),
+      );
+      for (const panel of candidates) {
+        if (this.requiredWidth(next) <= available) {
+          break;
+        }
+        next.add(panel.panelId);
+      }
+    }
+    const changed =
+      next.size !== this.autoRailed.size || [...next].some((id) => !this.autoRailed.has(id));
+    if (changed) {
+      this.autoRailed = next;
+      this.changeDetector.markForCheck();
+    }
+  }
+
   @HostListener('document:keydown.escape', ['$event'])
   public onEscape(event: Event): void {
     // A dialog or menu that handled Esc first keeps it.
@@ -136,12 +227,38 @@ export class PanelLayoutComponent implements PanelLayoutHost, OnInit, OnDestroy 
     window.dispatchEvent(new Event('resize'));
   }
 
+  private scheduleAutoRails(): void {
+    // Panels register while the view is being checked, so settle the rails just after.
+    Promise.resolve().then(() => this.updateAutoRails());
+  }
+
+  private requiredWidth(railed: ReadonlySet<string>): number {
+    return (
+      this.panels.reduce((sum, panel) => sum + this.widthNeeded(panel, railed), 0) + this.gapTotal()
+    );
+  }
+
+  private widthNeeded(panel: PanelRegistration, railed: ReadonlySet<string>): number {
+    const rail = panel.collapsible && (panel.collapsed || railed.has(panel.panelId));
+    return rail ? PanelLayoutComponent.railWidth : panel.minWidth;
+  }
+
+  private gapTotal(): number {
+    const count = this.panels.length;
+    if (count < 2) {
+      return 0;
+    }
+    const gap = parseFloat(getComputedStyle(this.host.nativeElement).columnGap);
+    return (Number.isFinite(gap) ? gap : 12) * (count - 1);
+  }
+
   private setFullscreen(panelId: string | null): void {
     if (this.fullscreenPanel === panelId) {
       return;
     }
     this.fullscreenPanel = panelId;
     this.fullscreenPanelChange.emit(panelId);
+    this.updateAutoRails();
     this.notifyResize();
   }
 }

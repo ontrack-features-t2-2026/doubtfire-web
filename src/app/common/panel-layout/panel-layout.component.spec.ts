@@ -3,6 +3,7 @@ import {BreakpointObserver} from '@angular/cdk/layout';
 import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {BehaviorSubject} from 'rxjs';
+import {PanelCollapseButtonComponent} from './panel-collapse-button.component';
 import {PanelLayoutComponent} from './panel-layout.component';
 import {PanelStateService} from './panel-state.service';
 import {PanelComponent} from './panel.component';
@@ -10,7 +11,7 @@ import {PanelComponent} from './panel.component';
 // The real template is set in the test module below, so this one stays empty.
 @Component({
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [PanelLayoutComponent, PanelComponent],
+  imports: [PanelLayoutComponent, PanelComponent, PanelCollapseButtonComponent],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: '',
 })
@@ -25,9 +26,12 @@ const hostTemplate = `
         panelId="list"
         panelTitle="Tasks"
         resizeEdge="end"
+        [maxWidth]="500"
+        [minWidth]="280"
         [showHeader]="false"
         [width]="300"
       >
+        <div class="list-controls"><app-panel-collapse-button></app-panel-collapse-button></div>
         <p>list</p>
       </app-panel>
       <app-panel
@@ -35,11 +39,21 @@ const hostTemplate = `
         panelTitle="Selected task"
         [collapsible]="false"
         [flex]="true"
+        [minWidth]="420"
         [showHeader]="false"
       >
+        <app-panel-collapse-button></app-panel-collapse-button>
         <p>work</p>
       </app-panel>
-      <app-panel icon="forum" panelId="comments" panelTitle="Comments" [fullscreenable]="true">
+      <app-panel
+        icon="forum"
+        panelId="comments"
+        panelTitle="Comments"
+        resizeEdge="start"
+        [fullscreenable]="true"
+        [minWidth]="320"
+        [width]="340"
+      >
         <p>comments</p>
       </app-panel>
     </app-panel-layout>
@@ -53,6 +67,11 @@ describe('PanelLayoutComponent', () => {
     fixture.nativeElement.querySelector(`app-panel[data-panel-id="${id}"]`);
   const button = (id: string, label: string): HTMLButtonElement =>
     panel(id).querySelector(`button[aria-label="${label}"]`);
+
+  const instance = <T>(id: string): T =>
+    fixture.debugElement.query((el) => el.nativeElement === panel(id)).componentInstance as T;
+  const layout = (): PanelLayoutComponent =>
+    fixture.debugElement.children[0].componentInstance as PanelLayoutComponent;
 
   const create = () => {
     fixture = TestBed.createComponent(HostComponent);
@@ -94,13 +113,95 @@ describe('PanelLayoutComponent', () => {
     expect(panel('comments').classList).not.toContain('app-panel--collapsed');
   });
 
-  it('gives a headerless panel an edge control to collapse it', () => {
+  it('lets a headerless panel collapse from a button inside its own content', () => {
     create();
-    button('list', 'Collapse Tasks').click();
+    const collapse = panel('list').querySelector<HTMLButtonElement>(
+      '.list-controls button[aria-label="Collapse Tasks"]',
+    );
+    expect(collapse).not.toBeNull();
+    expect(collapse.getAttribute('aria-expanded')).toBe('true');
+    expect(collapse.classList).toContain('mat-mdc-icon-button');
+    const spy = vi.spyOn(instance<PanelComponent>('list'), 'setCollapsed');
+
+    collapse.click();
     fixture.detectChanges();
 
+    expect(spy).toHaveBeenCalledWith(true);
     expect(panel('list').classList).toContain('app-panel--collapsed');
     expect(panel('work').querySelector('button[aria-label^="Collapse"]')).toBeNull();
+  });
+
+  it('has no floating edge toggle on any panel', () => {
+    create();
+    expect(fixture.nativeElement.querySelector('.app-panel__edge-toggle')).toBeNull();
+    const buttons = panel('list').querySelectorAll('button[aria-label="Collapse Tasks"]');
+    expect(buttons.length).toBe(1);
+  });
+
+  it('renders the collapse button as nothing while the panels are stacked', () => {
+    create();
+    stacked$.next({matches: true, breakpoints: {}});
+    fixture.detectChanges();
+    expect(panel('list').querySelector('button[aria-label="Collapse Tasks"]')).toBeNull();
+  });
+
+  it('keeps a resized panel between its minimum and the room the others leave', () => {
+    create();
+    const list = instance<PanelComponent>('list');
+    vi.spyOn(list, 'currentWidth', 'get').mockReturnValue(290);
+    list.resizeWithKeyboard(new KeyboardEvent('keydown', {key: 'ArrowLeft', shiftKey: true}));
+    expect(list.width).toBe(280);
+
+    // 1100 wide less work (420), comments (320) and two 12px gaps leaves 336 for the list.
+    layout().setAvailableWidth(1100);
+    vi.spyOn(list, 'currentWidth', 'get').mockReturnValue(330);
+    list.resizeWithKeyboard(new KeyboardEvent('keydown', {key: 'ArrowRight', shiftKey: true}));
+    expect(list.width).toBe(336);
+    expect(panel('list').style.minWidth).toBe('280px');
+  });
+
+  it('clamps a remembered width that is out of range when it loads', () => {
+    window.localStorage.setItem('ontrack.panels.spec.list', '{"width":90}');
+    window.localStorage.setItem('ontrack.panels.spec.comments', '{"width":9000}');
+    create();
+    expect(panel('list').style.width).toBe('280px');
+    expect(instance<PanelComponent>('comments').width).toBe(640);
+  });
+
+  it('rails the list, then comments, when the page is too narrow, without touching storage', async () => {
+    create();
+    await Promise.resolve();
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+
+    // All three need 280 + 420 + 320 + 24 = 1044.
+    layout().setAvailableWidth(1000);
+    fixture.detectChanges();
+    expect(panel('list').classList).toContain('app-panel--collapsed');
+    expect(panel('comments').classList).not.toContain('app-panel--collapsed');
+    expect(instance<PanelComponent>('list').collapsed).toBe(false);
+
+    layout().setAvailableWidth(700);
+    fixture.detectChanges();
+    expect(panel('comments').classList).toContain('app-panel--collapsed');
+
+    layout().setAvailableWidth(1200);
+    fixture.detectChanges();
+    expect(panel('list').classList).not.toContain('app-panel--collapsed');
+    expect(panel('comments').classList).not.toContain('app-panel--collapsed');
+    expect(setItem).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem('ontrack.panels.spec.list')).toBeNull();
+  });
+
+  it('opens a space-railed panel from its rail without remembering it', async () => {
+    create();
+    await Promise.resolve();
+    layout().setAvailableWidth(1000);
+    fixture.detectChanges();
+
+    button('list', 'Expand Tasks').click();
+    fixture.detectChanges();
+    expect(panel('list').classList).not.toContain('app-panel--collapsed');
+    expect(window.localStorage.getItem('ontrack.panels.spec.list')).toBeNull();
   });
 
   it('remembers collapsed state and width under a page and panel key', () => {

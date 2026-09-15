@@ -84,6 +84,9 @@ export class InboxComponent implements OnInit, OnDestroy {
     return this.breakpointObserver.isMatched(this.mobileBreakpoint);
   }
 
+  /** The narrowest each desktop panel goes; see the project dashboard for why. */
+  public readonly panelMinWidths = {list: 280, task: 420, comments: 320} as const;
+
   /** Explorer, moderation and the inbox each remember their own panels. */
   get panelPage(): string {
     return `task-${this.viewType || 'inbox'}`;

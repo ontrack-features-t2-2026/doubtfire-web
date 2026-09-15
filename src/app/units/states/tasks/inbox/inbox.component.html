@@ -98,7 +98,7 @@
         panelTitle="Task list"
         resizeEdge="end"
         [maxWidth]="500"
-        [minWidth]="250"
+        [minWidth]="panelMinWidths.list"
         [showHeader]="false"
         [width]="350"
       >
@@ -124,6 +124,7 @@
         panelTitle="Selected task"
         [collapsible]="false"
         [flex]="true"
+        [minWidth]="panelMinWidths.task"
         [showHeader]="false"
       >
         @if (loading) {
@@ -144,7 +145,7 @@
         resizeEdge="start"
         [fullscreenable]="!!taskData?.selectedTask"
         [maxWidth]="500"
-        [minWidth]="250"
+        [minWidth]="panelMinWidths.comments"
         [width]="350"
       >
         @if (fullscreenPanel === 'comments' && taskData?.selectedTask) {

@@ -6,7 +6,7 @@
     [attr.aria-expanded]="false"
     [attr.aria-label]="'Expand ' + panelTitle"
     [matTooltip]="'Expand ' + panelTitle"
-    (click)="setCollapsed(false)"
+    (click)="expandFromRail()"
   >
     @if (icon) {
       <mat-icon aria-hidden="true" class="app-panel__rail-icon">{{ icon }}</mat-icon>
@@ -47,7 +47,7 @@
           }}</mat-icon>
         </button>
       }
-      @if (collapsible && !stacked && !isFullscreen) {
+      @if (canCollapse) {
         <button
           mat-icon-button
           type="button"
@@ -82,19 +82,4 @@
     (keydown)="resizeWithKeyboard($event)"
     (pointerdown)="startResize($event)"
   ></div>
-}
-
-@if (!showHeader && collapsible && !showRail && !stacked && !isFullscreen) {
-  <button
-    class="app-panel__edge-toggle"
-    type="button"
-    [attr.aria-expanded]="true"
-    [attr.aria-label]="'Collapse ' + panelTitle"
-    [class.app-panel__edge-toggle--end]="collapseEdge === 'end'"
-    [class.app-panel__edge-toggle--start]="collapseEdge === 'start'"
-    [matTooltip]="'Collapse ' + panelTitle"
-    (click)="setCollapsed(true)"
-  >
-    <mat-icon aria-hidden="true">{{ collapseIcon }}</mat-icon>
-  </button>
 }
