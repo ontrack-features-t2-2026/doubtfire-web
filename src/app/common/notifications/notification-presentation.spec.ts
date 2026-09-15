@@ -52,6 +52,27 @@ describe('notification presentation', () => {
     });
   });
 
+  it('draws Unit Hub announcements and sessions in their own tone', () => {
+    expect(
+      [
+        'unit_announcement_published',
+        'unit_announcement_updated',
+        'unit_session_changed',
+        'unit_session_starting_soon',
+      ].map((event) => presentationFor(notification(event, 'unit_hub'))),
+    ).toEqual([
+      {icon: 'campaign', label: 'Announcement', tone: 'unit-hub'},
+      {icon: 'edit_note', label: 'Announcement updated', tone: 'unit-hub'},
+      {icon: 'event_note', label: 'Session update', tone: 'unit-hub'},
+      {icon: 'alarm', label: 'Starting soon', tone: 'unit-hub'},
+    ]);
+    expect(presentationFor(notification('unit_hub_future_event', 'unit_hub'))).toEqual({
+      icon: 'hub',
+      label: 'Unit Hub',
+      tone: 'unit-hub',
+    });
+  });
+
   it('uses a category fallback for a new event and a generic fallback for a new category', () => {
     expect(presentationFor(notification('future_feedback_event', 'feedback'))).toMatchObject({
       icon: 'chat_bubble',

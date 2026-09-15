@@ -191,6 +191,13 @@
     background: var(--ot-color-hover);
     color: var(--ot-color-text-muted);
   }
+
+  // Info is already portfolio, so the Unit Hub takes the selected pair, which
+  // the theme keeps readable against each other in light and dark.
+  &.tone-unit-hub {
+    background: var(--ot-color-selected);
+    color: var(--ot-color-selected-text);
+  }
 }
 
 .notification-message {

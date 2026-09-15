@@ -3,7 +3,7 @@ import {Notification} from 'src/app/api/models/notification';
 export interface NotificationPresentation {
   icon: string;
   label: string;
-  tone: 'feedback' | 'task' | 'portfolio' | 'extension' | 'general';
+  tone: 'feedback' | 'task' | 'portfolio' | 'extension' | 'general' | 'unit-hub';
 }
 
 const EVENT_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = {
@@ -28,6 +28,11 @@ const EVENT_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = 
   portfolio_submitted: {icon: 'inventory', label: 'Portfolio submitted', tone: 'portfolio'},
   group_membership_changed: {icon: 'groups', label: 'Group update', tone: 'general'},
   tutorial_changed: {icon: 'event_repeat', label: 'Tutorial update', tone: 'general'},
+  // Unit Hub. A cancellation is a session change too, and says so in its message.
+  unit_announcement_published: {icon: 'campaign', label: 'Announcement', tone: 'unit-hub'},
+  unit_announcement_updated: {icon: 'edit_note', label: 'Announcement updated', tone: 'unit-hub'},
+  unit_session_changed: {icon: 'event_note', label: 'Session update', tone: 'unit-hub'},
+  unit_session_starting_soon: {icon: 'alarm', label: 'Starting soon', tone: 'unit-hub'},
 };
 
 const CATEGORY_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>> = {
@@ -36,6 +41,7 @@ const CATEGORY_PRESENTATIONS: Readonly<Record<string, NotificationPresentation>>
   portfolio: {icon: 'collections_bookmark', label: 'Portfolio', tone: 'portfolio'},
   extension: {icon: 'more_time', label: 'Extension', tone: 'extension'},
   general: {icon: 'campaign', label: 'OnTrack update', tone: 'general'},
+  unit_hub: {icon: 'hub', label: 'Unit Hub', tone: 'unit-hub'},
 };
 
 const UNKNOWN_PRESENTATION: NotificationPresentation = {
