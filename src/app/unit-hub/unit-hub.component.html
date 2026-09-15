@@ -624,7 +624,22 @@
           <div class="section-heading">
             <mat-icon aria-hidden="true">campaign</mat-icon>
             <h2 id="announcements-title">Announcements</h2>
-            <span class="count">{{ announcements.length }}</span>
+            <span class="count"
+              >{{ announcements.length }}
+              @if (unreadCount) {
+                · {{ unreadCount }} new
+              }
+            </span>
+            @if (unreadCount) {
+              <button
+                class="mark-all-read"
+                mat-stroked-button
+                type="button"
+                (click)="markAllRead()"
+              >
+                <mat-icon aria-hidden="true">done_all</mat-icon>Mark all as read
+              </button>
+            }
           </div>
           @if (feed.announcements_truncated) {
             <p class="help-text">
@@ -633,8 +648,19 @@
             </p>
           }
           @for (announcement of visibleAnnouncements; track announcement.id) {
-            <article class="hub-card announcement-card" [class.is-pinned]="announcement.pinned">
+            @let unread = isUnread(announcement);
+            <article
+              class="hub-card announcement-card"
+              [class.is-pinned]="announcement.pinned"
+              [class.is-read]="!unread"
+              [class.is-unread]="unread"
+            >
               <div class="card-meta">
+                @if (unread) {
+                  <span class="chip chip-new"
+                    ><span aria-hidden="true" class="new-dot"></span>New</span
+                  >
+                }
                 <span class="unit-badge">{{ unitCode(announcement.unit_id) }}</span>
                 @if (announcement.pinned) {
                   <span class="chip chip-pinned"
@@ -656,9 +682,21 @@
                     announcement.published_at | date: 'd MMM'
                   }}</time></span
                 >
+                @if (unread) {
+                  <button
+                    class="mark-read"
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Mark as read: ' + announcement.title"
+                    (click)="markRead(announcement)"
+                  >
+                    <mat-icon aria-hidden="true">done</mat-icon>
+                  </button>
+                }
               </div>
               <div class="card-body">
                 <h3>
+                  <span class="visually-hidden">{{ unread ? 'Unread: ' : 'Read: ' }}</span>
                   <button
                     class="details-title"
                     type="button"

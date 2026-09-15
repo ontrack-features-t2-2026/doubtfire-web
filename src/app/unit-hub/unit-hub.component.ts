@@ -12,6 +12,7 @@ import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
+import {AnnouncementReadStore} from './announcement-read.store';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
@@ -97,6 +98,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     private router: Router,
     formBuilder: FormBuilder,
     private dialogs: MatDialog,
+    private readStatus: AnnouncementReadStore,
   ) {
     this.announcementForm = formBuilder.nonNullable.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -180,6 +182,21 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   get managedTeamsConfigured(): boolean {
     return this.units.find((unit) => unit.id === this.managedUnitId)?.teams_sync === 'configured';
   }
+  /** Read status is a student feed concern; staff managing content do not see it. */
+  isUnread(row: UnitAnnouncement): boolean {
+    return this.readStatus.isUnread(row);
+  }
+  get unreadCount(): number {
+    return this.announcements.filter((row) => this.readStatus.isUnread(row)).length;
+  }
+  markRead(row: UnitAnnouncement): void {
+    if (this.announcements.includes(row)) {
+      this.readStatus.markRead([row]);
+    }
+  }
+  markAllRead(): void {
+    this.readStatus.markRead(this.announcements.filter((row) => this.readStatus.isUnread(row)));
+  }
   isManagedExternally(row: UnitAnnouncement): boolean {
     return row.managed_externally === true || row.source_provider === 'microsoft_teams';
   }
@@ -254,6 +271,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     this.feedRequest = this.service.feed().subscribe({
       next: (feed) => {
         this.feed = feed;
+        this.readStatus.sync(feed.announcements, !this.demo.enabled);
         this.unavailableUnit =
           !!this.selectedUnitId && !feed.units.some((unit) => unit.id === this.selectedUnitId);
         this.loading = false;
@@ -295,6 +313,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     if (!unit || !this.announcements.includes(announcement)) {
       return;
     }
+    this.readStatus.markRead([announcement]);
     this.showDetails({
       unitCode: unit.code,
       unitName: unit.name,

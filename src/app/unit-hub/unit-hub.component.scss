@@ -834,3 +834,52 @@ fieldset {
 .editor f-teams-meeting-composer {
   --hub-composer-surface: var(--ot-color-surface-raised);
 }
+
+// ---- Read status (student feed only) ----
+.section-heading .mark-all-read.mat-mdc-button-base {
+  margin-left: auto;
+  border-radius: var(--ot-radius-pill);
+}
+.announcement-card.is-unread {
+  // a 4px primary accent bar on the left, inside the rounded edge
+  background: var(--ot-color-surface-raised);
+  box-shadow:
+    inset 4px 0 0 var(--ot-color-primary),
+    var(--ot-elevation-1);
+  .details-title {
+    font-weight: 750;
+  }
+}
+.announcement-card.is-read {
+  .details-title {
+    font-weight: 500;
+  }
+}
+.chip-new {
+  background: var(--ot-color-selected);
+  color: var(--ot-color-selected-text);
+}
+.new-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ot-radius-circle);
+  background: currentColor;
+}
+.card-meta .mark-read.mat-mdc-icon-button {
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  padding: 6px;
+  border: 1px solid var(--hub-card-border);
+  color: var(--ot-color-link);
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+@media (max-width: 599px) {
+  .section-heading {
+    flex-wrap: wrap;
+  }
+}

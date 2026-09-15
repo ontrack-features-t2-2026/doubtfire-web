@@ -4,6 +4,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {provideRouter} from '@angular/router';
 import {RouterTestingHarness} from '@angular/router/testing';
 import {Subject, of, throwError} from 'rxjs';
+import {UserService} from 'src/app/api/services/user.service';
 import {routes} from 'src/app/app.routes';
 import {roleWhitelistGuard} from 'src/app/common/guards/role-whitelist.guard';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
@@ -12,6 +13,20 @@ import {unitHubDemo} from './unit-hub-demo.fixtures';
 import {UnitHubDetailsComponent} from './unit-hub-details.component';
 import {UnitHubComponent} from './unit-hub.component';
 import {UnitHubService, scopeHubFeed} from './unit-hub.service';
+
+function memoryStorage(): Storage {
+  const values: Map<string, string> = new Map();
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key: string) => values.get(key) ?? null,
+    key: (index: number) => Array.from(values.keys())[index] ?? null,
+    removeItem: (key: string) => values.delete(key),
+    setItem: (key: string, value: string) => values.set(key, String(value)),
+  };
+}
 
 const feed = () => scopeHubFeed(unitHubDemo(new Date('2026-09-14T06:00:00Z')));
 
@@ -28,6 +43,7 @@ describe('Unit Hub route, forms and rendered content', () => {
   let demo: DemoModeStore;
   beforeEach(() => {
     sessionStorage.clear();
+    Object.defineProperty(globalThis, 'localStorage', {configurable: true, value: memoryStorage()});
     service = {
       feed: vi.fn().mockImplementation(() => of(feed())),
       announcements: vi.fn().mockReturnValue(of([])),
@@ -43,6 +59,7 @@ describe('Unit Hub route, forms and rendered content', () => {
         {provide: UnitHubService, useValue: service},
         {provide: CalendarModalService, useValue: calendars},
         {provide: DEMO_TOOLS_AVAILABLE, useValue: true},
+        {provide: UserService, useValue: {currentUser: {id: 7}}},
       ],
     });
     demo = TestBed.inject(DemoModeStore);
@@ -428,5 +445,64 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(component.joinUrl({...hosted, demo_hosted_join: false})).toBeNull();
     expect(component.joinUrl({...hosted, join_url: 'javascript:alert(1)'})).toBeNull();
     expect(component.joinUrl({...hosted, cancelled: true})).toBeNull();
+  });
+  describe('announcement read status', () => {
+    const cards = (element: HTMLElement) =>
+      Array.from(element.querySelectorAll<HTMLElement>('.announcement-card'));
+
+    it('highlights unread announcements with a text chip and screen reader state', async () => {
+      const {component, element} = await open();
+      const count = component.announcements.length;
+      expect(count).toBeGreaterThan(0);
+      expect(component.unreadCount).toBe(count);
+      const first = cards(element)[0];
+      expect(first.classList).toContain('is-unread');
+      expect(first.querySelector('.chip-new')?.textContent).toContain('New');
+      expect(first.querySelector('h3 .visually-hidden')?.textContent).toContain('Unread');
+      expect(first.querySelector('button.mark-read')?.getAttribute('aria-label')).toContain(
+        'Mark as read',
+      );
+      expect(
+        element.querySelector('.section-heading .count')?.textContent.replace(/\s+/g, ' '),
+      ).toContain(`${count} · ${count} new`);
+    });
+
+    it('marks an announcement read when its details open, and persists it per user', async () => {
+      const {component, harness, element} = await open();
+      const title = cards(element)[0].querySelector('.details-title') as HTMLButtonElement;
+      title.click();
+      harness.detectChanges();
+      expect(component.isUnread(component.announcements[0])).toBe(false);
+      expect(cards(element)[0].classList).toContain('is-read');
+      expect(cards(element)[0].querySelector('.chip-new')).toBeNull();
+      expect(component.unreadCount).toBe(component.announcements.length - 1);
+      const stored = JSON.parse(localStorage.getItem('ontrack.unitHub.read.7'));
+      expect(Object.keys(stored)).toEqual([String(component.announcements[0].id)]);
+    });
+
+    it('marks one from its card button and all from the section heading', async () => {
+      const {component, harness, element} = await open();
+      (cards(element)[1].querySelector('button.mark-read') as HTMLButtonElement).click();
+      harness.detectChanges();
+      expect(component.isUnread(component.announcements[1])).toBe(false);
+      const markAll = Array.from(element.querySelectorAll('button')).find((button) =>
+        button.textContent.includes('Mark all as read'),
+      );
+      markAll.click();
+      harness.detectChanges();
+      expect(component.unreadCount).toBe(0);
+      expect(element.querySelector('.chip-new')).toBeNull();
+      expect(
+        Array.from(element.querySelectorAll('button')).some((button) =>
+          button.textContent.includes('Mark all as read'),
+        ),
+      ).toBe(false);
+    });
+
+    it('does not show read status while staff manage content', async () => {
+      const {element} = await openManager();
+      expect(element.querySelector('.chip-new')).toBeNull();
+      expect(element.textContent).not.toContain('Mark all as read');
+    });
   });
 });
