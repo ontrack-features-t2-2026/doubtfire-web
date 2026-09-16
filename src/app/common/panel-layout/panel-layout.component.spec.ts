@@ -171,6 +171,35 @@ describe('PanelLayoutComponent', () => {
     expect(panel('list').style.minWidth).toBe('280px');
   });
 
+  it('does not strand a drag when a second pointer grabs the same handle', () => {
+    // The teardown for a drag lives in one field. A second pointerdown used to
+    // overwrite it, leaving the first drag's document listeners on the page for
+    // good, still resizing the panel from a pointer with no button held. Touch
+    // reports button 0 for every finger, so this is a two-finger grab.
+    create();
+    const list = instance<PanelComponent>('list');
+    const added: string[] = [];
+    const removed: string[] = [];
+    vi.spyOn(document, 'addEventListener').mockImplementation(((type: string) => {
+      added.push(type);
+    }) as never);
+    vi.spyOn(document, 'removeEventListener').mockImplementation(((type: string) => {
+      removed.push(type);
+    }) as never);
+
+    const grab = () => new PointerEvent('pointerdown', {button: 0, clientX: 500});
+    list.startResize(grab());
+    list.startResize(grab());
+
+    // Whatever the second grab added, the first grab's listeners are gone too.
+    expect(added.filter((type) => type === 'pointermove').length).toBe(2);
+    expect(removed.filter((type) => type === 'pointermove').length).toBe(1);
+    expect(list.resizing).toBe(true);
+
+    vi.mocked(document.addEventListener).mockRestore();
+    vi.mocked(document.removeEventListener).mockRestore();
+  });
+
   it('clamps a remembered width that is out of range when it loads', () => {
     window.localStorage.setItem('ontrack.panels.spec.list', '{"width":90}');
     window.localStorage.setItem('ontrack.panels.spec.comments', '{"width":9000}');

@@ -219,6 +219,13 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
     if (!this.canResize || event.button !== 0) {
       return;
     }
+    // Only one drag owns the panel. The teardown for a drag lives in a single
+    // field, so a second pointerdown before the first pointerup used to
+    // overwrite it and strand three document listeners: the abandoned move
+    // handler kept its own startX and startWidth and went on resizing the panel
+    // from a pointer with no button held, for the rest of the session. Touch
+    // reports button 0 for every finger, so the guard above does not cover it.
+    this.stopDragging();
     event.preventDefault();
     const startX = event.clientX;
     const startWidth = this.currentWidth;
