@@ -404,10 +404,12 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   };
 
   public canClose(): boolean {
-    // Once the confirmation is up the work is already saved, so anyone in a hurry
-    // can click the backdrop or press Escape and go. Nothing to warn about, and
-    // the upload flag is still set, which would otherwise hold them here.
-    if (this.celebration) {
+    // Material runs this for programmatic closes as well as Escape and the
+    // backdrop, so it decides whether the dialog may close itself. Once the
+    // server has taken the submission there is nothing left to discard, and a
+    // prompt here would both lie to the student and veto the dialog's own exit:
+    // answering "Cancel" to "discard your files?" would keep them in it.
+    if (this.celebration || this.uploadResponse) {
       return true;
     }
     if (this.uploadInFlight) {
@@ -441,6 +443,13 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     this.uploadStarted = false;
     this.uploadResponse = null;
     this.currentStage = 'details';
+  };
+
+  public onUploadFailed = (): void => {
+    // Only the success path cleared this, so after a failed upload the dialog's
+    // own Submit stayed locked for good and the uploader's Try again was the
+    // only way back.
+    this.uploadSubmitLocked = false;
   };
 
   public onBeforeUpload = (): void => {
@@ -594,6 +603,12 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
 
   public ngOnDestroy(): void {
     this.clearFlowTimers();
+    // The dialog can go before the uploader's completion callback arrives:
+    // Escape or the backdrop on the "Uploaded" panel, or Done during the
+    // handover. The submission is already on the server either way, so record
+    // it, and leave the celebration unclaimed for the dashboard to show. Does
+    // nothing when the response never arrived, or has already been applied.
+    this.applyCompletion(false);
   }
 
   public uploadButtonClicked(): void {

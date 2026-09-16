@@ -95,7 +95,9 @@ describe('UploadSubmissionModalComponent', () => {
       hasSelectedFiles: () => true,
     };
     component.uploadStarted = true;
-    component.uploadSubmitLocked = false;
+    // What the uploader's onFailure callback does, rather than a hand-set: the
+    // Submit button stays locked without it and the retry below is unreachable.
+    component.onUploadFailed();
 
     expect(component.uploadFailed).toBe(true);
 
@@ -108,6 +110,45 @@ describe('UploadSubmissionModalComponent', () => {
     component.onUploaderReady(startUpload);
     component.uploadButtonClicked();
     expect(startUpload).toHaveBeenCalled();
+  });
+
+  it('never asks about discarding work the server has already taken', () => {
+    // canClose is the dialog's closePredicate, and Material runs it for
+    // programmatic closes too. Prompting here both lied to the student and
+    // vetoed the dialog closing itself: answering "Cancel" to "discard your
+    // files?" kept them in it.
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      isUploading: true,
+      uploadInFlight: false,
+      hasSelectedFiles: () => true,
+    };
+    const confirm = vi.spyOn(window, 'confirm');
+
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+
+    // The response is in, the confirmation has not been worked out yet.
+    expect(component.celebration).toBeNull();
+    expect(component.canClose()).toBe(true);
+    expect(confirm).not.toHaveBeenCalled();
+    confirm.mockRestore();
+  });
+
+  it('records the submission when the dialog is dismissed before the callback', () => {
+    // Escape or the backdrop on the "Uploaded" panel destroys the dialog before
+    // the uploader reports completion. The bytes are already accepted, so the
+    // status change still has to land, with the celebration left for elsewhere.
+    component.submissionType = 'ready_for_feedback';
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+
+    component.ngOnDestroy();
+
+    expect(task.updateFromJson).toHaveBeenCalled();
+    expect(task.processTaskStatusChange).toHaveBeenCalledWith(
+      'ready_for_feedback',
+      expect.anything(),
+      true,
+      false,
+    );
   });
 
   it('still records the status change when Done is pressed before the callback fires', () => {

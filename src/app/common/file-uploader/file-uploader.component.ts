@@ -4,10 +4,12 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
 } from '@angular/core';
+import {Subscription} from 'rxjs';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {ACCEPTED_TYPES} from './file-upload-types';
@@ -50,7 +52,7 @@ interface UploadingInfo {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class FileUploaderComponent implements OnInit, OnChanges {
+export class FileUploaderComponent implements OnInit, OnChanges, OnDestroy {
   @Input() files: FileUploadSpec;
   @Input() url: string;
   @Input() method = 'POST';
@@ -83,6 +85,12 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   @Input() showProgressState: boolean = true;
   @Input() showUploadButton: boolean = true;
   @Input() resetAfterUpload: boolean = true;
+  /**
+   * What the in-flight panel calls what is being sent. This component is shared
+   * with the CSV importers and the group-set editor, where "your work" is a
+   * tutor's enrolment file and belongs to nobody.
+   */
+  @Input() uploadingLabel: string = 'Uploading';
 
   @Input() initiateUpload?: () => void;
 
@@ -110,6 +118,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   ) {}
 
   private externalName: string = 'OnTrack';
+  private externalNameSub: Subscription | null = null;
+  private completionTimer: ReturnType<typeof setTimeout> | null = null;
   private activeRequest?: XMLHttpRequest;
   private uploadWasCancelled = false;
 
@@ -125,9 +135,26 @@ export class FileUploaderComponent implements OnInit, OnChanges {
 
     this.resetUploader();
 
-    this.constants.ExternalName.subscribe((name) => {
+    this.externalNameSub = this.constants.ExternalName.subscribe((name) => {
       this.externalName = name;
     });
+  }
+
+  ngOnDestroy(): void {
+    // ExternalName is a BehaviorSubject on a root service, so it never
+    // completes. Left subscribed, every dialog that has ever held an uploader
+    // stays in memory for the session.
+    this.externalNameSub?.unsubscribe();
+    this.externalNameSub = null;
+
+    // The completion callback runs on a delay, and the host it calls back into
+    // may be gone by then: closing the dialog in that window had a destroyed
+    // component apply the submission and claim its confirmation, so the student
+    // was told nothing at all.
+    if (this.completionTimer) {
+      clearTimeout(this.completionTimer);
+      this.completionTimer = null;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -250,10 +277,10 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   }
 
   public get uploadTitle(): string {
-    if (this.uploadComplete) {
+    if (this.uploadComplete || this.uploadSettling) {
       return 'Uploaded';
     }
-    return this.uploadSettling ? 'Uploaded' : 'Uploading your work';
+    return this.uploadingLabel;
   }
 
   /** Percent sent so far, for a host drawing the in-flight state itself. */
@@ -386,7 +413,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
           if (xhr.status >= 200 && xhr.status < 300) {
             this.onSuccess?.(response);
             this.uploadingInfo.success = true;
-            setTimeout(() => {
+            this.completionTimer = setTimeout(() => {
+              this.completionTimer = null;
               this.onComplete?.();
               if (this.resetAfterUpload) {
                 this.resetUploader();
