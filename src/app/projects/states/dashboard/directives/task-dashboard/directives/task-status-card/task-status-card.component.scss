@@ -122,15 +122,3 @@
     width: 100%;
   }
 }
-
-// The sign-off flourish sits where the status icon normally does, so the row
-// does not change width when it plays.
-.task-status-card__mark {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-right: 10px;
-}

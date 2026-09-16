@@ -14,19 +14,10 @@
       >
         <mat-select-trigger>
           <span style="display: inline-flex">
-            <!-- Signed off while the student was on the page. The dashboard
-                 dialog only covers work completed since the last visit. -->
-            @if (justSignedOff) {
-              <span class="task-status-card__mark">
-                <f-celebration-particles [count]="10" [delay]="420" [spread]="40" />
-                <f-animated-check tone="success" [delay]="60" [size]="28" />
-              </span>
-            } @else {
-              <status-icon
-                style="margin-right: 10px"
-                [status]="$safeNavigationMigration(task?.status)"
-              ></status-icon>
-            }
+            <status-icon
+              style="margin-right: 10px"
+              [status]="$safeNavigationMigration(task?.status)"
+            ></status-icon>
             <h2 class="mb-0">{{ task?.statusLabel() }}</h2>
           </span>
         </mat-select-trigger>

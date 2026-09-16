@@ -193,18 +193,6 @@ body.split-pane-resizing pdf-viewer {
   background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
 }
 
-// Material ships mat-icon as font-size 24px, box 24px, line-height 24px. Any
-// rule that shrinks the first two and leaves the third behind gets a glyph
-// sitting low in its own box, which reads as a misaligned icon inside a round
-// button. There are dozens of such rules across the app.
-//
-// line-height: 1 ties the line box to whatever font-size is in force, so a 24px
-// icon is unchanged and every shrunken one lines up. Fixing it here beats
-// adding a line-height to each of those rules and remembering it in the next.
-.mat-icon {
-  line-height: 1;
-}
-
 // Filled buttons. Without a color input Material fills them with a neutral grey,
 // which in dark mode reads as a disabled box rather than the main action. Give
 // every filled button the primary fill and the same shape as outlined ones, so
@@ -363,16 +351,20 @@ ngx-gantt-root {
   outline-offset: 2px;
 }
 
-// Accessibility (1.4.11): the resting outline of a text field and an unchecked box
-// is how a user finds the control. Material's defaults are 38% black, which sits at
-// 2.7:1 on a white card, so point both at the control-border token (3:1 or better
-// on every surface in both themes). The dark selector matches the dark Material
-// theme include in theme.scss, which this file follows.
+// Accessibility (1.4.11): the resting outline of a text field is how a user finds
+// it, and Material's default is 38% black, which is 2.7:1 on a white card.
+//
+// Only the text field. An earlier version of this pointed the checkbox and radio
+// tokens here too, on the assumption they shared that 38% default. They do not:
+// both default to on-surface-variant, which is already better than this token on
+// every surface, so overriding them LOWERED contrast rather than raising it. The
+// radio line was dead as well, because Material sets that token on the element
+// itself once a colour is applied and a :root rule can never win.
+//
+// The dark selector matches the dark Material theme include in theme.scss.
 :root,
 :root[data-ot-theme='dark'] {
   --mat-form-field-outlined-outline-color: var(--ot-color-control-border);
-  --mat-checkbox-unselected-icon-color: var(--ot-color-control-border);
-  --mat-radio-unselected-icon-color: var(--ot-color-control-border);
 }
 
 // Keep focus outlines inside menu panels so their edges do not clip them.

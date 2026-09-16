@@ -90,6 +90,7 @@ export const routes: Routes = [
       import('./common/celebrate/motion-demo/motion-demo.component').then(
         (m) => m.MotionDemoComponent,
       ),
+    canActivate: [demoToolsGuard],
     data: {pageTitle: 'Motion'},
   },
   {
@@ -98,6 +99,7 @@ export const routes: Routes = [
       import('./common/celebrate/motion-demo/submit-motion.component').then(
         (m) => m.SubmitMotionComponent,
       ),
+    canActivate: [demoToolsGuard],
     data: {pageTitle: 'Submitting'},
   },
   {
