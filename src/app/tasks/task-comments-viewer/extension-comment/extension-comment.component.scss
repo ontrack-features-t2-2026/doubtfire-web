@@ -100,11 +100,46 @@
   border-radius: var(--ot-radius-sm, 4px);
   background: color-mix(in srgb, var(--ot-color-text) 4%, transparent);
 
-  p {
-    margin: 0.125rem 0 0;
-    overflow-wrap: anywhere;
-    white-space: pre-line;
+  // Markdown output, so the pre-line whitespace rule that suited raw text is
+  // gone: marked already turns newlines into breaks.
+  .markdown-to-html {
+    margin-top: 0.125rem;
     font-size: 0.875rem;
+    overflow-wrap: anywhere;
+
+    :first-child {
+      margin-top: 0;
+    }
+
+    :last-child {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin: 0 0 0.5rem;
+      line-height: 1.5;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 0.5rem;
+      padding-inline-start: 1.25rem;
+    }
+
+    li + li {
+      margin-top: 0.25rem;
+    }
+
+    code {
+      padding: 0.0625rem 0.25rem;
+      border-radius: var(--ot-radius-xs, 3px);
+      background: color-mix(in srgb, var(--ot-color-text) 8%, transparent);
+      font-size: 0.9em;
+    }
+
+    a {
+      color: var(--ot-color-link);
+    }
   }
 }
 

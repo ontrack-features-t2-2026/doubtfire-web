@@ -23,7 +23,9 @@
 
   <blockquote class="ext-card__reason">
     <span class="ext-card__label">Reason</span>
-    <p>{{ comment.text }}</p>
+    <!-- Extension reasons carry markdown: the automated ones bold their own
+         prefix, and a person writing one uses the same composer as a comment. -->
+    <div class="markdown-to-html" [innerHTML]="comment.text | marked"></div>
   </blockquote>
 
   @if (comment.assessed) {
