@@ -19,19 +19,23 @@
     </button>
   </div>
 } @else {
-  <header class="submission-dialog-header">
-    <h2 class="submission-dialog-title" mat-dialog-title>Submit task</h2>
-    <div class="submission-task-line">
-      <span class="submission-task-chip">{{ task.definition.abbreviation }}</span>
-      <span class="submission-task-name">{{ task.definition.name }}</span>
-      @if (dueDate) {
-        <span class="submission-task-due" [class.submission-task-due--past]="isPastDue">
-          <mat-icon aria-hidden="true">schedule</mat-icon>
-          Due {{ dueDate | date: 'EEE d MMM' }}
-        </span>
-      }
-    </div>
-  </header>
+  <!-- The header goes once the upload starts, so the dialog changes shape at the
+       moment of submitting rather than again when the confirmation arrives. -->
+  @if (!uploadStarted) {
+    <header class="submission-dialog-header">
+      <h2 class="submission-dialog-title" mat-dialog-title>Submit task</h2>
+      <div class="submission-task-line">
+        <span class="submission-task-chip">{{ task.definition.abbreviation }}</span>
+        <span class="submission-task-name">{{ task.definition.name }}</span>
+        @if (dueDate) {
+          <span class="submission-task-due" [class.submission-task-due--past]="isPastDue">
+            <mat-icon aria-hidden="true">schedule</mat-icon>
+            Due {{ dueDate | date: 'EEE d MMM' }}
+          </span>
+        }
+      </div>
+    </header>
+  }
 
   <mat-dialog-content class="submission-dialog-content">
     <div class="submission-dialog-body">

@@ -306,8 +306,10 @@ $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  min-height: 280px;
-  padding: 32px 24px;
+  // Matches the confirmation panel that replaces it, so the dialog does not
+  // resize between the two.
+  min-height: 360px;
+  padding: 40px 24px;
   text-align: center;
   animation: upload-panel-in 220ms $upload-ease-out both;
 }
@@ -333,6 +335,21 @@ $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 // Breathing, not spinning. Opacity only, so nothing is laid out again.
 .upload-progress__well {
   animation: upload-breathe 1600ms ease-in-out infinite;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+// Settles to the success colour while it waits to be replaced, so the handover
+// to the confirmation reads as one movement rather than two screens.
+.upload-progress--done .upload-progress__well {
+  background: color-mix(in srgb, var(--ot-color-success) 16%, transparent);
+  color: var(--ot-color-success);
+  animation: none;
+}
+
+.upload-progress--done .upload-progress__fill {
+  background: var(--ot-color-success);
 }
 
 .upload-progress__title,

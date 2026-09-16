@@ -847,11 +847,13 @@ fieldset {
   border-radius: var(--ot-radius-circle);
   background: currentColor;
 }
+// Sized through Material's tokens, which derive the box and its padding together.
+// Hardcoding width and height leaves the padding at the default and knocks the
+// glyph off the centre of its hover circle.
 .card-meta .mark-read.mat-mdc-icon-button {
-  width: 36px;
-  height: 36px;
+  --mat-icon-button-state-layer-size: 36px;
+  --mat-icon-button-icon-size: 20px;
   margin-left: auto;
-  padding: 6px;
   border: 1px solid var(--hub-card-border);
   color: var(--ot-color-link);
   mat-icon {

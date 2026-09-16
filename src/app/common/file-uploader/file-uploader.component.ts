@@ -218,6 +218,23 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     return this.showSummaryColumn ? this.shownUploadZones : this.uploadZones;
   }
 
+  /**
+   * The request has landed but the host has not taken over yet. Completion fires
+   * `onComplete` on a short delay, and unmounting this panel the moment the bytes
+   * arrive left the dialog empty for that whole window.
+   */
+  public get uploadSettling(): boolean {
+    return (
+      !this.showSuccessState &&
+      this.uploadingInfo?.complete === true &&
+      this.uploadingInfo?.success === true
+    );
+  }
+
+  public get showProgressPanel(): boolean {
+    return !this.uploadingInfo?.complete || this.uploadSettling;
+  }
+
   /** The file being sent, or a count once there is more than one. */
   public get uploadingFileLabel(): string {
     const named = this.uploadZones

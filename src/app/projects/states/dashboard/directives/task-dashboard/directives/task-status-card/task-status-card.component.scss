@@ -108,9 +108,12 @@
   }
 }
 
+// Size this through Material's own token. It derives the width, the height and
+// the padding together, so the glyph stays in the middle of its hover circle.
+// Setting width and height by hand leaves the padding at the 40px default and
+// the icon sits up and to the left of the ripple.
 .task-status-actions > [mat-icon-button] {
-  width: 44px;
-  height: 44px;
+  --mat-icon-button-state-layer-size: 44px;
   flex: none;
 }
 

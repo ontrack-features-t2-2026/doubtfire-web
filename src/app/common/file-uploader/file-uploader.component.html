@@ -176,14 +176,19 @@
     }
 
     @if (showUploader && readyToUpload() && isUploading) {
-      @if (!uploadingInfo?.complete) {
-        <!-- One thing happening, said once. The bar is the only moving part. -->
-        <div class="upload-progress" role="status">
+      <!-- Stays up through the short settle after the request lands, so the host
+           has something to replace rather than an empty dialog. -->
+      @if (showProgressPanel) {
+        <div class="upload-progress" role="status" [class.upload-progress--done]="uploadSettling">
           <span aria-hidden="true" class="upload-progress__well">
-            <mat-icon>{{ uploadZones[0]?.display?.icon ?? 'upload_file' }}</mat-icon>
+            <mat-icon>{{
+              uploadSettling ? 'check' : (uploadZones[0]?.display?.icon ?? 'upload_file')
+            }}</mat-icon>
           </span>
 
-          <p class="upload-progress__title">Uploading your work</p>
+          <p class="upload-progress__title">
+            {{ uploadSettling ? 'Uploaded' : 'Uploading your work' }}
+          </p>
           <p class="upload-progress__files">{{ uploadingFileLabel }}</p>
 
           <div
@@ -198,7 +203,9 @@
           </div>
           <p class="upload-progress__value">{{ uploadingInfo?.progress ?? 0 }}%</p>
 
-          <button mat-stroked-button type="button" (click)="cancelUpload()">Cancel upload</button>
+          @if (!uploadSettling) {
+            <button mat-stroked-button type="button" (click)="cancelUpload()">Cancel upload</button>
+          }
         </div>
       }
 
