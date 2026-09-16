@@ -1,6 +1,13 @@
-import {ChangeDetectionStrategy, Component, type QueryList, ViewChildren} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  type QueryList,
+  ViewChildren,
+  inject,
+} from '@angular/core';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {PortfolioCelebrationService} from '../portfolio-celebration.service';
 import {prefersReducedMotion} from '../reduced-motion';
 import {SubmitFlowLabComponent, type SubmitFlowVariant} from './submit-flow-lab.component';
 
@@ -25,6 +32,8 @@ interface VariantCard {
 })
 export class SubmitMotionComponent {
   @ViewChildren(SubmitFlowLabComponent) private panels?: QueryList<SubmitFlowLabComponent>;
+
+  private readonly portfolio = inject(PortfolioCelebrationService);
 
   public readonly reducedMotion = prefersReducedMotion();
 
@@ -73,5 +82,23 @@ export class SubmitMotionComponent {
 
   public resetAll(): void {
     this.panels?.forEach((panel) => panel.reset());
+  }
+
+  /** The portfolio moment, without having to finish a unit to see it. */
+  public playPortfolio(withGrade: boolean): void {
+    this.portfolio.show({
+      unitCode: 'SIT374',
+      unitName: 'Team Project (A)',
+      headline: 'Portfolio submitted',
+      detail:
+        'That is the whole unit done. Your portfolio is everything you have worked on this trimester, in one document.',
+      facts: withGrade
+        ? [
+            {icon: 'task_alt', label: 'Work included', value: '11 tasks'},
+            {icon: 'workspace_premium', label: 'Submitted for', value: 'High Distinction'},
+          ]
+        : [{icon: 'task_alt', label: 'Work included', value: '1 task'}],
+      next: 'It is being built now. That takes a little while, and you will get an email when it is ready to download.',
+    });
   }
 }

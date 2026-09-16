@@ -4,6 +4,7 @@ import {Task} from 'src/app/api/models/task';
 import {Unit} from 'src/app/api/models/unit';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
+import {PortfolioCelebrationService} from 'src/app/common/celebrate/portfolio-celebration.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -38,6 +39,7 @@ export class PortfolioReviewStepComponent implements OnInit {
     private alertService: AlertService,
     private confirmationModal: ConfirmationModalService,
     private fileDownloaderService: FileDownloaderService,
+    private portfolioCelebration: PortfolioCelebrationService,
   ) {}
 
   ngOnInit(): void {
@@ -91,11 +93,15 @@ export class PortfolioReviewStepComponent implements OnInit {
 
   public createPortfolio(): void {
     this.project.compilePortfolio = !this.project.compilePortfolio;
+    // Read before the update, so the count is what the student actually sent.
+    const included = this.selectedTasks;
 
     this.projectService.update(this.project).subscribe({
       next: () => {
         this.project.compilePortfolio = true;
         this.project.portfolioStatus = 0.5;
+        // The end of a whole unit. Everything else here gets a line of text.
+        this.portfolioCelebration.celebrate(this.project, included);
       },
       error: (error) => {
         this.project.compilePortfolio = false;

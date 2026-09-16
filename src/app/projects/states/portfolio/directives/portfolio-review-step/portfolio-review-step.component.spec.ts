@@ -6,9 +6,11 @@ import {PortfolioReviewStepComponent} from './portfolio-review-step.component';
 describe('PortfolioReviewStepComponent', () => {
   let component: PortfolioReviewStepComponent;
   let downloadFileWithFeedback: ReturnType<typeof vi.fn>;
+  let celebrate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     downloadFileWithFeedback = vi.fn();
+    celebrate = vi.fn();
     component = new PortfolioReviewStepComponent(
       {ExternalName: new BehaviorSubject('OnTrack')} as never,
       {} as never,
@@ -16,6 +18,7 @@ describe('PortfolioReviewStepComponent', () => {
       {} as never,
       {} as never,
       {downloadFileWithFeedback} as never,
+      {celebrate} as never,
     );
     component.project = {
       id: 17,
