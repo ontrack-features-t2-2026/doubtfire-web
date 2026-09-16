@@ -15,7 +15,10 @@
 }
 
 .calendar-dialog__header h2 {
+  // mat-dialog-title carries Material's own 24px side padding, which pushed the
+  // title in from the eyebrow above it. The header already sets the inset.
   margin: 0;
+  padding: 0;
   line-height: 1.25;
 }
 
