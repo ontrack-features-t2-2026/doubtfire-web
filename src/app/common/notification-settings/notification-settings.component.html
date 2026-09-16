@@ -56,7 +56,9 @@
        control, because it used to ride on feedback notifications and could not
        be turned off without losing those too. -->
   <div class="notification-setting notification-setting--choice">
-    <label class="notification-setting__label" for="digest-frequency">Summary email</label>
+    <!-- Named by id, not by label[for]: Material puts role="combobox" on the
+         select's own element, which a label cannot be associated with. -->
+    <span class="notification-setting__label" id="digest-frequency-label">Summary email</span>
     <mat-form-field
       appearance="outline"
       class="notification-setting__select"
@@ -64,6 +66,7 @@
     >
       <mat-select
         aria-describedby="digest-frequency-description"
+        aria-labelledby="digest-frequency-label"
         id="digest-frequency"
         [ngModelOptions]="{standalone: true}"
         [(ngModel)]="user.digestFrequency"

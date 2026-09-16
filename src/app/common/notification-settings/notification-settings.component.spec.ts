@@ -228,6 +228,16 @@ describe('NotificationSettingsComponent', () => {
     expect(help).not.toBeNull();
   });
 
+  // label[for] cannot name the select, because Material puts role="combobox" on
+  // the select's own element rather than on a form control.
+  it('names the cadence control with the label beside it', () => {
+    const select = fixture.nativeElement.querySelector('mat-select');
+    const label = fixture.nativeElement.querySelector('#digest-frequency-label');
+
+    expect(label?.textContent.trim()).toBe('Summary email');
+    expect(select?.getAttribute('aria-labelledby')?.trim()).toBe('digest-frequency-label');
+  });
+
   it('says nothing rather than guessing when the cadence is unknown', () => {
     fixture.componentInstance.user.digestFrequency = undefined as unknown as string;
     expect(fixture.componentInstance.digestHelp).toBe('');

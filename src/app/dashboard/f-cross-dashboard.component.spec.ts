@@ -7,6 +7,7 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {provideDateFnsAdapter} from '@angular/material-date-fns-adapter';
 import {MatButtonModule} from '@angular/material/button';
 import {MatButtonHarness} from '@angular/material/button/testing';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MAT_DATE_LOCALE} from '@angular/material/core';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatDateRangeInputHarness} from '@angular/material/datepicker/testing';
@@ -127,6 +128,7 @@ describe('CrossDashboardComponent', () => {
       declarations: [CrossDashboardComponent],
       imports: [
         MatButtonModule,
+        MatCheckboxModule,
         MatDatepickerModule,
         MatFormFieldModule,
         MatIconModule,
@@ -966,6 +968,31 @@ describe('CrossDashboardComponent', () => {
       {value: 2, label: 'Distinction'},
       {value: 3, label: 'High Distinction'},
     ]);
+  });
+
+  // The text in the menu item is not a label element, so the box needs its own name.
+  it('names the per-unit filter box after the filter it turns on', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', makeDate(12)),
+      ]),
+    ]);
+
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const filterButton = await loader.getHarness(
+      MatButtonHarness.with({selector: '[aria-label^="Filter tasks in"]'}),
+    );
+    await filterButton.click();
+    await syncView();
+
+    const item = document.querySelector('.mat-mdc-menu-panel .mat-mdc-menu-item') as HTMLElement;
+    const box = item?.querySelector('input') as HTMLInputElement;
+
+    expect(item?.textContent.trim()).toBe('Hide Completed');
+    expect(box?.getAttribute('aria-label')).toBe('Hide Completed');
+    expect(item?.getAttribute('aria-label')).toBe('Hide Completed');
   });
 
   it('binds both multiple-select controls and Clear all through the rendered toolbar', async () => {

@@ -15,6 +15,7 @@
         <mat-select-trigger>
           <span style="display: inline-flex">
             <status-icon
+              aria-hidden="true"
               style="margin-right: 10px"
               [status]="$safeNavigationMigration(task?.status)"
             ></status-icon>
@@ -24,7 +25,13 @@
         @for (trigger of triggers; track trigger) {
           <mat-option [value]="trigger.status">
             <div class="flex items-center">
-              <status-icon [showTooltip]="false" [status]="trigger.status"></status-icon>
+              <!-- The label beside it says the same thing, so the icon is decorative
+                   here and its own role="img" would announce the status twice. -->
+              <status-icon
+                aria-hidden="true"
+                [showTooltip]="false"
+                [status]="trigger.status"
+              ></status-icon>
               <h5 class="m-0 ml-2">{{ trigger.label }}</h5>
             </div>
           </mat-option>
