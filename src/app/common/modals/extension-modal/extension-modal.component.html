@@ -61,9 +61,13 @@
   <div class="ext-date">
     <mat-form-field appearance="outline" class="ext-field w-full">
       <mat-label>New due date</mat-label>
+      <!-- Past the final deadline there is no date left to choose, so the field
+           is closed rather than left open over an empty range. Disabling the
+           input carries the datepicker and its toggle with it. -->
       <input
         matInput
         placeholder="Choose a date"
+        [disabled]="!hasDateRange"
         [matDatepicker]="extensionDatePicker"
         [max]="maxDate"
         [min]="minDate"
@@ -79,7 +83,7 @@
     </mat-form-field>
 
     @if (dateNeedsAttention) {
-      <p class="ext-date__error">Pick a date from {{ dateRangeText }}</p>
+      <p class="ext-date__error">{{ dateErrorText }}</p>
     } @else if (extensionSummary) {
       <span
         class="ext-chip ext-summary"

@@ -77,6 +77,9 @@ describe('ExtensionModalComponent', () => {
     failure.component.extensionData.controls.extensionReason.setValue(
       'A sufficiently detailed reason for the request',
     );
+    // Submit refuses anything the button would refuse, so the date has to be
+    // picked here as it would be on screen. minDate is always in range.
+    pickDate(failure.component, failure.component.minDate);
 
     failure.component.submitApplication();
 
@@ -93,6 +96,7 @@ describe('ExtensionModalComponent', () => {
     success.component.extensionData.controls.extensionReason.setValue(
       'A sufficiently detailed reason for the request',
     );
+    pickDate(success.component, success.component.minDate);
     success.component.submitApplication();
 
     expect(success.requestExtension).toHaveBeenCalled();
@@ -178,6 +182,35 @@ describe('ExtensionModalComponent presentation', () => {
 
     component.extensionData.controls.extensionReason.setValue(REASON);
     expect(component.canSubmit).toBe(true);
+  });
+
+  it('refuses a date typed past the final deadline instead of sending it', () => {
+    // The out-of-range check used to return true outright once there was no
+    // range, so a typed 1 Jan 2030 went out as a 173 week request.
+    vi.setSystemTime(new Date(2026, 9, 3, 12, 0));
+    const {component, requestExtension} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+    component.extensionData.controls.extensionReason.setValue(REASON);
+
+    pickDate(component, new Date(2030, 0, 1));
+    expect(component.isDateInRange).toBe(false);
+    expect(component.dateNeedsAttention).toBe(true);
+    expect(component.canSubmit).toBe(false);
+    expect(component.dateErrorText).toBe(
+      'The final deadline has passed, so only the earliest date can be requested',
+    );
+
+    component.submitApplication();
+    expect(requestExtension).not.toHaveBeenCalled();
+  });
+
+  it('never renders an error naming an empty date range', () => {
+    vi.setSystemTime(new Date(2026, 9, 3, 12, 0));
+    const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
+
+    pickDate(component, null);
+    expect(component.dateNeedsAttention).toBe(true);
+    expect(component.dateRangeText).toBe('');
+    expect(component.dateErrorText).not.toContain('Pick a date from ');
   });
 
   it('keeps submit disabled until the reason and a date in range are both valid', () => {
@@ -290,5 +323,57 @@ describe('ExtensionModalComponent template', () => {
       el().querySelectorAll<HTMLButtonElement>('.task-dialog-actions button'),
     );
     expect(buttons.every((button) => button.disabled)).toBe(true);
+  });
+});
+
+describe('ExtensionModalComponent template past the final deadline', () => {
+  let fixture: ComponentFixture<ExtensionModalComponent>;
+
+  beforeEach(async () => {
+    vi.useFakeTimers({toFake: ['Date']});
+    vi.setSystemTime(new Date(2026, 9, 3, 12, 0));
+
+    await TestBed.configureTestingModule({
+      declarations: [ExtensionModalComponent],
+      imports: [
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatDatepickerModule,
+        MatDialogModule,
+        MatIconModule,
+        MatInputModule,
+        MatProgressSpinnerModule,
+      ],
+      providers: [
+        provideNativeDateAdapter(),
+        {provide: MatDialogRef, useValue: {close: vi.fn()}},
+        {provide: MAT_DIALOG_DATA, useValue: {task: buildTask(DUE, DEADLINE)}},
+        {provide: LOCALE_ID, useValue: 'en-US'},
+        {provide: AlertService, useValue: {success: vi.fn(), error: vi.fn()}},
+        {provide: TaskCommentService, useValue: {requestExtension: vi.fn(() => of({}))}},
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ExtensionModalComponent);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('closes the date field rather than leaving it open over an empty range', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector<HTMLInputElement>('.ext-date input');
+    const toggle = el.querySelector<HTMLButtonElement>('mat-datepicker-toggle button');
+
+    expect(fixture.componentInstance.hasDateRange).toBe(false);
+    expect(input?.disabled).toBe(true);
+    // Disabling the input carries the picker and its toggle, so there is no way
+    // in through the calendar either.
+    expect(toggle?.disabled).toBe(true);
+    expect(el.querySelector('.ext-date mat-hint')?.textContent).toContain(
+      'The final deadline has passed',
+    );
   });
 });

@@ -7,6 +7,7 @@ import {
   format,
   isAfter,
   isBefore,
+  isSameDay,
   startOfDay,
 } from 'date-fns';
 import {ChangeDetectionStrategy, Component, Inject, LOCALE_ID} from '@angular/core';
@@ -141,7 +142,11 @@ export class ExtensionModalComponent {
 
   public get isDateInRange(): boolean {
     if (!this.hasDateRange) {
-      return true;
+      // There is no range left to choose from, so the earliest date is the only
+      // one the request can carry. Returning true here instead turned every
+      // check off: a typed date of 1 Jan 2030 passed validation and went out as
+      // a 173 week extension.
+      return isSameDay(this.extensionDate, this.minDate);
     }
     if (this.minDate && isBefore(this.extensionDate, startOfDay(this.minDate))) {
       return false;
@@ -155,6 +160,14 @@ export class ExtensionModalComponent {
   /** True once the date field holds something that cannot be requested. */
   public get dateNeedsAttention(): boolean {
     return this.dateEntryInvalid || (this.dateChanged && !this.isDateInRange);
+  }
+
+  /** Why the date will not do. Empty when there is nothing to say. */
+  public get dateErrorText(): string {
+    if (!this.hasDateRange) {
+      return 'The final deadline has passed, so only the earliest date can be requested';
+    }
+    return `Pick a date from ${this.dateRangeText}`;
   }
 
   /**
@@ -205,7 +218,10 @@ export class ExtensionModalComponent {
   }
 
   submitApplication(): void {
-    if (this.submitting || this.extensionData.invalid) {
+    // Checks what the button checks, rather than only the reason. The date was
+    // guarded by the disabled state alone, so anything that reached this method
+    // with a bad date sent it.
+    if (!this.canSubmit) {
       this.extensionData.markAllAsTouched();
       return;
     }
