@@ -400,14 +400,19 @@ describe('StaffTaskListComponent', () => {
   });
 
   describe('waiting label', () => {
-    it('selects nothing when the previous-task shortcut has no selected task', () => {
-      vi.spyOn(component, 'isSelectedTask').mockReturnValue(false);
-      const setSelected = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
-      component.filteredTasks = [{}, {}] as unknown as Task[];
+    // Past the warning threshold but inside the overflow window. The row shows the
+    // warning icon here, so the tooltip has to read as a nudge and not as overdue.
+    it('says feedback is due soon while the task is only past the warning threshold', () => {
+      const task = {
+        submissionDate: new Date(),
+        status: 'ready_for_feedback',
+        daysSinceSubmission: () => 6,
+        unit: {feedbackOverflowThresholdDays: 8, feedbackWarningThresholdDays: 5},
+      } as unknown as Task;
 
-      component.previousTask();
-
-      expect(setSelected).not.toHaveBeenCalled();
+      expect(component.waitingLabel(task)).toBe(
+        'Waiting 6 days for feedback. Feedback is due soon.',
+      );
     });
 
     // The tooltip used to call the days since submission "overdue by", which is not
