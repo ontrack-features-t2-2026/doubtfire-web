@@ -18,9 +18,14 @@ import {FileUploaderComponent} from 'src/app/common/file-uploader/file-uploader.
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {PrivacyPolicy} from 'src/app/config/privacy-policy/privacy-policy';
+import {summariseUploadRequirement} from './task-upload-requirements/upload-category';
 
-/** Everything in the confirmation has settled by ~900ms, so this leaves a beat to read it. */
-const SUBMISSION_CELEBRATION_HOLD_MS = 1900;
+/**
+ * The confirmation finishes arriving at about 1.6s. This leaves roughly two more
+ * seconds to take it in before the dialog closes itself, and the Done button is
+ * there for anyone who would rather not wait.
+ */
+const SUBMISSION_CELEBRATION_HOLD_MS = 3600;
 
 type UploadStage = 'group' | 'details' | 'comments';
 type UploadSubmissionType = TaskStatusEnum | 'reupload_evidence' | 'test_submission';
@@ -185,6 +190,21 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     }
 
     return 'Make a comment...';
+  }
+
+  /**
+   * The callout above the drop zones only earns its place when it says something
+   * they do not. A single requirement is already named, typed and stated as
+   * required by its own zone, so repeating it three ways just adds to the page.
+   */
+  public get showUploadRequirements(): boolean {
+    const requirements = this.task.definition.uploadRequirements ?? [];
+    if (requirements.length !== 1) {
+      return requirements.length > 1;
+    }
+
+    const summary = summariseUploadRequirement(requirements[0]);
+    return summary.hasMoreExtensions || summary.maxSizeLabel !== null;
   }
 
   /** The steps this submission goes through, in order. */

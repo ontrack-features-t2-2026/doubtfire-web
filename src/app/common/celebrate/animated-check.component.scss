@@ -4,6 +4,9 @@
   @include motion.tokens;
 
   --check-color: var(--ot-color-success);
+  // Multiplies every duration and delay below. A rare, full-surface moment is
+  // worth drawing more slowly than the same mark inside a toast.
+  --check-pace: 1;
   display: inline-block;
   flex: none;
   line-height: 0;
@@ -22,8 +25,8 @@ svg {
   display: block;
   overflow: visible;
   // The small settle after the tick lands. Crisp, not bouncy: 6% at most.
-  animation: check-settle 240ms motion.$ease-out both;
-  animation-delay: calc(var(--check-delay, 0ms) + 520ms);
+  animation: check-settle calc(240ms * var(--check-pace)) motion.$ease-out both;
+  animation-delay: calc(var(--check-delay, 0ms) + 520ms * var(--check-pace));
 }
 
 .ring-track {
@@ -40,13 +43,14 @@ svg {
 
 .ring {
   stroke-linecap: round;
-  animation: check-draw motion.$duration-draw motion.$ease-out forwards;
+  animation: check-draw calc(#{motion.$duration-draw} * var(--check-pace)) motion.$ease-out
+    forwards;
   animation-delay: var(--check-delay, 0ms);
 }
 
 .tick {
-  animation: check-draw 240ms motion.$ease-out forwards;
-  animation-delay: calc(var(--check-delay, 0ms) + 260ms);
+  animation: check-draw calc(240ms * var(--check-pace)) motion.$ease-out forwards;
+  animation-delay: calc(var(--check-delay, 0ms) + 260ms * var(--check-pace));
 }
 
 @keyframes check-draw {

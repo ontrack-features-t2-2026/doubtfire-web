@@ -389,24 +389,21 @@
 // --- Confirmation ---
 // Replaces the whole dialog once the submission lands, so the last thing the
 // student sees is the result rather than the form they just finished with.
+// A student reaches this a handful of times a trimester, so it is allowed to
+// take its time: the mark draws at nearly twice the usual pace, the words
+// arrive after it lands, and the panel holds long enough to be read.
+
+$done-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
 .submission-done {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 44px 24px 36px;
+  gap: 8px;
+  min-height: 340px;
+  padding: 56px 24px 44px;
   text-align: center;
-  animation: submission-done-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
-
-  button {
-    margin-block-start: 10px;
-    transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
-
-    &:active {
-      transform: scale(0.97);
-    }
-  }
+  animation: submission-done-in 260ms $done-ease-out both;
 }
 
 .submission-done__mark {
@@ -415,31 +412,44 @@
 }
 
 .submission-done__headline {
-  margin: 6px 0 0;
+  max-width: 20ch;
+  margin: 20px 0 0;
   color: var(--ot-color-text);
-  font-size: 1.05rem;
-  font-weight: 620;
-  line-height: 1.35;
-  // Waits for the tick to finish drawing, so the two do not compete.
-  animation: submission-done-rise 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  animation-delay: 420ms;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
+  font-weight: 680;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  // Waits for the tick to land, so the two do not compete for the same beat.
+  animation: submission-done-rise 320ms $done-ease-out both;
+  animation-delay: 900ms;
 }
 
 .submission-done__detail {
-  max-width: 34ch;
+  max-width: 36ch;
   margin: 0;
   color: var(--ot-color-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 0.95rem;
+  line-height: 1.5;
   overflow-wrap: anywhere;
-  animation: submission-done-rise 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  animation-delay: 480ms;
+  animation: submission-done-rise 320ms $done-ease-out both;
+  animation-delay: 1040ms;
+}
+
+.submission-done__dismiss {
+  margin-block-start: 22px;
+  transition: transform 140ms $done-ease-out;
+  animation: submission-done-rise 280ms $done-ease-out both;
+  animation-delay: 1320ms;
+
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 @keyframes submission-done-in {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 
   to {
@@ -451,7 +461,7 @@
 @keyframes submission-done-rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px);
   }
 
   to {
@@ -463,13 +473,14 @@
 @media (prefers-reduced-motion: reduce) {
   .submission-done,
   .submission-done__headline,
-  .submission-done__detail {
+  .submission-done__detail,
+  .submission-done__dismiss {
     animation: none;
     opacity: 1;
     transform: none;
   }
 
-  .submission-done button {
+  .submission-done__dismiss {
     transition: none;
   }
 }

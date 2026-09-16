@@ -20,6 +20,7 @@ export type CelebrateTone = 'success' | 'primary' | 'neutral';
     '[class.tone-neutral]': "tone() === 'neutral'",
     '[class.reduced-motion]': 'reducedMotion',
     '[style.--check-delay]': 'delayCss()',
+    '[style.--check-pace]': 'pace()',
     '[style.width.px]': 'size()',
     '[style.height.px]': 'size()',
   },
@@ -29,6 +30,8 @@ export class AnimatedCheckComponent {
   public readonly tone = input<CelebrateTone>('success');
   /** Milliseconds to wait before the ring starts drawing. */
   public readonly delay = input(0);
+  /** Multiplies every duration in the draw. Above 1 draws more slowly. */
+  public readonly pace = input(1);
 
   /** Read once. A viewer who wants less motion gets the finished tick with a quick fade. */
   public readonly reducedMotion = prefersReducedMotion();

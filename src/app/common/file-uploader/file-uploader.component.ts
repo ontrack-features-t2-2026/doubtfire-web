@@ -69,6 +69,12 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   @Input() showName: boolean = true;
   @Input() asButton: boolean = false;
   @Input() singleDropZone: boolean = false;
+  /**
+   * Set false when the host shows its own confirmation after a successful upload,
+   * so the two do not play one after the other. A failure still reports here,
+   * because only this component knows how to retry it.
+   */
+  @Input() showSuccessState: boolean = true;
   @Input() showUploadButton: boolean = true;
   @Input() resetAfterUpload: boolean = true;
 
@@ -192,6 +198,36 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     upload.model = null;
     this.refreshShownUploadZones();
     this.updateReadyState(this.readyToUpload());
+  }
+
+  /**
+   * The summary column beside the drop zone is a second copy of the same state.
+   * It earns its place only when there is more than one file to keep track of;
+   * with one, the zone becomes the selected file in place instead.
+   */
+  public get showSummaryColumn(): boolean {
+    return this.singleDropZone && this.uploadZones.length > 1;
+  }
+
+  /**
+   * With the summary column the left side narrows to the next zone still waiting
+   * for a file. Without it, every zone stays on screen and each one turns into
+   * its own selected file, so nothing disappears when a file is chosen.
+   */
+  public get renderedUploadZones(): UploadZone[] {
+    return this.showSummaryColumn ? this.shownUploadZones : this.uploadZones;
+  }
+
+  /** The file being sent, or a count once there is more than one. */
+  public get uploadingFileLabel(): string {
+    const named = this.uploadZones
+      .map((zone) => zone.model?.[0]?.name)
+      .filter((name): name is string => !!name);
+
+    if (named.length === 0) {
+      return '';
+    }
+    return named.length === 1 ? named[0] : `${named.length} files`;
   }
 
   readyToUpload(): boolean {

@@ -120,7 +120,12 @@ describe('UploadSubmissionModalComponent', () => {
     expect(component.celebration?.headline).toBe('Submitted on time. Ready for feedback');
     expect(dialogRef.close).not.toHaveBeenCalled();
 
+    // Still open well after the sequence itself has finished arriving, so there
+    // is time to read it rather than catch it.
     vi.advanceTimersByTime(2500);
+    expect(dialogRef.close).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1500);
     expect(dialogRef.close).toHaveBeenCalledWith({value: task});
     vi.useRealTimers();
   });
@@ -143,7 +148,7 @@ describe('UploadSubmissionModalComponent', () => {
     component.finishCelebration();
     expect(dialogRef.close).toHaveBeenCalledTimes(1);
 
-    vi.advanceTimersByTime(2500);
+    vi.advanceTimersByTime(5000);
     expect(dialogRef.close).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
@@ -174,6 +179,16 @@ describe('UploadSubmissionModalComponent', () => {
 
     component.onReadyChange(true);
     expect(component.continueHint).toBeNull();
+  });
+
+  it('drops the requirements callout when one drop zone already says the same thing', () => {
+    expect(component.showUploadRequirements).toBe(false);
+
+    task.definition.uploadRequirements = [
+      {key: 'file0', name: 'Report', type: 'document'},
+      {key: 'file1', name: 'Code', type: 'code'},
+    ] as never;
+    expect(component.showUploadRequirements).toBe(true);
   });
 
   it('shows a status icon only for submission types that are task statuses', () => {

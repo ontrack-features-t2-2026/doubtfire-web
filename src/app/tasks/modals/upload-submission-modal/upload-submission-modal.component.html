@@ -3,13 +3,20 @@
   <div class="submission-done" role="status">
     <span class="submission-done__mark">
       @if (celebration.particles) {
-        <f-celebration-particles [count]="10" [delay]="520" [spread]="46" />
+        <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
       }
-      <f-animated-check [delay]="80" [size]="56" [tone]="celebration.tone" />
+      <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
     </span>
     <p class="submission-done__headline">{{ celebration.headline }}</p>
     <p class="submission-done__detail">{{ celebration.detail }}</p>
-    <button mat-stroked-button type="button" (click)="finishCelebration()">Done</button>
+    <button
+      class="submission-done__dismiss"
+      mat-stroked-button
+      type="button"
+      (click)="finishCelebration()"
+    >
+      Done
+    </button>
   </div>
 } @else {
   <header class="submission-dialog-header">
@@ -123,23 +130,18 @@
       }
 
       <section class="submission-section" [class.hidden]="!isDetailsStage && !uploadStarted">
-        @if (!uploadStarted) {
-          @if (submissionType === 'need_help') {
-            <p class="submission-section__lead">
-              Upload the required files so your tutor can help with this task, even if they are not
-              finished yet.
-            </p>
-          } @else {
-            <p class="submission-section__lead">
-              Upload files that show your evidence of work until each required file has been
-              selected.
-            </p>
-          }
+        @if (!uploadStarted && submissionType === 'need_help') {
+          <p class="submission-section__lead">
+            Upload the required files so your tutor can help with this task, even if they are not
+            finished yet.
+          </p>
         }
 
+        <!-- The drop zones already name each file and its formats, so the callout only
+             appears when it carries something they do not. -->
         <f-task-upload-requirements
           #uploadRequirements
-          [hidden]="uploadStarted || isUploading"
+          [hidden]="uploadStarted || isUploading || !showUploadRequirements"
           [requirements]="task.definition.uploadRequirements"
         ></f-task-upload-requirements>
 
@@ -154,6 +156,7 @@
           [onSuccess]="onUploadSuccess"
           [payload]="payload"
           [resetAfterUpload]="false"
+          [showSuccessState]="false"
           [showUploadButton]="false"
           [singleDropZone]="true"
           [url]="uploadUrl"
@@ -211,12 +214,17 @@
             </div>
 
             <div>
+              <!-- No color input: the app's outlined style reads the label as body
+                   text, where the primary palette leaves blue on a dark surface. -->
               <button
-                color="primary"
                 mat-stroked-button
                 type="button"
+                [attr.aria-expanded]="showPlagiarism"
                 (click)="showPlagiarism = !showPlagiarism"
               >
+                <mat-icon aria-hidden="true">{{
+                  showPlagiarism ? 'expand_less' : 'expand_more'
+                }}</mat-icon>
                 Plagiarism and collusion
               </button>
 

@@ -293,3 +293,158 @@
     overflow-wrap: anywhere;
   }
 }
+
+// --- Uploading and outcome ---
+// One centred column. The bar is the only thing that moves, so the eye has one
+// place to be while the request is in flight.
+
+$upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+.upload-progress,
+.upload-outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 280px;
+  padding: 32px 24px;
+  text-align: center;
+  animation: upload-panel-in 220ms $upload-ease-out both;
+}
+
+.upload-progress__well,
+.upload-outcome__well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--ot-radius-circle, 999px);
+  background: color-mix(in srgb, var(--ot-color-primary) 14%, transparent);
+  color: var(--ot-color-primary);
+
+  mat-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 26px;
+  }
+}
+
+// Breathing, not spinning. Opacity only, so nothing is laid out again.
+.upload-progress__well {
+  animation: upload-breathe 1600ms ease-in-out infinite;
+}
+
+.upload-progress__title,
+.upload-outcome__title {
+  margin: 6px 0 0;
+  color: var(--ot-color-text);
+  font-size: 1.05rem;
+  font-weight: 620;
+}
+
+.upload-progress__files,
+.upload-outcome__detail {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.upload-progress__track {
+  position: relative;
+  overflow: hidden;
+  width: min(360px, 100%);
+  height: 8px;
+  margin-block-start: 8px;
+  border-radius: 999px;
+  background: var(--ot-color-surface-raised);
+}
+
+.upload-progress__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ot-color-primary);
+  // Clipped rather than sized, so each progress event stays on the compositor.
+  clip-path: inset(0 calc(100% - var(--upload-progress, 0%)) 0 0);
+  transition: clip-path 260ms $upload-ease-out;
+}
+
+.upload-progress__value {
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-progress button,
+.upload-outcome button {
+  margin-block-start: 10px;
+  transition: transform 140ms $upload-ease-out;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.upload-outcome__well--success {
+  background: color-mix(in srgb, var(--ot-color-success) 16%, transparent);
+  color: var(--ot-color-success);
+}
+
+.upload-outcome__well--error {
+  background: color-mix(in srgb, var(--ot-color-error) 16%, transparent);
+  color: var(--ot-color-error);
+}
+
+.upload-outcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+@keyframes upload-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes upload-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-progress,
+  .upload-outcome,
+  .upload-progress__well {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .upload-progress__fill {
+    transition-duration: 1ms;
+  }
+
+  .upload-progress button,
+  .upload-outcome button {
+    transition: none;
+  }
+}

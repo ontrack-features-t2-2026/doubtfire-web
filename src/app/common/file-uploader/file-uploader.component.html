@@ -7,18 +7,18 @@
       </button>
     }
 
-    <div class="file-uploader-layout" [class.file-uploader-layout--split]="singleDropZone">
-      @if (showUploader && uploadingInfo === null && shownUploadZones.length) {
+    <div class="file-uploader-layout" [class.file-uploader-layout--split]="showSummaryColumn">
+      @if (showUploader && uploadingInfo === null && renderedUploadZones.length) {
         <div class="file-uploader-zones">
-          @for (upload of shownUploadZones; track upload) {
-            @if (!singleDropZone && showName) {
+          @for (upload of renderedUploadZones; track upload) {
+            @if (!showSummaryColumn && showName) {
               <h5 class="file-uploader-label">
                 {{ uploadZones.length === 1 ? '' : $index + 1 + ' - ' }}
                 {{ upload.display.name }}
               </h5>
             }
 
-            @if (singleDropZone && showName) {
+            @if (showSummaryColumn && showName) {
               <h5 class="file-uploader-label">{{ upload.display.name }}</h5>
             }
 
@@ -72,7 +72,7 @@
               />
             </div>
 
-            @if (!singleDropZone && upload.model?.length > 0) {
+            @if (!showSummaryColumn && upload.model?.length > 0) {
               <div class="selected-upload upload-file-row">
                 <mat-icon aria-hidden="true" class="upload-file-row__icon">{{
                   upload.display.icon
@@ -99,7 +99,7 @@
         </div>
       }
 
-      @if (showUploader && singleDropZone && uploadingInfo === null) {
+      @if (showUploader && showSummaryColumn && uploadingInfo === null) {
         <div class="file-uploader-summary">
           <h5 class="file-uploader-label">Selected files</h5>
 
@@ -177,49 +177,52 @@
 
     @if (showUploader && readyToUpload() && isUploading) {
       @if (!uploadingInfo?.complete) {
-        <div class="uploading flex min-h-[300px] w-full flex-col items-center justify-center gap-3">
-          <div class="flex items-center justify-center gap-1">
-            @for (upload of uploadZones; track upload) {
-              <mat-icon>{{ upload.display.icon }}</mat-icon>
-            }
-            <mat-icon>arrow_right_alt</mat-icon>
-            <i class="logo size-[75px]"></i>
-          </div>
+        <!-- One thing happening, said once. The bar is the only moving part. -->
+        <div class="upload-progress" role="status">
+          <span aria-hidden="true" class="upload-progress__well">
+            <mat-icon>{{ uploadZones[0]?.display?.icon ?? 'upload_file' }}</mat-icon>
+          </span>
 
-          <mat-progress-bar
-            mode="determinate"
-            [value]="$safeNavigationMigration(uploadingInfo?.progress)"
+          <p class="upload-progress__title">Uploading your work</p>
+          <p class="upload-progress__files">{{ uploadingFileLabel }}</p>
+
+          <div
+            aria-valuemax="100"
+            aria-valuemin="0"
+            class="upload-progress__track"
+            role="progressbar"
+            [attr.aria-valuenow]="uploadingInfo?.progress ?? 0"
+            [style.--upload-progress.%]="uploadingInfo?.progress ?? 0"
           >
-          </mat-progress-bar>
-          <button color="warn" mat-stroked-button type="button" (click)="cancelUpload()">
-            Cancel upload
-          </button>
+            <span class="upload-progress__fill"></span>
+          </div>
+          <p class="upload-progress__value">{{ uploadingInfo?.progress ?? 0 }}%</p>
+
+          <button mat-stroked-button type="button" (click)="cancelUpload()">Cancel upload</button>
         </div>
       }
 
-      @if (uploadingInfo?.complete) {
-        <div class="complete flex min-h-[300px] flex-col items-center justify-center gap-3">
-          <div class="flex w-full items-center justify-center gap-3">
-            <mat-icon color="{{ uploadingInfo.success ? 'primary' : 'warn' }}">
-              {{ uploadingInfo.success ? 'check_circle' : 'cancel' }}
-            </mat-icon>
+      @if (uploadingInfo?.complete && (!uploadingInfo.success || showSuccessState)) {
+        <div class="upload-outcome" role="status">
+          @if (uploadingInfo.success) {
+            <span aria-hidden="true" class="upload-outcome__well upload-outcome__well--success">
+              <mat-icon>check</mat-icon>
+            </span>
+            <p class="upload-outcome__title">Upload complete</p>
+          } @else {
+            <span aria-hidden="true" class="upload-outcome__well upload-outcome__well--error">
+              <mat-icon>priority_high</mat-icon>
+            </span>
+            <p class="upload-outcome__title">Upload failed</p>
+            <p class="upload-outcome__detail">{{ uploadingInfo.error }}</p>
 
-            <strong class="text-2xl">
-              File Upload {{ uploadingInfo.success ? 'Successful' : 'Failed' }}
-            </strong>
-          </div>
-
-          @if (!uploadingInfo.success) {
-            <div class="flex max-w-xl flex-col items-center justify-center">
-              <hr class="border-b border-ot-divider" />
-              <p><strong>Error Message:</strong> {{ uploadingInfo.error }}</p>
-
-              <div class="flex gap-3">
-                <button color="primary" mat-button (click)="initiateUploadInternal()">
-                  Retry Upload
-                </button>
-                <button mat-button (click)="onClickFailureCancel()">Cancel</button>
-              </div>
+            <div class="upload-outcome__actions">
+              <button mat-flat-button type="button" (click)="initiateUploadInternal()">
+                Try again
+              </button>
+              <button mat-stroked-button type="button" (click)="onClickFailureCancel()">
+                Cancel
+              </button>
             </div>
           }
         </div>
