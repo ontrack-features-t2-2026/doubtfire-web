@@ -116,12 +116,12 @@ describe('UploadSubmissionModalComponent', () => {
     component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
     component.onUploadComplete();
 
-    // The old words blur away first, so the panel is mid-swap and not yet
-    // showing the confirmation.
+    // The handover plays first, so the panel is mid-swap and not yet showing
+    // the confirmation.
     expect(component.flowSwapping).toBe(true);
     expect(component.celebration).toBeNull();
 
-    vi.advanceTimersByTime(300);
+    vi.advanceTimersByTime(600);
     expect(component.flowSwapping).toBe(false);
     expect(component.celebration?.headline).toBe('Submitted on time. Ready for feedback');
     expect(dialogRef.close).not.toHaveBeenCalled();
@@ -174,7 +174,7 @@ describe('UploadSubmissionModalComponent', () => {
     component.submissionType = 'ready_for_feedback';
     component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
     component.onUploadComplete();
-    vi.advanceTimersByTime(300);
+    vi.advanceTimersByTime(600);
 
     component.finishCelebration();
     expect(dialogRef.close).toHaveBeenCalledTimes(1);

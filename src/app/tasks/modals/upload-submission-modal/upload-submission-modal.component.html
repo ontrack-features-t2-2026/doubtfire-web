@@ -27,15 +27,21 @@
       [class.submit-flow--celebrating]="celebration"
       [class.submit-flow--done]="flowLanded"
     >
+      <!-- The outer element reserves the confirmation's full height from the
+           start, so nothing below moves when the circle inside it grows. -->
       <span aria-hidden="true" class="submit-flow__mark">
-        @if (celebration) {
-          @if (celebration.particles) {
-            <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+        <span class="submit-flow__ring">
+          @if (celebration) {
+            @if (celebration.particles) {
+              <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+            }
+            <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
+          } @else {
+            <mat-icon class="submit-flow__glyph">{{
+              flowLanded ? 'check' : 'upload_file'
+            }}</mat-icon>
           }
-          <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
-        } @else {
-          <mat-icon class="submit-flow__glyph">{{ flowLanded ? 'check' : 'upload_file' }}</mat-icon>
-        }
+        </span>
       </span>
 
       <p class="submit-flow__title">{{ flowTitle }}</p>

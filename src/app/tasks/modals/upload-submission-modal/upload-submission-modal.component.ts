@@ -27,8 +27,12 @@ import {summariseUploadRequirement} from './task-upload-requirements/upload-cate
  */
 const SUBMISSION_CELEBRATION_HOLD_MS = 3600;
 
-/** How long the old words stay blurred before they are replaced. */
-const FLOW_SWAP_MS = 220;
+/**
+ * The handover: long enough for the bar to draw into the middle (300ms) and the
+ * circle to answer it (from 240ms). Matches the "collapse" timing on
+ * /submit-motion, where the six candidates were compared.
+ */
+const FLOW_SWAP_MS = 480;
 
 type UploadStage = 'group' | 'details' | 'comments';
 type UploadSubmissionType = TaskStatusEnum | 'reupload_evidence' | 'test_submission';
@@ -116,7 +120,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   public uploadSubmitLocked = false;
   /** Set once the submission has landed. It takes over the dialog until it closes. */
   public celebration: SubmissionCelebration | null = null;
-  /** The moment between the two sets of words, while the old ones blur away. */
+  /** The handover: the bar collapses and the circle absorbs it. */
   public flowSwapping = false;
 
   private uploadResponse: UploadSubmissionResponse | null = null;
@@ -521,9 +525,9 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Blur the old words and the bar out first, then change them. Without the
-    // pause the text is simply replaced between two frames, which reads as a cut
-    // however well the box around it is transitioning.
+    // Play the handover before swapping the words. Without the pause the text is
+    // replaced between two frames, which reads as a cut however well the box
+    // around it is transitioning.
     this.flowSwapping = true;
     this.swapTimer = setTimeout(() => {
       this.swapTimer = null;
