@@ -117,6 +117,15 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pushSubscription?.unsubscribe();
+
+    // Clearing the timer here is not enough on its own. The save response can
+    // land after the view has gone, and the handler confirms the save, which
+    // arms a fresh timer against a component nothing will destroy again. The
+    // handlers check this flag instead of the request being cancelled here:
+    // unsubscribing would abort the PUT, so closing the dialog straight after
+    // pressing Save would silently lose the save.
+    this.destroyed = true;
+
     if (this.justSavedTimer) {
       clearTimeout(this.justSavedTimer);
       this.justSavedTimer = null;
@@ -305,6 +314,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   /** The pronouns select sits outside the user object, so it is snapshotted too. */
   private savedFormPronouns = '';
   private justSavedTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Set once the view has gone, so a late save response cannot touch it. */
+  private destroyed = false;
 
   /** The user as it was when the form was last clean. */
   private takeSnapshot(): void {
@@ -379,6 +390,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     if (this.newUser) {
       this.userService.create(this.user).subscribe({
         next: (updatedUser) => {
+          if (this.destroyed) {
+            return;
+          }
           this.saving = false;
           this.user = updatedUser;
           this.initialFirstName = this.user.firstName;
@@ -400,6 +414,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
       request.subscribe({
         next: (updatedUser) => {
+          if (this.destroyed) {
+            return;
+          }
           this.saving = false;
           if (this.mode === 'create') {
             this.router.navigateByUrl('/home');
@@ -423,13 +440,20 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   }
 
   private handleSaveError(error: unknown): void {
-    this.saving = false;
     const serverMessage = error instanceof HttpErrorResponse ? error.error?.error : null;
     const message = typeof error === 'string' ? error : serverMessage;
-    this.saveError =
+    const text =
       typeof message === 'string' && message.trim()
         ? message
         : 'Profile could not be saved. Check your connection and try again.';
-    this.alerts.error(this.saveError, 6000);
+
+    // The alert still goes up after the view has gone: a save that failed is
+    // worth saying wherever the user ended up, and the message says which one.
+    // Only the in-form state is skipped, because there is no form left to show it.
+    if (!this.destroyed) {
+      this.saving = false;
+      this.saveError = text;
+    }
+    this.alerts.error(text, 6000);
   }
 }

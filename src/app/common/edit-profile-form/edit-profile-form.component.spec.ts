@@ -4,7 +4,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
-import {of} from 'rxjs';
+import {Subject, of} from 'rxjs';
 import {User} from 'src/app/api/models/user/user';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
@@ -290,6 +290,39 @@ describe('EditProfileFormComponent', () => {
     expect(component.saveMessage).toBe('Profile saved.');
     expect(component.user.nickname).toBe('Preferred');
     expect(component.user.receiveFeedbackNotifications).toBe(false);
+  });
+
+  it('lets a save land after the view goes, but arms no timer behind it', () => {
+    vi.useFakeTimers();
+
+    // A save that has left but has not been answered yet.
+    const response: Subject<User> = new Subject();
+    userServiceStub.update.mockReturnValue(response);
+
+    createComponent();
+    component.submit();
+    expect(component.saving).toBe(true);
+
+    // The user leaves the profile page before the server replies. ngOnDestroy
+    // has already had its one chance to clear the confirmation timer, so a
+    // next handler running after this point would arm one nothing can clear.
+    // The request is deliberately not cancelled: the save itself must survive.
+    fixture.destroy();
+    const pendingAfterDestroy = vi.getTimerCount();
+    expect(response.observed).toBe(true);
+
+    response.next(makeUser({nickname: 'Preferred'}));
+    response.complete();
+
+    expect(component.justSaved).toBe(false);
+    expect(component.saveMessage).toBe('');
+    expect(vi.getTimerCount()).toBe(pendingAfterDestroy);
+
+    // And nothing turns up later either.
+    vi.advanceTimersByTime(10_000);
+    expect(component.justSaved).toBe(false);
+
+    vi.useRealTimers();
   });
 });
 
