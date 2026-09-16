@@ -57,6 +57,7 @@ describe('UploadSubmissionModalComponent', () => {
 
     (component as unknown as {fileUploader: unknown}).fileUploader = {
       isUploading: false,
+      uploadInFlight: false,
       hasSelectedFiles: () => true,
     };
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -73,6 +74,7 @@ describe('UploadSubmissionModalComponent', () => {
   it('cannot dismiss while the upload request is active', () => {
     (component as unknown as {fileUploader: unknown}).fileUploader = {
       isUploading: true,
+      uploadInFlight: true,
       hasSelectedFiles: () => true,
     };
     const confirm = vi.spyOn(window, 'confirm');
@@ -80,6 +82,56 @@ describe('UploadSubmissionModalComponent', () => {
     expect(component.canClose()).toBe(false);
     expect(confirm).not.toHaveBeenCalled();
     confirm.mockRestore();
+  });
+
+  it('can be dismissed and retried once a failed upload has settled', () => {
+    // The uploader keeps isUploading set after the request lands, because its
+    // own outcome panels render under it. Reading that as "still uploading"
+    // trapped the student on the error: no backdrop, no Escape, no retry.
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      isUploading: true,
+      uploadInFlight: false,
+      uploadingInfo: {complete: true, success: false},
+      hasSelectedFiles: () => true,
+    };
+    component.uploadStarted = true;
+    component.uploadSubmitLocked = false;
+
+    expect(component.uploadFailed).toBe(true);
+
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    expect(component.canClose()).toBe(true);
+    expect(confirm).toHaveBeenCalled();
+    confirm.mockRestore();
+
+    const startUpload = vi.fn();
+    component.onUploaderReady(startUpload);
+    component.uploadButtonClicked();
+    expect(startUpload).toHaveBeenCalled();
+  });
+
+  it('still records the status change when Done is pressed before the callback fires', () => {
+    // Done is on screen from the moment the bytes land, which is about a second
+    // before the uploader reports completion. Leaving in that window used to
+    // close the dialog without ever applying the response.
+    component.submissionType = 'ready_for_feedback';
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+
+    component.finishCelebration();
+
+    expect(task.updateFromJson).toHaveBeenCalled();
+    // Unclaimed, so the dashboard gets to show what this dialog no longer will.
+    expect(task.processTaskStatusChange).toHaveBeenCalledWith(
+      'ready_for_feedback',
+      expect.anything(),
+      true,
+      false,
+    );
+    expect(dialogRef.close).toHaveBeenCalledWith({value: task});
+
+    // And the uploader's own callback must not apply it a second time.
+    component.onUploadComplete();
+    expect(task.processTaskStatusChange).toHaveBeenCalledTimes(1);
   });
 
   it('marks the task queued immediately and closes on the same task after upload', () => {
@@ -139,6 +191,7 @@ describe('UploadSubmissionModalComponent', () => {
   it('lets someone in a hurry leave on the confirmation without a warning', () => {
     (component as unknown as {fileUploader: unknown}).fileUploader = {
       isUploading: true,
+      uploadInFlight: true,
       hasSelectedFiles: () => true,
     };
     const confirm = vi.spyOn(window, 'confirm');

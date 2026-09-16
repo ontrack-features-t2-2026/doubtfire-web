@@ -59,25 +59,18 @@
         <span class="submit-flow__fill"></span>
       </div>
 
-      @if (celebration) {
-        <button
-          class="submit-flow__action"
-          mat-stroked-button
-          type="button"
-          (click)="finishCelebration()"
-        >
-          Done
-        </button>
-      } @else if (!flowLanded) {
-        <button
-          class="submit-flow__action"
-          mat-stroked-button
-          type="button"
-          (click)="cancelUpload()"
-        >
-          Cancel upload
-        </button>
-      }
+      <!-- One button throughout. Swapping it for another, or dropping it while
+           the confirmation was on its way, unmounted the only focusable thing in
+           the dialog: a keyboard user lost their place for over a second, in the
+           middle of the one moment the panel is asking them to look at. -->
+      <button
+        class="submit-flow__action"
+        mat-stroked-button
+        type="button"
+        (click)="flowLanded ? finishCelebration() : cancelUpload()"
+      >
+        {{ flowLanded ? 'Done' : 'Cancel upload' }}
+      </button>
     </div>
   }
 
@@ -296,7 +289,7 @@
 
 @if (!uploadStarted && !celebration) {
   <mat-dialog-actions class="submission-dialog-actions">
-    <button class="cancel-action" color="warn" mat-stroked-button type="button" (click)="cancel()">
+    <button class="cancel-action" mat-stroked-button type="button" (click)="cancel()">
       Cancel
     </button>
 

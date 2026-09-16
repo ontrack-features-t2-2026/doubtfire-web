@@ -266,6 +266,16 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     return this.uploadingInfo?.complete === true && this.uploadingInfo?.success === true;
   }
 
+  /**
+   * Bytes actually on the wire. `isUploading` stays true after the request
+   * settles, because the panels that report the outcome are rendered under it,
+   * so a host asking "is there something here I would interrupt?" has to ask
+   * this instead.
+   */
+  public get uploadInFlight(): boolean {
+    return this.isUploading && this.uploadingInfo?.complete !== true;
+  }
+
   /** The file being sent, or a count once there is more than one. */
   public get uploadingFileLabel(): string {
     const named = this.uploadZones

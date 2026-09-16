@@ -124,6 +124,8 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   public flowSwapping = false;
 
   private uploadResponse: UploadSubmissionResponse | null = null;
+  /** Guards the status change against running twice, or not at all. */
+  private completionApplied = false;
   private startUpload?: () => void;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
   private swapTimer: ReturnType<typeof setTimeout> | null = null;
@@ -150,6 +152,16 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
 
   public get isUploading(): boolean {
     return this.fileUploader?.isUploading ?? false;
+  }
+
+  /**
+   * Bytes on the wire, as opposed to a request that has landed and is reporting
+   * its outcome. `isUploading` covers both, so using it to decide whether the
+   * dialog may close left it shut after a failed upload: the error panel offers
+   * Try again and Cancel, but Escape and the backdrop did nothing.
+   */
+  public get uploadInFlight(): boolean {
+    return this.fileUploader?.uploadInFlight ?? false;
   }
 
   public get showGroupSection(): boolean {
@@ -398,7 +410,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     if (this.celebration) {
       return true;
     }
-    if (this.isUploading) {
+    if (this.uploadInFlight) {
       return false;
     }
     if (!this.isDirty) {
@@ -489,33 +501,51 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const response = this.uploadResponse;
+    // The dialog the student started this from is still the thing they are
+    // looking at, so the confirmation belongs here rather than over the page
+    // they are about to be returned to.
+    const celebration = this.applyCompletion(true);
 
-    if (!this.data.isTestSubmission) {
-      const expectedStatus =
-        this.submissionType === 'need_help' || this.submissionType === 'ready_for_feedback'
-          ? this.submissionType
-          : response.status;
-
-      this.task.updateFromJson(response, this.taskService.mapping);
-      // The dialog the student started this from is still the thing they are
-      // looking at, so the confirmation belongs here rather than over the page
-      // they are about to be returned to.
-      const celebration = this.task.processTaskStatusChange(
-        expectedStatus as TaskStatusEnum,
-        this.alertService,
-        true,
-        true,
-      );
-
-      if (celebration) {
-        this.showCelebration(celebration);
-        return;
-      }
+    if (celebration) {
+      this.showCelebration(celebration);
+      return;
     }
 
     this.dialogRef.close({value: this.task});
   };
+
+  /**
+   * Fold the response into the task. Done can be pressed in the second or so
+   * between the bytes landing and this callback firing, so it runs at most once
+   * and either caller may be the one to run it.
+   *
+   * Leaving early passes `claimCelebration: false`, which hands the moment to
+   * the dashboard rather than spending it on a dialog that is already closing.
+   */
+  private applyCompletion(claimCelebration: boolean): SubmissionCelebration | null {
+    if (this.completionApplied || !this.uploadResponse?.id) {
+      return null;
+    }
+    this.completionApplied = true;
+
+    if (this.data.isTestSubmission) {
+      return null;
+    }
+
+    const response = this.uploadResponse;
+    const expectedStatus =
+      this.submissionType === 'need_help' || this.submissionType === 'ready_for_feedback'
+        ? this.submissionType
+        : response.status;
+
+    this.task.updateFromJson(response, this.taskService.mapping);
+    return this.task.processTaskStatusChange(
+      expectedStatus as TaskStatusEnum,
+      this.alertService,
+      true,
+      claimCelebration,
+    );
+  }
 
   /** Hold long enough for the mark to draw and the words to be read, then leave. */
   private showCelebration(celebration: SubmissionCelebration): void {
@@ -540,9 +570,14 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     }, FLOW_SWAP_MS);
   }
 
-  /** Also the Done button, so nobody has to wait out the hold. */
+  /**
+   * Also the Done button, so nobody has to wait out the hold. Done is on screen
+   * from the moment the upload lands, which can be before the completion
+   * callback has run, so apply what it would have applied before leaving.
+   */
   public finishCelebration(): void {
     this.clearFlowTimers();
+    this.applyCompletion(false);
     this.dialogRef.close({value: this.task});
   }
 
@@ -562,7 +597,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   }
 
   public uploadButtonClicked(): void {
-    if (this.uploadSubmitLocked || this.isUploading) {
+    if (this.uploadSubmitLocked || this.uploadInFlight) {
       return;
     }
 
@@ -595,6 +630,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     this.uploadStarted = false;
     this.uploadSubmitLocked = false;
     this.uploadResponse = null;
+    this.completionApplied = false;
     this.currentStage = this.showGroupSection ? 'group' : 'details';
   }
 
