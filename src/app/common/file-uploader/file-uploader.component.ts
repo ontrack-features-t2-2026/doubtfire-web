@@ -237,8 +237,23 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     );
   }
 
+  /** A success this component is showing itself, rather than handing over. */
+  public get uploadComplete(): boolean {
+    return this.showSuccessState && this.uploadLanded;
+  }
+
   public get showProgressPanel(): boolean {
-    return this.showProgressState && (!this.uploadingInfo?.complete || this.uploadSettling);
+    if (!this.showProgressState) {
+      return false;
+    }
+    return !this.uploadingInfo?.complete || this.uploadSettling || this.uploadComplete;
+  }
+
+  public get uploadTitle(): string {
+    if (this.uploadComplete) {
+      return 'Uploaded';
+    }
+    return this.uploadSettling ? 'Uploaded' : 'Uploading your work';
   }
 
   /** Percent sent so far, for a host drawing the in-flight state itself. */

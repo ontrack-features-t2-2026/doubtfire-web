@@ -294,112 +294,133 @@
   }
 }
 
-// --- Uploading and outcome ---
-// One centred column. The bar is the only thing that moves, so the eye has one
-// place to be while the request is in flight.
+// --- Uploading ---
+// One panel, the same elements from sending to sent: the circle greens when the
+// bytes land, the bar draws into the middle, the circle absorbs it, and the mark
+// draws out of it. Smaller than the submit dialog's, because this one sits
+// inside a card rather than taking over a surface.
 
 $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+$upload-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
-.upload-progress,
+.upload-flow,
 .upload-outcome {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  // Matches the confirmation panel that replaces it, so the dialog does not
-  // resize between the two.
-  min-height: 360px;
-  padding: 40px 24px;
+  gap: 6px;
+  min-height: 220px;
+  padding: 28px 16px;
   text-align: center;
   animation: upload-panel-in 220ms $upload-ease-out both;
 }
 
-.upload-progress__well,
-.upload-outcome__well {
+// Holds the finished mark's height from the first frame, so the circle growing
+// inside it never pushes the words below it down.
+.upload-flow__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  height: 72px;
+}
+
+.upload-flow__ring,
+.upload-outcome__well {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
   border-radius: var(--ot-radius-circle, 999px);
   background: color-mix(in srgb, var(--ot-color-primary) 14%, transparent);
   color: var(--ot-color-primary);
 
   mat-icon {
-    width: 26px;
-    height: 26px;
-    font-size: 26px;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
   }
 }
 
-// Breathing, not spinning. Opacity only, so nothing is laid out again.
-.upload-progress__well {
-  animation: upload-breathe 1600ms ease-in-out infinite;
+.upload-flow__ring {
   transition:
-    background-color 200ms ease,
-    color 200ms ease;
+    width 380ms $upload-ease-in-out,
+    height 380ms $upload-ease-in-out,
+    background-color 300ms ease,
+    color 300ms ease;
 }
 
-// Settles to the success colour while it waits to be replaced, so the handover
-// to the confirmation reads as one movement rather than two screens.
-.upload-progress--done .upload-progress__well {
-  background: color-mix(in srgb, var(--ot-color-success) 16%, transparent);
-  color: var(--ot-color-success);
-  animation: none;
+.upload-flow__glyph {
+  transition: opacity 180ms ease;
 }
 
-.upload-progress--done .upload-progress__fill {
-  background: var(--ot-color-success);
+// Breathing while there is still something to wait for. Opacity only, so nothing
+// is laid out again.
+.upload-flow:not(.upload-flow--done) .upload-flow__ring {
+  animation: upload-breathe 1600ms ease-in-out infinite;
 }
 
-.upload-progress__title,
+.upload-flow__title,
 .upload-outcome__title {
-  margin: 6px 0 0;
+  margin: 10px 0 0;
   color: var(--ot-color-text);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 620;
+  line-height: 1.3;
+  transition: opacity 180ms ease;
 }
 
-.upload-progress__files,
+.upload-flow__detail,
 .upload-outcome__detail {
-  max-width: 40ch;
+  max-width: 38ch;
   margin: 0;
   color: var(--ot-color-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
+  transition: opacity 180ms ease;
 }
 
-.upload-progress__track {
+.upload-flow__track {
   position: relative;
   overflow: hidden;
-  width: min(360px, 100%);
+  width: min(320px, 100%);
   height: 8px;
-  margin-block-start: 8px;
+  margin-block-start: 12px;
   border-radius: 999px;
   background: var(--ot-color-surface-raised);
+  // Narrows into the middle, then folds its own height away. It never simply
+  // disappears: something vanishing is what reads as a new screen.
+  transition:
+    width 300ms $upload-ease-in-out,
+    height 200ms $upload-ease-out 260ms,
+    margin 200ms $upload-ease-out 260ms,
+    opacity 160ms ease 280ms;
 }
 
-.upload-progress__fill {
+.upload-flow__fill {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: var(--ot-color-primary);
   // Clipped rather than sized, so each progress event stays on the compositor.
   clip-path: inset(0 calc(100% - var(--upload-progress, 0%)) 0 0);
-  transition: clip-path 260ms $upload-ease-out;
+  transition:
+    clip-path 260ms $upload-ease-out,
+    background-color 300ms ease;
 }
 
-.upload-progress__value {
+.upload-flow__value {
   margin: 0;
   color: var(--ot-color-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
 }
 
-.upload-progress button,
+.upload-flow__action,
 .upload-outcome button {
-  margin-block-start: 10px;
+  margin-block-start: 12px;
   transition: transform 140ms $upload-ease-out;
 
   &:active {
@@ -407,9 +428,44 @@ $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   }
 }
 
-.upload-outcome__well--success {
-  background: color-mix(in srgb, var(--ot-color-success) 16%, transparent);
-  color: var(--ot-color-success);
+// The bytes are away.
+.upload-flow--done {
+  .upload-flow__ring {
+    background: color-mix(in srgb, var(--ot-color-success) 16%, transparent);
+    color: var(--ot-color-success);
+  }
+
+  .upload-flow__fill {
+    background: var(--ot-color-success);
+  }
+
+  .upload-flow__track {
+    width: 0;
+  }
+}
+
+// Sent, and this component is the one saying so.
+.upload-flow--complete {
+  .upload-flow__ring {
+    width: 68px;
+    height: 68px;
+    background: transparent;
+    animation: upload-absorb 320ms $upload-ease-out both;
+  }
+
+  .upload-flow__track {
+    height: 0;
+    margin-block-start: 0;
+    opacity: 0;
+  }
+
+  .upload-flow__title {
+    animation: upload-panel-in 280ms $upload-ease-out 200ms both;
+  }
+
+  .upload-flow__detail {
+    animation: upload-panel-in 280ms $upload-ease-out 280ms both;
+  }
 }
 
 .upload-outcome__well--error {
@@ -436,6 +492,20 @@ $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   }
 }
 
+@keyframes upload-absorb {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.07);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes upload-breathe {
   0%,
   100% {
@@ -448,19 +518,23 @@ $upload-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .upload-progress,
+  .upload-flow,
   .upload-outcome,
-  .upload-progress__well {
+  .upload-flow__ring,
+  .upload-flow__title,
+  .upload-flow__detail {
     animation: none;
     opacity: 1;
     transform: none;
   }
 
-  .upload-progress__fill {
-    transition-duration: 1ms;
-  }
-
-  .upload-progress button,
+  .upload-flow__ring,
+  .upload-flow__glyph,
+  .upload-flow__title,
+  .upload-flow__detail,
+  .upload-flow__track,
+  .upload-flow__fill,
+  .upload-flow__action,
   .upload-outcome button {
     transition: none;
   }

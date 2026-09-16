@@ -176,62 +176,75 @@
     }
 
     @if (showUploader && readyToUpload() && isUploading) {
-      <!-- Stays up through the short settle after the request lands, so the host
-           has something to replace rather than an empty dialog. -->
+      <!-- One panel, the same elements throughout: the circle greens when the
+           bytes land, the bar draws into the middle, the circle absorbs it, and
+           the mark draws out. Stays up through the settle after the request
+           lands, so a host taking over has something to replace. -->
       @if (showProgressPanel) {
-        <div class="upload-progress" role="status" [class.upload-progress--done]="uploadSettling">
-          <span aria-hidden="true" class="upload-progress__well">
-            <mat-icon>{{
-              uploadSettling ? 'check' : (uploadZones[0]?.display?.icon ?? 'upload_file')
-            }}</mat-icon>
+        <div
+          class="upload-flow"
+          role="status"
+          [class.upload-flow--complete]="uploadComplete"
+          [class.upload-flow--done]="uploadSettling || uploadComplete"
+        >
+          <span aria-hidden="true" class="upload-flow__mark">
+            <span class="upload-flow__ring">
+              @if (uploadComplete) {
+                <f-animated-check tone="success" [delay]="80" [pace]="1.4" [size]="56" />
+              } @else {
+                <mat-icon class="upload-flow__glyph">{{
+                  uploadSettling ? 'check' : (uploadZones[0]?.display?.icon ?? 'upload_file')
+                }}</mat-icon>
+              }
+            </span>
           </span>
 
-          <p class="upload-progress__title">
-            {{ uploadSettling ? 'Uploaded' : 'Uploading your work' }}
-          </p>
-          <p class="upload-progress__files">{{ uploadingFileLabel }}</p>
+          <p class="upload-flow__title">{{ uploadTitle }}</p>
+          <p class="upload-flow__detail">{{ uploadingFileLabel }}</p>
 
           <div
             aria-valuemax="100"
             aria-valuemin="0"
-            class="upload-progress__track"
+            class="upload-flow__track"
             role="progressbar"
-            [attr.aria-valuenow]="uploadingInfo?.progress ?? 0"
-            [style.--upload-progress.%]="uploadingInfo?.progress ?? 0"
+            [attr.aria-valuenow]="uploadProgress"
+            [style.--upload-progress.%]="uploadProgress"
           >
-            <span class="upload-progress__fill"></span>
+            <span class="upload-flow__fill"></span>
           </div>
-          <p class="upload-progress__value">{{ uploadingInfo?.progress ?? 0 }}%</p>
 
-          @if (!uploadSettling) {
-            <button mat-stroked-button type="button" (click)="cancelUpload()">Cancel upload</button>
+          @if (!uploadSettling && !uploadComplete) {
+            <p class="upload-flow__value">{{ uploadProgress }}%</p>
+            <button
+              class="upload-flow__action"
+              mat-stroked-button
+              type="button"
+              (click)="cancelUpload()"
+            >
+              Cancel upload
+            </button>
           }
         </div>
       }
 
-      @if (uploadingInfo?.complete && (!uploadingInfo.success || showSuccessState)) {
+      <!-- Only a failure gets its own panel: it has different words and the
+           only actions that can do anything about it. -->
+      @if (uploadingInfo?.complete && !uploadingInfo.success) {
         <div class="upload-outcome" role="status">
-          @if (uploadingInfo.success) {
-            <span aria-hidden="true" class="upload-outcome__well upload-outcome__well--success">
-              <mat-icon>check</mat-icon>
-            </span>
-            <p class="upload-outcome__title">Upload complete</p>
-          } @else {
-            <span aria-hidden="true" class="upload-outcome__well upload-outcome__well--error">
-              <mat-icon>priority_high</mat-icon>
-            </span>
-            <p class="upload-outcome__title">Upload failed</p>
-            <p class="upload-outcome__detail">{{ uploadingInfo.error }}</p>
+          <span aria-hidden="true" class="upload-outcome__well upload-outcome__well--error">
+            <mat-icon>priority_high</mat-icon>
+          </span>
+          <p class="upload-outcome__title">Upload failed</p>
+          <p class="upload-outcome__detail">{{ uploadingInfo.error }}</p>
 
-            <div class="upload-outcome__actions">
-              <button mat-flat-button type="button" (click)="initiateUploadInternal()">
-                Try again
-              </button>
-              <button mat-stroked-button type="button" (click)="onClickFailureCancel()">
-                Cancel
-              </button>
-            </div>
-          }
+          <div class="upload-outcome__actions">
+            <button mat-flat-button type="button" (click)="initiateUploadInternal()">
+              Try again
+            </button>
+            <button mat-stroked-button type="button" (click)="onClickFailureCancel()">
+              Cancel
+            </button>
+          </div>
         </div>
       }
     }
