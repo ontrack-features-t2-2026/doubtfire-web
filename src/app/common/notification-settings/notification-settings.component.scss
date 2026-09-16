@@ -41,3 +41,30 @@
 .notification-setting__channels mat-checkbox {
   width: auto;
 }
+
+// A choice rather than an on/off, so the control sits on the same line as its
+// label the way the checkboxes do, with the help text underneath.
+.notification-setting--choice {
+  display: grid;
+  align-items: center;
+  gap: 4px 12px;
+  grid-template-areas:
+    'label control'
+    'help help';
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.notification-setting__label {
+  grid-area: label;
+  color: var(--ot-color-text);
+  font-size: 0.95rem;
+}
+
+.notification-setting__select {
+  grid-area: control;
+  width: 10rem;
+}
+
+.notification-setting--choice .notification-setting__help {
+  grid-area: help;
+}

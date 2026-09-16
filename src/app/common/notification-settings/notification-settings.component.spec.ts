@@ -4,7 +4,10 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormsModule} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
+import {MatSelectModule} from '@angular/material/select';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {User} from 'src/app/api/models/user/user';
 import {NotificationSettingsComponent} from './notification-settings.component';
@@ -29,7 +32,15 @@ describe('NotificationSettingsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [NotificationSettingsComponent],
-      imports: [FormsModule, MatCheckboxModule, MatIconModule, RouterModule.forRoot([])],
+      imports: [
+        FormsModule,
+        MatCheckboxModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatSelectModule,
+        NoopAnimationsModule,
+        RouterModule.forRoot([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationSettingsComponent);
@@ -61,7 +72,9 @@ describe('NotificationSettingsComponent', () => {
 
   it('renders the Unit Hub row like the other categories', () => {
     const rows: HTMLElement[] = Array.from(
-      fixture.nativeElement.querySelectorAll('.notification-setting'),
+      fixture.nativeElement.querySelectorAll(
+        '.notification-setting:not(.notification-setting--choice)',
+      ),
     );
     const hubRow = rows[3];
 
@@ -152,7 +165,9 @@ describe('NotificationSettingsComponent', () => {
     const inputs = fixture.nativeElement.querySelectorAll(
       '.notification-setting > mat-checkbox input[type="checkbox"]',
     );
-    const descriptions = fixture.nativeElement.querySelectorAll('.notification-setting small[id]');
+    const descriptions = fixture.nativeElement.querySelectorAll(
+      '.notification-setting:not(.notification-setting--choice) small[id]',
+    );
     const descriptionIds = [
       'task-notification-description',
       'feedback-notification-description',
@@ -185,5 +200,36 @@ describe('NotificationSettingsComponent', () => {
   it('leaves the notifications page link out unless asked to show it', () => {
     expect(fixture.nativeElement.querySelector('a[href="/notifications"]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Notifications page');
+  });
+
+  it('offers a cadence for the summary email and explains the one chosen', () => {
+    const component = fixture.componentInstance;
+
+    expect(component.digestOptions.map((option) => option.value)).toEqual([
+      'off',
+      'daily',
+      'weekly',
+      'monthly',
+    ]);
+
+    component.user.digestFrequency = 'monthly';
+    expect(component.digestHelp).toBe('How the trimester is going so far.');
+
+    // Never is a real choice here, separate from feedback notifications.
+    component.user.digestFrequency = 'off';
+    expect(component.digestHelp).toBe('No summary email.');
+  });
+
+  it('describes the cadence control the way the checkboxes are described', () => {
+    const select = fixture.nativeElement.querySelector('mat-select');
+    const help = fixture.nativeElement.querySelector('#digest-frequency-description');
+
+    expect(select?.getAttribute('aria-describedby')).toBe('digest-frequency-description');
+    expect(help).not.toBeNull();
+  });
+
+  it('says nothing rather than guessing when the cadence is unknown', () => {
+    fixture.componentInstance.user.digestFrequency = undefined as unknown as string;
+    expect(fixture.componentInstance.digestHelp).toBe('');
   });
 });

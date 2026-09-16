@@ -52,6 +52,32 @@
     </small>
   </div>
 
+  <!-- One email per unit summarising where the student is up to. Its own
+       control, because it used to ride on feedback notifications and could not
+       be turned off without losing those too. -->
+  <div class="notification-setting notification-setting--choice">
+    <label class="notification-setting__label" for="digest-frequency">Summary email</label>
+    <mat-form-field
+      appearance="outline"
+      class="notification-setting__select"
+      subscriptSizing="dynamic"
+    >
+      <mat-select
+        aria-describedby="digest-frequency-description"
+        id="digest-frequency"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="user.digestFrequency"
+      >
+        @for (option of digestOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <small class="notification-setting__help" id="digest-frequency-description">
+      {{ digestHelp }}
+    </small>
+  </div>
+
   <div class="notification-setting">
     <mat-checkbox
       aria-describedby="portfolio-notification-description"

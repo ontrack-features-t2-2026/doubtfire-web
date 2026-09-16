@@ -36,6 +36,7 @@ export class UserService extends CachedEntityService<User> {
       'receiveUnitHubEmailNotifications',
       'receiveUnitHubPushNotifications',
       'receiveUnitHubSessionReminders',
+      'digestFrequency',
       'displayPeerProgress',
       'themePreference',
       'themePreferenceUpdatedAt',
