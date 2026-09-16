@@ -228,10 +228,42 @@ describe('EditProfileFormComponent', () => {
     expect(component.canEditStudentId).toBe(true);
   });
 
+  it('treats an SSO name as read-only and a local one as editable', () => {
+    dialogData.user = makeUser({institutionalIdentityManaged: true, emailEditable: false});
+    createComponent();
+    expect(component.canEditName).toBe(false);
+
+    dialogData.user = makeUser({institutionalIdentityManaged: false, emailEditable: true});
+    createComponent();
+    expect(component.canEditName).toBe(true);
+  });
+
+  it('leaves institution-managed name and email out of the update', () => {
+    const user = makeUser({
+      institutionalIdentityManaged: true,
+      emailEditable: false,
+      nickname: 'Preferred',
+    });
+    dialogData.user = user;
+    userServiceStub.update.mockReturnValue(of(user));
+
+    createComponent();
+    component.submit();
+
+    expect(userServiceStub.update).toHaveBeenCalledWith(user, {
+      entity: user,
+      ignoreKeys: ['firstName', 'lastName', 'email'],
+    });
+  });
+
   it('reports explicit saving and success state while preserving genuine settings', () => {
+    // Database auth, so nothing on this account is institution-managed and the
+    // whole entity goes up. The SSO case is covered separately below.
     const updated = makeUser({
       nickname: 'Preferred',
       receiveFeedbackNotifications: false,
+      institutionalIdentityManaged: false,
+      emailEditable: true,
     });
     dialogData.user = updated;
     userServiceStub.update.mockReturnValue(of(updated));
@@ -484,5 +516,106 @@ describe('EditProfileFormComponent save bar and labels', () => {
     expect(fixture.nativeElement.querySelector('.profile-header__meta').textContent).toContain(
       'ada',
     );
+  });
+});
+
+// Identity the institution asserts is shown, not offered for editing. Renders
+// the real template under both auth methods, because the difference between the
+// two is entirely in what the form puts on the page.
+describe('EditProfileFormComponent institution-managed identity', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+
+  const render = async (user: User): Promise<void> => {
+    TestBed.resetTestingModule();
+
+    await TestBed.configureTestingModule({
+      declarations: [EditProfileFormComponent, StubNgFormProfile, StubNotificationNgModel],
+      providers: [
+        {provide: AlertService, useValue: {error: vi.fn()}},
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: {currentUser: user}},
+        {provide: Router, useValue: {}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: {user, mode: 'edit', modal: false}},
+        {provide: MatSnackBar, useValue: {}},
+        {provide: PushNotificationService, useValue: pushServiceStub},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    fixture.detectChanges();
+  };
+
+  const input = (name: string): Element | null =>
+    fixture.nativeElement.querySelector(`input[name="${name}"]`);
+  const accountFacts = (): string[] =>
+    Array.from(
+      fixture.nativeElement.querySelectorAll('.account-information dt') as NodeListOf<Element>,
+    ).map((term) => term.textContent.trim());
+
+  const ssoUser = (): User =>
+    makeUser({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      username: 'ada',
+      email: 'ada@institution.edu',
+      nickname: 'Addy',
+      institutionalIdentityManaged: true,
+      emailEditable: false,
+    });
+
+  const localUser = (): User =>
+    makeUser({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      username: 'ada',
+      email: 'ada@local.test',
+      institutionalIdentityManaged: false,
+      emailEditable: true,
+    });
+
+  it('shows the managed name and email as account facts under SSO', async () => {
+    await render(ssoUser());
+
+    expect(accountFacts()).toContain('First name');
+    expect(accountFacts()).toContain('Last name');
+    expect(accountFacts()).toContain('Institutional / sign-in email');
+    expect(fixture.nativeElement.querySelector('.account-information dl').textContent).toContain(
+      'Lovelace',
+    );
+    expect(input('first')).toBeNull();
+    expect(input('last')).toBeNull();
+    expect(input('email')).toBeNull();
+  });
+
+  it('explains where the managed details come from under SSO', async () => {
+    await render(ssoUser());
+
+    expect(
+      fixture.nativeElement.querySelector('.account-information__managed').textContent,
+    ).toContain('Your name and email come from your institution account.');
+  });
+
+  it('keeps the preferred name editable and hinted under SSO', async () => {
+    await render(ssoUser());
+
+    expect(input('preferred_name')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Shown to your tutors instead of your first name.',
+    );
+  });
+
+  it('keeps name and email editable under database auth', async () => {
+    await render(localUser());
+
+    expect(input('first')).not.toBeNull();
+    expect(input('last')).not.toBeNull();
+    expect(input('email')).not.toBeNull();
+    expect(accountFacts()).not.toContain('First name');
+    expect(fixture.nativeElement.querySelector('.account-information__managed')).toBeNull();
   });
 });

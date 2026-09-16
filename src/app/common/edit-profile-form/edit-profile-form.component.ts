@@ -210,6 +210,32 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.newUser || this.user.emailEditable === true;
   }
 
+  /**
+   * First and last name are asserted by the institution on every deployment
+   * that is not local database auth, so the API rejects a change to either.
+   * `institutionalIdentityManaged` is the server's own answer to that question,
+   * carried on the user we already fetched, so the page needs no extra request.
+   */
+  public get canEditName(): boolean {
+    return this.newUser || !this.user.institutionalIdentityManaged;
+  }
+
+  /**
+   * Identity the deployment manages. These are rendered as facts rather than
+   * inputs, so they are left out of the update as well. Sending a value the
+   * user was never able to change is at best noise and at worst a 422.
+   */
+  private get readOnlyIdentityKeys(): string[] {
+    const keys: string[] = [];
+    if (!this.canEditName) {
+      keys.push('firstName', 'lastName');
+    }
+    if (!this.canEditEmail) {
+      keys.push('email');
+    }
+    return keys;
+  }
+
   public get canEditStudentId(): boolean {
     return this.newUser || (!this.user.institutionalIdentityManaged && !this.managingOwnProfile);
   }
@@ -258,7 +284,12 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
         error: (error: unknown) => this.handleSaveError(error),
       });
     } else {
-      this.userService.update(this.user).subscribe({
+      const ignoreKeys = this.readOnlyIdentityKeys;
+      const request = ignoreKeys.length
+        ? this.userService.update(this.user, {entity: this.user, ignoreKeys})
+        : this.userService.update(this.user);
+
+      request.subscribe({
         next: (updatedUser) => {
           this.saving = false;
           if (this.mode === 'create') {
