@@ -14,11 +14,15 @@ import {TaskStatusEnum, TaskStatusUiData} from 'src/app/api/models/task-status';
 import {UnitRole} from 'src/app/api/models/unit-role';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {prefersReducedMotion} from 'src/app/common/celebrate/reduced-motion';
 import {ExtensionModalService} from 'src/app/common/modals/extension-modal/extension-modal.service';
 import {QrModalService} from 'src/app/common/modals/qr-modal/qr-modal.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {FeedbackAppealModalService} from 'src/app/tasks/modals/feedback-appeal-modal/feedback-appeal-modal.service';
 import {SubmissionTypeModalService} from 'src/app/tasks/modals/submission-type-modal/submission-type-modal.service';
+
+/** How long the sign-off flourish stays before the card settles. */
+const SIGNED_OFF_MS = 2600;
 
 @Component({
   selector: 'f-task-status-card',
@@ -29,7 +33,16 @@ import {SubmissionTypeModalService} from 'src/app/tasks/modals/submission-type-m
 })
 export class TaskStatusCardComponent implements OnChanges, OnDestroy {
   triggers: TaskStatusUiData[];
+  /**
+   * Set when this task reaches Complete while the student is looking at it. The
+   * dialog on the dashboard only plays for work signed off since the last visit,
+   * so a change that lands mid-session would otherwise pass without a word.
+   */
+  public justSignedOff = false;
+
   private taskStatusSub: Subscription;
+  private signedOffTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastSeenStatus?: TaskStatusEnum;
 
   constructor(
     private extensions: ExtensionModalService,
@@ -43,6 +56,7 @@ export class TaskStatusCardComponent implements OnChanges, OnDestroy {
   ) {
     this.taskStatusSub = this.taskService.taskStatusUpdated$.subscribe((task) => {
       if (this.isCurrentTask(task)) {
+        this.noteStatusChange(task.status);
         this.reapplyTriggers();
       }
     });
@@ -63,11 +77,51 @@ export class TaskStatusCardComponent implements OnChanges, OnDestroy {
       this.task = changes.task.currentValue;
       this.reapplyTriggers();
       this.project = this.task.project;
+      // Switching tasks is not a transition. Seed the baseline so opening one
+      // that is already complete does not read as having just been signed off.
+      this.lastSeenStatus = this.task?.status;
+      this.clearSignedOffTimer();
+      this.justSignedOff = false;
     }
   }
 
   ngOnDestroy(): void {
     this.taskStatusSub?.unsubscribe();
+    this.clearSignedOffTimer();
+  }
+
+  /**
+   * Only the student whose work it is, only on the way into Complete, and only
+   * when the card already knew a different status. Arriving on a task that is
+   * already complete is the returning visit the dialog handles.
+   */
+  private noteStatusChange(status: TaskStatusEnum): void {
+    const previous = this.lastSeenStatus;
+    this.lastSeenStatus = status;
+
+    if (status !== 'complete' || previous === undefined || previous === 'complete') {
+      return;
+    }
+    if (this.task?.unit?.myRole !== 'Student') {
+      return;
+    }
+
+    this.clearSignedOffTimer();
+    this.justSignedOff = true;
+    this.signedOffTimer = setTimeout(
+      () => {
+        this.justSignedOff = false;
+        this.signedOffTimer = null;
+      },
+      prefersReducedMotion() ? 900 : SIGNED_OFF_MS,
+    );
+  }
+
+  private clearSignedOffTimer(): void {
+    if (this.signedOffTimer) {
+      clearTimeout(this.signedOffTimer);
+      this.signedOffTimer = null;
+    }
   }
 
   private isCurrentTask(task: Task): boolean {
