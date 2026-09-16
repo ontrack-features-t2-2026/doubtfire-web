@@ -280,10 +280,14 @@ body.split-pane-resizing pdf-viewer {
 // This used to drive that from a single registered custom property animated on
 // :root behind a :has(). The property inherits, so its computed value changed on
 // every element in the document sixty times a second for as long as any skeleton
-// was on screen, and the :has() put a whole-document invalidation on the root as
-// well. Neither bought anything: the percentage sizing above is what keeps the
-// placeholders in step, and the shared clock only lined up start times, which
-// already line up because a loading state mounts its skeletons in one frame.
+// was on screen, and only the handful of pseudo-elements below ever read it.
+//
+// What the shared clock bought was a common phase, and a common phase is not
+// something anyone can see here: a percentage transform ties speed to width, so
+// a 600px bar's sheen crosses at about 750px/s and a 30px circle's at about
+// 37px/s. They were in phase and never in step. Within one loading state the
+// placeholders mount together and so start together anyway. Two regions loading
+// on separate flags can now drift apart, which is the one thing given up.
 @keyframes ot-skeleton-sheen {
   from {
     transform: translateX(-100%);

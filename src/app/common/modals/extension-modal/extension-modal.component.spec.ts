@@ -192,25 +192,37 @@ describe('ExtensionModalComponent presentation', () => {
     component.extensionData.controls.extensionReason.setValue(REASON);
 
     pickDate(component, new Date(2030, 0, 1));
-    expect(component.isDateInRange).toBe(false);
-    expect(component.dateNeedsAttention).toBe(true);
-    expect(component.canSubmit).toBe(false);
-    expect(component.dateErrorText).toBe(
-      'The final deadline has passed, so only the earliest date can be requested',
-    );
+
+    // The date never lands, so nothing downstream can be derived from it.
+    expect(component.extensionSummary).toBe('+4 weeks · Sun 4 Oct');
+    expect(component.isDateInRange).toBe(true);
+    expect(component.dateNeedsAttention).toBe(false);
 
     component.submitApplication();
-    expect(requestExtension).not.toHaveBeenCalled();
+    expect(requestExtension).toHaveBeenCalledWith(REASON, 4, expect.anything());
   });
 
-  it('never renders an error naming an empty date range', () => {
+  it('holds the earliest date even if the guard is the only thing left', () => {
+    // Belt to the braces above: if the field is ever re-enabled, this is what
+    // stops a far-future date being requested.
     vi.setSystemTime(new Date(2026, 9, 3, 12, 0));
     const {component} = buildComponent(undefined, buildTask(DUE, DEADLINE));
 
-    pickDate(component, null);
-    expect(component.dateNeedsAttention).toBe(true);
+    (component as unknown as {extensionDate: Date}).extensionDate = new Date(2030, 0, 1);
+    expect(component.isDateInRange).toBe(false);
+    expect(component.dateErrorText).toBe(
+      'The final deadline has passed, so only the earliest date can be requested',
+    );
+  });
+
+  it('never names a date range that resolved to nothing', () => {
+    // A task with no deadline leaves hasDateRange true and dateRangeText empty,
+    // which is the pair that used to render "Pick a date from ." and no hint.
+    const {component} = buildComponent(undefined, buildTask(DUE, null as unknown as Date));
+
+    expect(component.hasDateRange).toBe(true);
     expect(component.dateRangeText).toBe('');
-    expect(component.dateErrorText).not.toContain('Pick a date from ');
+    expect(component.dateErrorText).toBe('Pick a date on or after Sat 12 Sep');
   });
 
   it('keeps submit disabled until the reason and a date in range are both valid', () => {

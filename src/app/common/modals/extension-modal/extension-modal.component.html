@@ -79,6 +79,9 @@
         <mat-hint>Choose a date from {{ dateRangeText }}</mat-hint>
       } @else if (!hasDateRange) {
         <mat-hint>The final deadline has passed, so the earliest date is requested</mat-hint>
+      } @else {
+        <!-- A range that named no dates used to leave the field with no hint. -->
+        <mat-hint>Choose a date on or after {{ formatShortDate(minDate) }}</mat-hint>
       }
     </mat-form-field>
 

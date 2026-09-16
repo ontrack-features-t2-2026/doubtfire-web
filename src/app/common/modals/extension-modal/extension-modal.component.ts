@@ -83,6 +83,14 @@ export class ExtensionModalComponent {
   maxDate = this.data.task.localDeadlineDate(); // deadline, hard deadline
   extensionDate = new Date(this.minDate);
   addEvent(type: string, event: MatDatepickerInputEvent<Date>) {
+    // With no range left the request carries the earliest date, so there is
+    // nothing here to change. Refusing the write makes that an invariant rather
+    // than something the validity getters have to keep catching, and it means
+    // extensionDuration can only ever be derived from a date that was allowed.
+    if (!this.hasDateRange) {
+      return;
+    }
+
     this.dateEntryInvalid = !event.value;
     if (event.value) {
       this.extensionDate = new Date(event.value);
@@ -162,10 +170,18 @@ export class ExtensionModalComponent {
     return this.dateEntryInvalid || (this.dateChanged && !this.isDateInRange);
   }
 
-  /** Why the date will not do. Empty when there is nothing to say. */
+  /**
+   * Why the date will not do. hasDateRange and dateRangeText do not empty on
+   * the same condition, so this has to ask about the text it is going to use
+   * rather than assume a range exists wherever hasDateRange is true. Naming a
+   * range that resolved to nothing is what produced "Pick a date from ."
+   */
   public get dateErrorText(): string {
     if (!this.hasDateRange) {
       return 'The final deadline has passed, so only the earliest date can be requested';
+    }
+    if (!this.dateRangeText) {
+      return `Pick a date on or after ${this.formatShortDate(this.minDate)}`;
     }
     return `Pick a date from ${this.dateRangeText}`;
   }
