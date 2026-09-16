@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   Optional,
+  isDevMode,
 } from '@angular/core';
 import {NgForm} from '@angular/forms';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
@@ -207,7 +208,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   }
 
   public get canEditEmail(): boolean {
-    return this.newUser || this.user.emailEditable === true;
+    return this.newUser || (this.user.emailEditable === true && !this.identityManaged);
   }
 
   /**
@@ -217,7 +218,25 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
    * carried on the user we already fetched, so the page needs no extra request.
    */
   public get canEditName(): boolean {
-    return this.newUser || !this.user.institutionalIdentityManaged;
+    return this.newUser || !this.identityManaged;
+  }
+
+  /**
+   * The server decides this, and a local database-auth demo always answers no. A dev
+   * build accepts ?identityManaged=1 so the institution-managed page can be seen
+   * without an SSO deployment. It changes nothing that is saved.
+   */
+  public get identityManagedView(): boolean {
+    return this.identityManaged;
+  }
+
+  private get identityManaged(): boolean {
+    if (this.user?.institutionalIdentityManaged) {
+      return true;
+    }
+    return (
+      isDevMode() && new URLSearchParams(window.location.search).get('identityManaged') === '1'
+    );
   }
 
   /**
@@ -237,7 +256,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   }
 
   public get canEditStudentId(): boolean {
-    return this.newUser || (!this.user.institutionalIdentityManaged && !this.managingOwnProfile);
+    return this.newUser || (!this.identityManaged && !this.managingOwnProfile);
   }
 
   public get canEditSystemRole(): boolean {

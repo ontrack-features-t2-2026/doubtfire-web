@@ -238,6 +238,20 @@ describe('EditProfileFormComponent', () => {
     expect(component.canEditName).toBe(true);
   });
 
+  it('previews the institution-managed page from a dev-only query parameter', () => {
+    const search = window.location.search;
+    window.history.replaceState({}, '', `${window.location.pathname}?identityManaged=1`);
+    try {
+      dialogData.user = makeUser({institutionalIdentityManaged: false, emailEditable: true});
+      createComponent();
+      expect(component.canEditName).toBe(false);
+      expect(component.canEditEmail).toBe(false);
+      expect(component.identityManagedView).toBe(true);
+    } finally {
+      window.history.replaceState({}, '', `${window.location.pathname}${search}`);
+    }
+  });
+
   it('leaves institution-managed name and email out of the update', () => {
     const user = makeUser({
       institutionalIdentityManaged: true,
