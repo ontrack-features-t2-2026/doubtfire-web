@@ -25,6 +25,7 @@ import {environment} from 'src/environments/environment';
 import {ClipboardModule} from '@angular/cdk/clipboard';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {ScrollingModule} from '@angular/cdk/scrolling';
+import {TextFieldModule} from '@angular/cdk/text-field';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {APP_INITIALIZER, ErrorHandler, Injector, NgModule} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -841,6 +842,11 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ClipboardModule,
     DragDropModule,
     ScrollingModule,
+    // Seven templates ask a textarea to grow with its content, and set a minimum
+    // of three rows while they are at it. Without this the directive is an inert
+    // attribute, so every one of them rendered at the browser default of two rows
+    // and never grew.
+    TextFieldModule,
     MatToolbarModule,
     MatSidenavModule,
     MatFormFieldModule,

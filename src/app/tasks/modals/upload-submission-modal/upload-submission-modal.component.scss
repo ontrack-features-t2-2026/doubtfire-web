@@ -323,10 +323,13 @@
     var(--ot-color-error) 85%,
     var(--ot-color-text)
   );
+  // Against the decorative border this outline is 2.21:1 on the dialog surface
+  // in dark, under the 3:1 WCAG asks of a control edge. The control token takes
+  // it to 3.50:1 and leaves light mode exactly where it was.
   --mat-button-outlined-outline-color: color-mix(
     in srgb,
     var(--ot-color-error) 40%,
-    var(--ot-color-border)
+    var(--ot-color-control-border)
   );
   background-color: transparent;
 }

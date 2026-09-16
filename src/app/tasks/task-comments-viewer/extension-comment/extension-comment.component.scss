@@ -173,7 +173,8 @@
   color: var(--ot-color-on-primary, #fff);
 }
 
-.ext-btn.ext-btn--deny:not(:disabled) {
-  border-color: var(--ot-color-error);
-  color: var(--ot-color-error);
-}
+// Deny is destructive, and used to say so with a local red border and label.
+// That left it with a red outline over the primary-tinted fill every other
+// outlined button gets, since the button never said color="warn". It says so
+// now, so the global warn treatment supplies outline, label, fill and hover as
+// one set.

@@ -174,23 +174,66 @@ body.split-pane-resizing pdf-viewer {
 // radius and no shadow. The old grey fill with a drop shadow read as a legacy
 // raised box in light mode. Material's own state layer handles hover and focus.
 .mat-mdc-outlined-button:not(:disabled) {
+  --mat-button-outlined-container-shape: var(--ot-radius-md);
+  box-shadow: none;
+}
+
+// The outline is a control edge, so it is mixed from the control tokens rather
+// than the decorative ones. --ot-color-border and --ot-color-primary are both
+// dark in the dark theme, and the old mix of the two landed on #385A8D: 1.60:1
+// against a dialog or card, where WCAG 1.4.11 asks for 3:1. --ot-color-link and
+// --ot-color-control-border are the lighter pair the dark theme already defines
+// for exactly this, and give 3.66:1. Light is unchanged to the byte, because
+// there link equals primary and control-border equals border.
+.mat-mdc-outlined-button:not(:disabled):not(.mat-warn) {
   --mat-button-outlined-outline-color: color-mix(
     in srgb,
-    var(--ot-color-primary) 35%,
-    var(--ot-color-border)
+    var(--ot-color-link) 35%,
+    var(--ot-color-control-border)
   );
   --mat-button-outlined-label-text-color: var(--ot-color-text);
-  --mat-button-outlined-container-shape: var(--ot-radius-md);
+  // The wash stays on primary: it is a background, and it is meant to be faint.
+  // The glyph drawn over it is meaningful non-text and needs 3:1, which dark
+  // primary only reaches on the bare page (2.21:1 on a card). Link is the same
+  // accent one step lighter, and the same colour as primary in light.
   background-color: color-mix(in srgb, var(--ot-color-primary) 5%, transparent);
-  box-shadow: none;
 
   .mat-icon {
-    color: var(--ot-color-primary);
+    color: var(--ot-color-link);
   }
 }
 
-.mat-mdc-outlined-button:not(:disabled):hover {
+.mat-mdc-outlined-button:not(:disabled):not(.mat-warn):hover {
   background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
+}
+
+// color="warn" is the app's way of saying "this one destroys something", and the
+// treatment above painted it in primary anyway: a blue trash icon on Delete
+// portfolio. Give warn the same shape of treatment in its own colour. The filled
+// rule below already excludes .mat-warn; this is the outlined half of that.
+.mat-mdc-outlined-button:not(:disabled).mat-warn {
+  // Mixed against the control edge for the same reason as above: over the
+  // decorative border this lands at 2.36:1 in dark, and at 3.57:1 here.
+  --mat-button-outlined-outline-color: color-mix(
+    in srgb,
+    var(--ot-color-error) 45%,
+    var(--ot-color-control-border)
+  );
+  // The outline and the icon carry the warning. The label stays in the text
+  // colour: error over an error-tinted fill tops out around 4.3:1, under the
+  // 4.5:1 text needs, and no mix of error and text clears it in both themes
+  // without going pink. Non-text only has to reach 3:1, which the icon does at
+  // 3.92:1 in the worst case.
+  --mat-button-outlined-label-text-color: var(--ot-color-text);
+  background-color: color-mix(in srgb, var(--ot-color-error) 5%, transparent);
+
+  .mat-icon {
+    color: var(--ot-color-error);
+  }
+}
+
+.mat-mdc-outlined-button:not(:disabled).mat-warn:hover {
+  background-color: color-mix(in srgb, var(--ot-color-error) 11%, transparent);
 }
 
 // Filled buttons. Without a color input Material fills them with a neutral grey,
