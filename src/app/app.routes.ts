@@ -85,6 +85,14 @@ export const routes: Routes = [
     data: {pageTitle: 'Theme foundation'},
   },
   {
+    path: 'motion-demo',
+    loadComponent: () =>
+      import('./common/celebrate/motion-demo/motion-demo.component').then(
+        (m) => m.MotionDemoComponent,
+      ),
+    data: {pageTitle: 'Motion'},
+  },
+  {
     path: 'demo-controls',
     component: DemoControlsComponent,
     canActivate: [demoToolsGuard],
