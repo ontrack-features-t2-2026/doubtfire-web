@@ -270,27 +270,27 @@ body.split-pane-resizing pdf-viewer {
 // in dark mode. Restate them there with the divider token the hand-built
 // skeletons use. The :root prefix outweighs the library's attribute selector.
 //
-// The library also runs a separate 200px shimmer per placeholder, each on its
-// own clock, so a page of skeletons flickered out of step. Instead one shared
-// phase animates on the root, only while a skeleton is on the page, and every
-// placeholder moves a soft diagonal sheen by it. They all cross together.
-@property --ot-skeleton-sheen {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: -100%;
-}
-
+// The library's shimmer is a 200px pseudo-element that travels 100vw inside each
+// placeholder's own clip box, on ease-in-out. A narrow placeholder therefore
+// shows the sheen for a sliver of the cycle and a wide one for much longer, so a
+// page of skeletons flickered out of step. Sizing the sheen to the placeholder
+// and moving it by a percentage of itself is what fixes that: every placeholder
+// now plays one full sweep per cycle whatever its width.
+//
+// This used to drive that from a single registered custom property animated on
+// :root behind a :has(). The property inherits, so its computed value changed on
+// every element in the document sixty times a second for as long as any skeleton
+// was on screen, and the :has() put a whole-document invalidation on the root as
+// well. Neither bought anything: the percentage sizing above is what keeps the
+// placeholders in step, and the shared clock only lined up start times, which
+// already line up because a loading state mounts its skeletons in one frame.
 @keyframes ot-skeleton-sheen {
   from {
-    --ot-skeleton-sheen: -100%;
+    transform: translateX(-100%);
   }
   to {
-    --ot-skeleton-sheen: 100%;
+    transform: translateX(100%);
   }
-}
-
-:root:has(ngx-skeleton-loader .skeleton-loader.progress) {
-  animation: ot-skeleton-sheen 1.6s linear infinite;
 }
 
 :root ngx-skeleton-loader .skeleton-loader {
@@ -316,15 +316,10 @@ body.split-pane-resizing pdf-viewer {
     transparent 75%
   );
   background-size: 100% 100%;
-  transform: translateX(var(--ot-skeleton-sheen));
-  animation: none;
+  animation: ot-skeleton-sheen 1.6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:has(ngx-skeleton-loader .skeleton-loader.progress) {
-    animation: none;
-  }
-
   :root ngx-skeleton-loader .skeleton-loader.progress::before {
     display: none;
   }
