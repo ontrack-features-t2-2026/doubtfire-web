@@ -69,6 +69,7 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
   private readonly state = inject(PanelStateService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private removeDragListeners: (() => void) | null = null;
+  private destroyed = false;
 
   @HostBinding('class.app-panel') public readonly baseClass = true;
   @HostBinding('attr.role') public readonly role = 'region';
@@ -176,13 +177,26 @@ export class PanelComponent implements PanelRegistration, OnInit, OnDestroy {
     }
     if (this.resizeEdge && !this.flex && saved.width) {
       this.width = this.clamp(saved.width);
-      this.widthChange.emit(this.width);
+      // A panel runs its ngOnInit inside the check that set its inputs, so emitting here
+      // changes parent state Angular has already read, which is NG0100 under `[(width)]`
+      // or any listener that feeds a binding. Hand the width over just after the check
+      // instead, the way the layout settles its rails.
+      void Promise.resolve().then(() => this.emitRestoredWidth());
     }
   }
 
   public ngOnDestroy(): void {
+    this.destroyed = true;
     this.layout?.unregister(this);
     this.stopDragging();
+  }
+
+  /** The parent still has to hear it: the layout's space arithmetic uses the width it holds. */
+  private emitRestoredWidth(): void {
+    if (this.destroyed || typeof this.width !== 'number') {
+      return;
+    }
+    this.widthChange.emit(this.width);
   }
 
   public setCollapsed(collapsed: boolean): void {

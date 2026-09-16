@@ -2,9 +2,11 @@ import {HotkeysHelpComponent, HotkeysService} from '@ngneat/hotkeys';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
+  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -55,7 +57,17 @@ export class InboxComponent implements OnInit, OnDestroy {
     taskDefinitionIdSelected: number | TaskDefinition;
   }>;
   @Input() showSearchOptions: boolean;
-  @ViewChild('inboxpanel', {read: ElementRef}) inboxPanel: ElementRef;
+
+  /** The desktop layout and the phone one each carry this ref, so it moves at the breakpoint. */
+  @ViewChild('inboxpanel', {read: ElementRef})
+  set inboxPanel(panel: ElementRef<HTMLElement> | undefined) {
+    const element = panel?.nativeElement ?? null;
+    if (element === this.measuredPanel) {
+      return;
+    }
+    this.measuredPanel = element;
+    this.observeInboxWidth();
+  }
 
   @Input() viewType: 'inbox' | 'explorer' | 'moderation' | 'overflow';
 
@@ -76,9 +88,18 @@ export class InboxComponent implements OnInit, OnDestroy {
 
   visiblePdfUrl: string;
 
-  get narrowTaskInbox(): boolean {
-    return this.inboxPanel?.nativeElement.getBoundingClientRect().width < 150;
-  }
+  /**
+   * The task list panel is down to its rail, so the rows show as icons only. A
+   * ResizeObserver pushes this. Read as a getter it measured the panel on every check,
+   * and the list it feeds is what changes that measurement, so the check and the dev-mode
+   * pass that verifies it could get different answers.
+   */
+  public narrowTaskInbox = false;
+
+  /** Below this the list has no room for a row's text beside its avatar. */
+  private readonly narrowInboxWidth = 150;
+  private measuredPanel: HTMLElement | null = null;
+  private inboxResizeObserver: ResizeObserver | null = null;
 
   get isMobileView(): boolean {
     return this.breakpointObserver.isMatched(this.mobileBreakpoint);
@@ -105,6 +126,8 @@ export class InboxComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private constants: DoubtfireConstants,
     private breakpointObserver: BreakpointObserver,
+    private changeDetector: ChangeDetectorRef,
+    private zone: NgZone,
   ) {
     this.selectedTask.currentPdfUrl$.subscribe((url) => {
       this.visiblePdfUrl = url;
@@ -186,12 +209,39 @@ export class InboxComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.inboxResizeObserver?.disconnect();
+    this.inboxResizeObserver = null;
     this.destroy$.next();
     this.destroy$.complete();
     this.hotkeys.removeShortcuts('control.shift.d');
     this.hotkeys.removeShortcuts('control.shift.f');
     this.hotkeys.removeShortcuts('control.shift.c');
     this.hotkeys.removeShortcuts('shift.?');
+  }
+
+  private observeInboxWidth(): void {
+    this.inboxResizeObserver?.disconnect();
+    this.inboxResizeObserver = null;
+    if (!this.measuredPanel || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    // Observing delivers a first entry by itself, so nothing here has to measure the
+    // panel, and the callback runs after layout rather than inside a check.
+    this.inboxResizeObserver = new ResizeObserver((entries) => {
+      const width = entries[entries.length - 1]?.contentRect.width;
+      if (typeof width === 'number') {
+        this.zone.run(() => this.setNarrowTaskInbox(width < this.narrowInboxWidth));
+      }
+    });
+    this.inboxResizeObserver.observe(this.measuredPanel);
+  }
+
+  private setNarrowTaskInbox(narrow: boolean): void {
+    if (this.narrowTaskInbox === narrow) {
+      return;
+    }
+    this.narrowTaskInbox = narrow;
+    this.changeDetector.markForCheck();
   }
 
   public toggleCommentsPanel(): void {

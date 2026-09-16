@@ -25,6 +25,28 @@ class HostComponent {
   public fullscreen: string | null = null;
 }
 
+// A page that keeps the width itself, the way the project dashboard does. The restored
+// width has to land here without moving the parent after its own check has run.
+@Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PanelLayoutComponent, PanelComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <app-panel-layout page="spec">
+      <app-panel
+        panelId="list"
+        panelTitle="Tasks"
+        resizeEdge="end"
+        [minWidth]="280"
+        [(width)]="width"
+      ></app-panel>
+    </app-panel-layout>
+  `,
+})
+class TwoWayWidthHostComponent {
+  public width: number | string | null = 300;
+}
+
 const hostTemplate = `
     <app-panel-layout page="spec" [(fullscreenPanel)]="fullscreen">
       <app-panel
@@ -93,7 +115,7 @@ describe('PanelLayoutComponent', () => {
     window.localStorage.clear();
     stacked$ = new BehaviorSubject({matches: false, breakpoints: {}});
     await TestBed.configureTestingModule({
-      imports: [HostComponent],
+      imports: [HostComponent, TwoWayWidthHostComponent],
       providers: [{provide: BreakpointObserver, useValue: {observe: () => stacked$}}],
     })
       .overrideComponent(HostComponent, {set: {template: hostTemplate}})
@@ -206,6 +228,33 @@ describe('PanelLayoutComponent', () => {
     create();
     expect(panel('list').style.width).toBe('280px');
     expect(instance<PanelComponent>('comments').width).toBe(640);
+  });
+
+  it('hands a restored width to a two-way parent after its check, never inside it', async () => {
+    window.localStorage.setItem('ontrack.panels.spec.list', '{"width":420}');
+    const host = TestBed.createComponent(TwoWayWidthHostComponent);
+
+    // Emitting straight from ngOnInit moved the parent's `width` after Angular had
+    // already read it for the `[width]` binding, which is NG0100 in dev mode.
+    expect(() => host.detectChanges()).not.toThrow();
+    expect(host.componentInstance.width).toBe(300);
+
+    await host.whenStable();
+    host.detectChanges();
+
+    expect(host.componentInstance.width).toBe(420);
+    expect(host.nativeElement.querySelector('app-panel').style.width).toBe('420px');
+  });
+
+  it('drops a restored width when the panel goes before the check it waits for', async () => {
+    window.localStorage.setItem('ontrack.panels.spec.list', '{"width":420}');
+    const host = TestBed.createComponent(TwoWayWidthHostComponent);
+    host.detectChanges();
+    host.destroy();
+
+    await host.whenStable();
+
+    expect(host.componentInstance.width).toBe(300);
   });
 
   it('rails the list, then comments, when the page is too narrow, without touching storage', async () => {
