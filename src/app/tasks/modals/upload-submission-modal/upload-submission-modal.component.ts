@@ -1,14 +1,26 @@
-import {ChangeDetectionStrategy, Component, Inject, OnInit, ViewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MemberContribution} from 'src/app/api/models/groups/group';
 import {Task} from 'src/app/api/models/task';
 import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
+import {prefersReducedMotion} from 'src/app/common/celebrate/reduced-motion';
+import type {SubmissionCelebration} from 'src/app/common/celebrate/submission-timing';
 import {FileUploaderComponent} from 'src/app/common/file-uploader/file-uploader.component';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {PrivacyPolicy} from 'src/app/config/privacy-policy/privacy-policy';
+
+/** Everything in the confirmation has settled by ~900ms, so this leaves a beat to read it. */
+const SUBMISSION_CELEBRATION_HOLD_MS = 1900;
 
 type UploadStage = 'group' | 'details' | 'comments';
 type UploadSubmissionType = TaskStatusEnum | 'reupload_evidence' | 'test_submission';
@@ -66,7 +78,7 @@ export type UploadSubmissionModalResult =
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UploadSubmissionModalComponent implements OnInit {
+export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   @ViewChild(FileUploaderComponent) private fileUploader?: FileUploaderComponent;
 
   public readonly minCommentLength = 25;
@@ -94,9 +106,12 @@ export class UploadSubmissionModalComponent implements OnInit {
   public isUploaderReady = false;
   public uploadStarted = false;
   public uploadSubmitLocked = false;
+  /** Set once the submission has landed. It takes over the dialog until it closes. */
+  public celebration: SubmissionCelebration | null = null;
 
   private uploadResponse: UploadSubmissionResponse | null = null;
   private startUpload?: () => void;
+  private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: UploadSubmissionModalData,
@@ -408,11 +423,49 @@ export class UploadSubmissionModalComponent implements OnInit {
           : response.status;
 
       this.task.updateFromJson(response, this.taskService.mapping);
-      this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService, true);
+      // The dialog the student started this from is still the thing they are
+      // looking at, so the confirmation belongs here rather than over the page
+      // they are about to be returned to.
+      const celebration = this.task.processTaskStatusChange(
+        expectedStatus as TaskStatusEnum,
+        this.alertService,
+        true,
+        true,
+      );
+
+      if (celebration) {
+        this.showCelebration(celebration);
+        return;
+      }
     }
 
     this.dialogRef.close({value: this.task});
   };
+
+  /** Hold long enough for the mark to draw and the words to be read, then leave. */
+  private showCelebration(celebration: SubmissionCelebration): void {
+    this.celebration = celebration;
+    this.celebrationTimer = setTimeout(
+      () => this.finishCelebration(),
+      prefersReducedMotion() ? 900 : SUBMISSION_CELEBRATION_HOLD_MS,
+    );
+  }
+
+  /** Also the Done button, so nobody has to wait out the hold. */
+  public finishCelebration(): void {
+    if (this.celebrationTimer) {
+      clearTimeout(this.celebrationTimer);
+      this.celebrationTimer = null;
+    }
+    this.dialogRef.close({value: this.task});
+  }
+
+  public ngOnDestroy(): void {
+    if (this.celebrationTimer) {
+      clearTimeout(this.celebrationTimer);
+      this.celebrationTimer = null;
+    }
+  }
 
   public uploadButtonClicked(): void {
     if (this.uploadSubmitLocked || this.isUploading) {

@@ -164,6 +164,8 @@ import {ArchiveViewerComponent} from './common/archive-viewer/archive-viewer.com
 import {AudioPlayerComponent} from './common/audio-player/audio-player.component';
 import {AudioCommentRecorderComponent} from './common/audio-recorder/audio/audio-comment-recorder/audio-comment-recorder';
 import {MicrophoneTesterComponent} from './common/audio-recorder/audio/microphone-tester/microphone-tester.component';
+import {AnimatedCheckComponent} from './common/celebrate/animated-check.component';
+import {CelebrationParticlesComponent} from './common/celebrate/celebration-particles.component';
 import {ChartBaseComponent} from './common/chart-base/chart-base-component/chart-base-component.component';
 import {DragDropDirective} from './common/directives/drag-drop.directive';
 import {EditProfileFormComponent} from './common/edit-profile-form/edit-profile-form.component';
@@ -825,6 +827,8 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     PanelFullscreenButtonComponent,
     ThemeToggleComponent,
     EmptyStateComponent,
+    AnimatedCheckComponent,
+    CelebrationParticlesComponent,
     FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,

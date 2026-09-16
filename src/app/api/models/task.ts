@@ -5,6 +5,7 @@ import {LOCALE_ID} from '@angular/core';
 import {Observable, finalize, firstValueFrom, map} from 'rxjs';
 import {AppInjector} from 'src/app/app-injector';
 import {SubmissionCelebrationService} from 'src/app/common/celebrate/submission-celebration.service';
+import type {SubmissionCelebration} from 'src/app/common/celebrate/submission-timing';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GradeTaskModalService} from 'src/app/tasks/modals/grade-task-modal/grade-task-modal.service';
@@ -1018,11 +1019,18 @@ export class Task extends Entity {
     );
   }
 
+  /**
+   * Set `claimCelebration` when the caller has a surface of its own to show the
+   * confirmation in, such as the submission dialog it was started from. The
+   * celebration is returned instead of being raised over the page, and the
+   * snackbar stays suppressed either way.
+   */
   public processTaskStatusChange(
     expectedStatus: TaskStatusEnum,
     alerts: AlertService,
     submissionCompleted: boolean = false,
-  ) {
+    claimCelebration: boolean = false,
+  ): SubmissionCelebration | null {
     if (this.inTimeExceeded() && !this.isPastDeadline()) {
       alerts.message(
         'You have submitted after the deadline for feedback. Your task will not be reviewed by a tutor. It is now your responsibility to ensure this task meets the required standard.',
@@ -1032,11 +1040,21 @@ export class Task extends Entity {
 
     const previousStatus = this.statusBeforeSubmission;
     this.statusBeforeSubmission = undefined;
-    const celebrated =
+    const eligible =
       submissionCompleted &&
       expectedStatus === 'ready_for_feedback' &&
-      previousStatus !== undefined &&
-      this.celebrateSubmission(previousStatus);
+      previousStatus !== undefined;
+
+    let claimed: SubmissionCelebration | null = null;
+    let celebrated = false;
+    if (eligible) {
+      if (claimCelebration) {
+        claimed = this.describeSubmissionCelebration(previousStatus);
+        celebrated = claimed !== null;
+      } else {
+        celebrated = this.celebrateSubmission(previousStatus);
+      }
+    }
 
     if (this.status !== expectedStatus) {
       alerts.message(`Status changed to ${this.statusLabel()}.`, 4000);
@@ -1047,6 +1065,7 @@ export class Task extends Entity {
     this.getSubmissionDetails().subscribe();
     const taskService: TaskService = AppInjector.get(TaskService);
     taskService.notifyTransitionComplete(this, submissionCompleted);
+    return claimed;
   }
 
   private celebrateSubmission(previousStatus: TaskStatusEnum): boolean {
@@ -1054,6 +1073,16 @@ export class Task extends Entity {
       return AppInjector.get(SubmissionCelebrationService).celebrate(this, previousStatus);
     } catch {
       return false;
+    }
+  }
+
+  private describeSubmissionCelebration(
+    previousStatus: TaskStatusEnum,
+  ): SubmissionCelebration | null {
+    try {
+      return AppInjector.get(SubmissionCelebrationService).describe(this, previousStatus);
+    } catch {
+      return null;
     }
   }
 

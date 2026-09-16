@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {type Mock, beforeEach, describe, expect, it, vi} from 'vitest';
 import {Task} from 'src/app/api/models/task';
 import {
   UploadSubmissionModalComponent,
@@ -96,8 +96,56 @@ describe('UploadSubmissionModalComponent', () => {
       'ready_for_feedback',
       expect.anything(),
       true,
+      true,
     );
     expect(dialogRef.close).toHaveBeenCalledWith({value: task});
+  });
+
+  it('holds the dialog open on the confirmation, then closes on the same task', () => {
+    vi.useFakeTimers();
+    (task.processTaskStatusChange as unknown as Mock).mockReturnValue({
+      timing: 'on_time',
+      resubmission: false,
+      tone: 'success',
+      particles: true,
+      headline: 'Submitted on time. Ready for feedback',
+      detail: 'T1 A task',
+    });
+
+    component.submissionType = 'ready_for_feedback';
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+    component.onUploadComplete();
+
+    // The confirmation has taken the dialog over and nothing has closed yet.
+    expect(component.celebration?.headline).toBe('Submitted on time. Ready for feedback');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(2500);
+    expect(dialogRef.close).toHaveBeenCalledWith({value: task});
+    vi.useRealTimers();
+  });
+
+  it('closes early when the confirmation is dismissed, and only once', () => {
+    vi.useFakeTimers();
+    (task.processTaskStatusChange as unknown as Mock).mockReturnValue({
+      timing: 'after_due',
+      resubmission: false,
+      tone: 'neutral',
+      particles: false,
+      headline: 'Submitted after the due date',
+      detail: 'T1 A task',
+    });
+
+    component.submissionType = 'ready_for_feedback';
+    component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
+    component.onUploadComplete();
+
+    component.finishCelebration();
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(2500);
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   it('restores selection controls after a cancelled slow upload', () => {
