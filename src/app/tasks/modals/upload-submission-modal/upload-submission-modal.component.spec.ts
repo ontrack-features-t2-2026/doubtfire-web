@@ -116,7 +116,13 @@ describe('UploadSubmissionModalComponent', () => {
     component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
     component.onUploadComplete();
 
-    // The confirmation has taken the dialog over and nothing has closed yet.
+    // The old words blur away first, so the panel is mid-swap and not yet
+    // showing the confirmation.
+    expect(component.flowSwapping).toBe(true);
+    expect(component.celebration).toBeNull();
+
+    vi.advanceTimersByTime(300);
+    expect(component.flowSwapping).toBe(false);
     expect(component.celebration?.headline).toBe('Submitted on time. Ready for feedback');
     expect(dialogRef.close).not.toHaveBeenCalled();
 
@@ -128,6 +134,30 @@ describe('UploadSubmissionModalComponent', () => {
     vi.advanceTimersByTime(1500);
     expect(dialogRef.close).toHaveBeenCalledWith({value: task});
     vi.useRealTimers();
+  });
+
+  it('lets someone in a hurry leave on the confirmation without a warning', () => {
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      isUploading: true,
+      hasSelectedFiles: () => true,
+    };
+    const confirm = vi.spyOn(window, 'confirm');
+
+    // Mid-upload the dialog holds on, files selected and request in flight.
+    expect(component.canClose()).toBe(false);
+
+    // Once it is confirmed the work is saved, so the backdrop and Escape work.
+    component.celebration = {
+      timing: 'on_time',
+      resubmission: false,
+      tone: 'success',
+      particles: false,
+      headline: 'Submitted on time. Ready for feedback',
+      detail: '1.1P Hello World',
+    };
+    expect(component.canClose()).toBe(true);
+    expect(confirm).not.toHaveBeenCalled();
+    confirm.mockRestore();
   });
 
   it('closes early when the confirmation is dismissed, and only once', () => {
@@ -144,6 +174,7 @@ describe('UploadSubmissionModalComponent', () => {
     component.submissionType = 'ready_for_feedback';
     component.onUploadSuccess({id: 8, project_id: 1, status: 'ready_for_feedback'});
     component.onUploadComplete();
+    vi.advanceTimersByTime(300);
 
     component.finishCelebration();
     expect(dialogRef.close).toHaveBeenCalledTimes(1);

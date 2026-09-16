@@ -27,6 +27,9 @@ import {summariseUploadRequirement} from './task-upload-requirements/upload-cate
  */
 const SUBMISSION_CELEBRATION_HOLD_MS = 3600;
 
+/** How long the old words stay blurred before they are replaced. */
+const FLOW_SWAP_MS = 220;
+
 type UploadStage = 'group' | 'details' | 'comments';
 type UploadSubmissionType = TaskStatusEnum | 'reupload_evidence' | 'test_submission';
 
@@ -113,10 +116,13 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   public uploadSubmitLocked = false;
   /** Set once the submission has landed. It takes over the dialog until it closes. */
   public celebration: SubmissionCelebration | null = null;
+  /** The moment between the two sets of words, while the old ones blur away. */
+  public flowSwapping = false;
 
   private uploadResponse: UploadSubmissionResponse | null = null;
   private startUpload?: () => void;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
+  private swapTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: UploadSubmissionModalData,
@@ -382,6 +388,12 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   };
 
   public canClose(): boolean {
+    // Once the confirmation is up the work is already saved, so anyone in a hurry
+    // can click the backdrop or press Escape and go. Nothing to warn about, and
+    // the upload flag is still set, which would otherwise hold them here.
+    if (this.celebration) {
+      return true;
+    }
     if (this.isUploading) {
       return false;
     }
@@ -503,27 +515,46 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
 
   /** Hold long enough for the mark to draw and the words to be read, then leave. */
   private showCelebration(celebration: SubmissionCelebration): void {
-    this.celebration = celebration;
-    this.celebrationTimer = setTimeout(
-      () => this.finishCelebration(),
-      prefersReducedMotion() ? 900 : SUBMISSION_CELEBRATION_HOLD_MS,
-    );
+    if (prefersReducedMotion()) {
+      this.celebration = celebration;
+      this.celebrationTimer = setTimeout(() => this.finishCelebration(), 900);
+      return;
+    }
+
+    // Blur the old words and the bar out first, then change them. Without the
+    // pause the text is simply replaced between two frames, which reads as a cut
+    // however well the box around it is transitioning.
+    this.flowSwapping = true;
+    this.swapTimer = setTimeout(() => {
+      this.swapTimer = null;
+      this.celebration = celebration;
+      this.flowSwapping = false;
+      this.celebrationTimer = setTimeout(
+        () => this.finishCelebration(),
+        SUBMISSION_CELEBRATION_HOLD_MS,
+      );
+    }, FLOW_SWAP_MS);
   }
 
   /** Also the Done button, so nobody has to wait out the hold. */
   public finishCelebration(): void {
-    if (this.celebrationTimer) {
-      clearTimeout(this.celebrationTimer);
-      this.celebrationTimer = null;
-    }
+    this.clearFlowTimers();
     this.dialogRef.close({value: this.task});
   }
 
-  public ngOnDestroy(): void {
+  private clearFlowTimers(): void {
     if (this.celebrationTimer) {
       clearTimeout(this.celebrationTimer);
       this.celebrationTimer = null;
     }
+    if (this.swapTimer) {
+      clearTimeout(this.swapTimer);
+      this.swapTimer = null;
+    }
+  }
+
+  public ngOnDestroy(): void {
+    this.clearFlowTimers();
   }
 
   public uploadButtonClicked(): void {

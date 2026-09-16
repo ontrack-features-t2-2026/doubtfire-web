@@ -445,6 +445,22 @@ $flow-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   background: transparent;
 }
 
+// The words and the bar blur away before they are replaced, so the change reads
+// as one thing becoming another rather than a cut between two.
+.submit-flow--swapping {
+  .submit-flow__title,
+  .submit-flow__detail,
+  .submit-flow__glyph,
+  .submit-flow__action {
+    opacity: 0;
+    filter: blur(4px);
+  }
+
+  .submit-flow__track {
+    opacity: 0;
+  }
+}
+
 .submit-flow__title {
   margin: 14px 0 0;
   color: var(--ot-color-text);
@@ -453,7 +469,9 @@ $flow-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   line-height: 1.3;
   transition:
     font-size 320ms $flow-ease-out,
-    margin 320ms $flow-ease-out;
+    margin 320ms $flow-ease-out,
+    opacity 200ms ease,
+    filter 200ms ease;
 }
 
 .submit-flow--celebrating .submit-flow__title {
@@ -472,6 +490,9 @@ $flow-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   font-size: 0.9rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
+  transition:
+    opacity 200ms ease,
+    filter 200ms ease;
 }
 
 .submit-flow__track {
@@ -513,7 +534,10 @@ $flow-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
 .submit-flow__action {
   margin-block-start: 18px;
-  transition: transform 140ms $flow-ease-out;
+  transition:
+    transform 140ms $flow-ease-out,
+    opacity 200ms ease,
+    filter 200ms ease;
 
   &:active {
     transform: scale(0.97);
@@ -528,5 +552,10 @@ $flow-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   .submit-flow__fill,
   .submit-flow__action {
     transition: none;
+  }
+
+  .submit-flow--swapping :is(.submit-flow__title, .submit-flow__detail, .submit-flow__glyph) {
+    opacity: 1;
+    filter: none;
   }
 }
