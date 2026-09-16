@@ -21,6 +21,9 @@ import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 
+/** How long the save confirmation stays before the bar leaves with it. */
+const SAVED_CONFIRMATION_MS = 2600;
+
 @Component({
   selector: 'f-edit-profile-form',
   templateUrl: './edit-profile-form.component.html',
@@ -59,6 +62,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   public formPronouns = {pronouns: ''};
   public saving = false;
   public saveMessage = '';
+  /** Keeps the confirmation on screen for a moment after the bar would otherwise go. */
+  public justSaved = false;
   public saveError = '';
   public get customPronouns(): boolean {
     return this.formPronouns.pronouns === '__customPronouns';
@@ -91,6 +96,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       this.user.displayPeerProgress = true;
     }
 
+    // The values Discard puts back. Retaken after every successful save.
+    this.takeSnapshot();
+
     // The same for Unit Hub updates, which are on in the bell and off everywhere
     // else until the user opts in.
     this.user.receiveUnitHubNotifications ??= true;
@@ -109,6 +117,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pushSubscription?.unsubscribe();
+    if (this.justSavedTimer) {
+      clearTimeout(this.justSavedTimer);
+      this.justSavedTimer = null;
+    }
   }
 
   /**
@@ -274,6 +286,85 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.constants.IsTiiEnabled.value;
   }
 
+  /** The fields this form edits, for taking a snapshot to discard back to. */
+  private static readonly EDITED_FIELDS = [
+    'firstName',
+    'lastName',
+    'nickname',
+    'email',
+    'studentId',
+    'pronouns',
+    'username',
+    'systemRole',
+    'optInToResearch',
+    'displayPeerProgress',
+    'acceptedTiiEula',
+  ] as const;
+
+  private savedSnapshot: Record<string, unknown> = {};
+  /** The pronouns select sits outside the user object, so it is snapshotted too. */
+  private savedFormPronouns = '';
+  private justSavedTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** The user as it was when the form was last clean. */
+  private takeSnapshot(): void {
+    const snapshot: Record<string, unknown> = {};
+    EditProfileFormComponent.EDITED_FIELDS.forEach((field) => {
+      snapshot[field] = (this.user as unknown as Record<string, unknown>)[field];
+    });
+    this.savedSnapshot = snapshot;
+    this.savedFormPronouns = this.formPronouns.pronouns;
+  }
+
+  /**
+   * In edit mode the bar earns its place only when it has something to say: an
+   * edit to save, a save in flight, a problem, or a confirmation that has not
+   * faded yet. The other modes always need their main action on screen.
+   *
+   * Dirtiness comes from the template's own form reference, so this does not
+   * depend on how the form directive happens to be resolved.
+   */
+  public showActions(dirty: boolean): boolean {
+    if (this.mode !== 'edit') {
+      return true;
+    }
+    return dirty || this.saving || this.justSaved || !!this.saveError;
+  }
+
+  /** Puts every edited field back to how it was when the form was last clean. */
+  public discard(form?: NgForm): void {
+    if (this.saving) {
+      return;
+    }
+
+    const target = this.user as unknown as Record<string, unknown>;
+    Object.entries(this.savedSnapshot).forEach(([field, value]) => {
+      target[field] = value;
+    });
+
+    this.formPronouns.pronouns = this.savedFormPronouns;
+    this.saveMessage = '';
+    this.saveError = '';
+    form?.form.markAsPristine();
+    form?.form.markAsUntouched();
+  }
+
+  private confirmSaved(message: string, form?: NgForm): void {
+    this.saveMessage = message;
+    form?.form.markAsPristine();
+    this.takeSnapshot();
+
+    // The bar leaves on its own once the confirmation has been seen.
+    this.justSaved = true;
+    if (this.justSavedTimer) {
+      clearTimeout(this.justSavedTimer);
+    }
+    this.justSavedTimer = setTimeout(() => {
+      this.justSaved = false;
+      this.justSavedTimer = null;
+    }, SAVED_CONFIRMATION_MS);
+  }
+
   public submit(form?: NgForm): void {
     if (this.saving || form?.invalid) {
       return;
@@ -291,8 +382,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
           this.saving = false;
           this.user = updatedUser;
           this.initialFirstName = this.user.firstName;
-          form?.form.markAsPristine();
-          this.saveMessage = 'User created.';
+          this.confirmSaved('User created.', form);
 
           this._snackBar.open('User created', 'dismiss', {
             duration: 1500,
@@ -316,8 +406,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
           } else {
             this.user = updatedUser;
             this.initialFirstName = this.user.firstName;
-            form?.form.markAsPristine();
-            this.saveMessage = 'Profile saved.';
+            this.confirmSaved('Profile saved.', form);
 
             // TODO: refactor into new alertService
             // this is a new snackbar alert test

@@ -454,7 +454,7 @@ describe('EditProfileFormComponent notifications page link', () => {
   });
 });
 
-// The save bar swaps its action for a quiet status once nothing is left to save.
+// The save bar only exists while there is something to act on.
 @Directive({selector: 'form', exportAs: 'ngForm', standalone: false})
 class StubNgFormSaveBar {
   public invalid = false;
@@ -495,21 +495,55 @@ describe('EditProfileFormComponent save bar and labels', () => {
     fixture.debugElement.children[0].injector.get(StubNgFormSaveBar);
   const text = (): string => fixture.nativeElement.textContent;
 
-  it('shows a quiet saved status instead of a disabled button when clean', () => {
+  it('shows no bar at all when there is nothing to act on', () => {
+    expect(fixture.nativeElement.querySelector('.profile-actions')).toBeNull();
     expect(fixture.nativeElement.querySelector('button[type="submit"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.profile-actions__saved')?.textContent).toContain(
-      'All changes saved',
-    );
+    expect(text()).not.toContain('All changes saved');
   });
 
-  it('shows the save action once the form has changes', () => {
+  it('brings the bar in with both actions once the form has changes', () => {
     form().dirty = true;
     form().pristine = false;
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('.profile-actions')).not.toBeNull();
+    expect(text()).toContain('You have unsaved changes');
+
     const submit: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
     expect(submit.textContent).toContain('Save changes');
-    expect(fixture.nativeElement.querySelector('.profile-actions__saved')).toBeNull();
+    expect(text()).toContain('Discard');
+  });
+
+  it('keeps the bar while a save is in flight and while the result is still showing', () => {
+    const component = fixture.componentInstance;
+
+    component.saving = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.profile-actions')).not.toBeNull();
+
+    component.saving = false;
+    component.justSaved = true;
+    component.saveMessage = 'Profile saved.';
+    fixture.detectChanges();
+    expect(text()).toContain('Profile saved.');
+
+    // Once the confirmation has had its moment the bar goes with it.
+    component.justSaved = false;
+    component.saveMessage = '';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.profile-actions')).toBeNull();
+  });
+
+  it('puts every edited field back when the changes are discarded', () => {
+    const component = fixture.componentInstance;
+    const original = component.user.firstName;
+
+    component.user.firstName = 'Edited';
+    component.user.nickname = 'Edited too';
+    component.discard();
+
+    expect(component.user.firstName).toBe(original);
+    expect(component.user.nickname).not.toBe('Edited too');
   });
 
   it('labels the name fields in sentence case', () => {

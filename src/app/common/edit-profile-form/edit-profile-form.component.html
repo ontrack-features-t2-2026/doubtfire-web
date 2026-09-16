@@ -335,34 +335,47 @@
     </section>
   </div>
 
-  <div class="profile-actions">
-    <div class="profile-save-status">
-      @if (form.invalid && form.dirty) {
-        <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
-      }
-      <p aria-live="polite" class="profile-save-status__success" [class.sr-only]="mode === 'edit'">
-        {{ saveMessage }}
-      </p>
-      <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
-    </div>
+  <!-- In edit mode the bar is not permanent chrome: it exists only while there is
+       something to act on. A bar that sits there saying "All changes saved" reads
+       as a control that does nothing. The other two modes are wizards, where the
+       main action has to stay reachable. -->
+  @if (showActions(form.dirty)) {
+    <div class="profile-actions" [class.profile-actions--settled]="mode === 'edit' && !form.dirty">
+      <div class="profile-save-status">
+        @if (form.invalid && form.dirty) {
+          <p class="profile-save-status__validation">Fix the highlighted fields before saving.</p>
+        } @else if (mode === 'edit' && form.dirty) {
+          <p class="profile-save-status__pending">You have unsaved changes.</p>
+        }
+        <p
+          aria-live="polite"
+          class="profile-save-status__success"
+          [class.sr-only]="mode === 'edit' && form.dirty"
+        >
+          {{ saveMessage }}
+        </p>
+        <p aria-live="assertive" class="profile-save-status__error">{{ saveError }}</p>
+      </div>
 
-    <button
-      mat-stroked-button
-      type="button"
-      [hidden]="mode === 'edit' || mode === 'new'"
-      (click)="signOut()"
-    >
-      <mat-icon>logout</mat-icon>
-      Sign out
-    </button>
-    @if (mode === 'create') {
-      <button color="primary" mat-flat-button type="submit" [disabled]="form.invalid || saving">
-        <mat-icon>check</mat-icon>
-        {{ saving ? 'Saving…' : 'Confirm account' }}
+      <button
+        mat-stroked-button
+        type="button"
+        [hidden]="mode === 'edit' || mode === 'new'"
+        (click)="signOut()"
+      >
+        <mat-icon>logout</mat-icon>
+        Sign out
       </button>
-    }
-    @if (mode === 'edit') {
-      @if (form.dirty || saving) {
+      @if (mode === 'create') {
+        <button color="primary" mat-flat-button type="submit" [disabled]="form.invalid || saving">
+          <mat-icon>check</mat-icon>
+          {{ saving ? 'Saving…' : 'Confirm account' }}
+        </button>
+      }
+      @if (mode === 'edit' && (form.dirty || saving)) {
+        <button mat-stroked-button type="button" [disabled]="saving" (click)="discard(form)">
+          Discard
+        </button>
         <button
           color="primary"
           mat-flat-button
@@ -372,12 +385,7 @@
           <mat-icon>save</mat-icon>
           {{ saving ? 'Saving…' : 'Save changes' }}
         </button>
-      } @else {
-        <p class="profile-actions__saved">
-          <mat-icon aria-hidden="true">check_circle</mat-icon>
-          All changes saved
-        </p>
       }
-    }
-  </div>
+    </div>
+  }
 </form>

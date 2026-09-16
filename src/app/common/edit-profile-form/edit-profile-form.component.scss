@@ -181,8 +181,9 @@
 }
 
 // ---- Save bar ----
-// Sticky at the foot of the content column. It sits in flow after the last card, so
-// at the end of the page it never covers anything.
+// Only on screen when there is something to act on, so it arrives as an answer to
+// an edit rather than sitting there as chrome. Sticky at the foot of the content
+// column, in flow after the last card, so at the end of the page it covers nothing.
 .profile-actions {
   position: sticky;
   bottom: 0;
@@ -194,9 +195,15 @@
   gap: 8px 12px;
   box-sizing: border-box;
   min-height: var(--profile-actions-height);
-  padding: 12px 20px max(12px, env(safe-area-inset-bottom, 0px));
-  // no rule above it: the page ground already separates the bar from the last card
-  background: var(--ot-color-page);
+  margin-block-start: 4px;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom, 0px));
+  border: 1px solid var(--ot-color-border);
+  border-radius: var(--ot-radius-md);
+  // Raised, not a full-bleed band: it lines up with the cards above it rather
+  // than reading as a separate strip pinned to the window.
+  background: var(--ot-color-surface-raised);
+  box-shadow: var(--ot-elevation-1, 0 1px 2px rgb(0 0 0 / 12%));
+  animation: profile-actions-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
 
   @media (max-width: 599px) {
     padding-inline: 16px;
@@ -237,9 +244,42 @@
     color: var(--ot-color-success);
   }
 
+  &__pending {
+    color: var(--ot-color-text);
+    font-weight: 600;
+  }
+
   &__validation,
   &__error {
     color: var(--ot-color-error);
     font-weight: 600;
+  }
+}
+
+// Nothing left to do, just the confirmation on its way out.
+.profile-actions--settled {
+  justify-content: flex-start;
+
+  .profile-save-status__success {
+    color: var(--ot-color-success);
+    font-weight: 600;
+  }
+}
+
+@keyframes profile-actions-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-actions {
+    animation: none;
   }
 }
