@@ -1161,6 +1161,50 @@
     </div>
   }
   @if (showFeed) {
+    <!-- Closed by default. Somebody reading their announcements is not usually
+         looking this up, but it is the page they are on when they wonder. -->
+    <section aria-labelledby="status-guide-title" class="status-guide">
+      <button
+        class="status-guide__toggle"
+        id="status-guide-title"
+        type="button"
+        [attr.aria-expanded]="statusGuideOpen"
+        (click)="toggleStatusGuide()"
+      >
+        <mat-icon aria-hidden="true">help_outline</mat-icon>
+        <span>What your task statuses mean</span>
+        <mat-icon aria-hidden="true" class="status-guide__chevron">{{
+          statusGuideOpen ? 'expand_less' : 'expand_more'
+        }}</mat-icon>
+      </button>
+
+      @if (statusGuideOpen) {
+        <div class="status-guide__groups">
+          @for (group of statusGuide; track group.key) {
+            <div class="status-guide__group">
+              <h3 class="status-guide__group-title">
+                <mat-icon aria-hidden="true">{{ group.icon }}</mat-icon>
+                {{ group.title }}
+              </h3>
+
+              <ul class="status-guide__list">
+                @for (row of group.rows; track row.status) {
+                  <li class="status-guide__row">
+                    <span class="status-guide__pill" [attr.data-tone]="row.tone">
+                      <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon>
+                      {{ row.label }}
+                    </span>
+                    <p class="status-guide__reason">{{ row.reason }}</p>
+                    <p class="status-guide__action">{{ row.action }}</p>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
     <p class="hub-footer">
       Only members of a unit can see its updates. Content comes from your teaching team or connected
       unit announcement channels; linked meetings may also require your university sign-in.

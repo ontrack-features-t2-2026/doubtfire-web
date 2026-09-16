@@ -24,6 +24,7 @@ import {StudyEssentialsComponent} from '../study-essentials/study-essentials.com
 import {AnnouncementReadStore} from './announcement-read.store';
 import {HubMarkdownPipe, HubPlainTextPipe} from './hub-markdown';
 import {SessionTiming, sessionTiming, upNextSession} from './session-timing';
+import {buildStatusGuide} from './status-guide';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
@@ -262,6 +263,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
   get showFeed(): boolean {
     return !this.loading && !this.loadError && !this.managing && this.units.length > 0;
+  }
+
+  /** What each task status means, read from the same source the task pages use. */
+  public readonly statusGuide = buildStatusGuide();
+  public statusGuideOpen = false;
+
+  public toggleStatusGuide(): void {
+    this.statusGuideOpen = !this.statusGuideOpen;
   }
   /** Upcoming sessions grouped by the local calendar day they start on. */
   get sessionGroups(): {key: string; label: string; date: string; sessions: LearningSession[]}[] {

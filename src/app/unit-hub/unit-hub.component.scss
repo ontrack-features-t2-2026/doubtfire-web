@@ -1008,3 +1008,168 @@ fieldset {
 .up-next-relative {
   font-weight: 650;
 }
+
+// ---- What your task statuses mean ----
+// Reference, not something to read through. It stays closed until asked for, and
+// each row is one status with the reason it is set and what to do about it.
+
+.status-guide {
+  margin-block-start: 24px;
+}
+
+.status-guide__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--ot-color-border);
+  border-radius: var(--ot-radius-md);
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 160ms ease;
+
+  &:hover {
+    background: var(--ot-color-surface-raised);
+  }
+
+  &:active {
+    transform: scale(0.995);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 2px;
+  }
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--ot-color-text-muted);
+    font-size: 20px;
+  }
+}
+
+.status-guide__chevron {
+  margin-inline-start: auto;
+}
+
+.status-guide__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-block-start: 12px;
+  animation: status-guide-open 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.status-guide__group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--ot-color-text-muted);
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.status-guide__list {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-guide__row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--ot-color-border);
+  border-radius: var(--ot-radius-md);
+  background: var(--ot-color-surface);
+}
+
+// The same fill the status carries everywhere else, so the pill here is
+// recognisable as the one on the task.
+.status-guide__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 8px;
+  border-radius: 999px;
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  @each $tone in not-started, working-on-it, need-help, ready-for-feedback,
+    fix-and-resubmit, redo, attention-required, discuss, rediscuss, demonstrate,
+    assess-in-portfolio, complete, feedback-exceeded, time-exceeded, fail
+  {
+    &[data-tone='#{$tone}'] {
+      background: var(--ot-status-#{$tone});
+      color: var(--ot-status-#{$tone}-on);
+    }
+  }
+}
+
+.status-guide__reason {
+  margin: 0;
+  color: var(--ot-color-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.status-guide__action {
+  margin: 0;
+  color: var(--ot-color-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+@keyframes status-guide-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-guide__groups {
+    animation: none;
+  }
+
+  .status-guide__toggle {
+    transition: none;
+  }
+}
