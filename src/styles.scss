@@ -193,6 +193,18 @@ body.split-pane-resizing pdf-viewer {
   background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
 }
 
+// Material ships mat-icon as font-size 24px, box 24px, line-height 24px. Any
+// rule that shrinks the first two and leaves the third behind gets a glyph
+// sitting low in its own box, which reads as a misaligned icon inside a round
+// button. There are dozens of such rules across the app.
+//
+// line-height: 1 ties the line box to whatever font-size is in force, so a 24px
+// icon is unchanged and every shrunken one lines up. Fixing it here beats
+// adding a line-height to each of those rules and remembering it in the next.
+.mat-icon {
+  line-height: 1;
+}
+
 // Filled buttons. Without a color input Material fills them with a neutral grey,
 // which in dark mode reads as a disabled box rather than the main action. Give
 // every filled button the primary fill and the same shape as outlined ones, so

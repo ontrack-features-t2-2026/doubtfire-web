@@ -850,16 +850,27 @@ fieldset {
 // Sized through Material's tokens, which derive the box and its padding together.
 // Hardcoding width and height leaves the padding at the default and knocks the
 // glyph off the centre of its hover circle.
+// Centred by the flex box rather than by Material's padding arithmetic. That
+// padding is derived from the state-layer size alone, so the 1px border here is
+// not accounted for and the glyph sits off-centre. mat-icon also keeps its 24px
+// line-height when the font-size drops to 20, which pushes the glyph down again.
 .card-meta .mark-read.mat-mdc-icon-button {
   --mat-icon-button-state-layer-size: 36px;
   --mat-icon-button-icon-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-left: auto;
+  padding: 0;
   border: 1px solid var(--hub-card-border);
   color: var(--ot-color-link);
   mat-icon {
+    flex: none;
     width: 20px;
     height: 20px;
     font-size: 20px;
+    line-height: 20px;
+    overflow: visible;
   }
 }
 @media (max-width: 599px) {
