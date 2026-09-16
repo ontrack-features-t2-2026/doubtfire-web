@@ -4,16 +4,27 @@
   [class.ext-card--decided]="comment.assessed"
 >
   <header class="ext-card__header">
-    <mat-icon aria-hidden="true" class="ext-card__icon">event</mat-icon>
+    <mat-icon aria-hidden="true" class="ext-card__icon">{{
+      comment.automated ? 'smart_toy' : 'event'
+    }}</mat-icon>
     <div class="ext-card__heading">
       <div class="ext-card__title-row">
-        <span class="ext-card__title">Extension request</span>
+        <span class="ext-card__title">{{
+          comment.automated ? 'Extended automatically' : 'Extension request'
+        }}</span>
         <span class="ext-chip"
           >{{ comment.weeksRequested }} {{ comment.weeksRequested === 1 ? 'week' : 'weeks' }}</span
         >
       </div>
+      <!-- An automated extension is stored against the tutor, because a comment
+           needs an author. Naming them here would credit a person with something
+           OnTrack did on its own. -->
       <span class="ext-card__meta">
-        {{ comment.author?.name }}
+        @if (comment.automated) {
+          <span class="ext-card__by-system">By {{ externalName | async }}</span>
+        } @else {
+          {{ comment.author?.name }}
+        }
         @if (comment.createdAt) {
           · {{ comment.createdAt | date: 'd MMM y' }}
         }
@@ -22,7 +33,7 @@
   </header>
 
   <blockquote class="ext-card__reason">
-    <span class="ext-card__label">Reason</span>
+    <span class="ext-card__label">{{ comment.automated ? 'Why' : 'Reason' }}</span>
     <!-- Extension reasons carry markdown: the automated ones bold their own
          prefix, and a person writing one uses the same composer as a comment. -->
     <div class="markdown-to-html" [innerHTML]="comment.text | marked"></div>

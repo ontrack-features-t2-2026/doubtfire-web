@@ -75,6 +75,7 @@ export class TaskCommentService extends CachedEntityService<TaskComment> {
       'recipientReadTime',
       'replyToId',
       'isNew',
+      'automated',
       'attachmentFileName',
       'attachmentMimeType',
       'attachmentByteSize',

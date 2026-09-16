@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
 import {Task, TaskComment} from 'src/app/api/models/doubtfire-model';
 import {ExtensionComment} from 'src/app/api/models/task-comment/extension-comment';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 
 @Component({
   selector: 'extension-comment',
@@ -14,8 +15,13 @@ export class ExtensionCommentComponent {
   @Input() comment: ExtensionComment;
   @Input() task: Task;
   public busy = false;
+  /** What this deployment calls itself, for an automated extension's byline. */
+  public readonly externalName = this.constants.ExternalName;
 
-  constructor(private alerts: AlertService) {}
+  constructor(
+    private alerts: AlertService,
+    private constants: DoubtfireConstants,
+  ) {}
 
   private handleError(error: {data: {error: string}}) {
     this.alerts.error('Error: ' + error.data.error, 6000);

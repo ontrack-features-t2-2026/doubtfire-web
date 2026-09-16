@@ -143,6 +143,11 @@
   }
 }
 
+// Automated extensions carry a byline instead of a person's name.
+.ext-card__by-system {
+  font-weight: 600;
+}
+
 .ext-card__label {
   color: var(--ot-color-text-muted);
   font-size: 0.6875rem;
