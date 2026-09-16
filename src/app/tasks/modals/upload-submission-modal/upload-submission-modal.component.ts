@@ -192,6 +192,45 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     return 'Make a comment...';
   }
 
+  // ---- The submit panel ----
+  // One panel carries the whole thing: the same circle, the same two lines of
+  // text and the same bar go from sending to sent to confirmed. Nothing is
+  // unmounted and remounted in between, so there is nothing to read as a new
+  // screen appearing.
+
+  /** True from the moment Submit is pressed until the dialog closes. */
+  public get showSubmitFlow(): boolean {
+    return this.uploadStarted && !this.uploadFailed;
+  }
+
+  public get uploadFailed(): boolean {
+    return this.fileUploader?.uploadingInfo?.success === false;
+  }
+
+  public get flowProgress(): number {
+    return this.celebration ? 100 : (this.fileUploader?.uploadProgress ?? 0);
+  }
+
+  /** The bytes are away. The panel starts becoming the confirmation here. */
+  public get flowLanded(): boolean {
+    return !!this.celebration || this.fileUploader?.uploadLanded === true;
+  }
+
+  public get flowTitle(): string {
+    if (this.celebration) {
+      return this.celebration.headline;
+    }
+    return this.flowLanded ? 'Uploaded' : 'Uploading your work';
+  }
+
+  public get flowDetail(): string {
+    return this.celebration?.detail ?? this.fileUploader?.uploadingFileLabel ?? '';
+  }
+
+  public cancelUpload(): void {
+    this.fileUploader?.cancelUpload();
+  }
+
   /**
    * The callout above the drop zones only earns its place when it says something
    * they do not. A single requirement is already named, typed and stated as

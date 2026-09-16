@@ -17,46 +17,100 @@
 }
 
 <mat-dialog-content class="submission-dialog-content">
-  @if (celebration) {
-    <!-- The submission landed. This swaps the dialog's body only, so the surface,
-         its width and its padding are the same element the upload happened in. -->
-    <div class="submission-done" role="status">
-      <span class="submission-done__mark">
-        @if (celebration.particles) {
-          <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+  <!-- One panel for the whole submission. The circle, the two lines of text and
+       the bar are the same elements from sending through to confirmed: only their
+       state changes, so the dialog never swaps one screen for another. -->
+  @if (showSubmitFlow) {
+    <div
+      class="submit-flow"
+      role="status"
+      [class.submit-flow--celebrating]="celebration"
+      [class.submit-flow--done]="flowLanded"
+    >
+      <span aria-hidden="true" class="submit-flow__mark">
+        @if (celebration) {
+          @if (celebration.particles) {
+            <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+          }
+          <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
+        } @else {
+          <mat-icon class="submit-flow__glyph">{{ flowLanded ? 'check' : 'upload_file' }}</mat-icon>
         }
-        <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
       </span>
-      <p class="submission-done__headline">{{ celebration.headline }}</p>
-      <p class="submission-done__detail">{{ celebration.detail }}</p>
-      <button
-        class="submission-done__dismiss"
-        mat-stroked-button
-        type="button"
-        (click)="finishCelebration()"
+
+      <p class="submit-flow__title">{{ flowTitle }}</p>
+      <p class="submit-flow__detail">{{ flowDetail }}</p>
+
+      <div
+        aria-valuemax="100"
+        aria-valuemin="0"
+        class="submit-flow__track"
+        role="progressbar"
+        [attr.aria-valuenow]="flowProgress"
+        [style.--flow-progress.%]="flowProgress"
       >
-        Done
-      </button>
+        <span class="submit-flow__fill"></span>
+      </div>
+
+      @if (celebration) {
+        <button
+          class="submit-flow__action"
+          mat-stroked-button
+          type="button"
+          (click)="finishCelebration()"
+        >
+          Done
+        </button>
+      } @else if (!flowLanded) {
+        <button
+          class="submit-flow__action"
+          mat-stroked-button
+          type="button"
+          (click)="cancelUpload()"
+        >
+          Cancel upload
+        </button>
+      }
     </div>
-  } @else {
-    <div class="submission-dialog-body">
-      <!-- Disabled and irrelevant once the request is away. Dropping it keeps the
+  }
+
+  <!-- Stays in the DOM while the panel above is up: unmounting it would
+       destroy the uploader and with it the request in flight. -->
+  <div class="submission-dialog-body" [hidden]="showSubmitFlow">
+    <!-- Disabled and irrelevant once the request is away. Dropping it keeps the
            uploading panel and the confirmation at exactly the same height. -->
-      @if (!uploadStarted) {
-        <div class="submission-type-row">
-          <span class="submission-type-label" id="submission-type-label">Submit as</span>
-          <mat-select
-            aria-labelledby="submission-type-label"
-            class="submission-type-select"
-            panelClass="submission-type-panel"
-            placeholder="Choose a type"
-            [disabled]="uploadStarted || isUploading"
-            [(ngModel)]="submissionType"
-            (ngModelChange)="onSubmissionTypeChange($event)"
-          >
-            <mat-select-trigger>
+    @if (!uploadStarted) {
+      <div class="submission-type-row">
+        <span class="submission-type-label" id="submission-type-label">Submit as</span>
+        <mat-select
+          aria-labelledby="submission-type-label"
+          class="submission-type-select"
+          panelClass="submission-type-panel"
+          placeholder="Choose a type"
+          [disabled]="uploadStarted || isUploading"
+          [(ngModel)]="submissionType"
+          (ngModelChange)="onSubmissionTypeChange($event)"
+        >
+          <mat-select-trigger>
+            <span class="submission-type-option">
+              @if (statusFor(submissionType); as status) {
+                <status-icon
+                  class="submission-type-option__icon"
+                  [showTooltip]="false"
+                  [status]="status"
+                ></status-icon>
+              } @else {
+                <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
+                  submissionType === 'test_submission' ? 'science' : 'upload_file'
+                }}</mat-icon>
+              }
+              <span class="truncate">{{ selectedSubmissionTypeLabel }}</span>
+            </span>
+          </mat-select-trigger>
+          @for (option of submissionTypeOptions; track option.id) {
+            <mat-option [value]="option.id">
               <span class="submission-type-option">
-                @if (statusFor(submissionType); as status) {
+                @if (statusFor(option.id); as status) {
                   <status-icon
                     class="submission-type-option__icon"
                     [showTooltip]="false"
@@ -64,190 +118,173 @@
                   ></status-icon>
                 } @else {
                   <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
-                    submissionType === 'test_submission' ? 'science' : 'upload_file'
+                    option.id === 'test_submission' ? 'science' : 'upload_file'
                   }}</mat-icon>
                 }
-                <span class="truncate">{{ selectedSubmissionTypeLabel }}</span>
+                <span>{{ option.label }}</span>
               </span>
-            </mat-select-trigger>
-            @for (option of submissionTypeOptions; track option.id) {
-              <mat-option [value]="option.id">
-                <span class="submission-type-option">
-                  @if (statusFor(option.id); as status) {
-                    <status-icon
-                      class="submission-type-option__icon"
-                      [showTooltip]="false"
-                      [status]="status"
-                    ></status-icon>
-                  } @else {
-                    <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
-                      option.id === 'test_submission' ? 'science' : 'upload_file'
-                    }}</mat-icon>
-                  }
-                  <span>{{ option.label }}</span>
-                </span>
-              </mat-option>
-            }
-          </mat-select>
-        </div>
-      }
-
-      @if (steps.length > 1 && !uploadStarted) {
-        <ol aria-label="Submission steps" class="submission-steps">
-          @for (step of steps; track step.stage) {
-            <li
-              class="submission-step"
-              [attr.aria-current]="$index === currentStepIndex ? 'step' : null"
-              [class.submission-step--current]="$index === currentStepIndex"
-              [class.submission-step--done]="$index < currentStepIndex"
-            >
-              <span aria-hidden="true" class="submission-step__marker">
-                @if ($index < currentStepIndex) {
-                  <mat-icon>check</mat-icon>
-                } @else {
-                  {{ $index + 1 }}
-                }
-              </span>
-              <span class="submission-step__label">{{ step.label }}</span>
-              @if ($index < currentStepIndex) {
-                <span class="sr-only">(done)</span>
-              }
-            </li>
+            </mat-option>
           }
-        </ol>
-      }
-      @if (isGroupStage && !uploadStarted) {
-        <section class="submission-section">
-          <div>
-            <h3 class="submission-section__heading">Team contribution</h3>
-            <p class="submission-section__lead">
-              Please rate each team member's effort on {{ task.definition.name }}.
-            </p>
-            <p class="submission-section__lead">
-              Click the same rating twice to record no contribution.
-            </p>
-          </div>
+        </mat-select>
+      </div>
+    }
 
-          <f-group-member-contribution-assigner
-            [isTestSubmission]="data.isTestSubmission"
-            [project]="task.project"
-            [task]="task"
-            [(team)]="team"
+    @if (steps.length > 1 && !uploadStarted) {
+      <ol aria-label="Submission steps" class="submission-steps">
+        @for (step of steps; track step.stage) {
+          <li
+            class="submission-step"
+            [attr.aria-current]="$index === currentStepIndex ? 'step' : null"
+            [class.submission-step--current]="$index === currentStepIndex"
+            [class.submission-step--done]="$index < currentStepIndex"
           >
-          </f-group-member-contribution-assigner>
-        </section>
+            <span aria-hidden="true" class="submission-step__marker">
+              @if ($index < currentStepIndex) {
+                <mat-icon>check</mat-icon>
+              } @else {
+                {{ $index + 1 }}
+              }
+            </span>
+            <span class="submission-step__label">{{ step.label }}</span>
+            @if ($index < currentStepIndex) {
+              <span class="sr-only">(done)</span>
+            }
+          </li>
+        }
+      </ol>
+    }
+    @if (isGroupStage && !uploadStarted) {
+      <section class="submission-section">
+        <div>
+          <h3 class="submission-section__heading">Team contribution</h3>
+          <p class="submission-section__lead">
+            Please rate each team member's effort on {{ task.definition.name }}.
+          </p>
+          <p class="submission-section__lead">
+            Click the same rating twice to record no contribution.
+          </p>
+        </div>
+
+        <f-group-member-contribution-assigner
+          [isTestSubmission]="data.isTestSubmission"
+          [project]="task.project"
+          [task]="task"
+          [(team)]="team"
+        >
+        </f-group-member-contribution-assigner>
+      </section>
+    }
+
+    <section class="submission-section" [class.hidden]="!isDetailsStage && !uploadStarted">
+      @if (!uploadStarted && submissionType === 'need_help') {
+        <p class="submission-section__lead">
+          Upload the required files so your tutor can help with this task, even if they are not
+          finished yet.
+        </p>
       }
 
-      <section class="submission-section" [class.hidden]="!isDetailsStage && !uploadStarted">
-        @if (!uploadStarted && submissionType === 'need_help') {
-          <p class="submission-section__lead">
-            Upload the required files so your tutor can help with this task, even if they are not
-            finished yet.
-          </p>
-        }
-
-        <!-- The drop zones already name each file and its formats, so the callout only
+      <!-- The drop zones already name each file and its formats, so the callout only
              appears when it carries something they do not. -->
-        <f-task-upload-requirements
-          #uploadRequirements
-          [hidden]="uploadStarted || isUploading || !showUploadRequirements"
-          [requirements]="task.definition.uploadRequirements"
-        ></f-task-upload-requirements>
+      <f-task-upload-requirements
+        #uploadRequirements
+        [hidden]="uploadStarted || isUploading || !showUploadRequirements"
+        [requirements]="task.definition.uploadRequirements"
+      ></f-task-upload-requirements>
 
-        <f-file-uploader
-          #fileUploader
-          [describedBy]="uploadStarted || isUploading ? null : uploadRequirements.elementId"
-          [files]="fileRequirements"
-          [onBeforeUpload]="onBeforeUpload"
-          [onCancelUpload]="onUploadCancelled"
-          [onClickFailureCancel]="cancel"
-          [onComplete]="onUploadComplete"
-          [onSuccess]="onUploadSuccess"
-          [payload]="payload"
-          [resetAfterUpload]="false"
-          [showSuccessState]="false"
-          [showUploadButton]="false"
-          [singleDropZone]="true"
-          [url]="uploadUrl"
-          (isReadyChange)="onReadyChange($event)"
-          (uploadReady)="onUploaderReady($event)"
-        >
-        </f-file-uploader>
-      </section>
+      <f-file-uploader
+        #fileUploader
+        [describedBy]="uploadStarted || isUploading ? null : uploadRequirements.elementId"
+        [files]="fileRequirements"
+        [onBeforeUpload]="onBeforeUpload"
+        [onCancelUpload]="onUploadCancelled"
+        [onClickFailureCancel]="cancel"
+        [onComplete]="onUploadComplete"
+        [onSuccess]="onUploadSuccess"
+        [payload]="payload"
+        [resetAfterUpload]="false"
+        [showProgressState]="false"
+        [showSuccessState]="false"
+        [showUploadButton]="false"
+        [singleDropZone]="true"
+        [url]="uploadUrl"
+        (isReadyChange)="onReadyChange($event)"
+        (uploadReady)="onUploaderReady($event)"
+      >
+      </f-file-uploader>
+    </section>
 
-      @if (!uploadStarted && isCommentsStage) {
-        <section class="submission-section">
-          <div>
-            @if (submissionType === 'need_help') {
-              <h3 class="submission-section__heading">What do you need help with?</h3>
+    @if (!uploadStarted && isCommentsStage) {
+      <section class="submission-section">
+        <div>
+          @if (submissionType === 'need_help') {
+            <h3 class="submission-section__heading">What do you need help with?</h3>
+            <p class="submission-section__lead">
+              Add a short comment so your tutor knows what help you need on this task.
+            </p>
+          } @else {
+            <h3 class="submission-section__heading">Final comments</h3>
+            @if (task.definition.assessInPortfolioOnly) {
               <p class="submission-section__lead">
-                Add a short comment so your tutor knows what help you need on this task.
+                Please specify which areas of your submission you would like feedback on.
               </p>
             } @else {
-              <h3 class="submission-section__heading">Final comments</h3>
-              @if (task.definition.assessInPortfolioOnly) {
-                <p class="submission-section__lead">
-                  Please specify which areas of your submission you would like feedback on.
-                </p>
-              } @else {
-                <p class="submission-section__lead">
-                  Add an optional note for your tutor to read while assessing this submission.
-                </p>
-              }
+              <p class="submission-section__lead">
+                Add an optional note for your tutor to read while assessing this submission.
+              </p>
             }
+          }
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Comment</mat-label>
+          <textarea
+            matInput
+            rows="4"
+            [placeholder]="commentPlaceholder"
+            [(ngModel)]="comment"
+          ></textarea>
+        </mat-form-field>
+
+        <div class="submission-character-count">
+          Character count: {{ comment.length }}
+          @if (requiresComment) {
+            <span>(Min. {{ minCommentLength }})</span>
+          }
+        </div>
+      </section>
+
+      @if (privacyPolicy.privacy) {
+        <section class="submission-section submission-declaration">
+          <div>
+            <h3 class="submission-section__heading">Declaration</h3>
+            <p class="submission-section__lead">{{ privacyPolicy.privacy }}</p>
           </div>
 
-          <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-            <mat-label>Comment</mat-label>
-            <textarea
-              matInput
-              rows="4"
-              [placeholder]="commentPlaceholder"
-              [(ngModel)]="comment"
-            ></textarea>
-          </mat-form-field>
+          <div>
+            <!-- No color input: the app's outlined style reads the label as body
+                   text, where the primary palette leaves blue on a dark surface. -->
+            <button
+              mat-stroked-button
+              type="button"
+              [attr.aria-expanded]="showPlagiarism"
+              (click)="showPlagiarism = !showPlagiarism"
+            >
+              <mat-icon aria-hidden="true">{{
+                showPlagiarism ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
+              Plagiarism and collusion
+            </button>
 
-          <div class="submission-character-count">
-            Character count: {{ comment.length }}
-            @if (requiresComment) {
-              <span>(Min. {{ minCommentLength }})</span>
+            @if (showPlagiarism) {
+              <p class="submission-section__lead mt-2">
+                {{ privacyPolicy.plagiarism }}
+              </p>
             }
           </div>
         </section>
-
-        @if (privacyPolicy.privacy) {
-          <section class="submission-section submission-declaration">
-            <div>
-              <h3 class="submission-section__heading">Declaration</h3>
-              <p class="submission-section__lead">{{ privacyPolicy.privacy }}</p>
-            </div>
-
-            <div>
-              <!-- No color input: the app's outlined style reads the label as body
-                   text, where the primary palette leaves blue on a dark surface. -->
-              <button
-                mat-stroked-button
-                type="button"
-                [attr.aria-expanded]="showPlagiarism"
-                (click)="showPlagiarism = !showPlagiarism"
-              >
-                <mat-icon aria-hidden="true">{{
-                  showPlagiarism ? 'expand_less' : 'expand_more'
-                }}</mat-icon>
-                Plagiarism and collusion
-              </button>
-
-              @if (showPlagiarism) {
-                <p class="submission-section__lead mt-2">
-                  {{ privacyPolicy.plagiarism }}
-                </p>
-              }
-            </div>
-          </section>
-        }
       }
-    </div>
-  }
+    }
+  </div>
 </mat-dialog-content>
 
 @if (!uploadStarted && !celebration) {

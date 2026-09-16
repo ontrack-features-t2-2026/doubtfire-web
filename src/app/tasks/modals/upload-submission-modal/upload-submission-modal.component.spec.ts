@@ -181,6 +181,59 @@ describe('UploadSubmissionModalComponent', () => {
     expect(component.continueHint).toBeNull();
   });
 
+  it('carries one panel from sending through to the confirmation', () => {
+    const uploader = {
+      uploadProgress: 40,
+      uploadLanded: false,
+      uploadingFileLabel: 'report.pdf',
+      uploadingInfo: {success: null},
+      cancelUpload: vi.fn(),
+    };
+    (component as unknown as {fileUploader: unknown}).fileUploader = uploader;
+
+    // Nothing until Submit is pressed.
+    expect(component.showSubmitFlow).toBe(false);
+
+    component.uploadStarted = true;
+    expect(component.showSubmitFlow).toBe(true);
+    expect(component.flowTitle).toBe('Uploading your work');
+    expect(component.flowDetail).toBe('report.pdf');
+    expect(component.flowProgress).toBe(40);
+    expect(component.flowLanded).toBe(false);
+
+    // The bytes are away, but the confirmation has not arrived yet.
+    uploader.uploadLanded = true;
+    expect(component.flowLanded).toBe(true);
+    expect(component.flowTitle).toBe('Uploaded');
+
+    // The same panel becomes the confirmation.
+    component.celebration = {
+      timing: 'on_time',
+      resubmission: false,
+      tone: 'success',
+      particles: true,
+      headline: 'Submitted on time. Ready for feedback',
+      detail: '1.1P Hello World',
+    };
+    expect(component.showSubmitFlow).toBe(true);
+    expect(component.flowTitle).toBe('Submitted on time. Ready for feedback');
+    expect(component.flowDetail).toBe('1.1P Hello World');
+    expect(component.flowProgress).toBe(100);
+  });
+
+  it('hands a failure back to the uploader rather than holding the panel', () => {
+    (component as unknown as {fileUploader: unknown}).fileUploader = {
+      uploadProgress: 100,
+      uploadLanded: false,
+      uploadingFileLabel: 'report.pdf',
+      uploadingInfo: {success: false},
+    };
+    component.uploadStarted = true;
+
+    expect(component.uploadFailed).toBe(true);
+    expect(component.showSubmitFlow).toBe(false);
+  });
+
   it('drops the requirements callout when one drop zone already says the same thing', () => {
     expect(component.showUploadRequirements).toBe(false);
 

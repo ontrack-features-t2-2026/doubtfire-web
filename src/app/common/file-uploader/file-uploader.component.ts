@@ -75,6 +75,12 @@ export class FileUploaderComponent implements OnInit, OnChanges {
    * because only this component knows how to retry it.
    */
   @Input() showSuccessState: boolean = true;
+  /**
+   * Set false when the host draws the in-flight state itself, so one panel can
+   * carry the upload all the way into its own confirmation instead of handing
+   * over to a second one. A failure still reports here.
+   */
+  @Input() showProgressState: boolean = true;
   @Input() showUploadButton: boolean = true;
   @Input() resetAfterUpload: boolean = true;
 
@@ -232,7 +238,17 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   }
 
   public get showProgressPanel(): boolean {
-    return !this.uploadingInfo?.complete || this.uploadSettling;
+    return this.showProgressState && (!this.uploadingInfo?.complete || this.uploadSettling);
+  }
+
+  /** Percent sent so far, for a host drawing the in-flight state itself. */
+  public get uploadProgress(): number {
+    return this.uploadingInfo?.progress ?? 0;
+  }
+
+  /** True once the bytes are away, whether or not the host has taken over. */
+  public get uploadLanded(): boolean {
+    return this.uploadingInfo?.complete === true && this.uploadingInfo?.success === true;
   }
 
   /** The file being sent, or a count once there is more than one. */
