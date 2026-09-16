@@ -401,9 +401,9 @@ $done-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   align-items: center;
   gap: 8px;
   // Matches the uploader's progress panel, so replacing one with the other does
-  // not resize the dialog.
+  // not resize the dialog. The sides come from the dialog content itself.
   min-height: 360px;
-  padding: 40px 24px;
+  padding: 40px 0;
   text-align: center;
   animation: submission-done-in 260ms $done-ease-out both;
 }

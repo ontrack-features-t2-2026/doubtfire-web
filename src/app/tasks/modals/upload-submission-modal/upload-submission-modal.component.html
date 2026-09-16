@@ -1,75 +1,62 @@
-@if (celebration) {
-  <!-- The submission landed. This takes the dialog over, then closes it. -->
-  <div class="submission-done" role="status">
-    <span class="submission-done__mark">
-      @if (celebration.particles) {
-        <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+<!-- The header goes once the upload starts, so the dialog changes shape at the
+     moment of submitting rather than again when the confirmation arrives. -->
+@if (!uploadStarted) {
+  <header class="submission-dialog-header">
+    <h2 class="submission-dialog-title" mat-dialog-title>Submit task</h2>
+    <div class="submission-task-line">
+      <span class="submission-task-chip">{{ task.definition.abbreviation }}</span>
+      <span class="submission-task-name">{{ task.definition.name }}</span>
+      @if (dueDate) {
+        <span class="submission-task-due" [class.submission-task-due--past]="isPastDue">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          Due {{ dueDate | date: 'EEE d MMM' }}
+        </span>
       }
-      <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
-    </span>
-    <p class="submission-done__headline">{{ celebration.headline }}</p>
-    <p class="submission-done__detail">{{ celebration.detail }}</p>
-    <button
-      class="submission-done__dismiss"
-      mat-stroked-button
-      type="button"
-      (click)="finishCelebration()"
-    >
-      Done
-    </button>
-  </div>
-} @else {
-  <!-- The header goes once the upload starts, so the dialog changes shape at the
-       moment of submitting rather than again when the confirmation arrives. -->
-  @if (!uploadStarted) {
-    <header class="submission-dialog-header">
-      <h2 class="submission-dialog-title" mat-dialog-title>Submit task</h2>
-      <div class="submission-task-line">
-        <span class="submission-task-chip">{{ task.definition.abbreviation }}</span>
-        <span class="submission-task-name">{{ task.definition.name }}</span>
-        @if (dueDate) {
-          <span class="submission-task-due" [class.submission-task-due--past]="isPastDue">
-            <mat-icon aria-hidden="true">schedule</mat-icon>
-            Due {{ dueDate | date: 'EEE d MMM' }}
-          </span>
-        }
-      </div>
-    </header>
-  }
+    </div>
+  </header>
+}
 
-  <mat-dialog-content class="submission-dialog-content">
+<mat-dialog-content class="submission-dialog-content">
+  @if (celebration) {
+    <!-- The submission landed. This swaps the dialog's body only, so the surface,
+         its width and its padding are the same element the upload happened in. -->
+    <div class="submission-done" role="status">
+      <span class="submission-done__mark">
+        @if (celebration.particles) {
+          <f-celebration-particles [count]="12" [delay]="1000" [spread]="72" />
+        }
+        <f-animated-check [delay]="160" [pace]="1.9" [size]="88" [tone]="celebration.tone" />
+      </span>
+      <p class="submission-done__headline">{{ celebration.headline }}</p>
+      <p class="submission-done__detail">{{ celebration.detail }}</p>
+      <button
+        class="submission-done__dismiss"
+        mat-stroked-button
+        type="button"
+        (click)="finishCelebration()"
+      >
+        Done
+      </button>
+    </div>
+  } @else {
     <div class="submission-dialog-body">
-      <div class="submission-type-row">
-        <span class="submission-type-label" id="submission-type-label">Submit as</span>
-        <mat-select
-          aria-labelledby="submission-type-label"
-          class="submission-type-select"
-          panelClass="submission-type-panel"
-          placeholder="Choose a type"
-          [disabled]="uploadStarted || isUploading"
-          [(ngModel)]="submissionType"
-          (ngModelChange)="onSubmissionTypeChange($event)"
-        >
-          <mat-select-trigger>
-            <span class="submission-type-option">
-              @if (statusFor(submissionType); as status) {
-                <status-icon
-                  class="submission-type-option__icon"
-                  [showTooltip]="false"
-                  [status]="status"
-                ></status-icon>
-              } @else {
-                <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
-                  submissionType === 'test_submission' ? 'science' : 'upload_file'
-                }}</mat-icon>
-              }
-              <span class="truncate">{{ selectedSubmissionTypeLabel }}</span>
-            </span>
-          </mat-select-trigger>
-          @for (option of submissionTypeOptions; track option.id) {
-            <mat-option [value]="option.id">
+      <!-- Disabled and irrelevant once the request is away. Dropping it keeps the
+           uploading panel and the confirmation at exactly the same height. -->
+      @if (!uploadStarted) {
+        <div class="submission-type-row">
+          <span class="submission-type-label" id="submission-type-label">Submit as</span>
+          <mat-select
+            aria-labelledby="submission-type-label"
+            class="submission-type-select"
+            panelClass="submission-type-panel"
+            placeholder="Choose a type"
+            [disabled]="uploadStarted || isUploading"
+            [(ngModel)]="submissionType"
+            (ngModelChange)="onSubmissionTypeChange($event)"
+          >
+            <mat-select-trigger>
               <span class="submission-type-option">
-                @if (statusFor(option.id); as status) {
+                @if (statusFor(submissionType); as status) {
                   <status-icon
                     class="submission-type-option__icon"
                     [showTooltip]="false"
@@ -77,15 +64,33 @@
                   ></status-icon>
                 } @else {
                   <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
-                    option.id === 'test_submission' ? 'science' : 'upload_file'
+                    submissionType === 'test_submission' ? 'science' : 'upload_file'
                   }}</mat-icon>
                 }
-                <span>{{ option.label }}</span>
+                <span class="truncate">{{ selectedSubmissionTypeLabel }}</span>
               </span>
-            </mat-option>
-          }
-        </mat-select>
-      </div>
+            </mat-select-trigger>
+            @for (option of submissionTypeOptions; track option.id) {
+              <mat-option [value]="option.id">
+                <span class="submission-type-option">
+                  @if (statusFor(option.id); as status) {
+                    <status-icon
+                      class="submission-type-option__icon"
+                      [showTooltip]="false"
+                      [status]="status"
+                    ></status-icon>
+                  } @else {
+                    <mat-icon aria-hidden="true" class="submission-type-option__glyph">{{
+                      option.id === 'test_submission' ? 'science' : 'upload_file'
+                    }}</mat-icon>
+                  }
+                  <span>{{ option.label }}</span>
+                </span>
+              </mat-option>
+            }
+          </mat-select>
+        </div>
+      }
 
       @if (steps.length > 1 && !uploadStarted) {
         <ol aria-label="Submission steps" class="submission-steps">
@@ -242,73 +247,67 @@
         }
       }
     </div>
-  </mat-dialog-content>
-
-  @if (!uploadStarted) {
-    <mat-dialog-actions class="submission-dialog-actions">
-      <button
-        class="cancel-action"
-        color="warn"
-        mat-stroked-button
-        type="button"
-        (click)="cancel()"
-      >
-        Cancel
-      </button>
-
-      <div class="submission-dialog-actions__forward">
-        @if (continueHint; as hint) {
-          <span class="submission-continue-hint" id="submission-continue-hint">{{ hint }}</span>
-        }
-
-        @if (isDetailsStage && showGroupSection) {
-          <button mat-stroked-button type="button" (click)="goToGroupStage()">Back</button>
-        }
-
-        @if (isCommentsStage) {
-          <button mat-stroked-button type="button" (click)="goToDetailsStage()">Back</button>
-        }
-
-        @if (isGroupStage) {
-          <button
-            color="primary"
-            mat-flat-button
-            type="button"
-            [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
-            [disabled]="shouldDisableNext()"
-            (click)="goToDetailsStage()"
-          >
-            Next
-          </button>
-        }
-
-        @if (isDetailsStage && showCommentsSection) {
-          <button
-            color="primary"
-            mat-flat-button
-            type="button"
-            [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
-            [disabled]="shouldDisableNext()"
-            (click)="goToCommentsStage()"
-          >
-            Next
-          </button>
-        }
-
-        @if ((!showCommentsSection && isDetailsStage) || isCommentsStage) {
-          <button
-            color="primary"
-            mat-flat-button
-            type="button"
-            [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
-            [disabled]="shouldDisableSubmit()"
-            [matTooltip]="submitTooltip"
-            (click)="uploadButtonClicked()"
-          >
-            Submit
-          </button>
-        }
-      </div>
-    </mat-dialog-actions>
   }
+</mat-dialog-content>
+
+@if (!uploadStarted && !celebration) {
+  <mat-dialog-actions class="submission-dialog-actions">
+    <button class="cancel-action" color="warn" mat-stroked-button type="button" (click)="cancel()">
+      Cancel
+    </button>
+
+    <div class="submission-dialog-actions__forward">
+      @if (continueHint; as hint) {
+        <span class="submission-continue-hint" id="submission-continue-hint">{{ hint }}</span>
+      }
+
+      @if (isDetailsStage && showGroupSection) {
+        <button mat-stroked-button type="button" (click)="goToGroupStage()">Back</button>
+      }
+
+      @if (isCommentsStage) {
+        <button mat-stroked-button type="button" (click)="goToDetailsStage()">Back</button>
+      }
+
+      @if (isGroupStage) {
+        <button
+          color="primary"
+          mat-flat-button
+          type="button"
+          [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
+          [disabled]="shouldDisableNext()"
+          (click)="goToDetailsStage()"
+        >
+          Next
+        </button>
+      }
+
+      @if (isDetailsStage && showCommentsSection) {
+        <button
+          color="primary"
+          mat-flat-button
+          type="button"
+          [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
+          [disabled]="shouldDisableNext()"
+          (click)="goToCommentsStage()"
+        >
+          Next
+        </button>
+      }
+
+      @if ((!showCommentsSection && isDetailsStage) || isCommentsStage) {
+        <button
+          color="primary"
+          mat-flat-button
+          type="button"
+          [attr.aria-describedby]="continueHint ? 'submission-continue-hint' : null"
+          [disabled]="shouldDisableSubmit()"
+          [matTooltip]="submitTooltip"
+          (click)="uploadButtonClicked()"
+        >
+          Submit
+        </button>
+      }
+    </div>
+  </mat-dialog-actions>
 }
