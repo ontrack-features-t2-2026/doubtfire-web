@@ -93,6 +93,14 @@ export const routes: Routes = [
     data: {pageTitle: 'Motion'},
   },
   {
+    path: 'submit-motion',
+    loadComponent: () =>
+      import('./common/celebrate/motion-demo/submit-motion.component').then(
+        (m) => m.SubmitMotionComponent,
+      ),
+    data: {pageTitle: 'Submitting'},
+  },
+  {
     path: 'demo-controls',
     component: DemoControlsComponent,
     canActivate: [demoToolsGuard],
