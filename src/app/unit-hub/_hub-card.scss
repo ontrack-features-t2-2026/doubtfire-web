@@ -262,21 +262,33 @@
 
   > * {
     --ot-color-text: #{$on};
-    --ot-color-text-muted: color-mix(in srgb, #{$on} 82%, transparent);
+    // Nothing on a solid fill can sit lighter than the on-colour, so a translucent muted
+    // tone loses contrast instead of gaining it: 82% measured 3.64:1 on the dark primary
+    // fill and 3.59:1 on the light complete one. Muted keeps the on-colour (4.51:1 at
+    // worst) and the smaller, heavier, uppercase type carries the step down instead.
+    --ot-color-text-muted: #{$on};
     --ot-color-link: #{$on};
     --ot-color-primary: #{$on};
     --ot-color-border: color-mix(in srgb, #{$on} 35%, transparent);
+    // The control edge was the one token this block missed, so an outlined button inside a
+    // solid card mixed a scope-local link with the GLOBAL slate border: 1.95:1 against the
+    // fill, where 1.4.11 asks 3:1. At 80% of the on-colour that outline measures 3.51:1 at
+    // worst and 4.89:1 at best, and the edge stays a step below the label.
+    --ot-color-control-border: color-mix(in srgb, #{$on} 80%, transparent);
     --ot-color-surface: color-mix(in srgb, #{$on} 14%, transparent);
     --ot-color-surface-raised: color-mix(in srgb, #{$on} 18%, transparent);
     --ot-color-selected: color-mix(in srgb, #{$on} 20%, transparent);
     --ot-color-selected-text: #{$on};
   }
 
-  // state and type chips drop their own hue on a fill: an on-colour glass chip, so a
-  // green "Happening now" never sits green on green
+  // state and type chips drop their own hue on a fill, so a green "Happening now" never
+  // sits green on green. The glass fill lifted the ground under its own white label to
+  // 3.18:1, and any fill lighter than the card does that, so the chip is an outline now:
+  // the card fill shows through and the label reads at the card's own 4.51:1 worst case.
+  // The edge is the same 3:1 control step as the buttons, 3.06:1 at worst.
   :where(.chip, .unit-badge, .kind-chip) {
-    border-color: color-mix(in srgb, #{$on} 40%, transparent);
-    background: color-mix(in srgb, #{$on} 20%, transparent);
+    border-color: color-mix(in srgb, #{$on} 70%, transparent);
+    background: transparent;
     color: #{$on};
   }
 }

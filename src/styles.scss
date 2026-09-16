@@ -404,9 +404,16 @@ ngx-gantt-root {
 // itself once a colour is applied and a :root rule can never win.
 //
 // The dark selector matches the dark Material theme include in theme.scss.
+//
+// Only the resting half was pinned, so a focused field fell back to M2's primary and drew
+// DIMMER than at rest in dark: 2.40:1 on a raised card against the 3.08:1 resting edge.
+// The focus token is the one the global ring above already uses, so a keyboard user sees
+// one colour everywhere: 3.32:1 dark and 6.56:1 light at worst, and Material keeps drawing
+// focus at 2px against the resting 1px, so focus reads stronger on width as well as tone.
 :root,
 :root[data-ot-theme='dark'] {
   --mat-form-field-outlined-outline-color: var(--ot-color-control-border);
+  --mat-form-field-outlined-focus-outline-color: var(--ot-color-focus);
 }
 
 // Keep focus outlines inside menu panels so their edges do not clip them.

@@ -77,10 +77,13 @@
   outline-offset: -2px;
 }
 
+// The 12px/600 label is normal text (4.5:1) and the 3px underline is the selected-state
+// indicator (3:1). Primary on the selected fill measures 2.18:1 in dark; link is the same
+// accent one step lighter and gives 4.55:1 dark, 5.39:1 light, where link equals primary.
 .mobile-task-tab--active {
-  border-bottom-color: var(--ot-color-primary);
+  border-bottom-color: var(--ot-color-link);
   background: var(--ot-color-selected);
-  color: var(--ot-color-primary);
+  color: var(--ot-color-link);
 }
 
 .mobile-task-tab:disabled {

@@ -299,12 +299,21 @@
   }
 }
 
+// A hidden series is still the control the user presses to bring it back, so its label is
+// live text at 4.5:1. The disabled pair measured 2.31:1 light and 3.10:1 dark; muted text on
+// the same inert fill is the next step up and measures 5.34:1 light, 5.00:1 dark. The fill
+// step, the struck label and the hollow swatch carry "off" so contrast is not doing it alone.
 .progress-burndown__legend-item--hidden {
   background: var(--ot-color-disabled-surface);
-  color: var(--ot-color-disabled-text);
+  color: var(--ot-color-text-muted);
 
   .progress-burndown__legend-label {
     text-decoration: line-through;
+  }
+
+  // the series colour empties out to a ring, so the marker says "off" without colour
+  .progress-burndown__legend-swatch {
+    box-shadow: inset 0 0 0 3px var(--ot-color-disabled-surface);
   }
 }
 

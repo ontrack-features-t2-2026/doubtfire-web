@@ -17,7 +17,8 @@
     --mat-form-field-outlined-input-text-color: var(--ot-color-text);
     --mat-form-field-outlined-label-text-color: var(--ot-color-text-muted);
     --mat-form-field-outlined-hover-label-text-color: var(--ot-color-text-muted);
-    --mat-form-field-outlined-focus-outline-color: var(--ot-color-primary);
+    // the focused outline is owned by the global rule in styles.scss; this restated it as
+    // primary, which is 2.40:1 on a dark card where the focus token the global rule uses is 3.32:1
     --mat-form-field-outlined-focus-label-text-color: var(--ot-color-link);
     --mat-form-field-outlined-hover-outline-color: var(--ot-color-text-muted);
     --mat-form-field-outlined-container-shape: var(--ot-radius-sm);
