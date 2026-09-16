@@ -92,14 +92,17 @@
       <td *matCellDef="let unitRole" mat-cell>
         <mat-select
           class="w-full min-w-[140px]"
+          placeholder="(None)"
           [ngModel]="unitRole.mentorId"
           (selectionChange)="selectMentor(unitRole, $event)"
         >
-          <mat-option value="">(None)</mat-option>
-          @for (unitRole of unitStaff; track unitRole) {
-            <mat-option class="w-full min-w-fit" [value]="unitRole.id">
-              {{ unitRole.user.name }}</mat-option
-            >
+          <mat-option [value]="null">(None)</mat-option>
+          @for (staffRole of unitStaff; track staffRole) {
+            @if (staffRole.id !== unitRole.id) {
+              <mat-option class="w-full min-w-fit" [value]="staffRole.id">
+                {{ staffRole.user.name }}
+              </mat-option>
+            }
           }
         </mat-select>
       </td>
