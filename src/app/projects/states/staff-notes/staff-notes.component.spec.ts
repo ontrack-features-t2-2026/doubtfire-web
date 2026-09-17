@@ -73,7 +73,7 @@ describe('StaffNotesComponent note actions', () => {
     fixture.detectChanges();
     component.loadingStaffNotes = false;
     component.project = {
-      student: {preferredName: 'Ada', lastName: 'Lovelace'},
+      student: {preferredName: 'Ada', lastName: 'Lovelace', displayName: 'Ada Lovelace'},
       staffNoteCache: {currentValues: [note]},
     } as never;
     fixture.detectChanges();

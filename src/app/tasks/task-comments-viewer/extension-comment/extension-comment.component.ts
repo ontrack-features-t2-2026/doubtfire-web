@@ -21,7 +21,7 @@ export class ExtensionCommentComponent {
   }
 
   get message() {
-    const studentName = this.comment.author.name;
+    const studentName = this.comment.author.displayName;
     if (this.comment.assessed) {
       return this.comment.extensionResponse;
     }

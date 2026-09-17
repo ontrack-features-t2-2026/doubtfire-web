@@ -34,7 +34,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   public externalName = this.constants.ExternalName;
-  public userFirstName = this.currentUser.nickname || this.currentUser.firstName;
+  public userFirstName = this.currentUser.preferredName;
 
   private subscriptions: Subscription[] = [];
 
