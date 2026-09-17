@@ -15,6 +15,7 @@ import {Task} from 'src/app/api/models/task';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
 import {TaskDefinitionService} from 'src/app/api/services/task-definition.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {CsvResultModalService} from 'src/app/common/modals/csv-result-modal/csv-result-modal.service';
 import {CsvUploadModalService} from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
@@ -439,7 +440,16 @@ describe('StaffTaskListComponent rendered empty state', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [StaffTaskListComponent],
-      imports: [CommonModule, FormsModule, MatMenuModule, MatSelectModule, ScrollingModule],
+      imports: [
+        CommonModule,
+        FormsModule,
+        MatMenuModule,
+        MatSelectModule,
+        ScrollingModule,
+        // The real one, not a stub: these tests assert the text it renders and that
+        // its icon is decorative, which is exactly what it is responsible for.
+        EmptyStateComponent,
+      ],
       providers: [
         {provide: SelectedTaskService, useValue: {setSelectedTask: () => {}}},
         {provide: AlertService, useValue: emptyProvider},
@@ -475,8 +485,10 @@ describe('StaffTaskListComponent rendered empty state', () => {
     fixture.detectChanges();
   });
 
-  function emptyState(): HTMLElement {
-    return fixture.nativeElement.querySelector('.center-task-list');
+  // The empty state is no longer one always-rendered element toggled with [hidden].
+  // Each list state renders its own block, so "hidden" here means "not in the DOM".
+  function emptyState(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('[role="status"]');
   }
 
   function finishLoading(tasks: Task[] = []): void {
@@ -488,21 +500,21 @@ describe('StaffTaskListComponent rendered empty state', () => {
   it('shows descriptive text and a decorative icon after an empty response', () => {
     finishLoading();
     const status = emptyState();
-    expect(status.hidden).toBe(false);
+    expect(status).not.toBeNull();
     expect(status.getAttribute('role')).toBe('status');
-    expect(status.querySelector('p').textContent).toBe('No tasks match these filters.');
+    expect(status.querySelector('p').textContent.trim()).toBe(component.emptyState.message);
     expect(status.querySelector('p').classList.contains('sr-only')).toBe(false);
     expect(status.querySelector('mat-icon').getAttribute('aria-hidden')).toBe('true');
   });
 
   it('keeps the empty state hidden while the list is loading', () => {
-    expect(emptyState().hidden).toBe(true);
+    expect(emptyState()).toBeNull();
   });
 
   it('keeps the empty state hidden before a result is available', () => {
     component.loading = false;
     fixture.detectChanges();
-    expect(emptyState().hidden).toBe(true);
+    expect(emptyState()).toBeNull();
   });
 
   it('hides the empty state when results are present', () => {
@@ -517,15 +529,15 @@ describe('StaffTaskListComponent rendered empty state', () => {
       hasQualityPoints: () => false,
     } as unknown as Task;
     finishLoading([task]);
-    expect(emptyState().hidden).toBe(true);
+    expect(emptyState()).toBeNull();
   });
 
   it('keeps the full message accessible in the narrow icon-only sidebar', () => {
     component.isNarrow = true;
     finishLoading();
     const status = emptyState();
-    expect(status.hidden).toBe(false);
-    expect(status.querySelector('p').textContent).toBe('No tasks match these filters.');
+    expect(status).not.toBeNull();
+    expect(status.querySelector('p').textContent.trim()).toBe(component.emptyState.message);
     expect(status.querySelector('p').classList.contains('sr-only')).toBe(true);
     expect(status.querySelector('p').hasAttribute('aria-hidden')).toBe(false);
   });
