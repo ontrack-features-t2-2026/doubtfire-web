@@ -4,6 +4,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatButtonHarness} from '@angular/material/button/testing';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
@@ -121,6 +122,9 @@ describe('CrossDashboardComponent', () => {
       declarations: [CrossDashboardComponent],
       imports: [
         MatButtonModule,
+        // Without it the checkbox renders as an unknown element under NO_ERRORS_SCHEMA
+        // and produces no input, so its accessible name cannot be observed.
+        MatCheckboxModule,
         MatFormFieldModule,
         MatIconModule,
         MatInputModule,
@@ -1527,5 +1531,25 @@ describe('CrossDashboardComponent', () => {
     expect(Array.from(card.classList)).toEqual(
       expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:w-128']),
     );
+  });
+
+  // The text in the menu item is not a label element, so the box needs its own name.
+  it('names the per-unit filter box after the filter it turns on', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const filterButton = await loader.getHarness(
+      MatButtonHarness.with({selector: '[aria-label^="Filter tasks in"]'}),
+    );
+    await filterButton.click();
+    await syncView();
+
+    const item = document.querySelector('.mat-mdc-menu-panel .mat-mdc-menu-item') as HTMLElement;
+    const box = item?.querySelector('input') as HTMLInputElement;
+
+    expect(item?.textContent.trim()).toBe('Hide Completed');
+    expect(box?.getAttribute('aria-label')).toBe('Hide Completed');
+    expect(item?.getAttribute('aria-label')).toBe('Hide Completed');
   });
 });

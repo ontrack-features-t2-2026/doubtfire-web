@@ -243,11 +243,18 @@
               </button>
               <mat-menu #filtermenu="matMenu">
                 @for (mode of filterOptions; track mode) {
+                  <!-- The box carries the filter's name because the text beside it is
+                       not a label element. The item is named too, so naming the box
+                       does not make the menu read the filter twice. -->
                   <div
                     mat-menu-item
+                    [attr.aria-label]="mode"
                     (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
                   >
-                    <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
+                    <mat-checkbox
+                      [aria-label]="mode"
+                      [checked]="isFilterEnabled(unit.projectId, mode)"
+                    />
                     {{ mode }}
                   </div>
                 }
