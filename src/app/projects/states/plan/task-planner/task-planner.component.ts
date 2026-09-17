@@ -408,6 +408,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const originalStyle = {
+      flex: ganttEl.style.flex,
       width: ganttEl.style.width,
       height: ganttEl.style.height,
       overflow: ganttEl.style.overflow,
@@ -437,6 +438,9 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       const fullHeight =
         ganttEl.offsetHeight - mainContainer.offsetHeight + mainContainer.scrollHeight;
 
+      // The chart is a flex item that may shrink to fit the page, which would cut the
+      // rows below the fold out of the image, so hold it at its full size while capturing.
+      ganttEl.style.flex = '0 0 auto';
       ganttEl.style.width = `${fullWidth}px`;
       ganttEl.style.height = `${fullHeight}px`;
       ganttEl.style.overflow = 'visible';
@@ -449,6 +453,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.style.flex = originalStyle.flex;
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

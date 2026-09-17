@@ -67,6 +67,43 @@ describe('TaskPlannerComponent target-grade filtering', () => {
   });
 });
 
+describe('TaskPlannerComponent chart download', () => {
+  it('holds the chart at full size while it is captured and restores it after', async () => {
+    const ganttEl = document.createElement('div');
+    ganttEl.style.flex = '1 1 auto';
+    const side = document.createElement('div');
+    side.className = 'gantt-side';
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'gantt-main-container';
+    // jsdom has no element scrolling.
+    mainContainer.scrollTo = () => undefined;
+    ganttEl.append(side, mainContainer);
+
+    let flexDuringCapture = '';
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    Object.defineProperty(component, 'unit', {value: {code: 'SIT101'}});
+    Object.assign(component, {
+      ganttComponent: {element: ganttEl, view: {width: 400}},
+      ganttPrintService: {
+        html2canvas: async () => {
+          flexDuringCapture = ganttEl.style.flex;
+          return document.createElement('canvas');
+        },
+      },
+      alertService: {error: () => undefined},
+      renderAllGanttBars: async () => undefined,
+      waitForStableLayout: async () => undefined,
+      nextAnimationFrame: async () => undefined,
+      downloadCanvas: () => undefined,
+    });
+
+    await component.saveImage();
+
+    expect(flexDuringCapture).toBe('0 0 auto');
+    expect(ganttEl.style.flex).toBe('1 1 auto');
+  });
+});
+
 const emptyProvider = {};
 
 /** Records what barClick asks the modal to open, so the keyboard path can be checked. */
