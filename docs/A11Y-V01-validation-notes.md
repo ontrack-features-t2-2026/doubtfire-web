@@ -28,13 +28,100 @@ No dedicated axe, Pa11y, Lighthouse, Playwright or Cypress accessibility scanner
 
 ## 3. Targeted accessibility tests
 
-| Test                                                                                                                                                                                                                         | Result          |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/visualisations/task-visualisation/task-visualisation.component.spec.ts'`                                                             | **PASS, 3/3**   |
-| `cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/common/pdf-viewer/pdf-viewer.component.spec.ts'`                                                                                     | **PASS, 3/3**   |
-| `cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.spec.ts'`                                                       | **PASS, 31/31** |
-| `cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.spec.ts'`                                              | **PASS, 22/22** |
-| `cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts' --include='src/app/sessions/states/sign-in/sign-in.component.spec.ts'` | **PASS, 24/24** |
+### Task visualisation
+
+```text
+✓ doubtfire src/app/visualisations/task-visualisation/task-visualisation.component.spec.ts (3 tests)
+  ✓ complete status labels without chart ellipsis/false click affordance
+  ✓ status cards above 4.5:1 contrast floor
+  ✓ route reuse updates counts
+
+Test Files  1 passed (1)
+Tests       3 passed (3)
+```
+
+**Command:**
+
+```bash
+cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/visualisations/task-visualisation/task-visualisation.component.spec.ts'
+```
+
+### PDF viewer
+
+```text
+✓ doubtfire src/app/common/pdf-viewer/pdf-viewer.component.spec.ts (3 tests)
+  ✓ zoom buttons have different accessible names
+  ✓ search field has mat-label and spinner accessible name
+  ✓ embedded PDF object titled
+
+Test Files  1 passed (1)
+Tests       3 passed (3)
+```
+
+**Command:**
+
+```bash
+cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/common/pdf-viewer/pdf-viewer.component.spec.ts'
+```
+
+### Unit task list
+
+```text
+✓ doubtfire src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.spec.ts (31 tests)
+  ✓ task logic tests
+  ✓ status badges accessible names
+  ✓ decorative glyphs hidden
+  ✓ deadline states use different glyph for non-colour signal
+  ✓ collapsed list badges named
+
+Test Files  1 passed (1)
+Tests       31 passed (31)
+```
+
+**Command:**
+
+```bash
+cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.spec.ts'
+```
+
+### Staff task list
+
+```text
+✓ doubtfire src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.spec.ts (22 tests)
+  ✓ keyboard focus reveals row actions without hover
+  ✓ focus/blur
+  ✓ overflow menu focus
+  ✓ empty state descriptive text
+  ✓ full message accessible in narrow icon-only sidebar
+
+Test Files  1 passed (1)
+Tests       22 passed (22)
+```
+
+**Command:**
+
+```bash
+cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.spec.ts'
+```
+
+### Profile and sign-in forms
+
+```text
+✓ doubtfire src/app/common/edit-profile-form/edit-profile-form.component.spec.ts
+✓ doubtfire src/app/sessions/states/sign-in/sign-in.component.spec.ts
+
+Test Files  2 passed (2)
+Tests       24 passed (24)
+```
+
+These tests included the A11Y-FORM06 autocomplete-purpose checks.
+
+**Command:**
+
+```bash
+cd /workspace/doubtfire-web && npx ng test --no-watch --no-progress --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts' --include='src/app/sessions/states/sign-in/sign-in.component.spec.ts'
+```
+
 
 These tests covered accessible names, keyboard focus, status information, PDF controls, forms and contrast-related behaviour.
 
@@ -65,9 +152,14 @@ The light/dark theme toggle was not visible at 200% zoom or on the mobile layout
 
 At the mobile viewport, **Task Details → Task Sheet** showed three magnifying-glass icons and minor visual glitching around the left side of the PDF search box when folding/expanding. The search function remained usable.
 
+<img width="240" height="303" alt="Screenshot from 2026-09-18 13-50-39" src="https://github.com/user-attachments/assets/7272f45b-ffd6-41bd-991e-19fc91dcb5ad" />
+
+
 **Reproduction:** Open a student/staff Task Sheet at the iPhone 15 Pro viewport and fold/expand the PDF search area.
 
 ### Progress Dashboard observation
+
+<img width="701" height="542" alt="Screenshot from 2026-09-18 13-51-24" src="https://github.com/user-attachments/assets/57063adb-2b69-4b8a-84e0-5e3ddd7e3522" />
 
 The Progress Dashboard showed a strong visual difference between the white surrounding area and dark/black component boxes.
 
