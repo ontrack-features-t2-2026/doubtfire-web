@@ -18,7 +18,7 @@
     <div class="flex flex-col">
       <div>{{ title }}</div>
       <!-- <small>Please confirm that you want to perform this action.</small> -->
-      <small>Tutor: {{ task.tutor.user.name }}</small>
+      <small>Tutor: {{ task.tutor.user.displayName }}</small>
     </div>
   </div>
 </h3>
@@ -30,7 +30,7 @@
     <p>
       <mat-checkbox [(ngModel)]="dismissAllTasks">
         Apply this action to all {{ task.definition.abbreviation }} {{ task.definition.name }} tasks
-        from {{ task.tutor?.user.name ?? 'N/A' }}, currently waiting for moderation
+        from {{ task.tutor?.user.displayName ?? 'N/A' }}, currently waiting for moderation
       </mat-checkbox>
     </p>
   }
