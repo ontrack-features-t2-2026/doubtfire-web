@@ -52,7 +52,7 @@
           @for (week of weeks; track week.week) {
             <div
               class="flex flex-1 flex-col border-r border-[color:var(--ot-color-divider)] first:border-l"
-              [class.bg-blue-50]="week.week === currentWeek"
+              [class.is-current-week]="week.week === currentWeek"
               [style.min-width.px]="weekWidth(week.stamps)"
             >
               <div class="flex min-h-[210px] flex-1 items-end justify-center gap-[5px] px-2 py-2.5">

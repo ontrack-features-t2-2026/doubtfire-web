@@ -94,6 +94,8 @@ Examples of the mapping:
 - `portfolio-grade-select-step.component.html`, `portfolio-learning-summary-report-step.component.html`,
   `portfolio-included-tasks.component.html`
 - `task-assessment-comment.component.html`
+- `unit-task-list.component.html` (the task list shown in the task-detail view, whose selected row used a hardcoded `bg-blue-50`)
+- `engagement-passport-card.component.html` (the current-week column highlight)
 
 ## Non-colour cues
 
@@ -137,12 +139,11 @@ production build log for the PR.
 ### Visual verification
 
 The running dev server (`ng serve`) recompiled all SCSS and template changes
-without error, and the student unit dashboard at `/projects/:id/dashboard` was
-checked in Light and Dark. Confirmed fixed in Dark: the Unit and Task Learning
-Outcomes striped rows, the Progress Dashboard header strip, and the discussion
-status labels. Known residual: a small chart cell in the Engagement Passport still
-renders light in Dark, likely an SVG element rather than a CSS class; it is
-recorded as a follow-up.
+without error, and the student unit dashboard and task-detail view were checked
+in Light and Dark. Confirmed fixed in Dark: the Unit and Task Learning Outcomes
+striped rows, the Progress Dashboard header strip, the discussion status labels,
+the selected and hovered task rows on both the dashboard list and the task-detail
+list, and the Engagement Passport current-week column highlight.
 
 ## Evidence screenshots
 
