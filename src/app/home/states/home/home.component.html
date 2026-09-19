@@ -7,6 +7,12 @@
     >
     <mat-icon aria-hidden="true">arrow_forward</mat-icon>
   </a>
+  @if (notEnrolled) {
+    <div class="text-center">
+      <h1 class="mat-headline-5">You are not enrolled in any {{ externalName.value }} units.</h1>
+      <p class="mat-lead">Contact your unit convenor or tutor to enrol you in a subject.</p>
+    </div>
+  }
   <div [hidden]="!unitRoles?.length">
     <h2>Units you teach</h2>
     <div style="height: 185px" [hidden]="!loadingUnitRoles">

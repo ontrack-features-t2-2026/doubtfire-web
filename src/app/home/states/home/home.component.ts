@@ -17,7 +17,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   projects: Project[];
   unitRoles: UnitRole[];
   showSpinner: boolean;
-  dataLoaded: boolean;
+  dataLoaded = false;
   ifAdmin: boolean;
   ifConvenor: boolean;
   loadingUnitRoles: boolean;
@@ -70,6 +70,16 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.ifAdmin = this.currentUser.role === 'Admin';
     this.ifConvenor = this.currentUser.role === 'Convenor';
+
+    // Both lists start out empty before the first load finishes, so wait for it before
+    // deciding the user has no units.
+    this.globalState.onLoad(() => {
+      this.dataLoaded = true;
+    });
+  }
+
+  get notEnrolled(): boolean {
+    return this.dataLoaded && this.projects?.length === 0 && this.unitRoles?.length === 0;
   }
 
   get currentUser(): User {
