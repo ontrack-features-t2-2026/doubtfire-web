@@ -86,6 +86,13 @@ const ACCEPTED_FILE_TYPES = [
   'image/jpeg',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
+  'image/png',
+  'image/bmp',
+  'image/tiff',
+  'image/jpeg',
+  'image/gif',
+];
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const MAX_ATTACHMENT_BYTES = 30_000_000;
@@ -962,15 +969,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -979,15 +978,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   uploadFiles(files: ArrayLike<File>) {
@@ -1168,6 +1159,52 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return 'The upload timed out. Your draft is still here; retry when the connection is stable.';
     }
     return failure?.message || fallback;
+  }
+
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.currentInputText;
+
+    this.clearPastedPlaceholderContent(existingText);
+    this.uploadFiles(approvedImages);
   }
 
   private getClipboardFiles(event: ClipboardEvent): File[] {

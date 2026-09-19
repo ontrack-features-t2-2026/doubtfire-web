@@ -777,3 +777,123 @@ describe('TaskCommentComposerComponent addCommentWithType', () => {
     logSpy.mockRestore();
   });
 });
+
+function clipboardPasteEvent(files: File[]) {
+  return {
+    clipboardData: {
+      files,
+      items: [],
+    },
+    preventDefault: vi.fn(),
+  } as never as ClipboardEvent;
+}
+
+function beforeInputPasteEvent(files: File[]) {
+  return {
+    inputType: 'insertFromPaste',
+    dataTransfer: {files},
+    preventDefault: vi.fn(),
+  } as never as InputEvent;
+}
+
+function image(name: string, lastModified: number): File {
+  return new File(['image'], name, {type: 'image/png', lastModified});
+}
+
+describe('TaskCommentComposerComponent clipboard image paste', () => {
+  beforeEach(() => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function clipboardComposer() {
+    const harness = createComposer();
+    const uploadSpy = vi.spyOn(harness.component, 'uploadFiles').mockImplementation(() => {});
+    return {...harness, uploadSpy};
+  }
+
+  it('accepts an approved image from the paste event', () => {
+    const {component, uploadSpy} = clipboardComposer();
+    const file = image('screenshot.png', 10);
+    const event = clipboardPasteEvent([file]);
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledWith([file]);
+  });
+
+  it('accepts an approved image from the beforeinput path', () => {
+    const {component, uploadSpy} = clipboardComposer();
+    const file = image('screenshot.png', 20);
+    const event = beforeInputPasteEvent([file]);
+
+    component.handleBeforeInput(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledWith([file]);
+  });
+
+  it('prevents beforeinput and paste from creating the same attachment twice', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-17T12:00:00Z'));
+    const {component, uploadSpy} = clipboardComposer();
+    const file = image('screenshot.png', 30);
+
+    component.handleBeforeInput(beforeInputPasteEvent([file]));
+    component.handlePaste(clipboardPasteEvent([file]));
+
+    expect(uploadSpy).toHaveBeenCalledOnce();
+  });
+
+  it('preserves text already typed when an image is pasted', () => {
+    vi.useFakeTimers();
+    const {component, message} = clipboardComposer();
+    message.value = 'keep this text';
+
+    component.handlePaste(clipboardPasteEvent([image('screenshot.png', 40)]));
+    message.value = 'temporary pasted placeholder';
+    vi.runAllTimers();
+
+    expect(message.value).toBe('keep this text');
+  });
+
+  it('rejects unsupported clipboard files with a clear message', () => {
+    const {component, alerts, uploadSpy} = clipboardComposer();
+    const pdf = new File(['pdf'], 'evidence.pdf', {type: 'application/pdf', lastModified: 50});
+    const event = clipboardPasteEvent([pdf]);
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).not.toHaveBeenCalled();
+    expect(alerts.error).toHaveBeenCalledWith(
+      'Clipboard paste supports approved image files only.',
+      4000,
+    );
+  });
+
+  it('leaves normal text or HTML paste alone when there is no clipboard file', () => {
+    const {component, alerts, uploadSpy} = clipboardComposer();
+    const event = {
+      clipboardData: {files: [], items: [], types: ['text/plain', 'text/html']},
+      preventDefault: vi.fn(),
+    } as never as ClipboardEvent;
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(uploadSpy).not.toHaveBeenCalled();
+    expect(alerts.error).not.toHaveBeenCalled();
+  });
+});

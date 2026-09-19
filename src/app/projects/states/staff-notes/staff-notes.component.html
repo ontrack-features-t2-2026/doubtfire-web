@@ -1,7 +1,7 @@
 <div class="flex h-full flex-col">
   @if (!loadingStaffNotes && project?.staffNoteCount === 0) {
     <div class="flex size-full items-center justify-center text-gray-300">
-      No staff notes for {{ project.student.preferredName }} {{ project.student.lastName }}
+      No staff notes for {{ project.student.displayName }}
     </div>
   }
   <div #staffNotesContainer class="flex-1 overflow-auto p-2.5">
@@ -63,7 +63,7 @@
           <div class="flex justify-between">
             <mat-card-title class="flex items-center">
               <user-icon style="margin-right: 8px" [size]="25" [user]="note.user"></user-icon>
-              {{ note.user?.firstName }} {{ note.user?.lastName }}</mat-card-title
+              {{ note.user?.displayName }}</mat-card-title
             >
             <div class="flex items-center">
               <mat-card-subtitle
@@ -117,9 +117,7 @@
           <mat-icon class="mt-0.5 mr-2">reply</mat-icon>
           <div class="flex flex-col">
             <span class="font-medium">
-              Replying to {{ replyingToNote.user.firstName }} {{ replyingToNote.user.lastName }} ({{
-                replyingToNote.user.nickname
-              }})
+              Replying to {{ replyingToNote.user.displayName }} ({{ replyingToNote.user.nickname }})
             </span>
             <span class="text-xs text-gray-600">{{ replyingToNote.note }}</span>
           </div>
