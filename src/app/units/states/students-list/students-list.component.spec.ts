@@ -1,8 +1,17 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatOptionSelectionChange} from '@angular/material/core';
-import {MatPaginator} from '@angular/material/paginator';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatPaginator, MatPaginatorModule} from '@angular/material/paginator';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSortModule} from '@angular/material/sort';
+import {MatTableModule} from '@angular/material/table';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, of, throwError} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
@@ -11,6 +20,7 @@ import {Unit} from 'src/app/api/models/unit';
 import {CampusService} from 'src/app/api/services/campus.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {UnitStudentEnrolmentModalService} from '../../modals/unit-student-enrolment-modal/unit-student-enrolment-modal.service';
 import {UnitRootStateComponent} from '../../unit-root-state.component';
@@ -263,5 +273,95 @@ describe('StudentsListComponent', () => {
     component.changeCampus(project, {id: 2, name: 'Geelong'} as never);
 
     expect(project.campus).toBe(original);
+  });
+});
+
+describe('StudentsListComponent empty state', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [StudentsListComponent],
+      imports: [
+        FormsModule,
+        MatAutocompleteModule,
+        MatButtonToggleModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatPaginatorModule,
+        MatSelectModule,
+        MatSortModule,
+        MatTableModule,
+        NoopAnimationsModule,
+        EmptyStateComponent,
+      ],
+      providers: [
+        {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
+        {provide: Router, useValue: {}},
+        {provide: UserService, useValue: {currentUser: {id: 1}}},
+        {provide: ProjectService, useValue: {loadStudents: () => of([])}},
+        {provide: CampusService, useValue: {query: () => of([])}},
+        {provide: AlertService, useValue: {success: () => {}, error: () => {}}},
+        {provide: UnitStudentEnrolmentModalService, useValue: {}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  it('renders the empty state only while the filtered list has no rows', () => {
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    const component = fixture.componentInstance;
+    component.unit$ = of(unitStub(1, []));
+
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('f-empty-state') as HTMLElement;
+    const table = fixture.nativeElement.querySelector('table') as HTMLTableElement;
+    const tableScrollContainer = table.parentElement as HTMLDivElement;
+
+    expect(emptyState).toBeTruthy();
+    expect(emptyState.closest('table')).toBeNull();
+    expect(tableScrollContainer.hidden).toBe(true);
+
+    component.dataSource.data = [
+      {
+        student: {name: 'Cy Cole', username: 'cycole'},
+        hasTutor: () => true,
+        matches: () => true,
+        taskStats: [],
+      } as unknown as Project,
+    ];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeFalsy();
+    expect(tableScrollContainer.hidden).toBe(false);
+  });
+
+  it('shows a retryable error instead of claiming that a failed load is empty', () => {
+    const projectService = TestBed.inject(ProjectService);
+    const loadStudents = vi
+      .spyOn(projectService, 'loadStudents')
+      .mockReturnValueOnce(throwError(() => new Error('network unavailable')))
+      .mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    fixture.componentInstance.unit$ = of(unitStub(1, []));
+
+    fixture.detectChanges();
+
+    const errorState = fixture.nativeElement.querySelector('f-empty-state') as HTMLElement;
+    expect(errorState.textContent).toContain('Students could not be loaded');
+    expect(fixture.nativeElement.textContent).not.toContain('No students enrolled yet');
+
+    const retry = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent.includes('Try again'));
+    retry.click();
+    fixture.detectChanges();
+
+    expect(loadStudents).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).not.toContain('Students could not be loaded');
+    expect(fixture.nativeElement.querySelector('f-empty-state').textContent).toContain(
+      'No students enrolled yet',
+    );
   });
 });

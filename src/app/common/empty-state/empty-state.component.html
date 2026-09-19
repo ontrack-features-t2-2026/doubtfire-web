@@ -6,4 +6,9 @@
   @if (hint) {
     <p class="m-0 max-w-md text-sm">{{ hint }}</p>
   }
+  @if (actionLabel) {
+    <button class="mt-2" mat-stroked-button type="button" (click)="action.emit()">
+      {{ actionLabel }}
+    </button>
+  }
 </div>

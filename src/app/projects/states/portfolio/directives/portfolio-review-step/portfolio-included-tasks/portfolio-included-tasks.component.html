@@ -1,7 +1,7 @@
 @if (loadingIncludedTasks) {
-  <div class="flex min-h-24 w-full items-center justify-center gap-3 text-sm text-ot-muted">
-    <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
-    Loading tasks...
+  <div aria-busy="true" aria-label="Loading tasks" class="w-full" role="status">
+    <span class="sr-only">Loading tasks...</span>
+    <f-skeleton-loader shape="row" [count]="4"></f-skeleton-loader>
   </div>
 } @else {
   @if (tasksInPortfolio.length === 0) {

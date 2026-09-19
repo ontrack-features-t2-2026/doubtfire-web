@@ -377,4 +377,34 @@ describe('PortfoliosListComponent', () => {
     expect(progress.segments[0].color).toBe('var(--ot-status-complete-graphic)');
     expect(progress.label).toBe('Task progress: Complete 100%');
   });
+
+  it('renders the empty state only while the filtered list has no rows', () => {
+    fixture = TestBed.createComponent(PortfoliosListComponent);
+    const root = fixture.nativeElement as HTMLElement;
+    fixture.componentRef.setInput('unit', unitStub([]));
+
+    fixture.detectChanges();
+
+    expect(root.querySelector('f-empty-state')).toBeNull();
+
+    fixture.componentRef.setInput('loading', false);
+    fixture.detectChanges();
+
+    const emptyState = root.querySelector('f-empty-state') as HTMLElement;
+    const table = root.querySelector('table') as HTMLTableElement;
+    const tableScrollContainer = table.parentElement as HTMLDivElement;
+
+    expect(emptyState).toBeTruthy();
+    expect(emptyState.closest('table')).toBeNull();
+    expect(tableScrollContainer.classList.contains('hidden')).toBe(true);
+
+    fixture.componentRef.setInput(
+      'unit',
+      unitStub([studentStub({id: 1, name: 'Cy Cole', hasPortfolio: true})]),
+    );
+    fixture.detectChanges();
+
+    expect(root.querySelector('f-empty-state')).toBeNull();
+    expect(tableScrollContainer.classList.contains('hidden')).toBe(false);
+  });
 });
