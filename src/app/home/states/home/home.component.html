@@ -7,7 +7,7 @@
     >
     <mat-icon aria-hidden="true">arrow_forward</mat-icon>
   </a>
-  @if (projects?.length === 0 && unitRoles?.length === 0) {
+  @if (notEnrolled) {
     <div class="text-center">
       <h1 class="mat-headline-5">You are not enrolled in any {{ externalName.value }} units.</h1>
       <p class="mat-lead">Contact your unit convenor or tutor to enrol you in a subject.</p>
