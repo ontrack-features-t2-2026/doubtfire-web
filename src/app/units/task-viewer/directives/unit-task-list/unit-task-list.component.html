@@ -121,15 +121,10 @@
     <div class="omnisearch rounded-t-2xl md:rounded-2xl">
       <div class="flex items-center justify-between">
         <div class="flex min-w-0 flex-1 items-center">
-          <button
-            aria-label="Search Icon"
-            class="flex flex-none items-center"
-            disabled
-            mat-icon-button
-          >
-            <mat-icon class="flex items-center" disabled>search</mat-icon>
-          </button>
+          <mat-icon aria-hidden="true" class="flex items-center">search</mat-icon>
+
           <input
+            aria-label="Search tasks"
             autocomplete="off"
             class="search w-full text-gray-900 placeholder:text-gray-600 placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
             placeholder="Search Tasks"
