@@ -53,7 +53,9 @@
 
             @if (engagement.evidenceUrl || engagement.hasAttachment) {
               <div class="mt-3 border-t border-[color:var(--ot-color-divider)] pt-3">
-                <p class="mb-2 text-sm font-medium text-[color:var(--ot-color-text-muted)]">Evidence</p>
+                <p class="mb-2 text-sm font-medium text-[color:var(--ot-color-text-muted)]">
+                  Evidence
+                </p>
 
                 @if (engagement.evidenceUrl) {
                   <a
@@ -69,7 +71,9 @@
 
                 @if (engagement.hasAttachment && engagement.contentType === 'image') {
                   @if (evidenceLoading) {
-                    <div class="flex min-h-32 items-center justify-center rounded-md bg-[var(--ot-color-page)]">
+                    <div
+                      class="flex min-h-32 items-center justify-center rounded-md bg-[var(--ot-color-page)]"
+                    >
                       <mat-spinner diameter="28"></mat-spinner>
                     </div>
                   } @else if (evidenceBlobUrl) {
@@ -123,9 +127,13 @@
                       Replying to {{ comment.replyTo.user?.preferredName }}
                       {{ comment.replyTo.user?.lastName }}
                     </span>
-                    <span class="text-xs text-[color:var(--ot-color-text-muted)]">{{ comment.replyTo.comment }}</span>
+                    <span class="text-xs text-[color:var(--ot-color-text-muted)]">{{
+                      comment.replyTo.comment
+                    }}</span>
                   } @else {
-                    <span class="text-xs text-[color:var(--ot-color-text-muted)] italic">Replying to: Deleted comment</span>
+                    <span class="text-xs text-[color:var(--ot-color-text-muted)] italic"
+                      >Replying to: Deleted comment</span
+                    >
                   }
                 </div>
               </div>
@@ -217,7 +225,9 @@
         }
 
         @if (comments.length === 0) {
-          <p class="py-2 text-center text-sm text-[color:var(--ot-color-text-muted)]">No comments yet.</p>
+          <p class="py-2 text-center text-sm text-[color:var(--ot-color-text-muted)]">
+            No comments yet.
+          </p>
         }
 
         <span #commentsEnd aria-hidden="true"></span>

@@ -36,7 +36,9 @@
           Learning Summary Report Submitted
         </div>
         @if (draftTaskDefinitionWasUsed()) {
-          <div class="w-full max-w-2xl py-1 text-center text-xs text-[color:var(--ot-color-text-muted)]">
+          <div
+            class="w-full max-w-2xl py-1 text-center text-xs text-[color:var(--ot-color-text-muted)]"
+          >
             Your learning summary report was automatically submitted from your
             {{ unit.draftTaskDefinition.abbreviation }} {{ unit.draftTaskDefinition.name }}
             submission.

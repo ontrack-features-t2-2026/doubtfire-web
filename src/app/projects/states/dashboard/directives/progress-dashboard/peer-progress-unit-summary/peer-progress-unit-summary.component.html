@@ -31,7 +31,10 @@
 
       @default {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <section aria-label="Your unit progress" class="rounded-md border border-[color:var(--ot-color-divider)] p-4">
+          <section
+            aria-label="Your unit progress"
+            class="rounded-md border border-[color:var(--ot-color-divider)] p-4"
+          >
             <h5 class="mb-2 font-semibold">Your progress</h5>
 
             @if (studentPercentage !== null) {
@@ -64,7 +67,11 @@
                 [value]="cohortPercentage ?? 0"
               ></mat-progress-bar>
             } @else {
-              <div aria-live="polite" class="flex items-center gap-2 text-[color:var(--ot-color-text-muted)]" role="status">
+              <div
+                aria-live="polite"
+                class="flex items-center gap-2 text-[color:var(--ot-color-text-muted)]"
+                role="status"
+              >
                 <mat-icon aria-hidden="true">
                   {{ cohortStateIcon }}
                 </mat-icon>

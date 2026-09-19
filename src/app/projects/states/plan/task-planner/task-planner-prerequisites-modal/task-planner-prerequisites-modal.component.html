@@ -15,7 +15,9 @@
       [taskDefinition]="taskDefinition"
     ></f-task-prerequisites-card>
     @if (!task.hasPrerequisiteTasks()) {
-      <div class="w-full p-3 text-center text-[color:var(--ot-color-text-muted)]">This task has no prerequisites.</div>
+      <div class="w-full p-3 text-center text-[color:var(--ot-color-text-muted)]">
+        This task has no prerequisites.
+      </div>
     }
     <mat-divider class="my-3"></mat-divider>
     @if (dependents.length) {

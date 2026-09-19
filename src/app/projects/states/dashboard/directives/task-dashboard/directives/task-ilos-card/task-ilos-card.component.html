@@ -10,9 +10,15 @@
     <table class="overflow-hidden rounded-lg">
       <tbody>
         @for (ilo of learningOutcomes; track ilo) {
-          <tr class="border-b border-[color:var(--ot-color-divider)] odd:bg-[var(--ot-color-page)] even:bg-[var(--ot-color-surface)]">
-            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text)] uppercase">{{ ilo.abbreviation }}</td>
-            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text-muted)]">{{ ilo.fullOutcomeDescription }}</td>
+          <tr
+            class="border-b border-[color:var(--ot-color-divider)] odd:bg-[var(--ot-color-page)] even:bg-[var(--ot-color-surface)]"
+          >
+            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text)] uppercase">
+              {{ ilo.abbreviation }}
+            </td>
+            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text-muted)]">
+              {{ ilo.fullOutcomeDescription }}
+            </td>
             <td class="flex justify-end px-3.5 py-2.5 text-[color:var(--ot-color-text-muted)]">
               @for (outcome of getLinkedOutcomes(ilo); track outcome.abbreviation) {
                 <mat-chip-row class="m-0.5" matTooltip="{{ outcome.shortDescription }}">{{

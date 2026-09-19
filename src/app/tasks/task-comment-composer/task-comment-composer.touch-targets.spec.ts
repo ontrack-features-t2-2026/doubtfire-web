@@ -103,8 +103,8 @@ describe('TaskCommentComposerComponent phone actions', () => {
     expect(phoneStyles).toMatch(/width:\s*48px/);
     expect(phoneStyles).toMatch(/height:\s*48px/);
     expect(phoneStyles).toMatch(/transform:\s*none/);
-    expect(phoneStyles).toMatch(/border:\s*1px solid #cbd5e1/);
-    expect(phoneStyles).toMatch(/background-color:\s*#f8fafc/);
+    expect(phoneStyles).toMatch(/border:\s*1px solid var\(--ot-color-border\)/);
+    expect(phoneStyles).toMatch(/background-color:\s*var\(--ot-color-page\)/);
   });
 
   it('keeps the phone composer away from both safe-area edges', () => {

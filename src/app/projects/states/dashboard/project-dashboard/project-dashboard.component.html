@@ -153,7 +153,10 @@
         </div>
       }
       @if (isPhoneLayout && mobilePane === 'overview') {
-        <section aria-label="Project overview" class="mobile-overview-view min-w-0 flex-1 bg-[var(--ot-color-surface)]">
+        <section
+          aria-label="Project overview"
+          class="mobile-overview-view min-w-0 flex-1 bg-[var(--ot-color-surface)]"
+        >
           <div class="mobile-overview-pane">
             @if (isProjectTaskListReady(project)) {
               <f-progress-dashboard
@@ -162,7 +165,9 @@
                 [showSubmittedGrade]="showSubmittedGrade"
               ></f-progress-dashboard>
             } @else {
-              <div class="dashboard-skeleton min-h-full rounded-lg bg-[var(--ot-color-surface)] p-2.5">
+              <div
+                class="dashboard-skeleton min-h-full rounded-lg bg-[var(--ot-color-surface)] p-2.5"
+              >
                 <ngx-skeleton-loader
                   [theme]="{
                     height: '28px',
@@ -193,7 +198,10 @@
         </section>
       } @else if (selectedTaskDefinition) {
         @if (isPhoneLayout) {
-          <section aria-label="Selected task" class="mobile-task-view min-w-0 flex-1 bg-[var(--ot-color-surface)]">
+          <section
+            aria-label="Selected task"
+            class="mobile-task-view min-w-0 flex-1 bg-[var(--ot-color-surface)]"
+          >
             <div class="mobile-task-pane">
               @if (mobilePane === 'task') {
                 <f-task-dashboard
@@ -207,7 +215,9 @@
             </div>
           </section>
         } @else {
-          <div class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-[var(--ot-color-surface)] p-1">
+          <div
+            class="desktop-task-dashboard min-w-0 flex-1 rounded-lg bg-[var(--ot-color-surface)] p-1"
+          >
             <f-task-dashboard
               [task]="project.findTaskForDefinition(selectedTaskDefinition.id)"
             ></f-task-dashboard>

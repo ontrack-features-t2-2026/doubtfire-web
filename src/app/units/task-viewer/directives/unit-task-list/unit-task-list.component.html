@@ -155,7 +155,9 @@
         </button>
         <mat-menu #taskListFiltersMenu="matMenu" class="task-list-filters-menu" xPosition="after">
           <div class="px-3 py-2" (click)="$event.stopPropagation()">
-            <div class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase">
+            <div
+              class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
+            >
               Sort tasks
             </div>
             <div class="mb-2">
@@ -164,7 +166,8 @@
                   class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-[var(--ot-color-hover)]"
                   type="button"
                   [ngClass]="{
-                    'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-primary)]': viewPreferences.sortBy === option.value,
+                    'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-primary)]':
+                      viewPreferences.sortBy === option.value,
                     'text-[color:var(--ot-color-text)]': viewPreferences.sortBy !== option.value,
                   }"
                   (click)="setSortBy(option.value)"
@@ -183,7 +186,9 @@
               }
             </div>
 
-            <div class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase">
+            <div
+              class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
+            >
               Filters
             </div>
             <div class="flex flex-col gap-1">
@@ -204,7 +209,9 @@
               </mat-checkbox>
             </div>
 
-            <div class="mt-2 flex items-center justify-end gap-2 text-xs text-[color:var(--ot-color-text-muted)]">
+            <div
+              class="mt-2 flex items-center justify-end gap-2 text-xs text-[color:var(--ot-color-text-muted)]"
+            >
               <button
                 class="shrink-0 text-[color:var(--ot-color-primary)] disabled:text-[color:var(--ot-color-text-muted)]"
                 mat-button
@@ -228,7 +235,8 @@
           class="flex w-full cursor-pointer items-center border-b border-[color:var(--ot-color-divider)] p-1"
           [disableRipple]="true"
           [ngClass]="{
-            'bg-[var(--ot-color-selected)] hover:bg-[var(--ot-color-selected)]': isSelectedTaskDefinition(taskDef),
+            'bg-[var(--ot-color-selected)] hover:bg-[var(--ot-color-selected)]':
+              isSelectedTaskDefinition(taskDef),
             'hover:bg-[var(--ot-color-hover)]': !isSelectedTaskDefinition(taskDef),
             'h-16.25': !isCollapsed,
             'h-21': isCollapsed,
@@ -262,12 +270,20 @@
 
                       <div class="flex min-w-0 items-center gap-0.5">
                         @if (taskDef.isGroupTask()) {
-                          <mat-icon class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]">groups</mat-icon>
+                          <mat-icon
+                            class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]"
+                            >groups</mat-icon
+                          >
                         } @else {
-                          <mat-icon class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]">person</mat-icon>
+                          <mat-icon
+                            class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]"
+                            >person</mat-icon
+                          >
                         }
 
-                        <div class="mr-1 truncate text-[14px] leading-tight text-[color:var(--ot-color-text-muted)]">
+                        <div
+                          class="mr-1 truncate text-[14px] leading-tight text-[color:var(--ot-color-text-muted)]"
+                        >
                           {{ taskDef.abbreviation }}
                           -
                           {{ gradeNames[taskDef.targetGrade] }} Task
@@ -294,7 +310,8 @@
                                 'text-[#da532c]': task.daysUntilDueDate() <= 0,
                                 'font-normal text-[#fab143]':
                                   task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
-                                'font-normal text-[color:var(--ot-color-text-muted)]': task.daysUntilDueDate() > 11,
+                                'font-normal text-[color:var(--ot-color-text-muted)]':
+                                  task.daysUntilDueDate() > 11,
                               }"
                             >
                               <mat-icon class="!h-[16px] !w-[16px] !text-[16px]">
