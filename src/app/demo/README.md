@@ -1,38 +1,31 @@
 # Guarded local demo walkthrough
 
-`DemoScenarioRegistryService` is the only runtime adapter for the combined local walkthrough.
+`DemoScenarioRegistryService` controls eligibility for the combined local walkthrough and supplies its seeded runtime adapters.
 It loads `GET /api/demo/scenario` after authentication and keeps the returned contract in its own
 in-memory subject. It does not write units, projects, tasks, notifications, groups, or dynamic IDs
 into any normal entity cache.
-
-Unit Hub is separate: its sample content is in `src/app/unit-hub/unit-hub-demo.fixtures.ts`, not the
-scenario contract.
 
 Two independent guards are required: the build must set `environment.enableDemoTools` in a
 non-production build, and the API contract must succeed for the guarded synthetic account. An
 ordinary development API, another account, or production returns a generic 404, leaving the tools
 unavailable.
 
-Unit Hub has its own explicit demo fixtures. With demo mode off it always reads the signed-in
-account's authorised live API content, including in a development build.
-
 Demo OFF is a true pass-through. There is no HTTP masking interceptor and no PPI substitution.
-Demo ON only allows feature surfaces to consume the stable adapters in the contract. The enabled
+Demo ON enables the seeded feature adapters from the contract and the explicitly isolated Unit Hub sample described below. The enabled
 bit is stored in `sessionStorage` under both the scenario ID and authenticated user ID, is reset on
 sign out/account change, and never travels to the API. Toggling does not reload the application or
 mutate server data.
 
 The canonical semantics and seed live in the API's
-`lib/demo_data/mobile_feedback_scenario.rb`. Client-side preview fixture files may remain for unit
-tests or later component work, but they are not the runtime scenario registry.
+`lib/demo_data/mobile_feedback_scenario.rb`. The seeded task, notification, group and peer-progress adapters use that contract. Unit Hub separately uses browser-only sample announcements and schedules after the same guards pass; these samples never enter the runtime registry or normal entity caches.
 
 ## Unit Hub walkthrough
 
-Enable **Demo mode** in **Demo controls**, then open **Unit Hub**. The fictional student is enrolled
+First sign in to the guarded synthetic account and wait for the scenario contract to load. Enable **Demo mode** in **Demo controls**, then open **Unit Hub**. The switch applies immediately without a reload or another sign-in. The fictional student is enrolled
 in SIT111. The sample contains announcements, two HelpHubs and a lecture. SIT102 rows deliberately
 exist in the raw fixture to check that unrelated unit content is excluded from the displayed feed.
-Click an announcement title or **Read full announcement** to read the complete post. Click a session
-title or **View full details** for its description, time, joining and calendar choices. The detail
+Click anywhere on an announcement or session card, including its blank space, for full details.
+Separate Join, original-source and calendar controls keep their own actions. The detail
 dialog closes and clears its selected content when the unit, route or demo mode changes.
 
 The sample dates are generated relative to the local browser date and are not an official timetable.

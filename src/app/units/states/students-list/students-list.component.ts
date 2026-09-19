@@ -296,7 +296,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     project.switchToCampus(campus).subscribe({
       next: (updated: Project) => {
-        this.alerts.success(`Campus changed for ${updated.student.name}`, 2000);
+        this.alerts.success(`Campus changed for ${updated.student.displayName}`, 2000);
       },
       error: (message) => {
         project.campus = originalCampus;
@@ -444,7 +444,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'username':
         return project.student?.username?.toLowerCase() || '';
       case 'name':
-        return project.student?.name?.toLowerCase() || '';
+        return project.student?.displayName?.toLowerCase() || '';
       case 'stats':
         return project.orderScale ?? 0;
       case 'grade':
@@ -458,7 +458,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'tutorial':
         return project.shortTutorialDescription().toLowerCase();
       default:
-        return project.student?.name?.toLowerCase() || '';
+        return project.student?.displayName?.toLowerCase() || '';
     }
   }
 
@@ -477,7 +477,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private csvRow(project: Project): string[] {
     const row = [
       project.student?.username || '',
-      project.student?.name || '',
+      project.student?.displayName || '',
       project.student?.email || '',
       String(project.portfolioStatus ?? ''),
     ];

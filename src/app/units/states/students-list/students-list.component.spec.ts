@@ -18,7 +18,7 @@ import {StudentsListComponent} from './students-list.component';
 
 function studentStub(name: string, inMyTutorial = true): Project {
   return {
-    student: {name, username: name.toLowerCase()},
+    student: {name, displayName: name, username: name.toLowerCase()},
     hasTutor: () => inMyTutorial,
     matches: (text: string) => name.toLowerCase().includes(text),
   } as unknown as Project;
@@ -96,12 +96,16 @@ describe('StudentsListComponent', () => {
     component.ngOnInit();
 
     expect(component.unit.id).toBe(unitA.id);
-    expect(component.dataSource.data.map((project) => project.student.name)).toEqual(['Ana Amos']);
+    expect(component.dataSource.data.map((project) => project.student.displayName)).toEqual([
+      'Ana Amos',
+    ]);
 
     routeData.next({unit: unitB});
 
     expect(component.unit.id).toBe(unitB.id);
-    expect(component.dataSource.data.map((project) => project.student.name)).toEqual(['Bo Barnes']);
+    expect(component.dataSource.data.map((project) => project.student.displayName)).toEqual([
+      'Bo Barnes',
+    ]);
   });
 
   it('does not rebuild the list when the route resolves the same unit again', () => {

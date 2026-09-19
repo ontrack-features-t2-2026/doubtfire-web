@@ -317,6 +317,23 @@ mat-icon {
   box-shadow: var(--ot-elevation-1);
   overflow-wrap: anywhere;
 }
+// The whole card opens its details: the title button's ::after stretches over the
+// card, and the card's own links and buttons sit above that hit area.
+.announcement-card,
+.session-card,
+.up-next {
+  position: relative;
+  isolation: isolate;
+  a,
+  button:not(.details-title) {
+    position: relative;
+    z-index: 2;
+  }
+}
+.announcement-card:hover,
+.session-card:hover {
+  border-color: var(--ot-color-link);
+}
 .card-meta {
   display: flex;
   flex-wrap: wrap;
@@ -406,6 +423,8 @@ mat-icon {
   font-size: 0.92rem;
 }
 .details-title {
+  // The card, rather than this button, contains the stretched hit area.
+  position: static;
   display: block;
   width: 100%;
   padding: 2px 0;
@@ -421,6 +440,26 @@ mat-icon {
     text-decoration: underline;
     text-underline-offset: 4px;
   }
+}
+.announcement-card .details-title:focus-visible,
+.session-card .details-title:focus-visible,
+.up-next .details-title:focus-visible {
+  outline: none;
+}
+.announcement-card .details-title::after,
+.session-card .details-title::after,
+.up-next .details-title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--ot-radius-lg);
+}
+.announcement-card .details-title:focus-visible::after,
+.session-card .details-title:focus-visible::after,
+.up-next .details-title:focus-visible::after {
+  outline: 3px solid var(--ot-color-focus);
+  outline-offset: 3px;
 }
 // every card action sits in one footer row on the content inset, same outlined style
 .card-actions {

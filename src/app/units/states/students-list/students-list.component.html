@@ -204,7 +204,7 @@
                 [routerLink]="['/projects', project.id, 'dashboard']"
                 (click)="$event.stopPropagation()"
               >
-                {{ project.student?.name || 'Unnamed student' }}
+                {{ project.student?.displayName || 'Unnamed student' }}
               </a>
             </div>
           </td>
@@ -302,7 +302,7 @@
             <mat-form-field appearance="outline" class="table-field w-36" subscriptSizing="dynamic">
               <mat-select
                 placeholder="None"
-                [aria-label]="'Campus for ' + (project.student?.name || 'this student')"
+                [aria-label]="'Campus for ' + (project.student?.displayName || 'this student')"
                 [compareWith]="sameEntity"
                 [value]="project.campus ?? null"
                 (selectionChange)="changeCampus(project, $event.value)"
@@ -323,7 +323,7 @@
               <mat-select
                 multiple
                 placeholder="None"
-                [aria-label]="'Tutorials for ' + (project.student?.name || 'this student')"
+                [aria-label]="'Tutorials for ' + (project.student?.displayName || 'this student')"
                 [compareWith]="sameEntity"
                 [value]="project.tutorials"
               >

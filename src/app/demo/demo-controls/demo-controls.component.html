@@ -177,6 +177,33 @@
 
         <f-ppi-preview></f-ppi-preview>
 
+        <section aria-labelledby="push-preview-title" class="push-preview">
+          <div class="push-preview__heading">
+            <mat-icon aria-hidden="true">notifications_active</mat-icon>
+            <div>
+              <h2 id="push-preview-title">Push notification visual preview</h2>
+              <p>Preview only — no browser permission or push subscription is changed.</p>
+            </div>
+          </div>
+
+          <div aria-label="Example push notification" class="push-preview__notification" role="img">
+            <strong>{{ pushPreview.appName }}</strong>
+            <span>{{ pushPreview.title }}</span>
+            <span>{{ pushPreview.message }}</span>
+            <small>Would open: {{ pushPreview.destination }}</small>
+          </div>
+
+          <p class="push-preview__safety" role="note">
+            This preview never calls Notification permission APIs, Angular SwPush, or
+            <code>/push_subscriptions</code>.
+          </p>
+
+          <a mat-stroked-button routerLink="/edit_profile">
+            <mat-icon aria-hidden="true">manage_accounts</mat-icon>
+            Open My Profile for real notifications
+          </a>
+        </section>
+
         <section aria-labelledby="adapter-hooks-title" class="fixture-section">
           <h2 id="adapter-hooks-title">Reusable fixture adapters</h2>
           <p>

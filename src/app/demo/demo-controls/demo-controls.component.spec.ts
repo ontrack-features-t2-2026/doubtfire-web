@@ -152,6 +152,16 @@ describe('DemoControlsComponent', () => {
     expect(demoMode.setEnabled).toHaveBeenCalledWith(true);
   });
 
+  it('retains the Unit Hub host controls and visual-only push preview', () => {
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Unit Hub: announcements, HelpHubs and classes');
+    expect(text).toContain('Use your own HelpHub links');
+    expect(text).toContain('Preview only');
+    expect(text).toContain('Feedback is ready');
+    expect(fixture.nativeElement.querySelector('a[href="/unit-hub"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href="/edit_profile"]')).toBeTruthy();
+  });
+
   it('provides stable walkthrough link selectors', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="demo-link-tasks"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="demo-link-ppi"]')).toBeTruthy();

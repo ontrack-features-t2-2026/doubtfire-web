@@ -1,5 +1,6 @@
 <div (keydown.enter)="$event.preventDefault(); $event.stopPropagation()">
   <h2 mat-dialog-title>Post Attachment?</h2>
+
   <mat-dialog-content>
     <p>This attachment is ready to post as a task comment.</p>
 
@@ -29,6 +30,7 @@
               <span>{{ file.type || 'Audio file' }}</span>
             </div>
           </div>
+
           <audio class="mt-2.5 w-full" controls [src]="previewUrl"></audio>
         </div>
       } @else {
@@ -42,12 +44,13 @@
       }
     </div>
 
-    <p class="mt-2 text-base break-all opacity-80">
-      {{ file.name }}
+    <div class="mt-2 flex flex-col gap-1 text-base break-all opacity-80">
+      <span><strong>File:</strong> {{ file.name }}</span>
+      <span><strong>Type:</strong> {{ file.type || 'Unknown' }}</span>
       @if (file.size) {
-        <span>({{ formatFileSize(file.size) }})</span>
+        <span><strong>Size:</strong> {{ formatFileSize(file.size) }}</span>
       }
-    </p>
+    </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

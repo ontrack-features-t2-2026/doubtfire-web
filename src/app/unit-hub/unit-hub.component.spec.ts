@@ -64,8 +64,8 @@ describe('Unit Hub route, forms and rendered content', () => {
       ],
     });
     demo = TestBed.inject(DemoModeStore);
-    // This branch's demo store only switches on for a loaded demo scenario.
-    demo.configureScenario('unit-hub-spec', 1);
+    // The demo store only switches on for a loaded demo scenario.
+    demo.configureScenario('all-features', 111);
   });
   afterEach(() => {
     TestBed.inject(MatDialog).closeAll();

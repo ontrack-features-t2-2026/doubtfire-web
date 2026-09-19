@@ -56,7 +56,7 @@ export class ConfirmModerationModalComponent implements OnInit {
   // The task may belong to a tutorial with no tutor, or to a student in no tutorial,
   // and the dialog must still open so the task can be moderated.
   public get tutorName(): string {
-    return this.task?.tutor?.user?.name ?? 'not assigned';
+    return this.task?.tutor?.user?.displayName ?? this.task?.tutor?.user?.name ?? 'not assigned';
   }
 
   public runCallback() {

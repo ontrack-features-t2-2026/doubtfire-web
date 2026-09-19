@@ -35,6 +35,7 @@
         [disabled]="busy"
         [ngModelOptions]="{standalone: true}"
         [(ngModel)]="draftEmail"
+        (keydown.enter)="requestVerificationOnEnter($event, additionalEmail.invalid)"
       />
       <mat-hint>Must be different from your institutional address.</mat-hint>
       @if (additionalEmail.invalid) {

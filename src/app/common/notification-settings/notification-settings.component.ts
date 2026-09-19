@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {User} from 'src/app/api/models/user/user';
 
 @Component({
@@ -33,4 +33,11 @@ export class NotificationSettingsComponent {
       this.digestOptions.find((option) => option.value === this.user?.digestFrequency)?.help ?? ''
     );
   }
+
+  /**
+   * Fires when the user toggles a category. The checkboxes use standalone
+   * ngModels, so they never join the enclosing profile form, and that form
+   * needs this to know it has unsaved changes.
+   */
+  @Output() preferencesChange: EventEmitter<void> = new EventEmitter();
 }

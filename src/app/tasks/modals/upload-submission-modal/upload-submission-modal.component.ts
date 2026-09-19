@@ -129,6 +129,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
   private startUpload?: () => void;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
   private swapTimer: ReturnType<typeof setTimeout> | null = null;
+  private closingAfterUpload = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: UploadSubmissionModalData,
@@ -405,13 +406,17 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
 
   public canClose(): boolean {
     // Material runs this for programmatic closes as well as Escape and the
-    // backdrop, so it decides whether the dialog may close itself. Once the
-    // server has taken the submission there is nothing left to discard, and a
-    // prompt here would both lie to the student and veto the dialog's own exit:
-    // answering "Cancel" to "discard your files?" would keep them in it.
-    if (this.celebration || this.uploadResponse) {
+    // backdrop, so it decides whether the dialog may close itself. The closes
+    // this component makes once the server has answered must not be held back
+    // or asked about. Once the server has taken the submission there is nothing
+    // left to discard, and a prompt here would both lie to the student and veto
+    // the dialog's own exit: answering "Cancel" to "discard your files?" would
+    // keep them in it.
+    if (this.closingAfterUpload || this.celebration || this.uploadResponse) {
       return true;
     }
+    // Only bytes on the wire hold the dialog. A failed response hands control
+    // back to the student.
     if (this.uploadInFlight) {
       return false;
     }
@@ -496,7 +501,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     }
 
     console.error('Invalid response', response);
-    this.dialogRef.close({value: this.task});
+    this.closeAfterUpload();
     this.alertService.error(
       'Upload failed. Please try again, or contact your tutor if the issue continues.',
       8000,
@@ -520,7 +525,7 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.dialogRef.close({value: this.task});
+    this.closeAfterUpload();
   };
 
   /**
@@ -620,6 +625,11 @@ export class UploadSubmissionModalComponent implements OnInit, OnDestroy {
     this.uploadStarted = true;
     this.currentStage = 'details';
     this.startUpload?.();
+  }
+
+  private closeAfterUpload(): void {
+    this.closingAfterUpload = true;
+    this.dialogRef.close({value: this.task});
   }
 
   private buildSubmissionTypeOptions(): UploadSubmissionTypeOption[] {

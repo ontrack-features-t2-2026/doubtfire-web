@@ -75,13 +75,53 @@ describe('AppLifecycleService', () => {
     vi.useRealTimers();
   });
 
-  it('treats a file-picker blur/focus return as a resident resume', () => {
+  it('ignores a window blur/focus round trip while the page stays visible', () => {
     const {pause} = registeredPlayingMedia();
+    const pauseEvents: string[] = [];
+    service.mediaPauseSubject.subscribe((event) => pauseEvents.push(event.reason));
 
+    // A file picker, a microphone permission prompt or another window taking focus.
     window.dispatchEvent(new Event('blur'));
+
+    expect(service.stateSubject.value).toBe('active');
+    expect(pause).not.toHaveBeenCalled();
+    expect(pauseEvents).toEqual([]);
+
     window.dispatchEvent(new Event('focus'));
 
     expect(service.stateSubject.value).toBe('active');
+    expect(pauseEvents).toEqual([]);
+  });
+
+  it('pauses media when the page is hidden for bfcache or unload', () => {
+    const {pause} = registeredPlayingMedia();
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(service.stateSubject.value).toBe('hidden');
     expect(pause).toHaveBeenCalledOnce();
+  });
+
+  it('pauses media when the browser freezes the page', () => {
+    const {pause} = registeredPlayingMedia();
+    const pauseEvents: string[] = [];
+    service.mediaPauseSubject.subscribe((event) => pauseEvents.push(event.reason));
+
+    document.dispatchEvent(new Event('freeze'));
+
+    expect(service.stateSubject.value).toBe('hidden');
+    expect(pause).toHaveBeenCalledOnce();
+    expect(pauseEvents).toEqual(['app-hidden']);
+  });
+
+  it('stops listening once stopped', () => {
+    const {pause} = registeredPlayingMedia();
+    service.stop();
+
+    visibilityState = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    document.dispatchEvent(new Event('freeze'));
+
+    expect(pause).not.toHaveBeenCalled();
   });
 });

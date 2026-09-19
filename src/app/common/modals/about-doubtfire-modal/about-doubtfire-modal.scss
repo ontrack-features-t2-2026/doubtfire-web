@@ -261,6 +261,13 @@ $gutter: 24px;
   background: var(--ot-color-surface);
 }
 
+// The frame scrolls sideways on wider dialogs, so it takes keyboard focus as a region.
+.about__table-frame:focus-visible,
+.about__table-person:focus-visible {
+  outline: 2px solid var(--ot-color-focus);
+  outline-offset: 3px;
+}
+
 .about__table {
   --mat-table-background-color: transparent;
   width: 100%;

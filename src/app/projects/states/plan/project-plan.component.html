@@ -4,7 +4,7 @@
       <div class="min-w-0">
         <h1 class="m-0 text-2xl leading-tight font-semibold tracking-tight text-ot-text">
           Task Planner
-          @if (viewingOtherStudentProject && project.student?.name; as studentName) {
+          @if (viewingOtherStudentProject && project.student?.displayName; as studentName) {
             <span class="font-normal text-ot-muted">for {{ studentName }}</span>
           }
         </h1>

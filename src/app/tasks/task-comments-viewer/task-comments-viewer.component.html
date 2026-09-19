@@ -34,7 +34,7 @@
                   [matTooltip]="comment.createdAt | localizedDateTime"
                   [ngClass]="{own: comment.authorIsMe}"
                 >
-                  {{ comment.author.preferredName }} {{ comment.author.lastName }}
+                  {{ comment.author.displayName }}
                   {{ comment.createdAt | humanizedDate }}
                 </p>
               }
@@ -51,7 +51,7 @@
                   <div class="comment-user-icon-wrapper">
                     @if (comment.shouldShowAvatar && shouldShowAuthorIcon(comment.commentType)) {
                       <user-icon
-                        matTooltip="{{ comment.author.name }}"
+                        matTooltip="{{ comment.author.displayName }}"
                         matTooltipPosition="left"
                         [ngClass]="{'hidden-xs hidden-sm': comment.authorIsMe}"
                         [size]="28"

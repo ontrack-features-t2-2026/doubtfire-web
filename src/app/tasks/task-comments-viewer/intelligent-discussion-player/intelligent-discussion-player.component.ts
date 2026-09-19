@@ -147,6 +147,7 @@ export class IntelligentDiscussionDialog implements OnDestroy {
   startedDiscussion = false;
   inDiscussion = false;
   discussionComplete: boolean = false;
+  discussionInterrupted = false;
   promptLoading = false;
   promptPlaying = false;
   responseRecording = false;
@@ -157,6 +158,7 @@ export class IntelligentDiscussionDialog implements OnDestroy {
   private countdownTimer: ReturnType<typeof setInterval>;
   guide = {text: 'Click start to begin'};
   private promptBlobUrl: string;
+  private promptRequest = 0;
   private readonly unregisterMedia: () => void;
   private readonly lifecycleSubscription: Subscription;
 
@@ -178,9 +180,9 @@ export class IntelligentDiscussionDialog implements OnDestroy {
     },
   ) {
     this.unregisterMedia = this.appLifecycle.registerMedia(this.data.audioRef);
-    this.lifecycleSubscription = this.appLifecycle.mediaPauseSubject.subscribe(() => {
-      this.promptPlaying = false;
-    });
+    this.lifecycleSubscription = this.appLifecycle.mediaPauseSubject.subscribe(() =>
+      this.abandonDiscussion(),
+    );
   }
 
   ngOnDestroy(): void {
@@ -213,7 +215,7 @@ export class IntelligentDiscussionDialog implements OnDestroy {
       return 'Starting discussion';
     }
     if (!this.startedDiscussion) {
-      return 'Ready when you are';
+      return this.discussionInterrupted ? 'Discussion interrupted' : 'Ready when you are';
     }
     if (this.promptLoading) {
       return 'Loading prompt';
@@ -235,7 +237,9 @@ export class IntelligentDiscussionDialog implements OnDestroy {
       return 'Get ready. Recording will begin when the countdown finishes.';
     }
     if (!this.startedDiscussion) {
-      return 'When you start, your microphone will begin recording and the first prompt will play.';
+      return this.discussionInterrupted
+        ? 'The discussion stopped when you left this page, so nothing was submitted. Start again when you are ready.'
+        : 'When you start, your microphone will begin recording and the first prompt will play.';
     }
     if (this.promptLoading) {
       return 'Getting the next tutor prompt ready.';
@@ -270,6 +274,7 @@ export class IntelligentDiscussionDialog implements OnDestroy {
   startDiscussion() {
     if (!this.startedDiscussion) {
       this.startedDiscussion = true;
+      this.discussionInterrupted = false;
       this.inDiscussion = true;
       this.startCountdown();
     }
@@ -323,6 +328,7 @@ export class IntelligentDiscussionDialog implements OnDestroy {
   }
 
   setPrompt() {
+    const request = ++this.promptRequest;
     this.promptLoading = true;
     this.promptPlaying = false;
     this.responseRecording = false;
@@ -333,6 +339,10 @@ export class IntelligentDiscussionDialog implements OnDestroy {
     this.fileDownloader.downloadBlob(
       this.data.dc.generateDiscussionPromptUrl(this.activePromptId),
       (blobUrl) => {
+        if (request !== this.promptRequest) {
+          this.fileDownloader.releaseBlob(blobUrl);
+          return;
+        }
         this.promptBlobUrl = blobUrl;
         this.data.audioRef.src = blobUrl;
         this.guide.text = 'Listening to prompt';
@@ -354,6 +364,9 @@ export class IntelligentDiscussionDialog implements OnDestroy {
         };
       },
       (error) => {
+        if (request !== this.promptRequest) {
+          return;
+        }
         this.promptLoading = false;
         this.promptPlaying = false;
         this.responseRecording = false;
@@ -370,6 +383,33 @@ export class IntelligentDiscussionDialog implements OnDestroy {
     } else {
       this.finishDiscussion();
     }
+  }
+
+  // Backgrounding pauses the prompt and the lifecycle service never resumes it,
+  // so the prompt's onended would never fire and the dialog would be stuck.
+  // Posting the take would also submit part of an answer as the finished reply.
+  // So an unfinished attempt is dropped and the student starts it again.
+  private abandonDiscussion(): void {
+    if (!this.startedDiscussion || this.discussionComplete) {
+      return;
+    }
+    this.promptRequest++;
+    this.discussionRecorder.cancelRecording();
+    this.clearCountdown();
+    this.counter?.unsubscribe();
+    this.data.audioRef.onended = null;
+    this.data.audioRef.pause();
+    this.data.audioRef.currentTime = 0;
+    this.releasePromptBlob();
+    this.startedDiscussion = false;
+    this.inDiscussion = false;
+    this.promptLoading = false;
+    this.promptPlaying = false;
+    this.responseRecording = false;
+    this.activePromptId = 0;
+    this.timerText = '15m:00s';
+    this.discussionInterrupted = true;
+    this.guide = {text: 'Discussion interrupted'};
   }
 
   private releasePromptBlob(): void {

@@ -157,7 +157,12 @@ describe('TaskCommentsViewerComponent bubble actions', () => {
       firstInSeries: false,
       lastRead: false,
       createdAt: new Date(),
-      author: {preferredName: 'Ada', lastName: 'Lovelace', name: 'Ada Lovelace'},
+      author: {
+        preferredName: 'Ada',
+        lastName: 'Lovelace',
+        name: 'Ada Lovelace',
+        displayName: 'Ada Lovelace',
+      },
     };
     component.task = {comments: [comment], scormEnabled: false} as never;
 

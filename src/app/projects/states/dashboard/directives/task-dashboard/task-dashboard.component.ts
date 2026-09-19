@@ -90,9 +90,12 @@ export class TaskDashboardComponent implements OnInit, OnChanges, OnDestroy {
       this.currentIndex = this.tabIndexForView(this.currentView);
     });
     this.taskService.taskSubmissionCompleted$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
+      // A status-only transition on a task that takes no uploads also reports a
+      // completed submission, but there is nothing to show on Your Submission.
       if (
         task?.project?.id === this.task?.project?.id &&
-        task?.definition?.id === this.task?.definition?.id
+        task?.definition?.id === this.task?.definition?.id &&
+        task?.hasSubmissionHistory()
       ) {
         this.setSelectedDashboardView(DashboardViews.submission);
       }

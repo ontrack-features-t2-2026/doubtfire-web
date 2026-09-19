@@ -71,6 +71,11 @@ textarea {
   color: var(--ot-color-text);
   font: inherit;
   font-weight: 400;
+
+  &::placeholder {
+    color: var(--ot-color-text-muted);
+    opacity: 1;
+  }
 }
 
 textarea {

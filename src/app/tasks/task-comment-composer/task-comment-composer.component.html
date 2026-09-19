@@ -10,7 +10,7 @@
         <mat-icon aria-label="Quit cross icon">close</mat-icon>
       </button>
       Replying to:
-      <b>{{ originalComment !== null ? originalComment.author.name : '' }}</b>
+      <b>{{ originalComment !== null ? originalComment.author.displayName : '' }}</b>
     </div>
     <p>{{ originalComment !== null ? originalComment.text : '' }}</p>
   </div>
@@ -56,7 +56,6 @@
   role="form"
   style="display: flex; width: 100%"
   [hidden]="!this.task"
-  (ngSubmit)="send($event)"
 >
   <button
     aria-label="Close emoji picker"
@@ -270,9 +269,10 @@
         class="composer-send-button"
         color="primary"
         mat-flat-button
-        type="submit"
+        type="button"
         [attr.aria-label]="isEditing ? 'Save edited comment' : 'Send message'"
         [disabled]="!canSendMessage"
+        (click)="send($event)"
       >
         {{ isSending ? 'Sending…' : isEditing ? 'Save' : 'Send' }}
       </button>

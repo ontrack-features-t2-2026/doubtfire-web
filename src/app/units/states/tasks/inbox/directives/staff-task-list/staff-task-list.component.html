@@ -373,7 +373,7 @@
                           </span>
                         }
                       }
-                      <span class="truncate">{{ task.project.student.name }}</span>
+                      <span class="truncate">{{ task.project.student.displayName }}</span>
                     </span>
                     <span class="truncate text-xs leading-snug text-ot-muted">
                       {{ task.definition.abbreviation }} - {{ task.definition.name }}
@@ -475,7 +475,7 @@
                     matTooltipPosition="right"
                     matTooltipShowDelay="400"
                     type="button"
-                    [attr.aria-label]="'More options for ' + task.project.student.name"
+                    [attr.aria-label]="'More options for ' + task.project.student.displayName"
                     [matMenuTriggerFor]="overflowMenu"
                     [ngClass]="{'task-options--shown': rowActionsShown(task)}"
                     (blur)="hideTaskActionsForFocus(task)"

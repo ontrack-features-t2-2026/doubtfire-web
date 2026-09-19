@@ -6,6 +6,7 @@ import {unitHubDemo} from '../../unit-hub/unit-hub-demo.fixtures';
 import {DemoMeetingLinksStore} from '../demo-meeting-links.store';
 import {DemoModeStore} from '../demo-mode.store';
 import {DemoScenarioRegistryService} from '../demo-scenario-registry.service';
+import {DEMO_PUSH_PREVIEW} from '../fixtures/push-preview.fixture';
 
 @Component({
   selector: 'f-demo-controls',
@@ -29,6 +30,7 @@ export class DemoControlsComponent {
   });
   meetingLinksError = '';
   meetingLinksStatus = '';
+  readonly pushPreview = DEMO_PUSH_PREVIEW;
 
   constructor(
     readonly demoMode: DemoModeStore,

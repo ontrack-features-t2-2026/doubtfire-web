@@ -1,7 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {Directive, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {Router} from '@angular/router';
 import {Subject, of} from 'rxjs';
@@ -698,5 +705,92 @@ describe('EditProfileFormComponent institution-managed identity', () => {
     expect(input('email')).not.toBeNull();
     expect(accountFacts()).not.toContain('First name');
     expect(fixture.nativeElement.querySelector('.account-information__managed')).toBeNull();
+  });
+});
+
+// The save action only appears once the form is dirty. The notification
+// category checkboxes live in a child component with standalone ngModels, so
+// they never join this form. Renders the real NgForm and NgModel so the
+// pristine state is the one the page actually uses.
+describe('EditProfileFormComponent save state', () => {
+  let fixture: ComponentFixture<EditProfileFormComponent>;
+  let userServiceStub: {currentUser: User; update: ReturnType<typeof vi.fn>};
+
+  beforeEach(async () => {
+    const currentUser = makeUser({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      studentId: 's1234567',
+      username: 'ada',
+    });
+    userServiceStub = {currentUser, update: vi.fn().mockReturnValue(of(currentUser))};
+
+    await TestBed.configureTestingModule({
+      declarations: [EditProfileFormComponent, NotificationSettingsComponent],
+      imports: [
+        FormsModule,
+        MatCheckboxModule,
+        MatInputModule,
+        MatSelectModule,
+        MatSlideToggleModule,
+      ],
+      providers: [
+        {provide: AlertService, useValue: {error: vi.fn()}},
+        {
+          provide: DoubtfireConstants,
+          useValue: {ExternalName: {value: 'OnTrack'}, IsTiiEnabled: {value: false}},
+        },
+        {provide: UserService, useValue: userServiceStub},
+        {provide: Router, useValue: {navigateByUrl: vi.fn()}},
+        {provide: AuthenticationService, useValue: {}},
+        {provide: MAT_DIALOG_DATA, useValue: null},
+        {provide: MatSnackBar, useValue: {open: vi.fn()}},
+        {
+          provide: PushNotificationService,
+          useValue: {
+            subscription$: of(null),
+            blocker: () => 'no-service-worker',
+            permissionDeniedInstructions: () => [],
+          },
+        },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EditProfileFormComponent);
+    fixture.componentRef.setInput('mode', 'edit');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  const saveButton = (): HTMLButtonElement =>
+    fixture.nativeElement.querySelector('.profile-actions button[type="submit"]');
+
+  // The redesigned save bar is not rendered at all while the form is pristine.
+  it('offers no save action until something changes', () => {
+    expect(saveButton()).toBeNull();
+  });
+
+  it('offers Save changes when only a notification category changes', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const feedback = await loader.getHarness(
+      MatCheckboxHarness.with({label: 'Feedback notifications'}),
+    );
+
+    await feedback.check();
+    fixture.detectChanges();
+
+    expect(saveButton()).not.toBeNull();
+    expect(saveButton().disabled).toBe(false);
+    expect(saveButton().textContent).toContain('Save changes');
+
+    saveButton().click();
+
+    expect(userServiceStub.update).toHaveBeenCalled();
+    expect(userServiceStub.update.mock.calls[0][0]).toEqual(
+      expect.objectContaining({receiveFeedbackNotifications: true}),
+    );
   });
 });

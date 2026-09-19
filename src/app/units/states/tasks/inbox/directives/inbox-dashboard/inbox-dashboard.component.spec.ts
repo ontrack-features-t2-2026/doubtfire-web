@@ -261,3 +261,37 @@ describe('InboxDashboardComponent full screen', () => {
     expect(component.currentTab).toBe(4);
   });
 });
+
+describe('InboxDashboardComponent empty-state colour tokens (THM-M03)', () => {
+  let fixture: ComponentFixture<InboxDashboardComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [InboxDashboardComponent],
+      providers: [
+        {provide: FileDownloaderService, useValue: {}},
+        {provide: UserService, useValue: {}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(InboxDashboardComponent);
+    // No task input set: renders the "Select a task to review" empty state,
+    // the only state reachable without a fully-populated Task/Unit/Project mock.
+    fixture.detectChanges();
+  });
+
+  it('uses the themed empty state, with no bare hex colour, when no task is selected', () => {
+    const emptyState: HTMLElement = fixture.nativeElement.querySelector('f-empty-state');
+
+    expect(emptyState).not.toBeNull();
+    // Regression guard: a plain arbitrary hex class would mean the theme tokens were reverted.
+    expect(fixture.nativeElement.innerHTML).not.toMatch(/#c5c5c5/);
+  });
+
+  it('shows the expected empty-state copy', () => {
+    const emptyState: HTMLElement = fixture.nativeElement.querySelector('f-empty-state');
+
+    expect(emptyState.getAttribute('message')).toBe('Select a task to review');
+  });
+});

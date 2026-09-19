@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  color: var(--ot-color-text);
+}
+
 .demo-controls {
   box-sizing: border-box;
   margin: 0 auto;
@@ -221,4 +226,39 @@ h2 {
   .status-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.push-preview {
+  border-top: 1px solid var(--ot-color-border);
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+}
+
+.push-preview__heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.push-preview__notification {
+  color: var(--ot-color-text);
+  background: var(--ot-color-surface);
+  border: 1px solid var(--ot-color-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--ot-elevation-1);
+  display: grid;
+  gap: 0.25rem;
+  max-width: 30rem;
+  padding: 1rem;
+}
+
+.push-preview__notification small,
+.push-preview__safety {
+  color: var(--ot-color-text-muted);
+}
+
+.hook-list li[data-state='unavailable'] {
+  border-left: 3px solid var(--ot-color-warning);
 }

@@ -45,6 +45,21 @@ interface ApiError {
 }
 
 /**
+ * The draft a Send or Save was pressed on. The inbox and the project dashboard
+ * reuse one composer while the open task changes, so a response can arrive after
+ * another task is showing. It has to land on this draft, not on the open one.
+ */
+interface PendingSend {
+  task: Task;
+  context: FeedbackDraftContext | null;
+  key: string | null;
+  originalComment: TaskComment | null;
+  // The text in the field when this draft stopped showing. Once the composer is
+  // rebuilt, the stored draft belongs to the new one and may hold newer words.
+  text: string | null;
+}
+
+/**
  * The task comment viewer needs to share data with the Task Comment Composer. The data needed
  * id defined through this interface.
  */
@@ -70,6 +85,13 @@ const ACCEPTED_FILE_TYPES = [
   'image/jpg',
   'image/jpeg',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
+  'image/png',
+  'image/bmp',
+  'image/tiff',
+  'image/jpeg',
+  'image/gif',
 ];
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -98,10 +120,17 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private submittedTaskIds: Set<number | string> = new Set();
 
   public isSending: boolean = false;
+  // Drafts with a request still in flight, so returning to one shows it as sending.
+  private readonly sendingDraftKeys: Set<string> = new Set();
+  private destroyed = false;
+  private readonly inFlightSends: Set<PendingSend> = new Set();
   public stagedAttachments: StagedFeedbackAttachment[] = [];
   private draftClientRequestId: string | null = null;
+  private draftClientRequestFingerprint: string | null = null;
   private draftReplyToId: number | null = null;
   private draftBeforeEdit: string = '';
+  // The comment whose text is in the field, or null when the field holds the draft.
+  private editedComment: TaskComment | null = null;
 
   comment = {
     text: '',
@@ -161,9 +190,16 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       const newTask = changes.task.currentValue as Task;
       const previousTask = changes.task.previousValue as Task;
       if (previousTask) {
+        const previousText =
+          this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText;
+        const previousKey = this.getDraftKey(previousTask);
+        this.keepTextOfSends(
+          (send) => send.task === previousTask || (send.key !== null && send.key === previousKey),
+          previousText,
+        );
         this.saveDraftForTask(
           previousTask,
-          this.currentInputText,
+          previousText,
           this.sharedData?.originalComment?.id ?? this.draftReplyToId,
         );
       }
@@ -174,8 +210,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       this.sharedData.originalComment = null;
       this.stagedAttachments = [];
       this.draftClientRequestId = null;
+      this.draftClientRequestFingerprint = null;
       this.draftReplyToId = null;
       this.clearInput();
+      this.isSending = this.sendingDraftKeys.has(this.getDraftKey(newTask) ?? '');
 
       if (newTask) {
         this.loadDraftForTask(newTask);
@@ -193,7 +231,12 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   ngOnDestroy(): void {
+    this.keepTextOfSends(
+      (send) => this.isShowing(send),
+      this.editedComment !== null ? this.draftBeforeEdit : this.currentInputText,
+    );
     this.saveCurrentDraft();
+    this.destroyed = true;
     this.cancelDraftLoadTimers();
     this.draftLoadGeneration += 1;
     this.routeSubscription.unsubscribe();
@@ -302,13 +345,22 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     try {
       let raw: string;
-      if (this.task?.id === task.id && this.input?.first) {
+      if (_rawFromDom === undefined && this.editedComment !== null) {
+        // While editing, the field holds the comment being edited and the draft is set aside.
+        raw = this.draftBeforeEdit;
+      } else if (this.task?.id === task.id && this.input?.first) {
         raw = _rawFromDom ?? this.input.first.nativeElement.value;
       } else {
         raw = _rawFromDom ?? '';
       }
 
-      this.draftStore.save(context, raw, replyToId, this.draftClientRequestId);
+      this.draftStore.save(
+        context,
+        raw,
+        replyToId,
+        this.draftClientRequestId,
+        this.draftClientRequestFingerprint,
+      );
     } catch (error) {
       console.error('saveDraftForTask error:', error);
     }
@@ -329,6 +381,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       const draft = this.draftStore.load(context);
       this.stagedAttachments = this.draftStore.attachments(context);
       this.draftClientRequestId = draft.clientRequestId;
+      this.draftClientRequestFingerprint = draft.clientRequestFingerprint;
       this.draftReplyToId = draft.replyToId;
 
       if (!draft.text && draft.replyToId === null && this.stagedAttachments.length === 0) {
@@ -656,57 +709,152 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     if (this.isSending) {
       return;
     }
-    const originalComment = this.sharedData.originalComment;
+    const send = this.pendingSend();
     if (this.stagedAttachments.length > 0) {
-      this.uploadAttachmentQueue([...this.stagedAttachments], 0, originalComment);
+      this.uploadAttachmentQueue(send, [...this.stagedAttachments], 0);
       return;
     }
 
-    this.postDraftText(originalComment);
+    this.postDraftText(send);
   }
 
-  private postDraftText(originalComment: TaskComment | null): void {
-    if (!this.hasContent(this.currentInputText)) {
-      this.finishSuccessfulDraft();
+  private pendingSend(): PendingSend {
+    const context = this.draftContext(this.task);
+    return {
+      task: this.task,
+      context,
+      key: context ? this.draftStore.key(context) : null,
+      originalComment: this.sharedData.originalComment,
+      text: null,
+    };
+  }
+
+  private keepTextOfSends(leaving: (send: PendingSend) => boolean, text: string): void {
+    for (const send of this.inFlightSends) {
+      if (send.text === null && leaving(send)) {
+        send.text = text;
+      }
+    }
+  }
+
+  // True while the composer still shows the draft this send was pressed on.
+  private isShowing(send: PendingSend): boolean {
+    if (this.destroyed) {
+      return false;
+    }
+    return (
+      this.task === send.task || (send.key !== null && this.getDraftKey(this.task) === send.key)
+    );
+  }
+
+  private setSending(send: PendingSend, sending: boolean): void {
+    if (sending) {
+      this.inFlightSends.add(send);
+    } else {
+      this.inFlightSends.delete(send);
+    }
+    if (send.key !== null) {
+      if (sending) {
+        this.sendingDraftKeys.add(send.key);
+      } else {
+        this.sendingDraftKeys.delete(send.key);
+      }
+    }
+    if (this.isShowing(send)) {
+      this.isSending = sending;
+    }
+  }
+
+  private attachmentsFor(send: PendingSend): StagedFeedbackAttachment[] {
+    if (send.context) {
+      return this.draftStore.attachments(send.context);
+    }
+    return this.isShowing(send) ? this.stagedAttachments : [];
+  }
+
+  private postDraftText(send: PendingSend): void {
+    const showing = this.isShowing(send);
+    // Once another task is open, the field belongs to that task. This draft's text
+    // was saved when the task changed, so post that.
+    const stored = showing || !send.context ? null : this.draftStore.load(send.context);
+    const raw = showing ? this.currentInputText : (send.text ?? stored?.text ?? '');
+    if (!this.hasContent(raw)) {
+      this.finishSuccessfulDraft(send, raw);
       return;
     }
 
-    this.isSending = true;
-    this.draftClientRequestId ??= this.newClientRequestId();
-    this.saveCurrentDraft();
+    this.setSending(send, true);
+    const text = this.emojiService.nativeEmojiToColons(raw);
+    // The API answers a repeated request id with the comment it already stored and
+    // ignores the new text. Reuse an id only for the words and reply it was issued
+    // for, so a retry after a lost response is safe but a corrected message is not
+    // silently dropped.
+    const fingerprint = JSON.stringify([send.originalComment?.id ?? null, text]);
+    let clientRequestId: string;
+    if (stored && send.context) {
+      clientRequestId =
+        stored.clientRequestId && stored.clientRequestFingerprint === fingerprint
+          ? stored.clientRequestId
+          : this.newClientRequestId();
+      // Only record the id against the stored draft when it still holds these words.
+      if (stored.text === raw) {
+        this.draftStore.save(
+          send.context,
+          stored.text,
+          stored.replyToId,
+          clientRequestId,
+          fingerprint,
+        );
+      }
+    } else {
+      if (!this.draftClientRequestId || this.draftClientRequestFingerprint !== fingerprint) {
+        this.draftClientRequestId = this.newClientRequestId();
+        this.draftClientRequestFingerprint = fingerprint;
+      }
+      clientRequestId = this.draftClientRequestId;
+      this.saveCurrentDraft();
+    }
 
-    const text = this.emojiService.nativeEmojiToColons(this.currentInputText);
     this.taskCommentService
-      .addComment(this.task, text, 'text', originalComment, undefined, this.draftClientRequestId)
+      .addComment(send.task, text, 'text', send.originalComment, undefined, clientRequestId)
       .subscribe({
         next: (_tc: TaskComment) => {
-          this.finishSuccessfulDraft();
+          this.finishSuccessfulDraft(send, raw);
         },
         error: (error: ApiError) => {
-          this.isSending = false;
+          this.setSending(send, false);
           this.alerts.error(this.uploadErrorMessage(error, 'Failed to send this message.'), 6000);
         },
       });
   }
 
   private uploadAttachmentQueue(
+    send: PendingSend,
     queue: StagedFeedbackAttachment[],
     index: number,
-    originalComment: TaskComment | null,
   ): void {
     if (index >= queue.length) {
-      this.isSending = false;
-      if (this.stagedAttachments.length === 0) {
-        this.postDraftText(originalComment);
+      this.setSending(send, false);
+      if (this.attachmentsFor(send).length === 0) {
+        this.postDraftText(send);
       } else {
         this.alerts.error('Some attachments could not be sent. Remove them or retry.', 6000);
       }
       return;
     }
 
-    this.isSending = true;
-    const attachment = queue[index];
-    this.updateStagedAttachment(attachment.clientRequestId, {
+    // The queue is a copy taken when Send was pressed. Upload the live item so a file
+    // removed while earlier ones were uploading is skipped.
+    const attachment = this.attachmentsFor(send).find(
+      (item) => item.clientRequestId === queue[index].clientRequestId,
+    );
+    if (!attachment) {
+      this.uploadAttachmentQueue(send, queue, index + 1);
+      return;
+    }
+
+    this.setSending(send, true);
+    this.updateStagedAttachment(send, attachment.clientRequestId, {
       status: 'uploading',
       progress: 0,
       error: undefined,
@@ -714,50 +862,59 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     this.taskCommentService
       .uploadStagedAttachment(
-        this.task,
+        send.task,
         attachment.data,
         attachment.fileName,
         '',
-        originalComment,
+        send.originalComment,
         attachment.clientRequestId,
       )
       .subscribe({
         next: (state) => {
-          this.updateStagedAttachment(attachment.clientRequestId, {
+          this.updateStagedAttachment(send, attachment.clientRequestId, {
             status: 'uploading',
             progress: state.progress,
           });
           if (state.state === 'complete') {
-            this.removeStagedAttachment(attachment.clientRequestId, false, true);
+            this.removeSentAttachment(send, attachment.clientRequestId);
           }
         },
         error: (error: ApiError) => {
-          this.updateStagedAttachment(attachment.clientRequestId, {
+          this.updateStagedAttachment(send, attachment.clientRequestId, {
             status: 'failed',
             error: this.uploadErrorMessage(error, 'Upload failed. Retry or remove this file.'),
           });
-          this.uploadAttachmentQueue(queue, index + 1, originalComment);
+          this.uploadAttachmentQueue(send, queue, index + 1);
         },
-        complete: () => this.uploadAttachmentQueue(queue, index + 1, originalComment),
+        complete: () => this.uploadAttachmentQueue(send, queue, index + 1),
       });
   }
 
-  private finishSuccessfulDraft(): void {
-    this.isSending = false;
-    const taskKey =
-      this.task.id || `${this.task.projectId || this.task.project?.id}_${this.task.definition?.id}`;
+  private finishSuccessfulDraft(send: PendingSend, sentText?: string): void {
+    this.setSending(send, false);
+    const task = send.task;
+    const taskKey = task.id || `${task.projectId || task.project?.id}_${task.definition?.id}`;
     this.submittedTaskIds.add(taskKey);
     const submittedKey = this.submittedKey();
     if (submittedKey) {
       sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
     }
 
-    const context = this.draftContext(this.task);
-    if (context) {
-      this.draftStore.clear(context);
+    if (send.context) {
+      const showing = this.isShowing(send);
+      const stored = showing ? null : this.draftStore.load(send.context);
+      // A rebuilt composer may have saved newer words for this task since Send was
+      // pressed. Those were never sent, so leave them.
+      if (showing || sentText === undefined || stored.text === sentText) {
+        this.draftStore.clear(send.context);
+      }
+    }
+    if (!this.isShowing(send)) {
+      return;
     }
     this.stagedAttachments = [];
     this.draftClientRequestId = null;
+    this.draftClientRequestFingerprint = null;
     this.draftReplyToId = null;
     this.sharedData.originalComment = null;
     this.clearInput();
@@ -771,20 +928,26 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return;
     }
 
-    this.isSending = true;
+    const send = this.pendingSend();
+    const editing = this.editingComment;
+    this.setSending(send, true);
     const text = this.emojiService.nativeEmojiToColons(this.currentInputText);
 
-    this.taskCommentService.editComment(this.editingComment, text).subscribe({
+    this.taskCommentService.editComment(editing, text).subscribe({
       next: (_tc: TaskComment) => {
-        this.isSending = false;
+        this.setSending(send, false);
+        // Opening another task or cancelling ends the edit and puts that draft back
+        // before this lands, so there is nothing left here to clear.
+        if (!this.isShowing(send) || this.editingComment !== editing) {
+          return;
+        }
         this.sharedData.editingComment = null;
-        this.draftBeforeEdit = '';
         this.emojiSearchMode = false;
         this.dismissEmojiPicker();
-        this.clearInput();
+        this.restoreDraftAfterEdit();
       },
       error: (error: ApiError) => {
-        this.isSending = false;
+        this.setSending(send, false);
         this.alerts.error(this.uploadErrorMessage(error, 'Failed to edit this comment.'), 6000);
       },
     });
@@ -806,15 +969,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -823,15 +978,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   uploadFiles(files: ArrayLike<File>) {
@@ -861,11 +1008,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.saveCurrentDraft();
   }
 
-  removeStagedAttachment(
-    clientRequestId: string,
-    save: boolean = true,
-    allowUploading: boolean = false,
-  ): void {
+  removeStagedAttachment(clientRequestId: string, save: boolean = true): void {
     const context = this.draftContext(this.task);
     if (!context) {
       return;
@@ -873,13 +1016,23 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     const attachment = this.stagedAttachments.find(
       (item) => item.clientRequestId === clientRequestId,
     );
-    if (attachment?.status === 'uploading' && !allowUploading) {
+    if (attachment?.status === 'uploading') {
       return;
     }
     this.draftStore.removeAttachment(context, clientRequestId);
     this.stagedAttachments = this.draftStore.attachments(context);
     if (save) {
       this.saveCurrentDraft();
+    }
+  }
+
+  private removeSentAttachment(send: PendingSend, clientRequestId: string): void {
+    if (!send.context) {
+      return;
+    }
+    this.draftStore.removeAttachment(send.context, clientRequestId);
+    if (this.isShowing(send)) {
+      this.stagedAttachments = this.draftStore.attachments(send.context);
     }
   }
 
@@ -891,7 +1044,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       (item) => item.clientRequestId === clientRequestId,
     );
     if (attachment) {
-      this.uploadAttachmentQueue([attachment], 0, this.originalComment);
+      this.uploadAttachmentQueue(this.pendingSend(), [attachment], 0);
     }
   }
 
@@ -902,6 +1055,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
     this.stagedAttachments = [];
     this.draftClientRequestId = null;
+    this.draftClientRequestFingerprint = null;
     this.draftReplyToId = null;
     this.sharedData.originalComment = null;
     this.clearInput();
@@ -929,16 +1083,18 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   private updateStagedAttachment(
+    send: PendingSend,
     clientRequestId: string,
     update: Partial<StagedFeedbackAttachment>,
   ): void {
-    const context = this.draftContext(this.task);
-    if (!context) {
+    if (!send.context) {
       return;
     }
-    this.draftStore.updateAttachment(context, clientRequestId, update);
-    this.stagedAttachments = this.draftStore.attachments(context);
-    this.cdRef.detectChanges();
+    this.draftStore.updateAttachment(send.context, clientRequestId, update);
+    if (this.isShowing(send)) {
+      this.stagedAttachments = this.draftStore.attachments(send.context);
+      this.cdRef.detectChanges();
+    }
   }
 
   private attachmentValidationError(file: File): string | null {
@@ -1005,6 +1161,52 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     return failure?.message || fallback;
   }
 
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.currentInputText;
+
+    this.clearPastedPlaceholderContent(existingText);
+    this.uploadFiles(approvedImages);
+  }
+
   private getClipboardFiles(event: ClipboardEvent): File[] {
     const clipboardData = event.clipboardData;
 
@@ -1062,6 +1264,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       return;
     }
 
+    // Reply ends an edit without cancelling it, so the draft has to come back first.
+    if (this.editedComment !== null) {
+      this.restoreDraftAfterEdit();
+    }
     this.draftReplyToId = this.originalComment?.id ?? null;
     this.saveCurrentDraft();
     setTimeout(() => {
@@ -1070,16 +1276,20 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   private beginEditingComment() {
-    const currentText = this.currentInputText;
-    const nextText = this.editingComment?.text ?? '';
+    const editing = this.editingComment;
 
     if (this.sharedData.originalComment != null) {
       this.sharedData.originalComment = null;
     }
 
-    if (currentText !== nextText) {
-      this.draftBeforeEdit = currentText;
-      this.setComposerText(nextText);
+    if (this.editedComment !== editing) {
+      // Set the draft aside only when editing starts. Moving on to edit another
+      // comment must not replace it with the first comment's text.
+      if (this.editedComment === null) {
+        this.draftBeforeEdit = this.currentInputText;
+      }
+      this.editedComment = editing;
+      this.setComposerText(editing?.text ?? '');
     }
 
     setTimeout(() => {
@@ -1090,6 +1300,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   private restoreDraftAfterEdit() {
     const draft = this.draftBeforeEdit;
     this.draftBeforeEdit = '';
+    this.editedComment = null;
     this.setComposerText(draft);
   }
 

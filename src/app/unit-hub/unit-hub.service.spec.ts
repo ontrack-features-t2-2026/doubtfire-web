@@ -34,15 +34,16 @@ describe('Unit Hub API and demo isolation', () => {
     service = TestBed.inject(UnitHubService);
     http = TestBed.inject(HttpTestingController);
     demo = TestBed.inject(DemoModeStore);
-    // This branch's demo store only switches on for a loaded demo scenario.
-    demo.configureScenario('unit-hub-spec', 1);
+    // The demo store only switches on for a loaded demo scenario.
+    demo.configureScenario('all-features', 111);
   });
   afterEach(() => {
     http.verify();
     sessionStorage.clear();
   });
 
-  it('normal mode reads real content while demo mode is off', () => {
+  it('normal mode reads real content when the available demo is switched off', () => {
+    expect(demo.available).toBe(true);
     expect(demo.enabled).toBe(false);
     let result: UnitHubFeed;
     service.feed().subscribe((value) => (result = value));

@@ -12,7 +12,7 @@
   @if (task) {
     <p class="m-0 mt-1 truncate text-sm text-ot-muted">
       {{ task.definition.abbreviation }} {{ task.definition.name }}
-      @if (task.project?.student?.name; as studentName) {
+      @if (task.project?.student?.displayName; as studentName) {
         ({{ studentName }})
       }
     </p>

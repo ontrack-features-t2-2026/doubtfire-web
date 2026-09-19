@@ -1,5 +1,8 @@
 import {
+  GANTT_GLOBAL_CONFIG,
+  GANTT_I18N_LOCALE_TOKEN,
   GanttBaselineItem,
+  GanttConfigService,
   GanttDate,
   GanttItem,
   GanttLink,
@@ -8,6 +11,7 @@ import {
   GanttViewOptions,
   GanttViewType,
   NgxGanttComponent,
+  enUsLocale,
 } from '@worktile/gantt';
 import {
   AfterViewInit,
@@ -30,6 +34,7 @@ import {TaskPrerequisiteService} from 'src/app/api/services/task-prerequisite.se
 import {ConfirmationModalService} from 'src/app/common/modals/confirmation-modal/confirmation-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {taskPlannerGanttConfig} from './task-planner-gantt.config';
 import {TaskPlannerPrerequisitesModalService} from './task-planner-prerequisites-modal/task-planner-prerequisites-modal.service';
 
 interface TaskGanttItem extends GanttItem {
@@ -49,7 +54,12 @@ const GANTT_SCROLL_ALLOWANCE = 18;
   selector: 'f-task-planner',
   templateUrl: './task-planner.component.html',
   styleUrl: './task-planner.component.scss',
-  providers: [GanttPrintService],
+  providers: [
+    GanttPrintService,
+    GanttConfigService,
+    {provide: GANTT_GLOBAL_CONFIG, useValue: taskPlannerGanttConfig},
+    {provide: GANTT_I18N_LOCALE_TOKEN, useValue: [enUsLocale]},
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
@@ -491,6 +501,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const originalStyle = {
+      flex: ganttEl.style.flex,
       width: ganttEl.style.width,
       height: ganttEl.style.height,
       overflow: ganttEl.style.overflow,
@@ -520,6 +531,9 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       const fullHeight =
         ganttEl.offsetHeight - mainContainer.offsetHeight + mainContainer.scrollHeight;
 
+      // The chart is a flex item that may shrink to fit the page, which would cut the
+      // rows below the fold out of the image, so hold it at its full size while capturing.
+      ganttEl.style.flex = '0 0 auto';
       ganttEl.style.width = `${fullWidth}px`;
       ganttEl.style.height = `${fullHeight}px`;
       ganttEl.style.overflow = 'visible';
@@ -532,6 +546,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.style.flex = originalStyle.flex;
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

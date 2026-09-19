@@ -58,7 +58,7 @@
           <div class="flex min-w-0 items-center gap-3 py-2">
             <user-icon aria-hidden="true" [size]="32" [user]="unitRole.user"></user-icon>
             <div class="min-w-0">
-              <p class="m-0 font-medium text-ot-text">{{ unitRole.user?.name }}</p>
+              <p class="m-0 font-medium text-ot-text">{{ unitRole.user?.displayName }}</p>
               <p class="m-0 truncate text-sm text-ot-muted">{{ unitRole.user?.email }}</p>
             </div>
           </div>
@@ -71,7 +71,7 @@
           <mat-button-toggle-group
             hideSingleSelectionIndicator
             name="role"
-            [attr.aria-label]="'Role for ' + unitRole.user?.name"
+            [attr.aria-label]="'Role for ' + unitRole.user?.displayName"
             [ngModel]="unitRole.role"
             (change)="onRoleChange(unitRole, $event)"
           >
@@ -95,7 +95,7 @@
             <button
               mat-button
               type="button"
-              [attr.aria-label]="'Make ' + unitRole.user?.name + ' the main convenor'"
+              [attr.aria-label]="'Make ' + unitRole.user?.displayName + ' the main convenor'"
               (click)="changeMainConvenor(unitRole)"
             >
               Make main
@@ -112,7 +112,7 @@
         </th>
         <td *matCellDef="let unitRole" mat-cell>
           <mat-slide-toggle
-            [aria-label]="unitRole.user?.name + ' is an observer only'"
+            [aria-label]="unitRole.user?.displayName + ' is an observer only'"
             [checked]="unitRole.observerOnly"
             [disabled]="isMainConvenor(unitRole)"
             (change)="toggleObserverOnly(unitRole)"
@@ -126,7 +126,7 @@
         </th>
         <td *matCellDef="let unitRole" mat-cell>
           <mat-slide-toggle
-            [aria-label]="unitRole.user?.name + ' can mark overflow work'"
+            [aria-label]="unitRole.user?.displayName + ' can mark overflow work'"
             [checked]="unitRole.canMarkOverflowTasks"
             (change)="toggleCanOverflowMark(unitRole)"
           ></mat-slide-toggle>
@@ -138,13 +138,13 @@
         <td *matCellDef="let unitRole" mat-cell>
           <mat-form-field appearance="outline" class="w-48 py-2" subscriptSizing="dynamic">
             <mat-select
-              [aria-label]="'Mentor for ' + unitRole.user?.name"
+              [aria-label]="'Mentor for ' + unitRole.user?.displayName"
               [ngModel]="unitRole.mentorId ?? null"
               (selectionChange)="selectMentor(unitRole, $event)"
             >
               <mat-option [value]="null">No mentor</mat-option>
               @for (other of mentorOptions(unitRole); track other.id) {
-                <mat-option [value]="other.id">{{ other.user?.name }}</mat-option>
+                <mat-option [value]="other.id">{{ other.user?.displayName }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -159,7 +159,7 @@
               mat-icon-button
               matTooltip="Moderation notes"
               type="button"
-              [attr.aria-label]="'Moderation notes for ' + unitRole.user?.name"
+              [attr.aria-label]="'Moderation notes for ' + unitRole.user?.displayName"
               (click)="openTutorNotes(unitRole)"
             >
               <mat-icon aria-hidden="true">sticky_note_2</mat-icon>
@@ -168,7 +168,7 @@
               mat-icon-button
               matTooltip="Remove from unit"
               type="button"
-              [attr.aria-label]="'Remove ' + unitRole.user?.name + ' from the unit'"
+              [attr.aria-label]="'Remove ' + unitRole.user?.displayName + ' from the unit'"
               (click)="removeStaff(unitRole)"
             >
               <mat-icon aria-hidden="true">person_remove</mat-icon>

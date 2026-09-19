@@ -234,7 +234,10 @@
     <f-notification-settings
       [showNotificationsLink]="isOwnProfilePage"
       [user]="user"
+      (preferencesChange)="form.form.markAsDirty()"
     ></f-notification-settings>
+
+    <f-theme-settings class="profile-card"></f-theme-settings>
 
     <!--
       Push opt-in. Subscribing has to come from a click: the browser only shows

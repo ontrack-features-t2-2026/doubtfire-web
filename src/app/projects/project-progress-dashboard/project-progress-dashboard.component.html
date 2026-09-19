@@ -6,7 +6,7 @@
         <mat-card-content>
           <!-- <f-unit-code class="w-28" [unit_code]="project.unit.code"></f-unit-code> -->
           <h1 class="mb-1 text-3xl">
-            @if (project.student?.nickname || project.student?.firstName; as studentName) {
+            @if (project.student?.displayName; as studentName) {
               {{ studentName }}'s
             }
             {{ project.unit.name }}

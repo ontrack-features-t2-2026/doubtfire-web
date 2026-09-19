@@ -4,7 +4,7 @@
       <div>
         <div>{{ engagement.engagementType }} Engagement</div>
         <p class="mt-1 text-sm font-normal text-ot-muted">
-          Added by {{ engagement.user?.firstName }} {{ engagement.user?.lastName }}
+          Added by {{ engagement.user?.displayName }}
           <span class="mx-1">·</span>
           <span matTooltipPosition="above" [matTooltip]="engagement.occurredAt | localizedDateTime">
             {{ engagement.occurredAt | humanizedDate }}
@@ -34,7 +34,7 @@
             <mat-card-title class="flex min-w-0 items-center">
               <user-icon class="mr-2" [size]="25" [user]="engagement.user"></user-icon>
               <span class="truncate">
-                {{ engagement.user?.firstName }} {{ engagement.user?.lastName }}
+                {{ engagement.user?.displayName }}
               </span>
             </mat-card-title>
             <div class="flex shrink-0 items-center">
@@ -171,7 +171,7 @@
             <div class="flex justify-between">
               <mat-card-title class="flex items-center">
                 <user-icon style="margin-right: 8px" [size]="25" [user]="comment.user"></user-icon>
-                {{ comment.user?.firstName }} {{ comment.user?.lastName }}
+                {{ comment.user?.displayName }}
               </mat-card-title>
               <div class="flex items-center">
                 <mat-card-subtitle

@@ -36,4 +36,35 @@ describe('ProjectGroupsStateComponent group-set selection', () => {
 
     expect(component.selectedGroupSet).toBe(published);
   });
+
+  it('selects an empty set that students can create groups in when no set has groups', () => {
+    const staffOnly = {id: 1, groups: [], allowStudentsToCreateGroups: false, locked: false};
+    const lockedOpen = {id: 2, groups: [], allowStudentsToCreateGroups: true, locked: true};
+    const open = {id: 3, groups: [], allowStudentsToCreateGroups: true, locked: false};
+    const project = {
+      unit: {groupSets: [staffOnly, lockedOpen, open]},
+      groups: [],
+    } as unknown as Project;
+    const component = new ProjectGroupsStateComponent(route);
+    component.project$ = of(project);
+
+    component.ngOnInit();
+
+    expect(component.selectedGroupSet).toBe(open);
+  });
+
+  it('still prefers a set with groups over an empty set that allows student-created groups', () => {
+    const open = {id: 1, groups: [], allowStudentsToCreateGroups: true, locked: false};
+    const published = {id: 2, groups: [{id: 20}], allowStudentsToCreateGroups: false};
+    const project = {
+      unit: {groupSets: [open, published]},
+      groups: [],
+    } as unknown as Project;
+    const component = new ProjectGroupsStateComponent(route);
+    component.project$ = of(project);
+
+    component.ngOnInit();
+
+    expect(component.selectedGroupSet).toBe(published);
+  });
 });

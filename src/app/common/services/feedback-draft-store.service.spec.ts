@@ -71,6 +71,27 @@ describe('FeedbackDraftStore', () => {
     expect(store.load(scope).updatedAt).toBeGreaterThan(0);
   });
 
+  it('keeps the text request id paired with the payload it was issued for', () => {
+    const store = new FeedbackDraftStore();
+    const scope = context(7, 19);
+
+    store.save(scope, 'first words', null, 'text-request-1', '[null,"first words"]');
+    store.save(scope, 'first words, then more', null);
+
+    expect(store.load(scope)).toMatchObject({
+      text: 'first words, then more',
+      clientRequestId: 'text-request-1',
+      clientRequestFingerprint: '[null,"first words"]',
+    });
+
+    store.save(scope, 'new words', null, 'text-request-2', '[null,"new words"]');
+
+    expect(store.load(scope)).toMatchObject({
+      clientRequestId: 'text-request-2',
+      clientRequestFingerprint: '[null,"new words"]',
+    });
+  });
+
   it('isolates drafts by signed-in user and task conversation', () => {
     const store = new FeedbackDraftStore();
     const userOneTaskA = context(1, 10);

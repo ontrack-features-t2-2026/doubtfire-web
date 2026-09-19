@@ -1,8 +1,14 @@
-import {GanttPrintService} from '@worktile/gantt';
+import {
+  GanttConfigService,
+  GanttPrintService,
+  GanttViewType,
+  NgxGanttTableComponent,
+} from '@worktile/gantt';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {EmbeddedViewRef, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {By} from '@angular/platform-browser';
 import {ActivatedRoute, Router} from '@angular/router';
 import {EMPTY} from 'rxjs';
 import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
@@ -112,6 +118,43 @@ describe('TaskPlannerComponent target-grade filtering', () => {
 
     expect(component.showTasksAboveTargetGrade).toBe(true);
     expect(component.taskDefs()).toEqual([passTask, creditTask]);
+  });
+});
+
+describe('TaskPlannerComponent chart download', () => {
+  it('holds the chart at full size while it is captured and restores it after', async () => {
+    const ganttEl = document.createElement('div');
+    ganttEl.style.flex = '1 1 auto';
+    const side = document.createElement('div');
+    side.className = 'gantt-side';
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'gantt-main-container';
+    // jsdom has no element scrolling.
+    mainContainer.scrollTo = () => undefined;
+    ganttEl.append(side, mainContainer);
+
+    let flexDuringCapture = '';
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    Object.defineProperty(component, 'unit', {value: {code: 'SIT101'}});
+    Object.assign(component, {
+      ganttComponent: {element: ganttEl, view: {width: 400}},
+      ganttPrintService: {
+        html2canvas: async () => {
+          flexDuringCapture = ganttEl.style.flex;
+          return document.createElement('canvas');
+        },
+      },
+      alertService: {error: () => undefined},
+      renderAllGanttBars: async () => undefined,
+      waitForStableLayout: async () => undefined,
+      nextAnimationFrame: async () => undefined,
+      downloadCanvas: () => undefined,
+    });
+
+    await component.saveImage();
+
+    expect(flexDuringCapture).toBe('0 0 auto');
+    expect(ganttEl.style.flex).toBe('1 1 auto');
   });
 });
 
@@ -301,7 +344,7 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
 
     await TestBed.configureTestingModule({
       declarations: [TaskPlannerComponent],
-      imports: [CommonModule],
+      imports: [CommonModule, NgxGanttTableComponent],
       providers: [
         {
           provide: GradeService,
@@ -344,6 +387,32 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
   afterEach(() => {
     bar?.remove();
     view?.destroy();
+  });
+
+  it('uses English labels and date formats for every Gantt view', () => {
+    const config = fixture.debugElement.injector.get(GanttConfigService);
+    const views = config.getViewsLocale();
+    expect(views[GanttViewType.hour].label).toBe('Hourly');
+    expect(views[GanttViewType.day].label).toBe('Daily');
+    expect(views[GanttViewType.week].label).toBe('Weekly');
+    expect(views[GanttViewType.month].label).toBe('Monthly');
+    expect(views[GanttViewType.quarter].label).toBe('Quarterly');
+    expect(views[GanttViewType.year].label).toBe('Yearly');
+    expect(views[GanttViewType.day].tickFormats.period).toBe('MMM yyyy');
+    expect(JSON.stringify(views)).not.toMatch(/[\u3400-\u9fff]/);
+  });
+
+  it('supplies the real Gantt empty slot with an English target-grade explanation', () => {
+    const table = fixture.debugElement.query(By.directive(NgxGanttTableComponent))
+      .componentInstance as NgxGanttTableComponent;
+    const emptyTemplate = table.tableEmptyTemplate();
+    expect(emptyTemplate).toBeDefined();
+    const emptyView = emptyTemplate.createEmbeddedView({});
+    emptyView.detectChanges();
+    const content = emptyView.rootNodes.map((node: Node) => node.textContent).join(' ');
+    expect(content).toContain('No tasks to show for this target grade.');
+    expect(content).not.toMatch(/[\u3400-\u9fff]/);
+    emptyView.destroy();
   });
 
   it('gives the bar a role and a tab stop, so a keyboard can reach it', () => {

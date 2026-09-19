@@ -14,9 +14,14 @@ import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatSelectModule} from '@angular/material/select';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {
+  MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS,
+  MatSlideToggle,
+  MatSlideToggleModule,
+} from '@angular/material/slide-toggle';
 import {MatTabsModule} from '@angular/material/tabs';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {By} from '@angular/platform-browser';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Subject, of, throwError} from 'rxjs';
 import {Project, Webcal} from 'src/app/api/models/doubtfire-model';
@@ -24,7 +29,7 @@ import {ProjectService} from 'src/app/api/services/project.service';
 import {WebcalService} from 'src/app/api/services/webcal.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {DEMO_TOOLS_AVAILABLE} from 'src/app/demo/demo-mode.store';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 import {CalendarModalComponent} from './calendar-modal.component';
@@ -60,6 +65,7 @@ describe('CalendarModalComponent', () => {
   };
   let projectService: {query: ReturnType<typeof vi.fn>};
   let fileDownloader: {downloadFileWithFeedback: ReturnType<typeof vi.fn>};
+  let demoMode: {enabled: boolean};
 
   beforeEach(async () => {
     webcalService = {
@@ -75,6 +81,7 @@ describe('CalendarModalComponent', () => {
       ),
     };
     fileDownloader = {downloadFileWithFeedback: vi.fn()};
+    demoMode = {enabled: false};
 
     await TestBed.configureTestingModule({
       declarations: [CalendarModalComponent],
@@ -99,11 +106,11 @@ describe('CalendarModalComponent', () => {
         NoopAnimationsModule,
       ],
       providers: [
-        {provide: DEMO_TOOLS_AVAILABLE, useValue: true},
         {provide: MAT_DIALOG_DATA, useValue: {}},
         {provide: WebcalService, useValue: webcalService},
         {provide: ProjectService, useValue: projectService},
         {provide: FileDownloaderService, useValue: fileDownloader},
+        {provide: DemoModeStore, useValue: demoMode},
         {provide: DoubtfireConstants, useValue: {API_URL: 'https://api.example.test/api'}},
         {provide: AlertService, useValue: {success: vi.fn(), error: vi.fn()}},
         {provide: ConfirmationModalService, useValue: {show: vi.fn()}},
@@ -153,42 +160,6 @@ describe('CalendarModalComponent', () => {
     ).toContain('Subscribe from web');
   });
 
-  it('keeps learning sessions opt-in and restores the saved preference after a failed update', async () => {
-    await render();
-    expect(component.webcal.includeLearningSessions).toBe(false);
-    const response: Subject<Webcal> = new Subject();
-    webcalService.update.mockReturnValue(response);
-
-    component.webcal.includeLearningSessions = true;
-    component.toggleIncludeLearningSessions();
-
-    expect(webcalService.update).toHaveBeenCalledWith(
-      expect.objectContaining({includeLearningSessions: true}),
-    );
-    expect(component.working).toBe(true);
-    response.error(new Error('offline'));
-    expect(component.webcal.includeLearningSessions).toBe(false);
-    expect(component.working).toBe(false);
-  });
-
-  it('blocks the session subscription preference in demo mode', async () => {
-    await render();
-    component.demoMode.configureScenario('calendar-spec', 1);
-    component.demoMode.setEnabled(true);
-    webcalService.update.mockClear();
-
-    component.webcal.includeLearningSessions = true;
-    component.toggleIncludeLearningSessions();
-    fixture.detectChanges();
-
-    expect(webcalService.update).not.toHaveBeenCalled();
-    expect(component.webcal.includeLearningSessions).toBe(false);
-    expect(fixture.nativeElement.querySelector('#calendar-sessions-hint').textContent).toContain(
-      'turned off in demo mode',
-    );
-    component.demoMode.clearScenario();
-  });
-
   it('uses the shared download feedback helper with a useful ICS filename', async () => {
     await render();
 
@@ -235,5 +206,56 @@ describe('CalendarModalComponent', () => {
 
     expect(component.newReminderTime).toBe(1);
     expect(component.newReminderUnit).toBe('W');
+  });
+
+  it('keeps learning sessions opt-in and restores the saved preference after a failed update', async () => {
+    const response: Subject<Webcal> = new Subject();
+    webcalService.update.mockReturnValue(response);
+    await render();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+
+    expect(webcalService.update).toHaveBeenCalledWith(
+      expect.objectContaining({includeLearningSessions: true}),
+    );
+    expect(component.working).toBe(true);
+    response.error(new Error('offline'));
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(component.working).toBe(false);
+  });
+
+  it('blocks the session subscription preference in demo mode in both the control and handler', async () => {
+    demoMode.enabled = true;
+    await render();
+    const checkbox: HTMLInputElement = fixture.nativeElement.querySelector(
+      'mat-checkbox[aria-describedby="calendar-sessions-hint"] input',
+    );
+    expect(checkbox.disabled).toBe(true);
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+
+    expect(webcalService.update).not.toHaveBeenCalled();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+  });
+
+  it('explains in the sessions hint that the preference is off in demo mode', async () => {
+    demoMode.enabled = true;
+    await render();
+
+    expect(fixture.nativeElement.querySelector('#calendar-sessions-hint').textContent).toContain(
+      'disabled in demo mode',
+    );
+  });
+
+  it('keeps its switch from flipping itself without changing other slide toggles', async () => {
+    await render();
+
+    const webcalSwitch = fixture.debugElement.query(By.directive(MatSlideToggle))
+      .componentInstance as MatSlideToggle;
+    expect(webcalSwitch.defaults.disableToggleValue).toBe(true);
+    expect(TestBed.inject(MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS).disableToggleValue).not.toBe(true);
   });
 });

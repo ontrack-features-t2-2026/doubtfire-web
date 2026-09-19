@@ -112,7 +112,7 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
     unitRole.roleId = roleId;
     unitRole.role = role;
     this.unitRoleService.update(unitRole).subscribe({
-      next: () => this.alertService.success(`${unitRole.user.name} is now a ${role}.`, 2000),
+      next: () => this.alertService.success(`${unitRole.user.displayName} is now a ${role}.`, 2000),
       error: (response) => {
         // Revert changes on error
         unitRole.roleId = previousRoleId;
@@ -173,14 +173,14 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
   changeMainConvenor(staff: UnitRole) {
     this.confirmationModalService.show(
       'Change the main convenor?',
-      `${staff.user.name} will become the main convenor of ${this.unit.code}.`,
+      `${staff.user.displayName} will become the main convenor of ${this.unit.code}.`,
       () => {
         const previous = this.unit.mainConvenor;
         this.unit.mainConvenor = staff;
         this.unitService.update(this.unit, {body: {unit: {main_convenor_id: staff.id}}}).subscribe({
           next: () => {
             this.unit.mainConvenor = staff;
-            this.alertService.success(`${staff.user.name} is now the main convenor`, 2000);
+            this.alertService.success(`${staff.user.displayName} is now the main convenor`, 2000);
           },
           error: (response) => {
             this.unit.mainConvenor = previous;
@@ -281,7 +281,7 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
 
       if (!targetRole) {
         this.alertService.error(
-          `${staff.user.name} still runs tutorials, and there is no one to give them to. Add another convenor first.`,
+          `${staff.user.displayName} still runs tutorials, and there is no one to give them to. Add another convenor first.`,
           6000,
         );
         return;
@@ -289,11 +289,11 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
 
       const tutorialList = assignedTutorials.map((tutorial) => tutorial.abbreviation).join(', ');
       const toCurrentUser = targetRole.user?.id === this.userService.currentUser?.id;
-      const targetName = toCurrentUser ? 'you' : targetRole.user.name;
+      const targetName = toCurrentUser ? 'you' : targetRole.user.displayName;
 
       this.confirmationModalService.show(
-        `Remove ${staff.user.name}?`,
-        `${staff.user.name} runs ${tutorialList}. Removing them gives these tutorials to ${targetName}.`,
+        `Remove ${staff.user.displayName}?`,
+        `${staff.user.displayName} runs ${tutorialList}. Removing them gives these tutorials to ${targetName}.`,
         () => {
           this.unitRoleService
             .delete(staff, {
@@ -306,7 +306,7 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
                   tutorial.tutor = targetRole.user;
                 });
                 this.alertService.success(
-                  `${staff.user.name} removed, and their tutorials moved to ${targetName}`,
+                  `${staff.user.displayName} removed, and their tutorials moved to ${targetName}`,
                   2000,
                 );
               },
@@ -321,11 +321,11 @@ export class UnitStaffEditorComponent implements OnInit, OnDestroy {
     }
 
     this.confirmationModalService.show(
-      `Remove ${staff.user.name}?`,
-      `${staff.user.name} will no longer be able to work in ${this.unit.code} ${this.unit.name}.`,
+      `Remove ${staff.user.displayName}?`,
+      `${staff.user.displayName} will no longer be able to work in ${this.unit.code} ${this.unit.name}.`,
       () => {
         this.unitRoleService.delete(staff, {cache: this.unit.staffCache}).subscribe({
-          next: () => this.alertService.success(`${staff.user.name} removed`, 2000),
+          next: () => this.alertService.success(`${staff.user.displayName} removed`, 2000),
           error: (response) => this.alertService.error(response, 6000),
         });
       },

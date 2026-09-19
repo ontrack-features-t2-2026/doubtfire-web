@@ -127,15 +127,15 @@ describe('TaskSubmissionCardComponent', () => {
     expect(component.stateLabel).toBe('Processing timed out');
   });
 
-  it('keeps resubmission explicit and reopens the current task with new evidence enabled', () => {
+  it('reopens a submitted task in its current status with new evidence enabled', () => {
     const task = new Task();
-    task.status = 'redo';
+    task.status = 'ready_for_feedback';
     task.presentTaskSubmissionModal = vi.fn();
     component.task = task;
 
     component.uploadAlternateFiles();
 
-    expect(task.presentTaskSubmissionModal).toHaveBeenCalledWith('redo', true);
+    expect(task.presentTaskSubmissionModal).toHaveBeenCalledWith('ready_for_feedback', true);
   });
 
   it('downloads each ready artefact independently through the shared helper', () => {

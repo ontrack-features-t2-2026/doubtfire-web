@@ -112,12 +112,16 @@ export class TaskStatusCardComponent implements OnChanges, OnDestroy {
     return this.task.status === 'assess_in_portfolio';
   }
 
+  // The action follows the current status, not submission history. A task
+  // returned for Redo or Resubmit has history but must go back through Ready
+  // for Feedback, which asks for group contributions. The upload modal only
+  // offers New Evidence while the task is in a submitted state.
   public get showUploadSubmission(): boolean {
-    return !!this.task && !this.task.hasSubmissionHistory();
+    return !!this.task && !this.task.inSubmittedState();
   }
 
   public get showUploadNewFiles(): boolean {
-    return !!this.task?.hasSubmissionHistory() && this.task.requiresFileUpload();
+    return !!this.task?.inSubmittedState() && this.task.requiresFileUpload();
   }
 
   public get submissionActionPending(): boolean {

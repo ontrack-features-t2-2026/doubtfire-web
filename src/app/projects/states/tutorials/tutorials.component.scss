@@ -1,3 +1,45 @@
+:host {
+  display: block;
+  min-width: 0;
+  color: var(--ot-color-text);
+}
+
+.tutorial-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ot-color-divider);
+  border-radius: 10px;
+  background: var(--ot-color-surface);
+
+  &:focus-visible {
+    outline: 3px solid var(--ot-color-primary);
+    outline-offset: 3px;
+  }
+}
+
+table {
+  --mat-table-background-color: var(--ot-color-surface);
+  --mat-table-header-headline-color: var(--ot-color-text);
+  --mat-table-row-item-label-text-color: var(--ot-color-text);
+  --mat-table-row-item-outline-color: var(--ot-color-divider);
+  width: 100%;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+}
+
+tr[mat-header-row] {
+  background: var(--ot-color-surface-raised);
+}
+
+tr[mat-row]:hover {
+  background: var(--ot-color-hover);
+}
+
+th[mat-header-cell],
+td[mat-cell] {
+  border-bottom-color: var(--ot-color-divider);
+}
+
 .tutorial-card-list {
   display: none;
 }
@@ -95,5 +137,11 @@
     color: var(--ot-color-text-muted);
     font-size: 0.875rem;
     text-align: right;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .tutorial-table-container {
+    display: none;
   }
 }
