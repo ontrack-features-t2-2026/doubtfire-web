@@ -3,6 +3,7 @@ import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {AsyncSubject, Observable, catchError, map, throwError} from 'rxjs';
 import {User, UserService} from 'src/app/api/models/doubtfire-model';
+import {NotificationService} from 'src/app/api/services/notification.service';
 import {AppInjector} from 'src/app/app-injector';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
@@ -244,6 +245,12 @@ export class AuthenticationService {
       const globalStateService = AppInjector.get(GlobalStateService);
       globalStateService.clearUnitsAndProjects();
       this.userService.cache.clear();
+
+      // Notifications are per user and NotificationService is a root singleton,
+      // so its cache and unread count outlive the session. Sign out routes
+      // rather than reloading, so nothing else drops them and the next person on
+      // a shared machine would see this user's messages.
+      AppInjector.get(NotificationService).reset();
 
       // Trigger the UI changes
       globalStateService.hideHeader();
