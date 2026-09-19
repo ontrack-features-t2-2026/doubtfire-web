@@ -229,6 +229,7 @@ import {HttpErrorInterceptor} from './common/services/http-error.interceptor';
 import {StatusIconComponent} from './common/status-icon/status-icon.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {ThemeSettingsComponent} from './common/theme/theme-settings.component';
 import {ThemeToggleComponent} from './common/theme/theme-toggle.component';
 import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
@@ -697,6 +698,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     UnitTaskInboxStateComponent,
     LegacyRoutePlaceholderComponent,
     NotificationSettingsComponent,
+    ThemeSettingsComponent,
   ],
   providers: [
     // Services we provide

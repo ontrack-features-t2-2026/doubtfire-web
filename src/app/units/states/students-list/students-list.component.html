@@ -100,7 +100,7 @@
       <ng-container matColumnDef="name">
         <th *matHeaderCellDef mat-header-cell mat-sort-header>Name</th>
         <td *matCellDef="let project" mat-cell>
-          {{ project.student?.name || 'N/A' }}
+          {{ project.student?.displayName || 'N/A' }}
         </td>
       </ng-container>
 

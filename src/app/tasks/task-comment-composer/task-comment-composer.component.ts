@@ -64,6 +64,13 @@ const ACCEPTED_FILE_TYPES = [
   'image/jpg',
   'image/jpeg',
 ];
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
+  'image/png',
+  'image/bmp',
+  'image/tiff',
+  'image/jpeg',
+  'image/gif',
+];
 
 /**
  * The task comment composer is responsible for creating and adding comments to a given task.
@@ -637,15 +644,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -654,15 +653,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   uploadFiles(files: ArrayLike<File>) {
@@ -682,6 +673,52 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     this.confirmAttachmentsSequentially(acceptedFiles);
     this.resetUploader();
+  }
+
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
+
+    this.clearPastedPlaceholderContent(existingText);
+    this.uploadFiles(approvedImages);
   }
 
   private getClipboardFiles(event: ClipboardEvent): File[] {
