@@ -247,20 +247,27 @@
       }
     </div>
   } @else if (loadError) {
-    @if (!isNarrow) {
-      <div class="flex flex-col items-center px-2">
+    <!-- role="status" so the outcome is announced, and the message stays in the
+         accessibility tree when the rail is too narrow to draw it. An empty state
+         that is only an icon says nothing to a screen reader. -->
+    <div class="flex flex-col items-center px-2" role="status">
+      @if (isNarrow) {
+        <p class="sr-only">The tasks did not load</p>
+      } @else {
         <f-empty-state
           hint="Check your connection, then try again."
           icon="cloud_off"
           message="The tasks did not load"
         ></f-empty-state>
         <button mat-stroked-button type="button" (click)="refreshTasks()">Try again</button>
-      </div>
-    }
+      }
+    </div>
   } @else if (filteredTasks?.length === 0) {
-    @if (!isNarrow) {
-      @let empty = emptyState;
-      <div class="flex flex-col items-center px-2">
+    @let empty = emptyState;
+    <div class="flex flex-col items-center px-2" role="status">
+      @if (isNarrow) {
+        <p class="sr-only">{{ empty.message }}</p>
+      } @else {
         <f-empty-state [hint]="empty.hint" [icon]="empty.icon" [message]="empty.message">
         </f-empty-state>
         @if (empty.action) {
@@ -268,8 +275,8 @@
             {{ empty.actionLabel }}
           </button>
         }
-      </div>
-    }
+      }
+    </div>
   } @else if (filteredTasks) {
     <cdk-virtual-scroll-viewport class="tasks-viewport min-h-0 flex-1" itemSize="60">
       <div aria-label="Tasks" role="list">
