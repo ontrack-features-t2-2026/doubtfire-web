@@ -24,7 +24,7 @@ export class FileDownloaderService {
 
   private processPartialBlob(data: FileDownloaderData) {
     const range = data.response.headers.get('Content-Range');
-    const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(range ?? '');
+    const match = /^bytes (\d+)-(\d+)\/(\d+)$/i.exec(range ?? '');
     const received = data.binaryData.reduce((size, blob) => size + blob.size, 0);
     const [start, end, totalSize] = match ? match.slice(1).map(Number) : [];
 

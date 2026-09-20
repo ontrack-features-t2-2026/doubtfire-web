@@ -87,6 +87,15 @@ describe('FileDownloaderService', () => {
     expect(failure).not.toHaveBeenCalled();
   });
 
+  it('accepts case-insensitive byte range units', async () => {
+    service.downloadBlob(endpoint, success, failure);
+    part('Bytes 0-2/3', 'abc');
+
+    expect(success).toHaveBeenCalledOnce();
+    expect(await readBlob(createObjectURL.mock.calls[0][0])).toBe('abc');
+    expect(failure).not.toHaveBeenCalled();
+  });
+
   it.each([
     [null, 'abc'],
     ['garbage', 'abc'],
