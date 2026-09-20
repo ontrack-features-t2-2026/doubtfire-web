@@ -19,6 +19,12 @@ const assertContractShape = (fixture: PeerProgressIndicator) => {
   expect(
     fixture.submittedPercentage === null || typeof fixture.submittedPercentage === 'number',
   ).toBe(true);
+  expect(
+    fixture.completedPercentage === null || typeof fixture.completedPercentage === 'number',
+  ).toBe(true);
+  expect(typeof fixture.distributionAvailable).toBe('boolean');
+  expect(Array.isArray(fixture.statusDistribution)).toBe(true);
+  expect(typeof fixture.isUserEnabled).toBe('boolean');
 
   expect(typeof fixture.isSuppressed).toBe('boolean');
   expect(typeof fixture.isStale).toBe('boolean');
@@ -26,6 +32,13 @@ const assertContractShape = (fixture: PeerProgressIndicator) => {
 
   expect(fixture.lastUpdatedAt === null || typeof fixture.lastUpdatedAt === 'string').toBe(true);
   expect(typeof fixture.unavailableMessage).toBe('string');
+  expect(fixture.unavailableReason === null || typeof fixture.unavailableReason === 'string').toBe(
+    true,
+  );
+  expect(
+    fixture.distributionUnavailableReason === null ||
+      typeof fixture.distributionUnavailableReason === 'string',
+  ).toBe(true);
 };
 
 describe('PeerProgressIndicator Fixture Regression Tests', () => {
@@ -59,6 +72,22 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
     expect(FIXTURE_NORMAL.submittedPercentage).toBeGreaterThan(0);
     expect(FIXTURE_NORMAL.isSuppressed).toBe(false);
     expect(FIXTURE_NORMAL.isFeatureEnabled).toBe(true);
+  });
+
+  it('NORMAL fixture contains the complete, 10-point-quantised canonical status vector', () => {
+    expect(FIXTURE_NORMAL.statusDistribution).toHaveLength(15);
+    expect(new Set(FIXTURE_NORMAL.statusDistribution.map((entry) => entry.status)).size).toBe(15);
+    expect(FIXTURE_NORMAL.statusDistribution.every((entry) => entry.percentage % 10 === 0)).toBe(
+      true,
+    );
+    expect(FIXTURE_NORMAL.statusDistribution).toContainEqual({
+      status: 'fix_and_resubmit',
+      percentage: 10,
+    });
+    expect(FIXTURE_NORMAL.statusDistribution).toContainEqual({
+      status: 'redo',
+      percentage: 10,
+    });
   });
 
   it('ZERO_PERCENT fixture keeps a displayed 0% distinct from unavailable data', () => {
@@ -104,6 +133,9 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
       expect(f).not.toHaveProperty('cohortCount');
       expect(f).not.toHaveProperty('marks');
       expect(f).not.toHaveProperty('feedback');
+      expect(f.statusDistribution).not.toContainEqual(
+        expect.objectContaining({studentId: expect.anything()}),
+      );
     });
   });
 
@@ -114,6 +146,7 @@ describe('PeerProgressIndicator Fixture Regression Tests', () => {
     // invalid numeric values
     expect(malformed.submittedPercentage).toBeNaN();
     expect(Number.isFinite(malformed.submittedPercentage as number)).toBe(false);
+    expect(typeof malformed.distributionAvailable).not.toBe('boolean');
 
     // invalid ranges
     // expect((malformed.submittedPercentage as number) < 0).toBe(true);

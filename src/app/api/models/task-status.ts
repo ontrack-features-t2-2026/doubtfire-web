@@ -45,6 +45,26 @@ export class TaskStatus {
     'rediscuss',
   ];
 
+  // Student-facing lifecycle order for an anonymous peer distribution. This
+  // differs from persistence/API order, which is not intended as presentation.
+  public static readonly PEER_PROGRESS_DISPLAY_ORDER: TaskStatusEnum[] = [
+    'not_started',
+    'working_on_it',
+    'need_help',
+    'ready_for_feedback',
+    'fix_and_resubmit',
+    'redo',
+    'attention_required',
+    'discuss',
+    'rediscuss',
+    'demonstrate',
+    'assess_in_portfolio',
+    'complete',
+    'feedback_exceeded',
+    'time_exceeded',
+    'fail',
+  ];
+
   public static readonly VALID_TOP_TASKS: TaskStatusEnum[] = [
     'not_started',
     'redo',

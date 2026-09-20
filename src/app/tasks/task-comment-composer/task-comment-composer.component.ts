@@ -26,6 +26,7 @@ import {
   TaskComment,
   TaskCommentService,
 } from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
@@ -63,6 +64,13 @@ const ACCEPTED_FILE_TYPES = [
   'image/jpg',
   'image/jpeg',
 ];
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
+  'image/png',
+  'image/bmp',
+  'image/tiff',
+  'image/jpeg',
+  'image/gif',
+];
 
 /**
  * The task comment composer is responsible for creating and adding comments to a given task.
@@ -87,6 +95,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   public $userIsTyping: BehaviorSubject<boolean> = new BehaviorSubject(false);
   private draftSaveSubscription = new Subscription();
   private readonly DRAFT_KEY_PREFIX = 'task_comment_draft_';
+  private readonly SUBMITTED_KEY_PREFIX = 'task_comments_submitted_';
   public isDraftLoaded = false;
   private submittedTaskIds: Set<number | string> = new Set();
 
@@ -122,11 +131,13 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     private alerts: AlertService,
     @Inject(TaskCommentService) private taskCommentService: TaskCommentService,
     private cdRef: ChangeDetectorRef,
+    private userService: UserService,
   ) {
     this.differ = this.differs.find({}).create();
-    // submitted tasks from sessionStorage
+    // submitted tasks from sessionStorage, for this user only
     try {
-      const saved = sessionStorage.getItem('task_comments_submitted');
+      const key = this.submittedKey();
+      const saved = key ? sessionStorage.getItem(key) : null;
       if (saved) {
         this.submittedTaskIds = new Set(JSON.parse(saved));
       }
@@ -199,10 +210,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
         // Update session storage
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
@@ -215,10 +226,39 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.saveCurrentDraft();
   }
 
-  private getDraftKey(task: Task): string {
+  // The id of whoever is signed in, or null during sign out when currentUser has
+  // already been swapped for the anonymous user. A draft with nobody to own it is
+  // not worth keeping, so callers return early on null rather than inventing a
+  // key. The id and not the username or the email: ids are stable, and an email
+  // in a storage key is personal data sitting in plain sight in dev tools.
+  private currentUserId(): number | null {
+    const id = this.userService?.currentUser?.id;
+    return typeof id === 'number' && id > 0 ? id : null;
+  }
+
+  private submittedKey(): string | null {
+    const userId = this.currentUserId();
+    return userId === null ? null : `${this.SUBMITTED_KEY_PREFIX}${userId}`;
+  }
+
+  // The key used to name a task identified the task and never the person, so on a
+  // shared machine the next person to open the same task was handed the previous
+  // person's unsent words.
+  //
+  // The user segment is written as uid<id> rather than the bare number. A legacy
+  // key is task_comment_draft_<taskId> or task_comment_draft_<projectId>_<defId>,
+  // so a bare number would make task_comment_draft_5_7 mean both "user 5, task 7"
+  // and "project 5, definition 7". The marker makes the two shapes impossible to
+  // confuse, which is what lets sign out sweep the old ones safely.
+  private getDraftKey(task: Task): string | null {
+    const userId = this.currentUserId();
+    if (userId === null) {
+      return null;
+    }
+
     // If task has an ID, use it
     if (task.id) {
-      return `${this.DRAFT_KEY_PREFIX}${task.id}`;
+      return `${this.DRAFT_KEY_PREFIX}uid${userId}_${task.id}`;
     }
 
     // For "not started" tasks, create a composite key using only valid properties
@@ -226,7 +266,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     // Fix: Use task.definition.id instead of task.definition_id
     const definitionId = task.definition?.id || 'unknown';
 
-    return `${this.DRAFT_KEY_PREFIX}${projectId}_${definitionId}`;
+    return `${this.DRAFT_KEY_PREFIX}uid${userId}_${projectId}_${definitionId}`;
   }
 
   private hasContent(raw: string): boolean {
@@ -240,6 +280,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
 
     try {
       let raw: string;
@@ -277,6 +320,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
+
     try {
       const draft = localStorage.getItem(draftKey);
 
@@ -538,10 +585,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         this.submittedTaskIds.add(taskKey);
 
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
@@ -586,8 +633,6 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       next: (_success: TaskComment) => {
         this.comment.text = '';
         this.commentsViewer.scrollDown();
-        console.log('implement - check map comments');
-        //this.task.comments = this.ts.mapComments(this.task.comments);
       },
       error: (message: string) => this.alerts.error(message, 6000),
     });
@@ -599,15 +644,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -616,15 +653,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   uploadFiles(files: ArrayLike<File>) {
@@ -644,6 +673,52 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     this.confirmAttachmentsSequentially(acceptedFiles);
     this.resetUploader();
+  }
+
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
+
+    this.clearPastedPlaceholderContent(existingText);
+    this.uploadFiles(approvedImages);
   }
 
   private getClipboardFiles(event: ClipboardEvent): File[] {
@@ -790,7 +865,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 }
 
 // The discussion prompt composer dialog Component
-// eslint-disable-next-line max-classes-per-file
+
 @Component({
   selector: 'discussion-prompt-composer-dialog.html',
   templateUrl: 'discussion-prompt-composer-dialog.html',

@@ -126,7 +126,7 @@ export class UnitStaffEditorComponent implements OnInit {
 
   selectMentor(unitRole: UnitRole, event: MatSelectChange) {
     const previousValue = unitRole.mentorId;
-    unitRole.mentorId = event.value;
+    unitRole.mentorId = event.value ?? null;
     unitRole.roleId = unitRole.role === 'Tutor' ? 2 : 3;
 
     this.unitRoleService.update(unitRole).subscribe({
@@ -148,7 +148,7 @@ export class UnitStaffEditorComponent implements OnInit {
   changeMainConvenor(staff: UnitRole) {
     this.confirmationModalService.show(
       'Set Main Convenor',
-      `Do you want to make ${staff.user.name} the main convenor for this unit?`,
+      `Do you want to make ${staff.user.displayName} the main convenor for this unit?`,
       () => {
         this.unit.changeMainConvenor(staff).subscribe({
           next: (_response) => this.alertService.success('Main convenor changed', 2000),
@@ -252,7 +252,7 @@ export class UnitStaffEditorComponent implements OnInit {
 
       this.confirmationModalService.show(
         'Reassign Tutorials',
-        `You cannot remove ${staff.user.name} from the unit as they tutor the following tutorials: ${tutorialList}.`,
+        `You cannot remove ${staff.user.displayName} from the unit as they tutor the following tutorials: ${tutorialList}.`,
         () => {
           this.unitRoleService
             .delete(staff, {
@@ -278,7 +278,7 @@ export class UnitStaffEditorComponent implements OnInit {
 
     this.confirmationModalService.show(
       'Remove staff member',
-      `Are you sure you want to remove ${staff.user.name} from ${this.unit.code} ${this.unit.name}?`,
+      `Are you sure you want to remove ${staff.user.displayName} from ${this.unit.code} ${this.unit.name}?`,
       () => {
         this.unitRoleService.delete(staff, {cache: this.unit.staffCache}).subscribe({
           next: () => this.alertService.success('Staff member removed', 2000),

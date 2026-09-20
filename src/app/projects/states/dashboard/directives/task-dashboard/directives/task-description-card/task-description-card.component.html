@@ -12,10 +12,6 @@
     ></div>
     @if (task) {
       <f-task-date-slider [task]="task" />
-
-      @if (showPeerProgress) {
-        <f-ppi-widget [task]="task" [taskDef]="taskDef" />
-      }
     }
     <ul>
       <li>{{ grades.names[taskDef?.targetGrade] }} Task</li>
@@ -28,10 +24,12 @@
           }}.
         </li>
         <li>I'm aiming to <b>submit</b> this task by {{ dueDate() | date: 'EEE d MMM' }}.</li>
-        <li>
-          To receive <b>feedback</b>, I must submit this task by
-          {{ feedbackDate() | date: 'EEE d MMM' }}.
-        </li>
+        @if (feedbackDate()) {
+          <li [class.text-amber-600]="shouldShowDeadline()">
+            To receive <b>feedback</b>, I must submit this task by
+            {{ feedbackDate() | date: 'EEE d MMM' }}.
+          </li>
+        }
       } @else {
         <li>
           Start Date &mdash; I'm aiming to <b>start</b> this task by
@@ -45,6 +43,12 @@
           Due Date &mdash; I'm aiming to <b>submit</b> this task by
           {{ dueDate() | date: 'EEE d MMM' }}.
         </li>
+        @if (feedbackDate()) {
+          <li [class.text-amber-600]="shouldShowDeadline()">
+            Feedback Deadline &mdash; To receive <b>feedback</b>, I must submit this task by
+            {{ feedbackDate() | date: 'EEE d MMM' }}.
+          </li>
+        }
       }
     </ul>
   </mat-card-content>
@@ -70,4 +74,21 @@
       ><span>Resources</span>
     </button>
   </mat-card-actions>
+  @if (googleCalendarUrl; as calendarUrl) {
+    <mat-card-actions class="space-x-1">
+      <a
+        aria-label="Add to Google Calendar, opens in a new tab"
+        class="add-to-google-calendar-link"
+        mat-stroked-button
+        rel="noopener noreferrer"
+        target="_blank"
+        [href]="calendarUrl"
+        (keydown)="handleCalendarLinkKeydown($event)"
+      >
+        <mat-icon aria-hidden="true" style="width: 20px; height: 20px; font-size: 20px"
+          >event</mat-icon
+        ><span>Add to Google Calendar</span>
+      </a>
+    </mat-card-actions>
+  }
 </mat-card>

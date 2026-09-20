@@ -1,5 +1,5 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, Input} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Router} from '@angular/router';
 import {CreateNewUnitModal} from 'src/app/admin/modals/create-new-unit-modal/create-new-unit-modal.component';
 import {Unit} from 'src/app/api/models/unit';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
@@ -26,7 +26,6 @@ export class LtiUnitLinkComponent implements AfterViewInit {
     private ltiService: LtiService,
     private userService: UserService,
     private router: Router,
-    private route: ActivatedRoute,
   ) {}
 
   @Input() ltik: string;
@@ -39,7 +38,7 @@ export class LtiUnitLinkComponent implements AfterViewInit {
   public loadingUnits: boolean;
 
   ngAfterViewInit(): void {
-    this.ltik = this.ltik ?? this.route.snapshot.queryParamMap.get('ltik');
+    this.ltik = this.ltik ?? this.userService.currentUser.ltik;
     this.loadingUnits = true;
 
     // Scroll to the bottom of the page in case the header is visible
@@ -93,7 +92,7 @@ export class LtiUnitLinkComponent implements AfterViewInit {
 
           this.alertsService.success(`Successfully linked ${unit.code}`, 5000);
 
-          this.router.navigate(['/lti'], {queryParams: {ltik: this.ltik}});
+          this.router.navigateByUrl('/lti');
         },
         error: (error) => {
           console.log(error);

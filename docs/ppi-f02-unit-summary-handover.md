@@ -28,7 +28,7 @@ This implementation reuses:
 - `PeerProgressUnitSummary`;
 - `PeerProgressUnitSummaryViewModel`;
 - `resolvePeerProgressUnitSummaryState`;
-- `PeerProgressIndicatorService.getMockUnitSummary`;
+- `PeerProgressIndicatorService.getDemoUnitSummary` (only while the local demo-mode switch is on);
 - `calculateCompletionPercentage`.
 
 The existing task-sheet PPI widget and Progress Burndown implementation were

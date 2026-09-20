@@ -53,6 +53,7 @@ describe('UserService', () => {
         firstName: 'Jake',
         lastName: 'renzella',
         email: 'jake@jake.jake',
+        displayPeerProgress: false,
       });
     });
 
@@ -74,6 +75,41 @@ describe('UserService', () => {
       receive_portfolio_notifications: false,
       receive_feedback_notifications: false,
       receive_task_notifications: false,
+      display_peer_progress: false,
+    });
+  });
+
+  it('serialises the peer progress display preference when updating a profile', () => {
+    const user = new User();
+    user.id = 1;
+    user.displayPeerProgress = false;
+
+    userService.update(user).subscribe();
+
+    const req = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toMatchObject({
+      user: {display_peer_progress: false},
+    });
+    req.flush({id: 1, display_peer_progress: false});
+  });
+
+  it('updates only the account theme preference and maps its server timestamp', () => {
+    const user = new User();
+    user.id = 1;
+
+    userService.updateThemePreference(user, 'dark').subscribe((updatedUser) => {
+      expect(updatedUser.themePreference).toBe('dark');
+      expect(updatedUser.themePreferenceUpdatedAt).toBe('2026-09-01T01:02:03Z');
+    });
+
+    const req = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({user: {theme_preference: 'dark'}});
+    req.flush({
+      id: 1,
+      theme_preference: 'dark',
+      theme_preference_updated_at: '2026-09-01T01:02:03Z',
     });
   });
 
@@ -157,39 +193,42 @@ describe('UserService', () => {
     u.receiveFeedbackNotifications = false;
     u.receiveTaskNotifications = false;
 
-    userService.update(u).subscribe(
-      (result) => {
-        expect(result.firstName).toBe(u.firstName);
-      },
-      (error) => {
-        throw error;
-      },
-    );
-
-    let req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
-      expect(request.url).toEqual('http://localhost:3000/api/users/1');
-      expect(request.method).toBe('PUT');
-      return true;
-    });
-    req.flush(u);
-
-    u.firstName = 'andrew';
+    // The API answers a PUT with the saved user as snake_case JSON. Flush a
+    // literal in that shape whose values differ from the local `u`, so the
+    // assertions only pass if the snake_case -> camelCase mapping ran. Flushing
+    // `u` back, as this test used to, could not tell a working mapping from a
+    // broken one because both sides already held the same camelCase values.
     userService.update(u).subscribe({
       next: (result) => {
         expect(result.firstName).toBe('andrew');
+        expect(result.lastName).toBe('cain');
+        expect(result.nickname).toBe('andy');
+        expect(result.receiveTaskNotifications).toBe(true);
       },
       error: (error) => {
         throw error;
       },
     });
 
-    req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
+    const req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
       expect(request.url).toEqual('http://localhost:3000/api/users/1');
       expect(request.method).toBe('PUT');
       return true;
     });
-
-    req.flush(u);
+    req.flush({
+      id: 1,
+      first_name: 'andrew',
+      last_name: 'cain',
+      nickname: 'andy',
+      email: 'jake@jake.jake',
+      student_id: '1',
+      username: 'test',
+      opt_in_to_research: true,
+      has_run_first_time_setup: false,
+      receive_portfolio_notifications: false,
+      receive_feedback_notifications: false,
+      receive_task_notifications: true,
+    });
   });
 
   it('should cache the result of a get request', () => {

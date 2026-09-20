@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {CommonModule} from '@angular/common';
 import {HttpErrorResponse} from '@angular/common/http';
 import {SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
@@ -9,15 +10,19 @@ import {Observable, Subject, of, throwError} from 'rxjs';
 import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
+import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {
+  DETAIL_PROTECTED_STATE,
   DISABLED_STATE,
   NORMAL_STATE,
+  ROUNDED_90_STATE,
+  ROUNDED_110_STATE,
   STALE_STATE,
   SUPPRESSED_STATE,
   UNAVAILABLE_STATE,
+  USER_DISABLED_STATE,
   ZERO_PERCENT_STATE,
-} from 'src/app/api/services/mock';
-import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
+} from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {PpiWidgetComponent} from './ppi-widget.component';
 
 describe('PpiWidgetComponent', () => {
@@ -33,7 +38,7 @@ describe('PpiWidgetComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
-      imports: [MatIconModule, MatProgressSpinnerModule, MatButtonModule],
+      imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule],
       providers: [{provide: PeerProgressIndicatorService, useValue: {getIndicator}}],
     }).compileComponents();
 
@@ -54,27 +59,31 @@ describe('PpiWidgetComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('shows the peer percentage on a normal response', () => {
+  it('shows the completion percentage on a normal response', () => {
     load(of(NORMAL_STATE));
     expect(getIndicator).toHaveBeenCalledWith(7, 99);
     expect(component.view.state).toBe('success');
-    expect(fixture.nativeElement.textContent).toContain('42%');
+    expect(fixture.nativeElement.textContent).toContain('10%');
+    expect(fixture.nativeElement.textContent).toContain('have completed this task');
   });
 
-  it('provides an accessible name for the peer progress widget', () => {
-    load(of(NORMAL_STATE));
+  it('labels the rolling-API fallback as submitted rather than completed', () => {
+    load(of({...NORMAL_STATE, completedPercentage: null}));
 
-    const widget = fixture.nativeElement.querySelector('.ppi-widget');
-    expect(widget.getAttribute('role')).toBe('group');
-    expect(widget.getAttribute('aria-label')).toBe('Peer submission progress');
+    const summary = fixture.nativeElement.querySelector('.ppi-value');
+    expect(summary.textContent).toContain('60%');
+    expect(summary.textContent).toContain('have submitted this task');
+    expect(summary.getAttribute('aria-label')).toBe(
+      'Peer submission progress at your target grade',
+    );
   });
 
   it('shows a rounded zero as data rather than unavailable', () => {
     load(of(ZERO_PERCENT_STATE));
     expect(component.view.state).toBe('no-data');
-    expect(fixture.nativeElement.textContent).toContain(
-      'Peer submission progress rounds to 0% for your target grade',
-    );
+    expect(fixture.nativeElement.textContent).toContain('0%');
+    expect(fixture.nativeElement.textContent).toContain('have completed this task');
+    expect(fixture.nativeElement.querySelector('.ppi-fill').style.width).toBe('0%');
   });
 
   it('shows the API-provided hidden message for a suppressed response', () => {
@@ -94,6 +103,15 @@ describe('PpiWidgetComponent', () => {
     load(of(DISABLED_STATE));
     expect(component.view.state).toBe('disabled');
     expect(fixture.nativeElement.textContent).toContain(DISABLED_STATE.unavailableMessage);
+  });
+
+  it('uses a local neutral message when the profile preference is disabled', () => {
+    load(of(USER_DISABLED_STATE));
+
+    expect(component.view.state).toBe('preference-disabled');
+    expect(fixture.nativeElement.textContent).toContain('Peer progress is turned off');
+    expect(fixture.nativeElement.textContent).toContain('profile settings');
+    expect(fixture.nativeElement.textContent).not.toContain('60%');
   });
 
   it('shows a distinct visible stale state when data is outdated', () => {
@@ -144,12 +162,12 @@ describe('PpiWidgetComponent', () => {
 
   it('does not render a stale value if a request fails after a new one has already started', () => {
     load(of(NORMAL_STATE));
-    expect(fixture.nativeElement.textContent).toContain('42%');
+    expect(fixture.nativeElement.textContent).toContain('10%');
 
     load(throwError(() => new Error('network down')));
     fixture.detectChanges();
     expect(component.view.state).toBe('error');
-    expect(fixture.nativeElement.textContent).not.toContain('42%');
+    expect(fixture.nativeElement.textContent).not.toContain('10%');
   });
 
   it('cancels a previous in-flight request when the task changes before it resolves', () => {
@@ -167,5 +185,140 @@ describe('PpiWidgetComponent', () => {
 
     second.next(SUPPRESSED_STATE);
     expect(component.view.state).toBe('hidden');
+  });
+
+  it('hides decorative icons from screen readers', () => {
+    load(throwError(() => new Error('network down')));
+    fixture.detectChanges();
+
+    const icons = fixture.nativeElement.querySelectorAll('mat-icon');
+
+    icons.forEach((icon: HTMLElement) => {
+      expect(icon.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
+
+  it.each([
+    {response: NORMAL_STATE, metric: 'completion', verb: 'completed', percentage: 10},
+    {
+      response: {...NORMAL_STATE, completedPercentage: null},
+      metric: 'submission',
+      verb: 'submitted',
+      percentage: 60,
+    },
+    {response: ZERO_PERCENT_STATE, metric: 'completion', verb: 'completed', percentage: 0},
+  ])(
+    'exposes the $percentage% $metric value in a named semantic group',
+    ({response, metric, verb, percentage}) => {
+      load(of(response));
+
+      const value = fixture.nativeElement.querySelector('.ppi-value[role="group"]');
+
+      expect(value).toBeTruthy();
+      expect(value.getAttribute('aria-label')).toBe(`Peer ${metric} progress at your target grade`);
+      expect(value.textContent).toContain(`${percentage}%`);
+      expect(value.textContent).toContain(`of peers have ${verb} this task`);
+    },
+  );
+
+  it('keeps the visible summary concise while retaining cohort context for assistive technology', () => {
+    load(of(NORMAL_STATE));
+
+    const summary = fixture.nativeElement.querySelector('.ppi-value') as HTMLElement;
+    const progress = fixture.nativeElement.querySelector('.ppi-track') as HTMLElement;
+
+    expect(summary.querySelector('strong')?.textContent).toBe('10%');
+    expect(summary.querySelector('span')?.textContent).toBe('of peers have completed this task');
+    expect(summary.textContent).not.toContain('target grade');
+    expect(progress.getAttribute('aria-label')).toBe(
+      '10% of peers at your target grade have completed this task',
+    );
+  });
+
+  it('uses a compact accessible switch for the optional detailed panel', () => {
+    load(of(NORMAL_STATE));
+
+    const toggle = fixture.nativeElement.querySelector(
+      'button[role="switch"]',
+    ) as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeNull();
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-label')).toBe('Advanced peer status breakdown');
+    expect(fixture.nativeElement.querySelector('.ppi-advanced')).toBeTruthy();
+  });
+
+  it('reveals the full non-zero status distribution through the Advanced switch', () => {
+    load(of(NORMAL_STATE));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Task status breakdown');
+    expect(text).toContain('Redo');
+    expect(text).toContain('Resubmit');
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.ppi-independent')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.ppi-legend li').length).toBe(7);
+    expect(
+      Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.ppi-name')).map((label) =>
+        label.textContent.trim(),
+      ),
+    ).toEqual([
+      'Not Started',
+      'Working On It',
+      'Ready for Feedback',
+      'Resubmit',
+      'Redo',
+      'Complete',
+      'Fail',
+    ]);
+  });
+
+  it.each([
+    {state: ROUNDED_90_STATE, total: 90},
+    {state: ROUNDED_110_STATE, total: 110},
+  ])('does not visually renormalise a privacy-rounded $total% vector', ({state, total}) => {
+    load(of(state));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const independent = fixture.nativeElement.querySelector('.ppi-independent');
+    const workingFill = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] .ppi-independent__fill',
+    ) as HTMLElement;
+    const workingTrack = fixture.nativeElement.querySelector(
+      '[data-status="working_on_it"] [role="progressbar"]',
+    ) as HTMLElement;
+
+    expect(component.distributionTotal).toBe(total);
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeNull();
+    expect(independent.textContent).toContain(`total ${total}%`);
+    expect(independent.textContent).toContain('not stretched to fill 100%');
+    expect(workingFill.style.width).toBe('20%');
+    expect(workingTrack.getAttribute('aria-valuenow')).toBe('20');
+    expect(workingTrack.getAttribute('aria-describedby')).toBe(component.independentScaleNoticeId);
+  });
+
+  it('keeps the compact value while explaining a privacy-withheld detailed vector', () => {
+    load(of(DETAIL_PROTECTED_STATE));
+
+    component.setAdvanced(true);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('10%');
+    expect(text).toContain('Detailed breakdown protected');
+    expect(text).not.toContain('Redo');
+    expect(fixture.nativeElement.querySelector('.ppi-distribution')).toBeNull();
   });
 });

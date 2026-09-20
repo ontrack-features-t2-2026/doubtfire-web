@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import {MediaObserver} from 'ng-flex-layout';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {Subscription, asapScheduler, observeOn} from 'rxjs';
@@ -11,9 +10,11 @@ import {
   UnitRole,
   User,
 } from 'src/app/api/models/doubtfire-model';
+import {NotificationService} from 'src/app/api/services/notification.service';
 import {SidekiqJobEntry, SidekiqJobService} from 'src/app/api/services/sidekiq-job.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants, LogoSettings} from 'src/app/config/constants/doubtfire-constants';
+import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
@@ -55,6 +56,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   sidekiqJobs: SidekiqJobEntry[] = [];
 
+  /**
+   * How many notifications are unread, for the account menu on a phone.
+   *
+   * The bell is not rendered below xs, because this toolbar does not wrap and
+   * there is no room for it, so the account menu is the only way in on a phone
+   * and it needs to say there is something waiting.
+   *
+   * Read here rather than in notification-bell, because that component is the
+   * thing that does not exist at this size.
+   */
+  unreadNotifications = 0;
+
   constructor(
     private calendarModal: CalendarModalService,
     private aboutDoubtfireModal: AboutDoubtfireModal,
@@ -63,16 +76,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
     protected globalState: GlobalStateService,
     private userService: UserService,
     private authService: AuthenticationService,
-    protected media: MediaObserver,
+    private breakpointObserver: BreakpointObserver,
     protected doubtfireConstants: DoubtfireConstants,
+    private notificationService: NotificationService,
     private sidekiqJobService: SidekiqJobService,
     private sidekiqJobsModalService: SidekiqJobsModalService,
     private qrModalService: QrModalService,
     private router: Router,
     private tutorNotesModal: TutorNotesModalService,
+    readonly demoMode: DemoModeStore,
   ) {}
 
   public externalName: string;
+
+  protected get isExtraSmall(): boolean {
+    return this.breakpointObserver.isMatched('(max-width: 599.98px)');
+  }
 
   ngOnInit(): void {
     this.doubtfireConstants.ExternalName.subscribe((externalName) => {
@@ -83,7 +102,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: (shouldShow) => {
           this.showHeader = shouldShow;
         },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
         error: (err) => {
           console.log(`Error showing header: ${err}`);
         },
@@ -98,9 +117,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           } // might be signing out, or the data has been cleared
           this.unitRoles = unitRoles;
 
-          this.filteredUnitRoles = this.isActiveUnitRole
-            .transform(this.unitRoles)
-            .filter((role) => this.isUniqueRole(role));
+          this.filteredUnitRoles = this.uniqueUnitRoles(this.unitRoles);
         },
         error: (err) => {
           console.log(`Error fetching unit roles: ${err}`);
@@ -141,7 +158,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.currentProject = null;
           }
         },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
         error: (err) => {
           console.log(`Error on switching view and entity: ${err}`);
         },
@@ -163,6 +180,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.sidekiqJobService.sidekiqJobsSubject.subscribe((jobs) => {
       this.sidekiqJobs = [...jobs];
     });
+
+    this.subscriptions.push(
+      this.notificationService.unreadCount$.subscribe((count) => {
+        this.unreadNotifications = count;
+      }),
+    );
   }
 
   showMyQr() {
@@ -199,10 +222,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  isUniqueRole = (unit) => {
-    const units = this.unitRoles.filter((role: UnitRole) => role.unit?.id === unit.unit?.id);
-    return units.length == 1 || unit.role == 'Tutor';
-  };
+  // Keep one unit role per unit, plus every tutor role. Count the roles per
+  // unit once up front rather than rescanning unitRoles for each role, which
+  // was quadratic and reran on every unit-role cache emission (FEPERF-19).
+  uniqueUnitRoles(unitRoles: UnitRole[]): UnitRole[] {
+    const countByUnit: Map<number | undefined, number> = new Map();
+    unitRoles.forEach((role) => {
+      const id = role.unit?.id;
+      countByUnit.set(id, (countByUnit.get(id) ?? 0) + 1);
+    });
+
+    return this.isActiveUnitRole
+      .transform(unitRoles)
+      .filter((role) => countByUnit.get(role.unit?.id) === 1 || role.role === 'Tutor');
+  }
 
   updateSelectedProject(project: Project): void {
     this.currentProject = project;
@@ -238,6 +271,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   openAboutModal(): void {
     this.aboutDoubtfireModal.show();
+  }
+
+  public refreshMobileUnreadCount(): void {
+    if (!this.isExtraSmall || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.notificationService.refreshUnreadCount().subscribe({
+      error: () => undefined,
+    });
   }
 
   openCalendar(): void {

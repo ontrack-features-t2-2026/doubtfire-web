@@ -298,7 +298,7 @@ export class UploadSubmissionModalComponent implements OnInit {
           : response.status;
 
       this.task.updateFromJson(response, this.taskService.mapping);
-      this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService);
+      this.task.processTaskStatusChange(expectedStatus as TaskStatusEnum, this.alertService, true);
     }, 1500);
   };
 
