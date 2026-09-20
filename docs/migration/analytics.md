@@ -68,3 +68,5 @@ compare the accessible tables with the endpoint payloads, try grade grouping, th
 simulate a failed stats request and use Retry. Check narrow layouts and theme contrast.
 A seeded/authenticated API session is required for that final real-data walkthrough;
 unit fixtures are not evidence that a production account was exercised.
+
+See the [recorded validation results](validation.md) for the final full-suite run and source revisions.
