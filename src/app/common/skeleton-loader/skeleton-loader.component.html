@@ -1,0 +1,15 @@
+<div aria-hidden="true" class="flex flex-col gap-3">
+  @for (placeholder of placeholders; track placeholder) {
+    @if (shape === 'card') {
+      <ngx-skeleton-loader
+        class="block"
+        [theme]="{height: '120px', width: '100%', 'border-radius': '8px', margin: '0'}"
+      ></ngx-skeleton-loader>
+    } @else {
+      <ngx-skeleton-loader
+        class="block"
+        [theme]="{height: '48px', width: '100%', 'border-radius': '8px', margin: '0'}"
+      ></ngx-skeleton-loader>
+    }
+  }
+</div>
