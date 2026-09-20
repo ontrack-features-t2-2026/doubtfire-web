@@ -143,19 +143,13 @@ export class StudentOnboardingService implements OnDestroy {
       const accountId = this.accountId;
       const generation = this.generation;
       // This endpoint derives its owner from authentication; no user id is supplied.
-      // One result is enough to disqualify history, including inactive enrolments.
+      // The bounded boolean includes withdrawn/inactive history without returning
+      // project, assessment or identity data. An older API fails safely to replay.
       this.historySubscription = this.http
-        .get<unknown>(`${API_URL}/projects`, {
-          params: {
-            include_inactive: 'true',
-            include_task_definitions: 'false',
-            page: '1',
-            per_page: '1',
-          },
-        })
+        .get<unknown>(`${API_URL}/projects/history`)
         .pipe(timeout(10000))
         .subscribe({
-          next: (projects) => {
+          next: (history) => {
             if (
               generation !== this.generation ||
               accountId !== this.users.currentUser?.id ||
@@ -165,7 +159,12 @@ export class StudentOnboardingService implements OnDestroy {
             ) {
               return;
             }
-            if (Array.isArray(projects) && projects.length === 0) {
+            if (
+              history !== null &&
+              typeof history === 'object' &&
+              Object.keys(history).join(',') === 'hasProjects' &&
+              (history as {hasProjects: unknown}).hasProjects === false
+            ) {
               this.save('new', 0);
               this.evaluate();
             }

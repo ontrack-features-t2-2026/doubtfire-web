@@ -70,7 +70,9 @@
     <div class="onboarding-controls">
       @switch (view.panel) {
         @case ('welcome') {
-          <button mat-flat-button type="button" (click)="onboarding.begin()">Start tutorial</button>
+          <button color="primary" mat-flat-button type="button" (click)="onboarding.begin()">
+            Start tutorial
+          </button>
         }
         @case ('step') {
           <button
@@ -81,7 +83,7 @@
           >
             Back
           </button>
-          <button mat-flat-button type="button" (click)="onboarding.next()">
+          <button color="primary" mat-flat-button type="button" (click)="onboarding.next()">
             {{ view.index === steps.length - 1 ? 'Finish' : 'Next' }}
           </button>
         }
@@ -89,10 +91,14 @@
           <button mat-stroked-button type="button" (click)="onboarding.cancelSkip()">
             Go back
           </button>
-          <button mat-flat-button type="button" (click)="onboarding.skip()">Skip tutorial</button>
+          <button color="primary" mat-flat-button type="button" (click)="onboarding.skip()">
+            Skip tutorial
+          </button>
         }
         @case ('complete') {
-          <button mat-flat-button type="button" (click)="onboarding.finish()">Finish</button>
+          <button color="primary" mat-flat-button type="button" (click)="onboarding.finish()">
+            Finish
+          </button>
         }
       }
       @if (view.panel === 'welcome' || view.panel === 'step') {

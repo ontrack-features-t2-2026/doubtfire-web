@@ -152,6 +152,12 @@
           Demo controls
         </button>
       }
+      @if (studentOnboarding.available) {
+        <button mat-menu-item (click)="studentOnboarding.replay()">
+          <mat-icon aria-hidden="true" matListItemIcon>help_outline</mat-icon>
+          Tutorial and Help
+        </button>
+      }
       <button mat-menu-item routerLink="/unit-hub">
         <mat-icon aria-hidden="true" matListItemIcon>campaign</mat-icon>
         Unit Hub · announcements &amp; classes
@@ -164,12 +170,6 @@
         <mat-icon aria-label="Edit calendar" matListItemIcon>calendar_month</mat-icon>
         Calendar
       </button>
-      @if (studentOnboarding.available) {
-        <button mat-menu-item (click)="studentOnboarding.replay()">
-          <mat-icon aria-hidden="true" matListItemIcon>help_outline</mat-icon>
-          Tutorial and Help
-        </button>
-      }
       <button mat-menu-item (click)="openAboutModal()">
         <mat-icon aria-label="About" matListItemIcon>info</mat-icon>
         About

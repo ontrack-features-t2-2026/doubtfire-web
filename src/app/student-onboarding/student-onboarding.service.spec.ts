@@ -51,7 +51,7 @@ describe('StudentOnboardingService', () => {
     Object.defineProperty(window, 'localStorage', {value: storage, configurable: true});
     users = {currentUser: {id: 1, role: 'Student', hasRunFirstTimeSetup: false}};
     auth = {isAuthenticated: vi.fn(() => true)};
-    http = {get: vi.fn(() => of([]))};
+    http = {get: vi.fn(() => of({hasProjects: false}))};
     globals = {isLoadingSubject: new BehaviorSubject(true)};
     settings = {IsTutorialEnabled: new BehaviorSubject(true)};
     router = {url: '/welcome', events: new Subject(), navigate: vi.fn()};
@@ -75,30 +75,29 @@ describe('StudentOnboardingService', () => {
     }
   });
 
-  it('checks only current-user enrolment history including inactive units with a bounded response', () => {
+  it('requests only the authenticated current-user history boolean without owner parameters', () => {
     service.start();
     expect(http.get).toHaveBeenCalledOnce();
-    expect(http.get).toHaveBeenCalledWith(expect.stringMatching(/\/projects$/), {
-      params: {
-        include_inactive: 'true',
-        include_task_definitions: 'false',
-        page: '1',
-        per_page: '1',
-      },
-    });
+    expect(http.get).toHaveBeenCalledWith(expect.stringMatching(/\/projects\/history$/));
   });
-  it.each([[{id: 9}], {projects: []}])(
-    'keeps non-empty or unknown history replay-only',
-    (history) => {
-      http.get.mockReturnValue(of(history));
-      service.start();
-      finishProfile();
-      expect(service.view$.value).toBeNull();
-      expect(storage.getItem(key)).toBeNull();
-      service.replay();
-      expect(service.view$.value?.replay).toBe(true);
-    },
-  );
+  it.each([
+    {history: {hasProjects: true}},
+    {history: {}},
+    {history: []},
+    {history: null},
+    {history: {hasProjects: 0}},
+    {history: {hasProjects: 'false'}},
+    {history: {hasProjects: false, userId: 1}},
+    {history: {projects: []}},
+  ])('keeps existing, malformed or unknown history replay-only: $history', ({history}) => {
+    http.get.mockReturnValue(of(history));
+    service.start();
+    finishProfile();
+    expect(service.view$.value).toBeNull();
+    expect(storage.getItem(key)).toBeNull();
+    service.replay();
+    expect(service.view$.value?.replay).toBe(true);
+  });
   it('does not replace invalid or future stored progress with a new automatic offer', () => {
     storage.setItem(key, record('completed', 'unit', 999));
     service.start();
@@ -122,7 +121,7 @@ describe('StudentOnboardingService', () => {
     settings.IsTutorialEnabled.next(false);
     users.currentUser = {id: 2, role: 'Student', hasRunFirstTimeSetup: true};
     settings.IsTutorialEnabled.next(true);
-    response.next([]);
+    response.next({hasProjects: false});
     finishProfile();
     expect(service.view$.value).toBeNull();
     expect(storage.length).toBe(0);
@@ -132,7 +131,7 @@ describe('StudentOnboardingService', () => {
     http.get.mockReturnValue(response);
     service.start();
     users.currentUser.role = 'Tutor';
-    response.next([]);
+    response.next({hasProjects: false});
     expect(storage.length).toBe(0);
     expect(service.view$.value).toBeNull();
   });
@@ -184,7 +183,7 @@ describe('StudentOnboardingService', () => {
     service.start();
     finishProfile();
     expect(service.view$.value).toBeNull();
-    response.next([]);
+    response.next({hasProjects: false});
     expect(service.view$.value?.panel).toBe('welcome');
   });
   it('waits for profile, enrolment loading and a safe route before offering a new student the tutorial', () => {
