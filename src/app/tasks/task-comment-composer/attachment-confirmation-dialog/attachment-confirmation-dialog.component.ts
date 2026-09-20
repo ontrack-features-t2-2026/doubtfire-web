@@ -23,7 +23,9 @@ export class AttachmentConfirmationDialogComponent implements OnInit, OnDestroy 
 
   ngOnInit() {
     this.file = this.data.file;
-    if (this.isImage || this.isAudio) this.previewUrl = URL.createObjectURL(this.file);
+    if (this.isImage || this.isAudio) {
+      this.previewUrl = URL.createObjectURL(this.file);
+    }
   }
 
   ngOnDestroy() {

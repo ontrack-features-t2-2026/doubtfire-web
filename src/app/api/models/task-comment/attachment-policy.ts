@@ -26,7 +26,9 @@ export function attachmentError(error: {
     return 'The upload is too large. Choose a smaller file and try again. Your draft is unchanged.';
   }
   const details = error?.error;
-  if (typeof details === 'string' && !details.trim().startsWith('<')) return details;
+  if (typeof details === 'string' && !details.trim().startsWith('<')) {
+    return details;
+  }
   if (
     details &&
     typeof details === 'object' &&

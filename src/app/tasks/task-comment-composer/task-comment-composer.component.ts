@@ -165,10 +165,11 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   public get attachmentGuidance(): string {
-    if (!this.attachmentPolicy)
+    if (!this.attachmentPolicy) {
       return this.attachmentPolicyFailed
         ? 'Attachment requirements are unavailable. Reload to try again. You can still send text.'
         : 'Loading attachment requirements…';
+    }
     const formats = this.attachmentPolicy.categories
       .map((item) => `${item.name}: ${item.extensions.join(', ').toUpperCase()}`)
       .join('; ');
