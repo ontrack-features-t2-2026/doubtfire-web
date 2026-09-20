@@ -127,6 +127,57 @@ describe('StudentOnboardingService', () => {
     expect(service.view$.value).toBeNull();
     expect(storage.length).toBe(0);
   });
+  it('does not persist eligibility when the pending account becomes staff', () => {
+    const response: Subject<unknown> = new Subject();
+    http.get.mockReturnValue(response);
+    service.start();
+    users.currentUser.role = 'Tutor';
+    response.next([]);
+    expect(storage.length).toBe(0);
+    expect(service.view$.value).toBeNull();
+  });
+  it('times out history checks without retrying or interrupting normal use', () => {
+    vi.useFakeTimers();
+    try {
+      http.get.mockReturnValue(new Subject());
+      service.start();
+      finishProfile();
+      vi.advanceTimersByTime(10000);
+      route();
+      expect(service.view$.value).toBeNull();
+      expect(http.get).toHaveBeenCalledOnce();
+      service.replay();
+      expect(service.view$.value?.replay).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('returns automatic close to the last target and replay close to its visible launch control', () => {
+    const target = document.createElement('button');
+    target.dataset.onboardingTarget = 'unit-selector';
+    const launch = document.createElement('button');
+    launch.dataset.onboardingTarget = 'account-menu';
+    for (const element of [target, launch]) {
+      element.getBoundingClientRect = () => new DOMRect(10, 10, 80, 40);
+      document.body.appendChild(element);
+    }
+    try {
+      service.start();
+      finishProfile();
+      service.begin();
+      service.close();
+      expect(document.activeElement).toBe(target);
+      launch.focus();
+      service.replay();
+      service.begin();
+      service.next();
+      service.close();
+      expect(document.activeElement).toBe(launch);
+    } finally {
+      target.remove();
+      launch.remove();
+    }
+  });
   it('can complete profile setup before the successful eligibility response without a race', () => {
     const response: Subject<unknown> = new Subject();
     http.get.mockReturnValue(response);

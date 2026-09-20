@@ -1,21 +1,61 @@
-Tutorial implementation validation, 21 September 2026 (Australia/Melbourne)
+Tutorial implementation validation — 21 September 2026 (Australia/Melbourne)
+
 Initial base: d16f6201caff78082e5e83c540320dbee5871404 (11.0.x)
-Node: v22.23.2; Angular CLI 22.0.9; Angular22.0.3; TypeScript6.0.3; Vitest4.1.9
-Dependencies: unchanged package-lock SHA1 1f2acc374d8e3af819dab13862cf8fbbb017bf3d
+Rebased base: a35f2826d (11.0.x); upstream changes retained without conflicts.
+Node v22.23.2; Angular CLI 22.0.9; Angular 22.0.3; TypeScript 6.0.3; Vitest 4.1.9.
+Dependency lockfile unchanged: SHA1 1f2acc374d8e3af819dab13862cf8fbbb017bf3d.
+Commands below were run with this Node runtime; NG_BUILD_MAX_WORKERS=2 limited
+build concurrency. No API writes or production-account actions were performed.
 
-Focused tests (20 September2026 23:30 UTC):
-ng test --watch=false --progress=false --runner-config=/tmp/tutorial-vitest.config.mjs
-  --include='src/app/student-onboarding/*.spec.ts'
-  --include='src/app/config/constants/doubtfire-constants.spec.ts'
-  --include='src/app/welcome/welcome.component.spec.ts'
-  --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts'
-  --include='src/app/common/header/header.component.spec.ts'
-Runner configuration: {test:{maxWorkers:1,fileParallelism:false,pool:'threads'}}
-Exit0; 6 test files passed;89 tests passed;4.35s test execution.
+1. Full application typecheck
+   node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js -p src/tsconfig.app.json --noEmit
+   Started 2026-09-20 23:34:28 UTC; exit 0.
 
-Initial ngc -p src/tsconfig.app.json --noEmit passed before final history-gate changes.
-Final full typecheck, full lint, production build and post-rebase test results will
-be appended before PR handover. A prior parallel run timed out starting workers
-while the host was suspended/busy and executed no tests; serial retry above passed.
-Browser/synthetic harness results and limitations are recorded separately; no
-human pilot, real screen-reader session or approval has been claimed.
+2. Full repository lint
+   node node_modules/@angular/cli/bin/ng.js lint --max-warnings 0
+   Started 2026-09-20 23:35:29 UTC; exit 0, all files passed linting.
+
+3. Focused feature and existing-profile regression suite
+   node node_modules/@angular/cli/bin/ng.js test --watch=false --progress=false
+     --runner-config=/tmp/tutorial-vitest.config.mjs
+     --include='src/app/student-onboarding/*.spec.ts'
+     --include='src/app/config/constants/doubtfire-constants.spec.ts'
+     --include='src/app/welcome/welcome.component.spec.ts'
+     --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts'
+     --include='src/app/common/header/header.component.spec.ts'
+   Runner config: export default {test:{maxWorkers:1,fileParallelism:false,pool:'threads'}};
+   Completed 2026-09-20 23:39 UTC; exit 0, 95 tests passed in 6 files.
+   Test execution 21.21 seconds; includes actual account-menu replay and protected
+   profile/SCORM routes, in addition to eligibility, state, targets and controls.
+
+4. Final service delta verification
+   Same command/runner config, restricted to
+     --include='src/app/student-onboarding/student-onboarding.service.spec.ts'
+   Completed 2026-09-20 23:41 UTC; exit 0, 47 tests passed in 1 file, 3.50 seconds.
+   Includes 3 additional cases: pending eligibility becomes staff; bounded history
+   timeout; automatic/replay focus return. Combined unique coverage is 98 tests,
+   not 95 + 47 (44 service cases were re-run).
+   Focused ESLint on final service and test file: exit 0.
+
+5. Production application build
+   node node_modules/@angular/cli/bin/ng.js build --configuration production --progress=false
+   Started 2026-09-20 23:39:34 UTC; completed 23:41:37 UTC; exit 0.
+   Initial output 11.45 MB raw / 2.08 MB estimated transfer.
+   Warnings remain in unchanged dependencies/styles: eval/minifier notice,
+   CommonJS packages, existing component style budgets and 46 skipped selectors.
+   No new tutorial dependency or tutorial style-budget warning was introduced.
+
+6. Diff hygiene
+   git diff --check: exit 0.
+   Tutorial targets preserve upstream header/dropdown/dashboard changes. The
+   standalone module import was placed away from another pending PR's insertion.
+
+Earlier attempts: the first test pass identified test-environment localStorage and
+focus-timer assumptions, which were corrected. A later parallel worker launch
+executed no tests after the host was suspended/busy; the serial retries above
+passed. Neither failed attempt was represented as a successful run.
+
+Manual evidence is tracked in validation.md. The preview mounts actual tutorial
+code with synthetic account/history services and real Angular Router events; its
+surrounding targets are synthetic. Browser checks cannot substitute for full-app
+QA, real assistive-technology sessions, human pilot participation or reviewer approval.

@@ -159,6 +159,7 @@ export class StudentOnboardingService implements OnDestroy {
             if (
               generation !== this.generation ||
               accountId !== this.users.currentUser?.id ||
+              this.users.currentUser.role !== 'Student' ||
               !this.settings.IsTutorialEnabled.value ||
               !this.auth.isAuthenticated()
             ) {

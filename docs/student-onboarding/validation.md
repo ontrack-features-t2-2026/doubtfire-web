@@ -1,7 +1,7 @@
 # Tutorial validation and evidence
 
 TUT-T01 / TUT-Q01 / TUT-MVP01. Feature branch base: web `11.0.x`
-`d16f6201caff78082e5e83c540320dbee5871404` before final rebase. PR links and final
+`d16f6201caff78082e5e83c540320dbee5871404`, then rebased onto `a35f2826d`. PR links and final
 commit combination are recorded in the PR description and central guide evidence
 index. Do not interpret a workbook checklist as evidence of execution.
 
@@ -73,3 +73,20 @@ Human prototype/security approvals, second-contributor review, versioned fallbac
 recording, full browser/assistive-technology QA and pilot sessions remain pending.
 This handover completes the repository implementation and reproducible test assets;
 it does not claim those external review activities happened or that PRs merged.
+
+## Remaining workbook ticket mapping
+
+| Ticket | Repository deliverable / remaining boundary |
+| --- | --- |
+| TUT-W01 | Reusable standalone shell, typed registry, explicit targets, focus and fallback behavior implemented. |
+| TUT-W02 | Auth/profile/history gate, browser state, resume, skip, completion, dismissal, version handling and failure behavior implemented. |
+| TUT-W03 | Four existing controls annotated; exact DOC-11 copy and safe fallbacks implemented; no automatic actions. |
+| TUT-W04 | One role/flag-gated account-menu replay entry and written guide link implemented. |
+| TUT-T01 | 98 unique focused tests, unchanged welcome/profile regressions, full lint/typecheck/build and command evidence supplied. |
+| TUT-S01 | Data flow, fields, trust boundaries, dependency decision and security tests supplied; human approval pending. |
+| TUT-Q01 | Automated semantics/state/route checks and reproducible manual matrix supplied; browser harness evidence is supplemental to full-app and assistive-technology QA. |
+| TUT-D04 | Implementation locations, maintenance/version rules, troubleshooting and handover supplied; central guides updated in github-guide; second human review/video pending. |
+| TUT-MVP01 | Evidence index and honest handover supplied; PR review, pilot and full release validation pending, no merge claimed. |
+| PR-TUT-17 | Separate API default-false runtime flag change; this frontend consumes the authenticated response and resets on sign-out. |
+| TUT-U01-RUN | Existing pilot script/templates linked; real representative participants cannot be fabricated by repository work. |
+| TUT-U01-FIXES | Requires actual pilot findings; no invented critical/high issues, participant findings or approvals. |
