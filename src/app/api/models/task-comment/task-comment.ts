@@ -22,6 +22,9 @@ export class TaskComment extends Entity {
   recipientReadTime: string;
   commentType: string = 'text';
   isNew: boolean;
+  attachmentFileName: string;
+  attachmentMimeType: string;
+  attachmentByteSize: number;
   replyToId: number;
 
   // Data calculated from the above
@@ -55,7 +58,9 @@ export class TaskComment extends Entity {
   }
 
   public get isBubbleComment(): boolean {
-    return ['text', 'discussion', 'audio', 'image', 'pdf'].includes(this.commentType);
+    return ['text', 'discussion', 'audio', 'image', 'pdf', 'document', 'spreadsheet'].includes(
+      this.commentType,
+    );
   }
 
   public get isStaffAuthored(): boolean {

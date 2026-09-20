@@ -1,3 +1,9 @@
+<p id="chat-attachment-guidance" class="m-2 text-sm" role="status">{{ attachmentGuidance }}</p>
+@if (attachmentsUploading > 0) {
+  <p role="status" aria-live="polite" class="m-2">
+    Uploading {{ attachmentsUploading }} attachment(s)… Your draft is unchanged.
+  </p>
+}
 <emoji-mart
   class="emoji-picker"
   emoji="thumbsup"
@@ -116,6 +122,8 @@
         @if (!isEditing) {
           <button
             aria-label="Attach a file"
+            aria-describedby="chat-attachment-guidance"
+            [disabled]="!attachmentPolicy"
             class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Attach a file"
@@ -127,7 +135,7 @@
             <mat-icon class="message-inbox-icon">attach_file</mat-icon>
             <input
               #uploader
-              accept="audio/*,image/*,.pdf"
+              [accept]="attachmentAccept"
               multiple="multiple"
               style="display: none"
               type="file"
