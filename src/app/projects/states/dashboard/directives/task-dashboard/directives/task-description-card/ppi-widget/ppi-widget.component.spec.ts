@@ -1,14 +1,14 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {HttpErrorResponse} from '@angular/common/http';
-import {SimpleChange} from '@angular/core';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {MatButtonModule} from '@angular/material/button';
-import {MatIconModule} from '@angular/material/icon';
-import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import {Observable, Subject, of, throwError} from 'rxjs';
-import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator';
-import {Task} from 'src/app/api/models/task';
-import {TaskDefinition} from 'src/app/api/models/task-definition';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
+import { SimpleChange } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { PeerProgressIndicator } from 'src/app/api/models/peer-progress-indicator';
+import { Task } from 'src/app/api/models/task';
+import { TaskDefinition } from 'src/app/api/models/task-definition';
 import {
   DISABLED_STATE,
   NORMAL_STATE,
@@ -17,16 +17,16 @@ import {
   UNAVAILABLE_STATE,
   ZERO_PERCENT_STATE,
 } from 'src/app/api/services/mock';
-import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
-import {PpiWidgetComponent} from './ppi-widget.component';
+import { PeerProgressIndicatorService } from 'src/app/api/services/peer-progress-indicator.service';
+import { PpiWidgetComponent } from './ppi-widget.component';
 
 describe('PpiWidgetComponent', () => {
   let component: PpiWidgetComponent;
   let fixture: ComponentFixture<PpiWidgetComponent>;
   let getIndicator: ReturnType<typeof vi.fn>;
 
-  const mockTask = {project: {id: 7, unit: {id: 1}, targetGrade: 2}} as unknown as Task;
-  const mockTaskDef = {id: 99} as unknown as TaskDefinition;
+  const mockTask = { project: { id: 7, unit: { id: 1 }, targetGrade: 2 } } as unknown as Task;
+  const mockTaskDef = { id: 99 } as unknown as TaskDefinition;
 
   beforeEach(async () => {
     getIndicator = vi.fn();
@@ -34,7 +34,7 @@ describe('PpiWidgetComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [PpiWidgetComponent],
       imports: [MatIconModule, MatProgressSpinnerModule, MatButtonModule],
-      providers: [{provide: PeerProgressIndicatorService, useValue: {getIndicator}}],
+      providers: [{ provide: PeerProgressIndicatorService, useValue: { getIndicator } }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PpiWidgetComponent);
@@ -45,7 +45,7 @@ describe('PpiWidgetComponent', () => {
 
   function load(response$: Observable<PeerProgressIndicator>) {
     getIndicator.mockReturnValue(response$);
-    component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
+    component.ngOnChanges({ task: new SimpleChange(null, mockTask, true) });
     fixture.detectChanges();
   }
 
@@ -59,6 +59,14 @@ describe('PpiWidgetComponent', () => {
     expect(getIndicator).toHaveBeenCalledWith(7, 99);
     expect(component.view.state).toBe('success');
     expect(fixture.nativeElement.textContent).toContain('42%');
+  });
+
+  it('provides an accessible name for the peer progress widget', () => {
+    load(of(NORMAL_STATE));
+
+    const widget = fixture.nativeElement.querySelector('.ppi-widget');
+    expect(widget.getAttribute('role')).toBe('group');
+    expect(widget.getAttribute('aria-label')).toBe('Peer submission progress');
   });
 
   it('shows a rounded zero as data rather than unavailable', () => {
@@ -101,7 +109,7 @@ describe('PpiWidgetComponent', () => {
     const subject: Subject<PeerProgressIndicator> = new Subject();
     getIndicator.mockReturnValue(subject.asObservable());
 
-    component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
+    component.ngOnChanges({ task: new SimpleChange(null, mockTask, true) });
     expect(component.view.state).toBe('loading');
 
     subject.next(NORMAL_STATE);
@@ -114,13 +122,13 @@ describe('PpiWidgetComponent', () => {
       const subject: Subject<PeerProgressIndicator> = new Subject();
       getIndicator.mockReturnValue(subject.asObservable());
 
-      component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
+      component.ngOnChanges({ task: new SimpleChange(null, mockTask, true) });
       expect(component.view.state).toBe('loading');
 
       subject.error(
         new HttpErrorResponse({
           status,
-          error: {error: 'Peer progress is unavailable for this project or task.'},
+          error: { error: 'Peer progress is unavailable for this project or task.' },
         }),
       );
       fixture.detectChanges();
@@ -151,8 +159,8 @@ describe('PpiWidgetComponent', () => {
       .mockReturnValueOnce(first.asObservable())
       .mockReturnValueOnce(second.asObservable());
 
-    component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
-    component.ngOnChanges({task: new SimpleChange(null, mockTask, true)});
+    component.ngOnChanges({ task: new SimpleChange(null, mockTask, true) });
+    component.ngOnChanges({ task: new SimpleChange(null, mockTask, true) });
 
     first.next(NORMAL_STATE);
     expect(component.view.state).toBe('loading');
