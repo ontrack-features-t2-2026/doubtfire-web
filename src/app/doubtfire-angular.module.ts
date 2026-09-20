@@ -229,6 +229,7 @@ import {HttpErrorInterceptor} from './common/services/http-error.interceptor';
 import {StatusIconComponent} from './common/status-icon/status-icon.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {MonacoThemeDirective} from './common/theme/monaco-theme.directive';
 import {ThemeSettingsComponent} from './common/theme/theme-settings.component';
 import {ThemeToggleComponent} from './common/theme/theme-toggle.component';
 import {UnitCodeComponent} from './common/unit-code/unit-code.component';
@@ -464,6 +465,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
 @NgModule({
   // Components we declare
   declarations: [
+    MonacoThemeDirective,
     AppComponent,
     CrossDashboardComponent,
     DashboardListItemComponent,
