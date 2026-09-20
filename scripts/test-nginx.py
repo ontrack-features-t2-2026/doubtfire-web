@@ -31,6 +31,9 @@ class NginxTest(unittest.TestCase):
         cls.fixture = tempfile.TemporaryDirectory(prefix="ontrack-nginx-")
         cls.addClassCleanup(cls.fixture.cleanup)
         cls.files = Path(cls.fixture.name)
+        # Linux bind mounts retain mkdtemp's 0700 mode. Nginx workers must be
+        # able to traverse this directory of public, synthetic static fixtures.
+        cls.files.chmod(0o755)
         (cls.files / "assets").mkdir()
         (cls.files / "index.html").write_text("<!doctype html><title>OnTrack test shell</title>")
         cls.manifest = (ROOT / "src/manifest.webmanifest").read_bytes()
