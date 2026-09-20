@@ -8,6 +8,7 @@ import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
@@ -90,6 +91,21 @@ describe('TaskCommentComposerComponent phone actions', () => {
     expect(record.classList).toContain('composer-touch-action');
   });
 
+  it('updates the emoji picker when the resolved theme changes', () => {
+    const theme = TestBed.inject(ThemeService);
+    const picker = fixture.nativeElement.querySelector('emoji-mart') as HTMLElement & {
+      darkMode: boolean;
+    };
+
+    theme.setPreference('dark');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(true);
+
+    theme.setPreference('light');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(false);
+  });
+
   it('gives both phone controls 48px touch targets without changing their desktop rule', () => {
     const styles = componentStyles();
     const phoneMediaStart = styles.indexOf('@media (max-width: 639.98px)');
@@ -103,8 +119,8 @@ describe('TaskCommentComposerComponent phone actions', () => {
     expect(phoneStyles).toMatch(/width:\s*48px/);
     expect(phoneStyles).toMatch(/height:\s*48px/);
     expect(phoneStyles).toMatch(/transform:\s*none/);
-    expect(phoneStyles).toMatch(/border:\s*1px solid #cbd5e1/);
-    expect(phoneStyles).toMatch(/background-color:\s*#f8fafc/);
+    expect(phoneStyles).toMatch(/border:\s*1px solid var\(--ot-color-border\)/);
+    expect(phoneStyles).toMatch(/background-color:\s*var\(--ot-color-page\)/);
   });
 
   it('keeps the phone composer away from both safe-area edges', () => {

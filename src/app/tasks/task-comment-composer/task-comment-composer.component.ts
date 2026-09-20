@@ -29,6 +29,7 @@ import {
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {AttachmentConfirmationDialogComponent} from './attachment-confirmation-dialog/attachment-confirmation-dialog.component';
 
@@ -132,6 +133,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     @Inject(TaskCommentService) private taskCommentService: TaskCommentService,
     private cdRef: ChangeDetectorRef,
     private userService: UserService,
+    public readonly theme: ThemeService,
   ) {
     this.differ = this.differs.find({}).create();
     // submitted tasks from sessionStorage, for this user only

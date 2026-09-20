@@ -18,6 +18,7 @@ function composerFor(currentUser: {id: number | null}): TaskCommentComposerCompo
     {} as never, // taskCommentService
     {} as never, // cdRef
     userService as never,
+    {isDark: () => false} as never, // theme
   );
 }
 
