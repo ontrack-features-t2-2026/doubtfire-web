@@ -6,6 +6,15 @@ selector switches between the whole unit and one tutorial. Task Status additiona
 filters by task; Task Completion can show the selected unit/tutorial or all grade groups.
 New routes/sub-states are outside this change.
 
+## Chart library compatibility
+
+Rendering tests uncovered that ngx-charts 20.5 injects Angular's removed
+`ComponentFactoryResolver`. The dependency is upgraded to **25.0.2**, whose
+[upstream changelog](https://github.com/swimlane/ngx-charts/blob/master/docs/changelog.md)
+adds Angular 22 support. Existing burndown, task-status pie and gauge components
+have real SVG smoke tests as well as the new chart tests. No tooltip injection
+shim or disabled render assertion is used to hide the incompatibility.
+
 ## Behaviour retained from the source
 
 - `SummaryTaskStatusScatterComponent` totals the existing

@@ -1,6 +1,7 @@
 import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {TestBed} from '@angular/core/testing';
 import {MatCardModule} from '@angular/material/card';
+import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {Unit} from 'src/app/api/models/unit';
 import {GradeService} from 'src/app/common/services/grade.service';
 import {TargetGradePieChartComponent} from './target-grade-pie-chart.component';
@@ -14,6 +15,7 @@ const data = [
 describe('TargetGradePieChartComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
+      providers: [provideNoopAnimations()],
       declarations: [TargetGradePieChartComponent],
       imports: [MatCardModule, NgxChartsModule],
     }),

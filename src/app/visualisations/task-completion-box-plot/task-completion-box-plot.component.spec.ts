@@ -5,6 +5,7 @@ import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatSelectModule} from '@angular/material/select';
 import {By} from '@angular/platform-browser';
+import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {GradeService} from 'src/app/common/services/grade.service';
 import {TaskCompletionBoxPlotComponent} from './task-completion-box-plot.component';
 
@@ -14,6 +15,7 @@ const data = {unit: summary, tutorial: {10: {...summary, max: 9}}, grade: {0: su
 describe('TaskCompletionBoxPlotComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
+      providers: [provideNoopAnimations()],
       declarations: [TaskCompletionBoxPlotComponent],
       imports: [FormsModule, MatCardModule, MatFormFieldModule, MatSelectModule, NgxChartsModule],
     }),

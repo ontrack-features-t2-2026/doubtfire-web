@@ -4,6 +4,7 @@ import {FormsModule} from '@angular/forms';
 import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatSelectModule} from '@angular/material/select';
+import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {Unit} from 'src/app/api/models/unit';
 import {SummaryTaskStatusScatterComponent} from './summary-task-status-scatter.component';
 
@@ -24,6 +25,7 @@ const data = {
 describe('SummaryTaskStatusScatterComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
+      providers: [provideNoopAnimations()],
       declarations: [SummaryTaskStatusScatterComponent],
       imports: [FormsModule, MatCardModule, MatFormFieldModule, MatSelectModule, NgxChartsModule],
     }),

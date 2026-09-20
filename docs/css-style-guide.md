@@ -8,7 +8,7 @@ The [theme contract](theme/THEME-CONTRACT.md) governs colour and theme behaviour
 ## Choose the existing layer
 
 1. **Angular Material** supplies interactive components: buttons, form fields,
-   dialogs, menus, cards. For example, `account/edit-profile-form` uses Material
+   dialogs, menus, cards. For example, `common/edit-profile-form` uses Material
    fields and `units/states/analytics/unit-analytics-route.component.html` uses cards
    and buttons. Keep their keyboard and accessible-name behaviour.
 2. **Tailwind utilities** express layout, spacing and responsive dimensions. Use
