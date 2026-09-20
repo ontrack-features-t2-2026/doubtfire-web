@@ -1,6 +1,7 @@
 <div class="flex w-full flex-col gap-3 p-3">
   @if (loadingPrompts) {
-    <div aria-busy="true" aria-label="Loading discussion prompts">
+    <div role="status">
+      <span class="sr-only">Loading discussion prompts...</span>
       <f-skeleton-loader shape="row" [count]="3"></f-skeleton-loader>
     </div>
   } @else if (promptsLoadFailed) {

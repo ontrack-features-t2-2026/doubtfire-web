@@ -223,4 +223,26 @@ describe('StudentsListComponent empty state', () => {
     expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
     expect(fixture.nativeElement.querySelector('f-skeleton-loader')).not.toBeNull();
   });
+  it('ignores an obsolete request after changing units and cancels on destroy', () => {
+    const first: Subject<Project[]> = new Subject();
+    const second: Subject<Project[]> = new Subject();
+    vi.spyOn(TestBed.inject(ProjectService), 'loadStudents')
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(second);
+    const units: BehaviorSubject<Unit> = new BehaviorSubject(unitStub(1, []));
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    fixture.componentInstance.unit$ = units;
+    fixture.detectChanges();
+    units.next(unitStub(2, []));
+    fixture.detectChanges();
+    expect(first.observed).toBe(false);
+    first.error(new Error('Obsolete unit request'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loadingStudents).toBe(true);
+    expect(fixture.componentInstance.studentsLoadFailed).toBe(false);
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    fixture.destroy();
+    expect(second.observed).toBe(false);
+  });
 });

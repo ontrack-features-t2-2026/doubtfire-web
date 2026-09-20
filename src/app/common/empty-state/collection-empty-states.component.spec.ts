@@ -80,6 +80,9 @@ describe('Discussion prompt states', () => {
     const fixture = TestBed.createComponent(DiscussionPromptsComponent);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('f-skeleton-loader')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain(
+      'Loading discussion prompts',
+    );
     expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
     result.next([]);
     fixture.detectChanges();

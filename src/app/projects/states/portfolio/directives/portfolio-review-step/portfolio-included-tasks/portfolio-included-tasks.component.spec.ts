@@ -70,6 +70,9 @@ describe('PortfolioIncludedTasksComponent', () => {
     expect(loader).not.toBeNull();
     expect(loader.count).toBe(4);
     expect(loader.shape).toBe('row');
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain(
+      'Loading tasks',
+    );
   });
 
   // Discriminating: this fails if the skeleton were left on screen once the
