@@ -5,12 +5,11 @@
     [ngClass]="{expanded: showSearchOptions, mobile: mobile}"
   >
     <div class="flex items-center">
-      <button aria-label="Search Icon" class="flex flex-none items-center" disabled mat-icon-button>
-        <mat-icon class="flex items-center" disabled>search</mat-icon>
-      </button>
+      <mat-icon aria-hidden="true" class="flex items-center">search</mat-icon>
 
       <div class="grow">
         <input
+          aria-label="Search the inbox"
           autocomplete="off"
           class="search w-full"
           placeholder="Search Inbox"
@@ -261,10 +260,14 @@
     </div>
   }
 
-  <div class="center-task-list" [hidden]="loading || filteredTasks?.length !== 0 || isNarrow">
-    <mat-icon>done_all</mat-icon>
+  <div
+    class="center-task-list text-center"
+    role="status"
+    [hidden]="loading || filteredTasks?.length !== 0"
+  >
+    <mat-icon aria-hidden="true">done_all</mat-icon>
+    <p [class.sr-only]="isNarrow">No tasks match these filters.</p>
   </div>
-
   <!--/search-options-->
   @if (filteredTasks && !loading) {
     <cdk-virtual-scroll-viewport class="tasks-viewport scrollable" itemSize="60">
@@ -331,7 +334,7 @@
                       </mat-icon>
                     }
 
-                    <span class="truncate">{{ task.project.student.name }}</span>
+                    <span class="truncate">{{ task.project.student.displayName }}</span>
                   </h4>
                   <div class="task-details truncate">
                     {{ task.definition.abbreviation }} -

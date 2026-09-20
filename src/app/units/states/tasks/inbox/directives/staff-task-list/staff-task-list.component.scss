@@ -9,11 +9,18 @@
 $my-palette: mat.m2-define-palette($md-formatif);
 
 :host {
+  // THM-M03: rgba(black) tints read as "hover/selected" against a light surface but
+  // vanish (or invert the wrong way) against a dark one, so this needs an explicit
+  // dark override rather than a token substitution.
   --background-gray: rgba(0, 0, 0, 0.04);
   padding-right: 8px;
-  border-right-color: rgba(0, 0, 0, 0.1);
+  border-right-color: var(--ot-color-divider, rgba(0, 0, 0, 0.1));
   border-right-style: solid;
   border-right-width: 1px;
+}
+
+:host-context([data-ot-theme='dark']) {
+  --background-gray: rgba(255, 255, 255, 0.06);
 }
 
 ::ng-deep .cdk-virtual-scroll-content-wrapper {
@@ -29,7 +36,7 @@ $my-palette: mat.m2-define-palette($md-formatif);
   }
 }
 
-$warn-color: #f44336;
+$warn-color: var(--ot-color-error, #f44336);
 
 .pin-container {
   display: flex;
@@ -39,7 +46,7 @@ $warn-color: #f44336;
   height: 100%;
 
   .mat-icon {
-    color: #bcc0c4;
+    color: var(--ot-color-text-muted, #bcc0c4);
   }
 }
 
@@ -90,7 +97,10 @@ $warn-color: #f44336;
   .search {
     background-color: transparent;
     border: hidden;
-    outline: none;
+  }
+  .search:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
   }
 
   .mdc-icon-button {
@@ -140,7 +150,7 @@ user-icon {
 }
 
 .muted {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--ot-color-text-muted, rgba(0, 0, 0, 0.5));
 }
 
 .task-list-data {
@@ -208,7 +218,7 @@ user-icon {
   }
 
   &.active.similarities {
-    background-color: #f44336;
+    background-color: $warn-color;
   }
 }
 
@@ -242,7 +252,7 @@ user-icon {
   p {
     margin-bottom: 0;
     padding: 0;
-    color: gray;
+    color: var(--ot-color-text-muted, gray);
   }
 }
 
@@ -257,6 +267,6 @@ user-icon {
 
   .mat-icon {
     // font-size: 50px;
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--ot-color-divider, rgba(0, 0, 0, 0.2));
   }
 }

@@ -24,21 +24,21 @@
 Enumerated from the router, restricted to student-facing routes and the shared
 surfaces students use.
 
-| Student surface | Route or component | Migrated |
-|---|---|---|
-| Project and task dashboard | `dashboard` -> `CrossDashboardComponent`, `projects/.../dashboard` -> `project-dashboard` | Yes |
-| Task dashboard and status card | `task-dashboard`, `task-status-card` | Yes |
-| Task list | `project-tasks-list` | Yes |
-| Feedback, comments, discussion | `task-comments-viewer` and its comment, extension and SCORM comment children, `comment-bubble-action` | Yes |
-| Comment composer | `task-comment-composer` | Yes |
-| Progress widgets | `progress-dashboard` directives, `engagement-detail-dialog` | Yes for the files that carried colour; the rest already use tokens |
-| Unit and task navigation dropdown | `task-dropdown` | Yes |
+| Student surface                   | Route or component                                                                                    | Migrated                                                           |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Project and task dashboard        | `dashboard` -> `CrossDashboardComponent`, `projects/.../dashboard` -> `project-dashboard`             | Yes                                                                |
+| Task dashboard and status card    | `task-dashboard`, `task-status-card`                                                                  | Yes                                                                |
+| Task list                         | `project-tasks-list`                                                                                  | Yes                                                                |
+| Feedback, comments, discussion    | `task-comments-viewer` and its comment, extension and SCORM comment children, `comment-bubble-action` | Yes                                                                |
+| Comment composer                  | `task-comment-composer`                                                                               | Yes                                                                |
+| Progress widgets                  | `progress-dashboard` directives, `engagement-detail-dialog`                                           | Yes for the files that carried colour; the rest already use tokens |
+| Unit and task navigation dropdown | `task-dropdown`                                                                                       | Yes                                                                |
 
 ## What changed
 
 Colour was locked to light in three ways, and all three were migrated so the same
-markup now flips correctly in Light, Dark and System. No layout, logic, status,
-submission, extension or feedback behaviour was changed.
+markup now flips correctly in Light, Dark and System. No task, status, submission, extension or feedback logic was changed. The emoji
+picker now follows the resolved theme.
 
 1. **Hardcoded colour values in component SCSS** (hex, rgb) replaced with the
    shared M01 tokens.
@@ -109,26 +109,26 @@ Examples of the mapping:
 These carried colour but are out of THM-M02 scope or owned by an active ticket, so
 they are recorded here rather than changed, as the card requires.
 
-| File or area | Reason | Suggested follow-up |
-|---|---|---|
-| `task-description-card/ppi-widget` | Owned by the active PPI feature | THM-M02-R1: theme the PPI widget with the feature owner |
-| `common/header/header.component.scss`, `notification-bell` | Header shell is THM-M01, the bell is the notifications feature | THM-M02-R2: finish the header badge and bell with M01 and notifications owners |
-| `tasks/.../task-upload-requirements` and the upload modal | Upload is named in the cross-objective boundary and is feature-owned | THM-M02-R3: theme the upload surfaces with the upload owner |
-| Staff surfaces under `units/states/edit`, `units/states/tasks/inbox`, `projects/states/tutor-*`, `staff-notes`, `analytics` | Staff-only pages, out of scope | THM-M03 (tutor, unit chair and admin surfaces) |
-| `units/task-viewer` | Needs confirmation whether it is a student or tutor surface | Confirm role, then THM-M02 or THM-M03 |
+| File or area                                                                                                                | Reason                                                                                                                                      | Suggested follow-up                                                            |
+| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `task-description-card/ppi-widget`                                                                                          | Owned by the active PPI feature                                                                                                             | THM-M02-R1: theme the PPI widget with the feature owner                        |
+| `common/header/header.component.scss`, `notification-bell`                                                                  | Header shell is THM-M01, the bell is the notifications feature                                                                              | THM-M02-R2: finish the header badge and bell with M01 and notifications owners |
+| `tasks/.../task-upload-requirements` and the upload modal                                                                   | Upload is named in the cross-objective boundary and is feature-owned                                                                        | THM-M02-R3: theme the upload surfaces with the upload owner                    |
+| Staff surfaces under `units/states/edit`, `units/states/tasks/inbox`, `projects/states/tutor-*`, `staff-notes`, `analytics` | Staff-only pages, out of scope                                                                                                              | THM-M03 (tutor, unit chair and admin surfaces)                                 |
+| `units/task-viewer` wrapper                                                                                                 | The shared `unit-task-list` child is migrated here and used by the student dashboard; staff-only wrapper surfaces remain outside this scope | THM-M03 for remaining staff wrapper surfaces                                   |
 
-## Checks
+## Original checks — 2026-09-14 (historical)
 
 Run inside the Docker web container on 2026-09-14. Node 22.23.2, Angular CLI
 22.0.9, vitest 4.1.9.
 
-| Check | Command | Result |
-|---|---|---|
-| SCSS compiles | `sass --no-source-map --load-path=src <each changed file>` | 12 of 12 pass |
-| App bundle | produced by the test builder while running the targeted test | Application bundle generation complete |
-| Targeted test | `ng test --watch=false --include='.../task-status-card.component.spec.ts'` | 1 file, 1 test passed |
-| Typecheck | `ngc -p src/tsconfig.app.json --noEmit` | exit 0, no errors |
-| Lint | `ng lint --max-warnings 0` | All files pass linting |
+| Check         | Command                                                                    | Result                                 |
+| ------------- | -------------------------------------------------------------------------- | -------------------------------------- |
+| SCSS compiles | `sass --no-source-map --load-path=src <each changed file>`                 | 12 of 12 pass                          |
+| App bundle    | produced by the test builder while running the targeted test               | Application bundle generation complete |
+| Targeted test | `ng test --watch=false --include='.../task-status-card.component.spec.ts'` | 1 file, 1 test passed                  |
+| Typecheck     | `ngc -p src/tsconfig.app.json --noEmit`                                    | exit 0, no errors                      |
+| Lint          | `ng lint --max-warnings 0`                                                 | All files pass linting                 |
 
 The full production `ng build` was killed by the Docker VM memory limit during
 the minify step. It is an environment constraint, not a code error: the same
@@ -136,7 +136,7 @@ sources compile cleanly under the test builder above, which produced a complete
 application bundle. Re-run `ng build` on a machine with more memory to capture the
 production build log for the PR.
 
-### Visual verification
+### Original visual verification (historical)
 
 The running dev server (`ng serve`) recompiled all SCSS and template changes
 without error, and the student unit dashboard and task-detail view were checked
@@ -150,12 +150,12 @@ list, and the Engagement Passport current-week column highlight.
 Captured on a student account with mock data. Stored in
 `docs/theme/screenshots/`.
 
-| File | View |
-|---|---|
-| `home-light.png`, `home-dark.png` | Enrolled units home in Light and Dark |
+| File                                        | View                                                                              |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `home-light.png`, `home-dark.png`           | Enrolled units home in Light and Dark                                             |
 | `dashboard-light.png`, `dashboard-dark.png` | Student unit dashboard with task list, progress panels and Unit Learning Outcomes |
-| `task-detail-dark.png` | Task details, learning outcomes and the discussion panel in Dark |
-| `calendar-web-dark.png` | Web calendar dialog in Dark |
+| `task-detail-dark.png`                      | Task details, learning outcomes and the discussion panel in Dark                  |
+| `calendar-web-dark.png`                     | Web calendar dialog in Dark                                                       |
 
 ## Evidence to attach to the PR
 
@@ -163,3 +163,44 @@ Captured on a student account with mock data. Stored in
 - The Light and Dark screenshots above.
 - The check output above.
 - The residual follow-up tickets.
+
+## Maintainer review and integration — 2026-09-20
+
+The branch was integrated with `11.0.x` at `d16f6201c`, preserving the merged
+preferred display names and task-list accessibility labels. The migration is
+additional to the shared theme foundation and the merged staff inbox work. The
+related study-view PR #223 is closed without a merge; its existence does not make
+these changes duplicates of the current base.
+
+The review corrected the following theme issues:
+
+- Active mobile tabs, selected sort options, current-week engagement labels and
+  dates in selected task rows use the matching selected foreground token.
+  Current-week text uses mutually exclusive Tailwind utilities so the global
+  utility `!important` rules cannot override the selected foreground.
+- Discussion, extension and SCORM status text uses opaque muted text. The fade
+  remains on decorative lines. Own-comment reply snippets use opaque on-primary
+  text, avoiding reduced contrast on the Dark primary background.
+- The due-soon badge uses paired status background and foreground tokens; other
+  due-date text uses urgency tokens. Icons and wording still distinguish states.
+- The composer buttons, emoji control and remaining engagement text use theme
+  tokens. The emoji picker follows the resolved ThemeService signal, including
+  System mode, rather than being fixed to Light.
+
+Validation used Node 22.23.2 and dependencies installed from the current lockfile.
+The full suite passed **1,076 tests in 144 files**; the targeted theme, composer,
+mobile dashboard, comments and task-list runs passed **117 tests**. Angular
+`ngc` typecheck, full lint and compilation of all 14 changed SCSS files passed.
+The production build passed with existing component-size, CommonJS and
+minification warnings; no budget was raised. The original Docker build limitation
+above is historical, and is superseded by this production-build result.
+
+The browser contrast checks used **representative component fixtures**, the actual
+compiled component styles and generated production utility styles. They covered
+320, 390 and 1,280 CSS-pixel widths in Light, Dark and System, including an OS
+light/dark change. These checks verify the shared browser/PWA styles, contrast and
+48-pixel phone composer targets; they are not a full authenticated route or
+physical-device test. The author screenshots above are historical route captures
+with mock data and predate these review fixes; they are not screenshots of this
+fixture or proof of the final mobile layout. No native mobile application was
+built or tested by this PR.

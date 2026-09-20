@@ -4,7 +4,7 @@
       <div>
         <div>{{ engagement.engagementType }} Engagement</div>
         <p class="mt-1 text-sm font-normal text-[color:var(--ot-color-text-muted)]">
-          Added by {{ engagement.user?.firstName }} {{ engagement.user?.lastName }}
+          Added by {{ engagement.user?.displayName }}
           <span class="mx-1">·</span>
           <span matTooltipPosition="above" [matTooltip]="engagement.occurredAt | localizedDateTime">
             {{ engagement.occurredAt | humanizedDate }}
@@ -27,14 +27,14 @@
       <p class="p-6 text-sm text-red-600">Unable to load this engagement.</p>
     } @else {
       <div
-        class="p-2.5 font-['Inter','open-sans','Roboto'] text-[15px] leading-6 font-normal tracking-normal text-[rgba(0,0,0,0.87)]"
+        class="p-2.5 font-['Inter','open-sans','Roboto'] text-[15px] leading-6 font-normal tracking-normal text-[color:var(--ot-color-text)]"
       >
         <mat-card class="mb-2.5 p-3">
           <div class="flex justify-between gap-3">
             <mat-card-title class="flex min-w-0 items-center">
               <user-icon class="mr-2" [size]="25" [user]="engagement.user"></user-icon>
               <span class="truncate">
-                {{ engagement.user?.firstName }} {{ engagement.user?.lastName }}
+                {{ engagement.user?.displayName }}
               </span>
             </mat-card-title>
             <div class="flex shrink-0 items-center">
@@ -179,7 +179,7 @@
             <div class="flex justify-between">
               <mat-card-title class="flex items-center">
                 <user-icon style="margin-right: 8px" [size]="25" [user]="comment.user"></user-icon>
-                {{ comment.user?.firstName }} {{ comment.user?.lastName }}
+                {{ comment.user?.displayName }}
               </mat-card-title>
               <div class="flex items-center">
                 <mat-card-subtitle

@@ -62,12 +62,12 @@
       @if (task.isDueSoon() && !task.inFinalState()) {
         <span
           aria-label="Due soon"
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#fab143] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          class="flex size-[20px] items-center justify-center rounded-full bg-[var(--ot-status-working-on-it)] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
           role="img"
         >
           <mat-icon
             aria-hidden="true"
-            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-[color:var(--ot-color-text)]"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-[color:var(--ot-status-working-on-it-on)]"
           >
             schedule
           </mat-icon>
@@ -121,15 +121,10 @@
     <div class="omnisearch rounded-t-2xl md:rounded-2xl">
       <div class="flex items-center justify-between">
         <div class="flex min-w-0 flex-1 items-center">
-          <button
-            aria-label="Search Icon"
-            class="flex flex-none items-center"
-            disabled
-            mat-icon-button
-          >
-            <mat-icon class="flex items-center" disabled>search</mat-icon>
-          </button>
+          <mat-icon aria-hidden="true" class="flex items-center">search</mat-icon>
+
           <input
+            aria-label="Search tasks"
             autocomplete="off"
             class="search w-full text-[color:var(--ot-color-text)] placeholder:text-[color:var(--ot-color-text-muted)] placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
             placeholder="Search Tasks"
@@ -166,7 +161,7 @@
                   class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-[var(--ot-color-hover)]"
                   type="button"
                   [ngClass]="{
-                    'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-primary)]':
+                    'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-selected-text)]':
                       viewPreferences.sortBy === option.value,
                     'text-[color:var(--ot-color-text)]': viewPreferences.sortBy !== option.value,
                   }"
@@ -213,7 +208,7 @@
               class="mt-2 flex items-center justify-end gap-2 text-xs text-[color:var(--ot-color-text-muted)]"
             >
               <button
-                class="shrink-0 text-[color:var(--ot-color-primary)] disabled:text-[color:var(--ot-color-text-muted)]"
+                class="shrink-0 text-[color:var(--ot-color-link)] disabled:text-[color:var(--ot-color-text-muted)]"
                 mat-button
                 type="button"
                 [disabled]="!hasNonDefaultViewPreferences"
@@ -307,10 +302,17 @@
                             <span
                               class="flex shrink-0 items-center gap-px text-[12px] font-bold"
                               [ngClass]="{
-                                'text-[#da532c]': task.daysUntilDueDate() <= 0,
-                                'font-normal text-[#fab143]':
-                                  task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
-                                'font-normal text-[color:var(--ot-color-text-muted)]':
+                                'text-[color:var(--ot-color-selected-text)]':
+                                  isSelectedTaskDefinition(taskDef),
+                                'text-[color:var(--ot-urgency-overdue)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
+                                  task.daysUntilDueDate() <= 0,
+                                'font-normal text-[color:var(--ot-urgency-soon)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
+                                  task.daysUntilDueDate() > 0 &&
+                                  task.daysUntilDueDate() < 11,
+                                'font-normal text-[color:var(--ot-urgency-later)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
                                   task.daysUntilDueDate() > 11,
                               }"
                             >

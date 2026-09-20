@@ -1,8 +1,13 @@
 import {HotkeysService} from '@ngneat/hotkeys';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {ScrollingModule} from '@angular/cdk/scrolling';
+import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
 import {ActivatedRoute, Router} from '@angular/router';
 import {EMPTY, Subject, of} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
@@ -285,5 +290,104 @@ describe('StaffTaskListComponent', () => {
     component.previousTask();
 
     expect(setSelected).not.toHaveBeenCalled();
+  });
+});
+
+describe('StaffTaskListComponent rendered empty state', () => {
+  let fixture: ComponentFixture<StaffTaskListComponent>;
+  let component: StaffTaskListComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [StaffTaskListComponent],
+      imports: [CommonModule, FormsModule, MatMenuModule, MatSelectModule, ScrollingModule],
+      providers: [
+        {provide: SelectedTaskService, useValue: {setSelectedTask: () => {}}},
+        {provide: AlertService, useValue: emptyProvider},
+        {provide: FileDownloaderService, useValue: emptyProvider},
+        {provide: MatDialog, useValue: emptyProvider},
+        {provide: CsvUploadModalService, useValue: emptyProvider},
+        {provide: CsvResultModalService, useValue: emptyProvider},
+        {provide: UserService, useValue: {currentUser: {name: 'A Tutor'}}},
+        {provide: HotkeysService, useValue: hotkeysServiceStub},
+        {provide: Router, useValue: emptyProvider},
+        {provide: ActivatedRoute, useValue: emptyProvider},
+        {provide: TaskDefinitionService, useValue: emptyProvider},
+        {provide: SidekiqProgressModalService, useValue: emptyProvider},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+    fixture = TestBed.createComponent(StaffTaskListComponent);
+    component = fixture.componentInstance;
+    component.unit = {
+      ...unitStub(1, 'LAB'),
+      taskDefinitionCache: {values: of([])},
+    } as unknown as Unit;
+    component.unitRole = unitRoleStub(1);
+    component.filters = {};
+    component.taskData = {
+      source: () => EMPTY,
+      selectedTask: null,
+      taskKey: null,
+      onSelectedTaskChange: () => {},
+      taskDefMode: false,
+    };
+    component.isNarrow = false;
+    fixture.detectChanges();
+  });
+
+  function emptyState(): HTMLElement {
+    return fixture.nativeElement.querySelector('.center-task-list');
+  }
+
+  function finishLoading(tasks: Task[] = []): void {
+    component.filteredTasks = tasks;
+    component.loading = false;
+    fixture.detectChanges();
+  }
+
+  it('shows descriptive text and a decorative icon after an empty response', () => {
+    finishLoading();
+    const status = emptyState();
+    expect(status.hidden).toBe(false);
+    expect(status.getAttribute('role')).toBe('status');
+    expect(status.querySelector('p').textContent).toBe('No tasks match these filters.');
+    expect(status.querySelector('p').classList.contains('sr-only')).toBe(false);
+    expect(status.querySelector('mat-icon').getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('keeps the empty state hidden while the list is loading', () => {
+    expect(emptyState().hidden).toBe(true);
+  });
+
+  it('keeps the empty state hidden before a result is available', () => {
+    component.loading = false;
+    fixture.detectChanges();
+    expect(emptyState().hidden).toBe(true);
+  });
+
+  it('hides the empty state when results are present', () => {
+    const task = {
+      id: 1,
+      taskKeyToIdString: () => 'task-1',
+      statusClass: () => 'need-help',
+      project: {student: {name: 'A Student'}},
+      definition: {abbreviation: '1.1P', name: 'A Task'},
+      daysSinceSubmission: () => 0,
+      hasGrade: () => false,
+      hasQualityPoints: () => false,
+    } as unknown as Task;
+    finishLoading([task]);
+    expect(emptyState().hidden).toBe(true);
+  });
+
+  it('keeps the full message accessible in the narrow icon-only sidebar', () => {
+    component.isNarrow = true;
+    finishLoading();
+    const status = emptyState();
+    expect(status.hidden).toBe(false);
+    expect(status.querySelector('p').textContent).toBe('No tasks match these filters.');
+    expect(status.querySelector('p').classList.contains('sr-only')).toBe(true);
+    expect(status.querySelector('p').hasAttribute('aria-hidden')).toBe(false);
   });
 });

@@ -77,8 +77,12 @@
               </div>
 
               <div
-                class="flex flex-col items-center border-t border-[color:var(--ot-color-divider)] px-0.5 py-[7px] text-[11px] leading-[1.15] text-[color:var(--ot-color-text-muted)]"
-                [class.!text-blue-700]="week.week === currentWeek"
+                class="flex flex-col items-center border-t border-[color:var(--ot-color-divider)] px-0.5 py-[7px] text-[11px] leading-[1.15]"
+                [ngClass]="{
+                  'font-semibold text-[color:var(--ot-color-selected-text)]':
+                    week.week === currentWeek,
+                  'text-[color:var(--ot-color-text-muted)]': week.week !== currentWeek,
+                }"
               >
                 <span>Week</span>
                 <strong class="mt-0.5 text-sm text-current">{{ week.week }}</strong>

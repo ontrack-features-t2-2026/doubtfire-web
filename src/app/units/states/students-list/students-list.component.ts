@@ -233,7 +233,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'username':
         return project.student.username?.toLowerCase() || '';
       case 'name':
-        return project.student.name?.toLowerCase() || '';
+        return project.student.displayName?.toLowerCase() || '';
       case 'stats':
         return project.orderScale ?? 0;
       case 'grade':
@@ -247,7 +247,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'tutorial':
         return project.shortTutorialDescription().toLowerCase();
       default:
-        return project.student.name?.toLowerCase() || '';
+        return project.student.displayName?.toLowerCase() || '';
     }
   }
 
@@ -266,7 +266,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private csvRow(project: Project): string[] {
     const row = [
       project.student.username || '',
-      project.student.name || '',
+      project.student.displayName || '',
       project.student.email || '',
       String(project.portfolioStatus ?? ''),
     ];

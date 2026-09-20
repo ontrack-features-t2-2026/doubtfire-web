@@ -1,6 +1,4 @@
-@use 'sass:color';
-
-$emoji-color: color.adjust(black, $lightness: 25%);
+$emoji-color: var(--ot-color-text-muted);
 
 .composer-container {
   padding-bottom: 0;

@@ -8,6 +8,7 @@ import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
@@ -88,6 +89,21 @@ describe('TaskCommentComposerComponent phone actions', () => {
     expect(record).toBeTruthy();
     expect(attach.classList).toContain('composer-touch-action');
     expect(record.classList).toContain('composer-touch-action');
+  });
+
+  it('updates the emoji picker when the resolved theme changes', () => {
+    const theme = TestBed.inject(ThemeService);
+    const picker = fixture.nativeElement.querySelector('emoji-mart') as HTMLElement & {
+      darkMode: boolean;
+    };
+
+    theme.setPreference('dark');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(true);
+
+    theme.setPreference('light');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(false);
   });
 
   it('gives both phone controls 48px touch targets without changing their desktop rule', () => {

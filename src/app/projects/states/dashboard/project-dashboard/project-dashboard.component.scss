@@ -83,7 +83,7 @@
 .mobile-task-tab--active {
   border-bottom-color: var(--ot-color-primary);
   background: var(--ot-color-selected);
-  color: var(--ot-color-primary);
+  color: var(--ot-color-selected-text);
 }
 
 .mobile-task-tab:disabled {

@@ -160,13 +160,49 @@ describe('TaskCommentsViewerComponent bubble actions', () => {
       firstInSeries: false,
       lastRead: false,
       createdAt: new Date(),
-      author: {preferredName: 'Ada', lastName: 'Lovelace', name: 'Ada Lovelace'},
+      author: {
+        preferredName: 'Ada',
+        lastName: 'Lovelace',
+        name: 'Ada Lovelace',
+        displayName: 'Ada Lovelace',
+      },
     };
     component.task = {comments: [comment], scormEnabled: false} as never;
 
     fixture.detectChanges();
     component.loading = false;
     fixture.detectChanges();
+  });
+
+  it('renders accessible empty-state text from the real template after loading', () => {
+    component.task = {comments: [], scormEnabled: false} as never;
+    fixture.detectChanges();
+
+    const icon = fixture.nativeElement.querySelector('#noView') as HTMLElement;
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.parentElement.getAttribute('role')).toBe('status');
+    expect(icon.parentElement.textContent).toContain('No comments on this task yet.');
+  });
+
+  it('does not claim the comments are empty while they are loading', () => {
+    component.task = {comments: [], scormEnabled: false} as never;
+    component.loading = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#noView')).toBeNull();
+  });
+
+  it('renders the empty state safely when no task is selected', () => {
+    component.task = undefined;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain(
+      'No comments on this task yet.',
+    );
+  });
+
+  it('omits the empty state when the task has a comment', () => {
+    expect(fixture.nativeElement.querySelector('#noView')).toBeNull();
   });
 
   function anchor(): HTMLElement {
