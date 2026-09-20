@@ -87,6 +87,11 @@ export class StudentOnboardingService implements OnDestroy {
 
   get available(): boolean {
     const user = this.users.currentUser;
+    const path = this.router.url.split(/[?#]/)[0];
+    const protectedRoute =
+      /^\/(welcome|edit_profile|sign_in|sign_out)([;/]|$)|\/(scorm-player|preview-scorm)([;/]|$)/.test(
+        path,
+      );
     return (
       this.settings.IsTutorialEnabled.value &&
       this.auth.isAuthenticated() &&
@@ -95,7 +100,7 @@ export class StudentOnboardingService implements OnDestroy {
       user.role === 'Student' &&
       user.hasRunFirstTimeSetup === true &&
       !this.globals.isLoadingSubject.value &&
-      !/^\/(welcome|edit_profile|sign_in|sign_out|scorm)(\/|$)/.test(this.router.url.split('?')[0])
+      !protectedRoute
     );
   }
 

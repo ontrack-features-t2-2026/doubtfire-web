@@ -336,6 +336,21 @@ describe('StudentOnboardingService', () => {
       'version',
     ]);
   });
+  it.each([
+    '/edit_profile',
+    '/welcome;mode=setup',
+    '/projects/1/task_def_id/2/scorm-player/normal',
+    '/projects/1/task_def_id/2/scorm-player/review/3',
+    '/task_def_id/2/preview-scorm',
+  ])('never covers the protected application route %s', (path) => {
+    service.start();
+    finishProfile();
+    service.begin();
+    route(path);
+    service.replay();
+    expect(service.available).toBe(false);
+    expect(service.view$.value).toBeNull();
+  });
   it('continues safely on browser Back and suppresses the tutorial on the profile route', () => {
     service.start();
     finishProfile();

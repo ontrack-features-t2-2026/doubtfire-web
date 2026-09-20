@@ -811,7 +811,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
-    StudentOnboardingComponent,
     ThemeToggleComponent,
     FlexLayoutModule,
     BrowserModule,
@@ -825,6 +824,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ClipboardModule,
     DragDropModule,
     ScrollingModule,
+    StudentOnboardingComponent,
     MatToolbarModule,
     MatSidenavModule,
     MatFormFieldModule,
