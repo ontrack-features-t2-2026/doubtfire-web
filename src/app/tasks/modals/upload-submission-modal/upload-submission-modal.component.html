@@ -1,5 +1,7 @@
 <div class="flex flex-col items-start justify-between sm:flex-row sm:items-center">
-  <h2 mat-dialog-title>Submit {{ task.definition.abbreviation }} {{ task.definition.name }}</h2>
+  <h2 #dialogTitle mat-dialog-title tabindex="-1">
+    Submit {{ task.definition.abbreviation }} {{ task.definition.name }}
+  </h2>
   <mat-form-field
     appearance="outline"
     class="my-2.5 w-full px-6 sm:mt-[22px] sm:mr-[24px] sm:px-0 lg:max-w-sm"
@@ -18,12 +20,15 @@
 </div>
 
 <mat-dialog-content>
+  <p aria-atomic="true" class="sr-only" role="status">
+    {{ uploadAnnouncement }}
+  </p>
   <div class="flex flex-col gap-2.5">
     @if (isGroupStage && !uploadStarted) {
       <mat-card>
         <mat-card-content class="flex flex-col gap-2 pt-3.5">
           <div>
-            <h3 class="font-semibold">Team Contribution</h3>
+            <h3 #groupHeading class="font-semibold" tabindex="-1">Team Contribution</h3>
             <p class="text-gray-600">
               Please rate each team member's effort on {{ task.definition.name }}.
             </p>
@@ -45,7 +50,7 @@
       <mat-card-content class="flex flex-col gap-2 pt-3.5">
         @if (!uploadStarted) {
           <div>
-            <h3 class="font-semibold">
+            <h3 #detailsHeading class="font-semibold" tabindex="-1">
               Select {{ submissionType === 'need_help' ? 'files' : 'evidence' }} to upload
             </h3>
 
@@ -76,6 +81,7 @@
           [onBeforeUpload]="onBeforeUpload"
           [onClickFailureCancel]="cancel"
           [onComplete]="onUploadComplete"
+          [onFailure]="onUploadFailure"
           [onSuccess]="onUploadSuccess"
           [payload]="payload"
           [resetAfterUpload]="false"
@@ -95,12 +101,14 @@
           <mat-card-content class="flex flex-col gap-2.5 pt-3.5">
             <div>
               @if (submissionType === 'need_help') {
-                <h3 class="font-semibold">What do you need help with?</h3>
+                <h3 #commentsHeading class="font-semibold" tabindex="-1">
+                  What do you need help with?
+                </h3>
                 <p class="text-gray-600">
                   Add a short comment so your tutor knows what help you need on this task.
                 </p>
               } @else {
-                <h3 class="font-semibold">Final comments</h3>
+                <h3 #commentsHeading class="font-semibold" tabindex="-1">Final comments</h3>
                 @if (task.definition.assessInPortfolioOnly) {
                   <p class="text-gray-600">
                     Please specify which areas of your submission you would like feedback on.
@@ -118,17 +126,25 @@
               <textarea
                 matInput
                 rows="4"
+                [errorStateMatcher]="commentErrorStateMatcher"
                 [placeholder]="commentPlaceholder"
+                [required]="requiresComment"
                 [(ngModel)]="comment"
               ></textarea>
+              <mat-hint>
+                @if (requiresComment) {
+                  Required: at least {{ minCommentLength }} characters, excluding leading and
+                  trailing spaces.
+                } @else {
+                  Optional comment.
+                }
+                Character count: {{ comment.trim().length }}.
+              </mat-hint>
+              <mat-error
+                >Enter at least {{ minCommentLength }} characters, excluding leading and trailing
+                spaces.</mat-error
+              >
             </mat-form-field>
-
-            <div class="text-right text-gray-500">
-              Character count: {{ comment.length }}
-              @if (requiresComment) {
-                <span>(Min. {{ minCommentLength }})</span>
-              }
-            </div>
           </mat-card-content>
         </mat-card>
 
@@ -145,6 +161,7 @@
                   color="primary"
                   mat-stroked-button
                   type="button"
+                  [attr.aria-expanded]="showPlagiarism"
                   (click)="showPlagiarism = !showPlagiarism"
                 >
                   Plagiarism and collusion

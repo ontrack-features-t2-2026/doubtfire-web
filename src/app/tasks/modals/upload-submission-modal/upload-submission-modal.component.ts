@@ -1,4 +1,15 @@
-import {ChangeDetectionStrategy, Component, Inject, OnInit, ViewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Inject,
+  Injector,
+  OnInit,
+  ViewChild,
+  afterNextRender,
+  inject,
+} from '@angular/core';
+import {ErrorStateMatcher} from '@angular/material/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MemberContribution} from 'src/app/api/models/groups/group';
 import {Task} from 'src/app/api/models/task';
@@ -62,6 +73,11 @@ export type UploadSubmissionModalResult =
 })
 export class UploadSubmissionModalComponent implements OnInit {
   @ViewChild(FileUploaderComponent) private fileUploader?: FileUploaderComponent;
+  @ViewChild('groupHeading') private groupHeading?: ElementRef<HTMLElement>;
+  @ViewChild('detailsHeading') private detailsHeading?: ElementRef<HTMLElement>;
+  @ViewChild('commentsHeading') private commentsHeading?: ElementRef<HTMLElement>;
+  @ViewChild('dialogTitle') private dialogTitle?: ElementRef<HTMLElement>;
+  private readonly injector = inject(Injector);
 
   public readonly minCommentLength = 25;
   public readonly task = this.data.task;
@@ -88,6 +104,13 @@ export class UploadSubmissionModalComponent implements OnInit {
   public isUploaderReady = false;
   public uploadStarted = false;
   public uploadSubmitLocked = false;
+  public uploadAnnouncement = '';
+  public readonly commentErrorStateMatcher: ErrorStateMatcher = {
+    isErrorState: (control) =>
+      !!control?.touched &&
+      this.requiresComment &&
+      this.comment.trim().length < this.minCommentLength,
+  };
 
   private uploadResponse: UploadSubmissionResponse | null = null;
   private startUpload?: () => void;
@@ -204,17 +227,36 @@ export class UploadSubmissionModalComponent implements OnInit {
   public goToCommentsStage(): void {
     if (this.showCommentsSection && !this.shouldDisableNext()) {
       this.currentStage = 'comments';
+      this.focusStageHeading();
     }
   }
 
   public goToGroupStage(): void {
     if (this.showGroupSection) {
       this.currentStage = 'group';
+      this.focusStageHeading();
     }
   }
 
   public goToDetailsStage(): void {
     this.currentStage = 'details';
+    this.focusStageHeading();
+  }
+
+  private focusStageHeading(): void {
+    afterNextRender(
+      () => {
+        const heading = this.uploadStarted
+          ? this.dialogTitle
+          : this.isGroupStage
+            ? this.groupHeading
+            : this.isCommentsStage
+              ? this.commentsHeading
+              : this.detailsHeading;
+        heading?.nativeElement.focus();
+      },
+      {injector: this.injector},
+    );
   }
 
   public cancel = (): void => {
@@ -257,6 +299,7 @@ export class UploadSubmissionModalComponent implements OnInit {
   public onUploadSuccess = (response: unknown): void => {
     if (this.isValidUploadResponse(response)) {
       this.uploadResponse = response;
+      this.uploadAnnouncement = 'Submission uploaded successfully.';
 
       if (this.data.isTestSubmission) {
         this.projectService.loadProject(response.project_id, this.task.unit).subscribe({
@@ -275,6 +318,11 @@ export class UploadSubmissionModalComponent implements OnInit {
       'Upload failed. Please try again, or contact your tutor if the issue continues.',
       8000,
     );
+  };
+
+  public onUploadFailure = (): void => {
+    this.uploadAnnouncement =
+      'Submission upload failed. Review the error below and cancel to try again.';
   };
 
   public onUploadComplete = (): void => {
@@ -309,7 +357,9 @@ export class UploadSubmissionModalComponent implements OnInit {
 
     this.uploadSubmitLocked = true;
     this.uploadStarted = true;
+    this.uploadAnnouncement = 'Uploading submission. Please wait for the result.';
     this.currentStage = 'details';
+    this.focusStageHeading();
     this.startUpload?.();
   }
 
@@ -334,6 +384,7 @@ export class UploadSubmissionModalComponent implements OnInit {
 
   private resetUploadState(): void {
     this.uploadStarted = false;
+    this.uploadAnnouncement = '';
     this.uploadSubmitLocked = false;
     this.uploadResponse = null;
     this.currentStage = this.showGroupSection ? 'group' : 'details';
