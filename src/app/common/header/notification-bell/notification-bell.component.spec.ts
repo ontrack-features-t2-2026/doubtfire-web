@@ -335,6 +335,102 @@ describe('NotificationBellComponent', () => {
       fixture.detectChanges();
     });
 
+    const menu = (): HTMLElement => panel().querySelector('[role="menu"]');
+
+    const expectMenuStructure = (): void => {
+      expect(menu().getAttribute('aria-label')).toBe('Notifications');
+      expect(menu().querySelector('h1, h2, h3, h4, h5, h6, [role="heading"]')).toBeNull();
+      const content = menu().querySelector('.mat-mdc-menu-content');
+      for (const child of Array.from(content.children)) {
+        expect(['none', 'menuitem']).toContain(child.getAttribute('role'));
+      }
+      for (const wrapper of Array.from(menu().querySelectorAll('[role="none"]'))) {
+        // A presentational wrapper must not hide its interactive descendants.
+        expect(wrapper.getAttribute('aria-hidden')).not.toBe('true');
+      }
+    };
+
+    it('names the menu and exposes loading as an unavailable menu item', () => {
+      openMenu();
+
+      expectMenuStructure();
+      const state = menu().querySelector('[role="menuitem"][aria-disabled="true"]');
+      expect(state.textContent).toContain('Loading your notifications');
+      expect(state.querySelector('mat-spinner').getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('keeps empty and failed states accessible without adding headings or actions', () => {
+      openMenu();
+      list.next([]);
+      fixture.detectChanges();
+
+      expectMenuStructure();
+      expect(menu().querySelector('[role="menuitem"][aria-disabled="true"]').textContent).toContain(
+        'You are all caught up.',
+      );
+
+      const refresh = reopenWith();
+      refresh.error(new Error('offline'));
+      fixture.detectChanges();
+
+      expectMenuStructure();
+      expect(menu().querySelector('[role="menuitem"][aria-disabled="true"]').textContent).toContain(
+        'We could not load your notifications.',
+      );
+    });
+
+    it('preserves menu structure when a refresh fails with existing rows', () => {
+      openMenu();
+      list.next([notification(1)]);
+      fixture.detectChanges();
+      const refresh = reopenWith();
+      refresh.error(new Error('offline'));
+      fixture.detectChanges();
+
+      expectMenuStructure();
+      expect(menu().querySelector('[aria-disabled="true"]').textContent).toContain('out of date');
+      expect(rows()).toHaveLength(1);
+    });
+
+    it('moves through every action with arrow keys and restores the bell on Escape', async () => {
+      notificationService.list.mockReturnValue(of([notification(1)]));
+      unreadCount.next(1);
+      fixture.detectChanges();
+      bell().focus();
+      bell().dispatchEvent(
+        new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, bubbles: true}),
+      );
+      // jsdom does not synthesize the native button click from Enter.
+      bell().click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expectMenuStructure();
+      const actions = Array.from(menu().querySelectorAll<HTMLElement>('[role="menuitem"]'));
+      expect(actions).toHaveLength(4);
+      expect(document.activeElement).toBe(actions[0]);
+      for (const next of [...actions.slice(1), actions[0]]) {
+        document.activeElement.dispatchEvent(
+          new KeyboardEvent('keydown', {key: 'ArrowDown', keyCode: 40, bubbles: true}),
+        );
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(next);
+      }
+      document.activeElement.dispatchEvent(
+        new KeyboardEvent('keydown', {key: 'ArrowUp', keyCode: 38, bubbles: true}),
+      );
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(actions[3]);
+
+      document.activeElement.dispatchEvent(
+        new KeyboardEvent('keydown', {key: 'Escape', keyCode: 27, bubbles: true}),
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(menu()).toBeNull();
+      expect(document.activeElement).toBe(bell());
+    });
+
     it('does not request the list before authentication is ready', () => {
       authenticationService.isAuthenticated.mockReturnValue(false);
 
