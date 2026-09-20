@@ -2,12 +2,14 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CdkCopyToClipboard, Clipboard, ClipboardModule} from '@angular/cdk/clipboard';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatChipsModule} from '@angular/material/chips';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
+import {MatMenuModule} from '@angular/material/menu';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {By} from '@angular/platform-browser';
 import {Subject, of} from 'rxjs';
-import {ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
+import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DEMO_TOOLS_AVAILABLE} from 'src/app/demo/demo-mode.store';
 import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
@@ -268,7 +270,13 @@ describe('CalendarModalComponent accessible URL controls', () => {
     });
     await TestBed.configureTestingModule({
       declarations: [CalendarModalComponent],
-      imports: [ClipboardModule, MatIconModule, MatSlideToggleModule],
+      imports: [
+        ClipboardModule,
+        MatIconModule,
+        MatSlideToggleModule,
+        MatChipsModule,
+        MatMenuModule,
+      ],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         {provide: MAT_DIALOG_DATA, useValue: {}},
@@ -347,6 +355,47 @@ describe('CalendarModalComponent accessible URL controls', () => {
     expect(
       copy.compareDocumentPosition(regenerate) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('names the enable switch and reminder icon controls', () => {
+    fixture.componentInstance.newReminderActive = true;
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    const toggle = root.querySelector('mat-slide-toggle button[role="switch"]');
+    expect(toggle?.getAttribute('aria-label')).toBe('Enable web calendar');
+    expect(root.querySelector('button[aria-label="Save reminder changes"]')).not.toBeNull();
+    expect(root.querySelector('button[aria-label="Cancel reminder changes"]')).not.toBeNull();
+  });
+
+  it('uses named native buttons to exclude a unit and open the add-unit menu', () => {
+    fixture.componentInstance.projects = [
+      {unit: {id: 1, code: 'TEST101', name: 'Test unit'}},
+      {unit: {id: 2, code: 'TEST202', name: 'Other unit'}},
+    ] as Project[];
+    fixture.componentInstance.webcal.unitExclusions = [2];
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    const remove = root.querySelector<HTMLButtonElement>(
+      'button[aria-label="Exclude TEST101 from web calendar"]',
+    )!;
+    const exclude = vi
+      .spyOn(fixture.componentInstance, 'includeExclusion')
+      .mockImplementation(() => undefined);
+    expect(remove.disabled).toBe(false);
+    expect(remove.tabIndex).toBe(0);
+    remove.click();
+    expect(exclude).toHaveBeenCalledWith(fixture.componentInstance.projects[0]);
+    remove.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, bubbles: true}));
+    remove.dispatchEvent(new KeyboardEvent('keydown', {key: ' ', keyCode: 32, bubbles: true}));
+    expect(exclude).toHaveBeenCalledTimes(3);
+    const add = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+      button.textContent?.includes('Add unit'),
+    )!;
+    expect(add.getAttribute('aria-haspopup')).toBe('menu');
+    fixture.componentInstance.working = true;
+    fixture.detectChanges();
+    expect(remove.disabled).toBe(true);
+    expect(add.disabled).toBe(true);
   });
 
   it('disables the download a copy button while a settings update is saving', () => {
