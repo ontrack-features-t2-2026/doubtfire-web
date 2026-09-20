@@ -1,10 +1,13 @@
+import {JSDOM} from 'jsdom';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {compile} from 'sass';
 import {describe, expect, it} from 'vitest';
 
 const index = readFileSync('src/index.html', 'utf8');
-const bootScript = index.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+const parsedPage = new JSDOM(index);
+const bootScript = parsedPage.window.document.querySelector('script:not([src])')?.textContent;
+parsedPage.window.close();
 const tokens = (mode: string): Record<string, string> =>
   Object.fromEntries(
     [
