@@ -157,3 +157,9 @@ Refer to [CONTRIBUTING.md](CONTRIBUTING.md)
 ## License
 
 Licensed under GNU Affero General Public License (AGPL) v3
+
+## Frontend maintenance
+
+- [CSS style guide](docs/css-style-guide.md) and [remaining layout catalogue](docs/migration/ui-catalogue.md)
+- [Legacy source audit](docs/migration/legacy-audit.md) and [Unit Statistics charts](docs/migration/analytics.md)
+- [Migration recovery register](docs/migration/recovery-register.md) and [upstream PR triage](docs/migration/open-pr-triage.md)
