@@ -5,6 +5,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
+import {By} from '@angular/platform-browser';
 import {BehaviorSubject} from 'rxjs';
 import {ProjectService, TaskService} from 'src/app/api/models/doubtfire-model';
 import {UserService} from 'src/app/api/services/user.service';
@@ -51,13 +52,18 @@ describe('UploadSubmissionModalComponent upload guidance', () => {
         {provide: PrivacyPolicy, useValue: {}},
         {provide: AlertService, useValue: {}},
         {provide: EmojiService, useValue: {}},
-        {provide: UserService, useValue: {}},
+        {
+          provide: UserService,
+          useValue: {currentUser: {authenticationToken: 'demo-token', username: 'demo'}},
+        },
         {provide: DoubtfireConstants, useValue: {ExternalName: new BehaviorSubject('OnTrack')}},
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(UploadSubmissionModalComponent);
     fixture.detectChanges();
   });
+
+  afterEach(() => vi.restoreAllMocks());
 
   it('shows guidance before selection and describes the real file picker controls', () => {
     const root: HTMLElement = fixture.nativeElement;
@@ -161,7 +167,7 @@ describe('UploadSubmissionModalComponent upload guidance', () => {
     expect(component.shouldDisableSubmit()).toBe(false);
     const region = fixture.nativeElement.querySelector('mat-dialog-content > [role="status"]');
     expect(region.textContent.trim()).toBe('');
-    component.onUploaderReady(() => {});
+    component.onUploaderReady(component.onBeforeUpload);
     component.uploadButtonClicked();
     fixture.detectChanges();
     expect(region.textContent).toContain('Uploading submission');
@@ -171,5 +177,45 @@ describe('UploadSubmissionModalComponent upload guidance', () => {
     component.onUploadFailure();
     fixture.detectChanges();
     expect(region.textContent).toContain('Submission upload failed');
+  });
+
+  it('announces a retry and moves focus away from the removed Retry Upload button', async () => {
+    vi.spyOn(XMLHttpRequest.prototype, 'open').mockImplementation(() => {});
+    vi.spyOn(XMLHttpRequest.prototype, 'setRequestHeader').mockImplementation(() => {});
+    const send = vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(() => {});
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[type=file]');
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['demo'], 'source.vue')],
+    });
+    input.dispatchEvent(new Event('change'));
+    const component = fixture.componentInstance;
+    const uploader = fixture.debugElement.query(By.directive(FileUploaderComponent))
+      .componentInstance as FileUploaderComponent;
+    component.uploadStarted = true;
+    uploader.isUploading = true;
+    uploader.uploadingInfo = {
+      progress: 100,
+      complete: true,
+      success: false,
+      error: 'Demonstration error',
+    };
+    uploader.onFailure?.({error: 'Demonstration error'});
+    fixture.detectChanges();
+    const region = fixture.nativeElement.querySelector('mat-dialog-content > [role="status"]');
+    expect(region.textContent).toContain('Retry Upload or Cancel');
+    const retry = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button: HTMLButtonElement) => button.textContent?.trim() === 'Retry Upload',
+    ) as HTMLButtonElement;
+    retry.focus();
+    retry.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(send).toHaveBeenCalledOnce();
+    expect(region.textContent).toContain('Uploading submission');
+    expect(retry.isConnected).toBe(false);
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('h2[mat-dialog-title]'),
+    );
   });
 });

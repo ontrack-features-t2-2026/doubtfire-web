@@ -273,6 +273,8 @@ export class UploadSubmissionModalComponent implements OnInit {
   }
 
   public onBeforeUpload = (): void => {
+    this.uploadAnnouncement = 'Uploading submission. Please wait for the result.';
+    this.focusStageHeading();
     Object.keys(this.payload).forEach((key) => delete this.payload[key]);
 
     if (this.showGroupSection) {
@@ -322,7 +324,7 @@ export class UploadSubmissionModalComponent implements OnInit {
 
   public onUploadFailure = (): void => {
     this.uploadAnnouncement =
-      'Submission upload failed. Review the error below and cancel to try again.';
+      'Submission upload failed. Review the error below, then choose Retry Upload or Cancel.';
   };
 
   public onUploadComplete = (): void => {
@@ -357,9 +359,7 @@ export class UploadSubmissionModalComponent implements OnInit {
 
     this.uploadSubmitLocked = true;
     this.uploadStarted = true;
-    this.uploadAnnouncement = 'Uploading submission. Please wait for the result.';
     this.currentStage = 'details';
-    this.focusStageHeading();
     this.startUpload?.();
   }
 
