@@ -24,6 +24,7 @@
             @if (!version.current && version.versionOrder === 1) {
               <span> — latest retained archive</span>
             }
+            <p>Archive file: submission-{{ version.id }}.zip</p>
             <p>
               @if (version.timestamp) {
                 <time [attr.datetime]="version.timestamp.toISOString()">{{

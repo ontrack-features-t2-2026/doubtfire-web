@@ -82,6 +82,7 @@ describe('Previous submissions', () => {
     const fixture = render();
     const rows = fixture.nativeElement.querySelectorAll('li');
     expect(rows[0].textContent).toContain('Current submission');
+    expect(rows[0].textContent).toContain('Archive file: submission-4.zip');
     expect(rows[1].textContent).toContain('Previous submission');
     expect(rows[1].textContent).toContain('Files unavailable');
     expect(rows[0].querySelector('button').getAttribute('aria-label')).toContain(
