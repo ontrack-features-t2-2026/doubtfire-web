@@ -198,17 +198,28 @@ describe('PpiWidgetComponent', () => {
     });
   });
 
-  it('provides an accessible name for the peer progress value', () => {
-    load(of(NORMAL_STATE));
-    fixture.detectChanges();
+  it.each([
+    {response: NORMAL_STATE, metric: 'completion', verb: 'completed', percentage: 10},
+    {
+      response: {...NORMAL_STATE, completedPercentage: null},
+      metric: 'submission',
+      verb: 'submitted',
+      percentage: 60,
+    },
+    {response: ZERO_PERCENT_STATE, metric: 'completion', verb: 'completed', percentage: 0},
+  ])(
+    'exposes the $percentage% $metric value in a named semantic group',
+    ({response, metric, verb, percentage}) => {
+      load(of(response));
 
-    const value = fixture.nativeElement.querySelector(
-      '[aria-label="Peer completion progress at your target grade"]',
-    );
+      const value = fixture.nativeElement.querySelector('.ppi-value[role="group"]');
 
-    expect(value).toBeTruthy();
-    expect(value.textContent).toContain('10%');
-  });
+      expect(value).toBeTruthy();
+      expect(value.getAttribute('aria-label')).toBe(`Peer ${metric} progress at your target grade`);
+      expect(value.textContent).toContain(`${percentage}%`);
+      expect(value.textContent).toContain(`of peers have ${verb} this task`);
+    },
+  );
 
   it('keeps the visible summary concise while retaining cohort context for assistive technology', () => {
     load(of(NORMAL_STATE));
