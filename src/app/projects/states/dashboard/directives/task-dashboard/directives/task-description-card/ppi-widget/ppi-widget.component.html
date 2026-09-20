@@ -44,14 +44,10 @@
     </div>
   }
   @case ('success') {
-    <div
-    class="ppi-widget"
-    role="group"
-    aria-label="Peer submission progress"
-  >
-    <span
-      >{{ view.data?.submittedPercentage }}% of peers at your target grade have submitted</span
-    >
-  </div>
+    <div aria-label="Peer submission progress" class="ppi-widget" role="group">
+      <span
+        >{{ view.data?.submittedPercentage }}% of peers at your target grade have submitted</span
+      >
+    </div>
   }
 }
