@@ -264,6 +264,7 @@ import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/p
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
 import {TaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/task-list-item/task-list-item.component';
 import {DiscussionPromptsViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/discussion-prompts-view/discussion-prompts-view.component';
+import {PreviousSubmissionsComponent} from './projects/states/dashboard/directives/task-dashboard/directives/previous-submissions/previous-submissions.component';
 import {StaffNotesViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/staff-notes-view/staff-notes-view.component';
 import {TaskAssessmentCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-assessment-card/task-assessment-card.component';
 import {PpiWidgetComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component';
@@ -810,6 +811,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    PreviousSubmissionsComponent,
     ThemeToggleComponent,
     FlexLayoutModule,
     BrowserModule,
