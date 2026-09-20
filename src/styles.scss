@@ -114,3 +114,15 @@ body.split-pane-resizing pdf-viewer {
   background-color: var(--ot-color-page);
   color: var(--ot-color-text);
 }
+
+// Print the application chrome in Light as well as switching semantic tokens.
+// Keep this in the global stylesheet: components import theme.scss for palette
+// variables and must not each emit a duplicate print theme. Use the same
+// specificity as the on-screen Dark block without changing the
+// root marker or the user's saved preference.
+@media print {
+  :root,
+  :root[data-ot-theme='dark'] {
+    @include mat.all-component-colors($theme);
+  }
+}

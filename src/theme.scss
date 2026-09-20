@@ -257,13 +257,3 @@ $dark-theme: mat.m2-define-dark-theme(
     background-color: var(--ot-color-surface-raised);
   }
 }
-
-// Print the application chrome in Light as well as switching semantic tokens.
-// Keep the same specificity as the on-screen Dark block without changing the
-// root marker or the user's saved preference.
-@media print {
-  :root,
-  :root[data-ot-theme='dark'] {
-    @include mat.all-component-colors($theme);
-  }
-}
