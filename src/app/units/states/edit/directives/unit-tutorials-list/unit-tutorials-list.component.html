@@ -36,6 +36,14 @@
     }
   </div>
 
+  @if (tutorials.length === 0) {
+    <f-empty-state
+      heading="No tutorials in this stream"
+      icon="groups"
+      message="Use the fields below to add a tutorial."
+    ></f-empty-state>
+  }
+
   <table
     class="f-table"
     mat-table

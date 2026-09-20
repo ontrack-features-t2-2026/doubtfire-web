@@ -73,7 +73,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions.push(
       this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
         if (!unit) {
-          this.loadingStudents = false;
+          this.loadingStudents = true;
           this.studentsLoadFailed = false;
           return;
         }

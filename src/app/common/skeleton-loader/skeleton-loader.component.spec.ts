@@ -72,4 +72,34 @@ describe('SkeletonLoaderComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[aria-hidden="true"]')).not.toBeNull();
   });
+  it('renders table rows with the requested columns and row height', () => {
+    component.shape = 'table-row';
+    component.count = 2;
+    component.columns = 9;
+    component.rowHeight = '72px';
+    fixture.detectChanges();
+    expect(placeholders()).toHaveLength(18);
+    expect(placeholders()[0].parentElement.style.height).toBe('72px');
+  });
+
+  it('keeps only avatars in a compact inbox, and restores text in the wide view', () => {
+    component.shape = 'list-row';
+    component.count = 2;
+    component.compact = true;
+    fixture.detectChanges();
+    expect(placeholders()).toHaveLength(2);
+    component.compact = false;
+    fixture.detectChanges();
+    expect(placeholders()).toHaveLength(8);
+  });
+
+  it('accepts caller dimensions and safely ignores an invalid repeat count', () => {
+    component.count = 1;
+    component.theme = {height: '300px'};
+    fixture.detectChanges();
+    expect(renderedHeight(0)).toBe('300px');
+    component.count = Number.NaN;
+    fixture.detectChanges();
+    expect(placeholders()).toHaveLength(0);
+  });
 });

@@ -11,13 +11,14 @@ import {MatSortModule} from '@angular/material/sort';
 import {MatTableModule} from '@angular/material/table';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BehaviorSubject, of, throwError} from 'rxjs';
+import {BehaviorSubject, Subject, of, throwError} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Unit} from 'src/app/api/models/unit';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
+import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {UnitStudentEnrolmentModalService} from '../../modals/unit-student-enrolment-modal/unit-student-enrolment-modal.service';
 import {UnitRootStateComponent} from '../../unit-root-state.component';
 import {StudentsListComponent} from './students-list.component';
@@ -133,6 +134,7 @@ describe('StudentsListComponent empty state', () => {
         MatTableModule,
         NoopAnimationsModule,
         EmptyStateComponent,
+        SkeletonLoaderComponent,
       ],
       providers: [
         {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
@@ -199,5 +201,26 @@ describe('StudentsListComponent empty state', () => {
     expect(loadStudents).toHaveBeenCalledTimes(2);
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('f-empty-state')).toBeTruthy();
+  });
+  it('shows skeleton rows until an empty student response has resolved', () => {
+    const result: Subject<Project[]> = new Subject();
+    vi.spyOn(TestBed.inject(ProjectService), 'loadStudents').mockReturnValue(result);
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    fixture.componentInstance.unit$ = of(unitStub(1, []));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('f-skeleton-loader')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
+    result.next([]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).toBeNull();
+    expect(fixture.nativeElement.querySelector('f-empty-state')).not.toBeNull();
+  });
+
+  it('does not announce an empty list before a unit has resolved', () => {
+    const fixture = TestBed.createComponent(StudentsListComponent);
+    fixture.componentInstance.unit$ = of(null);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).not.toBeNull();
   });
 });

@@ -27,7 +27,6 @@ export class ActivityTypeListComponent
   activityTypes: ActivityType[] = new Array<ActivityType>();
   dataSource = new MatTableDataSource(this.activityTypes);
   loadingActivities = true;
-  skeletonRows = Array.from({length: 3}, (_, index) => index);
 
   // Calls the parent's constructor, passing in an object
   // that maps all of the form controls that this form consists of.

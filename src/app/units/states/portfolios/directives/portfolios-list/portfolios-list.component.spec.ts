@@ -12,6 +12,7 @@ import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloa
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {D2lTransferModal} from '../../d2l-transfer-modal/d2l-transfer.component';
 import {PortfoliosListComponent} from './portfolios-list.component';
 
@@ -32,7 +33,7 @@ describe('PortfoliosListComponent empty state', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [PortfoliosListComponent],
-      imports: [MatTableModule, EmptyStateComponent],
+      imports: [MatTableModule, SkeletonLoaderComponent, EmptyStateComponent],
       providers: [
         {
           provide: TaskService,
@@ -61,6 +62,7 @@ describe('PortfoliosListComponent empty state', () => {
     fixture.detectChanges();
 
     expect(root.querySelector('f-empty-state')).toBeNull();
+    expect(root.querySelectorAll('f-skeleton-loader')).toHaveLength(2);
 
     fixture.componentRef.setInput('loading', false);
     fixture.detectChanges();
@@ -70,6 +72,7 @@ describe('PortfoliosListComponent empty state', () => {
     const tableScrollContainer = table.parentElement as HTMLDivElement;
 
     expect(emptyState).toBeTruthy();
+    expect(root.querySelector('f-skeleton-loader')).toBeNull();
     expect(emptyState.closest('table')).toBeNull();
     expect(tableScrollContainer.hidden).toBe(true);
 
