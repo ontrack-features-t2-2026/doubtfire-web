@@ -23,7 +23,15 @@
 }
 
 .removeStyle {
+  display: block;
+  color: inherit;
   text-decoration: none;
+
+  &:focus-visible {
+    outline: 3px solid var(--ot-color-primary, #006b80);
+    outline-offset: 3px;
+    border-radius: 15px;
+  }
 }
 
 .mat-mdc-card-header {

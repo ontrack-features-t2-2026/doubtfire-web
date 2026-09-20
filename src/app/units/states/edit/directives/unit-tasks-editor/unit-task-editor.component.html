@@ -208,32 +208,39 @@
                   [ngClass]="{
                     'bg-[#e7e7ff]': isSelectedTaskDefinition(taskDefinition),
                   }"
-                  (click)="selectTaskDefinition(taskDefinition)"
                 >
                   <div class="flex w-full items-center px-[6px]">
                     <div
                       class="flex w-full items-center"
                       [ngClass]="{'justify-center': isTaskListCollapsed}"
                     >
-                      <f-task-badge
-                        [highlight]="isSelectedTaskDefinition(taskDefinition)"
-                        [taskDef]="taskDefinition"
-                      ></f-task-badge>
+                      <button
+                        class="flex min-w-0 flex-1 items-center text-left"
+                        type="button"
+                        [attr.aria-label]="
+                          'Edit ' + taskDefinition.abbreviation + ' ' + taskDefinition.name
+                        "
+                        [attr.aria-pressed]="isSelectedTaskDefinition(taskDefinition)"
+                        (click)="selectTaskDefinition(taskDefinition)"
+                      >
+                        <f-task-badge
+                          [highlight]="isSelectedTaskDefinition(taskDefinition)"
+                          [taskDef]="taskDefinition"
+                        ></f-task-badge>
 
-                      @if (!isTaskListCollapsed) {
-                        <div class="ml-2.5 min-w-0 flex-1 flex-col">
-                          <h4 class="mt-[8px] mb-[-2px] line-clamp-1 text-[15px]">
-                            {{ taskDefinition.name }}
-                          </h4>
-                          <div class="mb-0 text-[12px]">
-                            {{ gradeNames[taskDefinition.targetGrade] }} Task
+                        @if (!isTaskListCollapsed) {
+                          <div class="ml-2.5 min-w-0 flex-1 flex-col">
+                            <h4 class="mt-[8px] mb-[-2px] line-clamp-1 text-[15px]">
+                              {{ taskDefinition.name }}
+                            </h4>
+                            <div class="mb-0 text-[12px]">
+                              {{ gradeNames[taskDefinition.targetGrade] }} Task
+                            </div>
                           </div>
-                        </div>
-
-                        <div
-                          class="flex items-center gap-0.5 pr-0.5"
-                          (click)="$event.stopPropagation()"
-                        >
+                        }
+                      </button>
+                      @if (!isTaskListCollapsed) {
+                        <div class="flex items-center gap-0.5 pr-0.5">
                           @if (taskDefinitionHasChanges(taskDefinition)) {
                             <button
                               aria-label="save task definition"

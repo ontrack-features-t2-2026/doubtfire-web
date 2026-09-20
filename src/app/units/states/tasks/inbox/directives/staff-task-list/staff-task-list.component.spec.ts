@@ -371,6 +371,7 @@ describe('StaffTaskListComponent rendered empty state', () => {
       id: 1,
       taskKeyToIdString: () => 'task-1',
       statusClass: () => 'need-help',
+      statusLabel: () => 'Need Help',
       project: {student: {name: 'A Student'}},
       definition: {abbreviation: '1.1P', name: 'A Task'},
       daysSinceSubmission: () => 0,
@@ -389,5 +390,35 @@ describe('StaffTaskListComponent rendered empty state', () => {
     expect(status.querySelector('p').textContent).toBe('No tasks match these filters.');
     expect(status.querySelector('p').classList.contains('sr-only')).toBe(true);
     expect(status.querySelector('p').hasAttribute('aria-hidden')).toBe(false);
+  });
+
+  it('separates native task selection from the overflow action and names narrow rows', async () => {
+    const task = {
+      id: 1,
+      taskKeyToIdString: () => 'task-1',
+      statusClass: () => 'need-help',
+      statusLabel: () => 'Need Help',
+      project: {student: {displayName: 'Demo Student'}},
+      definition: {abbreviation: '1.1P', name: 'Demonstration task'},
+      daysSinceSubmission: () => 0,
+      hasGrade: () => false,
+      hasQualityPoints: () => false,
+    } as unknown as Task;
+    finishLoading([task]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector('button[aria-pressed]') as HTMLButtonElement;
+    expect(select).toBeTruthy();
+    expect(select.getAttribute('aria-label')).toBe('Demo Student, 1.1P: Demonstration task');
+    expect(select.querySelector('button, a, input, [role="option"]')).toBeNull();
+    expect(select.tabIndex).toBe(0);
+    const summary = document.getElementById(select.getAttribute('aria-describedby'));
+    expect(summary.textContent).toContain('Need Help');
+    const activate = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    select.click();
+    expect(activate).toHaveBeenCalledExactlyOnceWith(task);
+    component.isNarrow = true;
+    fixture.detectChanges();
+    expect(select.getAttribute('aria-label')).toContain('Demo Student');
   });
 });

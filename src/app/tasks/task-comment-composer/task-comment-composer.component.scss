@@ -58,6 +58,11 @@ $emoji-color: var(--ot-color-text-muted);
     max-lines: 1;
     overflow: hidden;
   }
+
+  #textField:focus-visible {
+    outline: 2px solid var(--ot-color-primary, #006b80);
+    outline-offset: 2px;
+  }
 }
 
 #textField.draft-loaded {
@@ -101,9 +106,12 @@ $emoji-color: var(--ot-color-text-muted);
   padding: 6px 0 6px 2px;
 }
 
-#emojiButton {
-  height: 24px;
-  width: 24px;
+.composer-inline-action {
+  --mdc-icon-button-state-layer-size: 32px;
+  --mdc-icon-button-icon-size: 24px;
+  padding: 4px;
+  height: 32px;
+  width: 32px;
   cursor: pointer;
   color: $emoji-color;
 }

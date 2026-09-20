@@ -186,9 +186,11 @@
 
                   <div class="bubble" [ngClass]="commentClasses(comment)">
                     @if (!!comment.replyToId) {
-                      <a
-                        class="original-comment"
+                      <button
+                        class="original-comment w-full text-left"
+                        type="button"
                         [class.disabled]="!comment.originalComment"
+                        [disabled]="!comment.originalComment"
                         (click)="scrollToComment(comment.originalComment?.id)"
                       >
                         <p class="reply-text">
@@ -199,7 +201,7 @@
                               : 'comment removed'
                           }}
                         </p>
-                      </a>
+                      </button>
                     }
 
                     @switch (comment.commentType) {

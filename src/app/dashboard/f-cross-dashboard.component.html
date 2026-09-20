@@ -243,13 +243,20 @@
               </button>
               <mat-menu #filtermenu="matMenu">
                 @for (mode of filterOptions; track mode) {
-                  <div
+                  <button
                     mat-menu-item
+                    role="menuitemcheckbox"
+                    type="button"
+                    [attr.aria-checked]="isFilterEnabled(unit.projectId, mode)"
                     (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
                   >
-                    <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
+                    <mat-icon aria-hidden="true">{{
+                      isFilterEnabled(unit.projectId, mode)
+                        ? 'check_box'
+                        : 'check_box_outline_blank'
+                    }}</mat-icon>
                     {{ mode }}
-                  </div>
+                  </button>
                 }
               </mat-menu>
             </div>
