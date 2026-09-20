@@ -76,6 +76,7 @@
     @if (!isExtraSmall) {
       <button
         aria-label="Open your calendar subscription settings"
+        data-onboarding-target="calendar"
         mat-icon-button
         matTooltip="Subscribe to your calendar"
         (click)="openCalendar()"
@@ -115,6 +116,7 @@
     <button
       aria-label="Open account menu"
       class="account-menu-trigger"
+      data-onboarding-target="account-menu"
       mat-button
       [matMenuTriggerFor]="menu2"
       (menuOpened)="refreshMobileUnreadCount()"
@@ -158,10 +160,16 @@
         <mat-icon aria-label="Edit profile" matListItemIcon>person</mat-icon>
         My Profile
       </button>
-      <button mat-menu-item (click)="openCalendar()">
+      <button data-onboarding-target="calendar" mat-menu-item (click)="openCalendar()">
         <mat-icon aria-label="Edit calendar" matListItemIcon>calendar_month</mat-icon>
         Calendar
       </button>
+      @if (studentOnboarding.available) {
+        <button mat-menu-item (click)="studentOnboarding.replay()">
+          <mat-icon aria-hidden="true" matListItemIcon>help_outline</mat-icon>
+          Tutorial and Help
+        </button>
+      }
       <button mat-menu-item (click)="openAboutModal()">
         <mat-icon aria-label="About" matListItemIcon>info</mat-icon>
         About

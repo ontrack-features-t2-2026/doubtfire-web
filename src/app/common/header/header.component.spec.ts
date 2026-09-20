@@ -18,6 +18,7 @@ import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
+import {StudentOnboardingService} from 'src/app/student-onboarding/student-onboarding.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
 import {CalendarModalService} from '../modals/calendar-modal/calendar-modal.service';
 import {QrModalService} from '../modals/qr-modal/qr-modal.service';
@@ -73,6 +74,7 @@ describe('HeaderComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [HeaderComponent],
       providers: [
+        {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
         {provide: CalendarModalService, useValue: emptyProvider},
         {provide: AboutDoubtfireModal, useValue: emptyProvider},
         {provide: IsActiveUnitRole, useValue: emptyProvider},
@@ -154,6 +156,7 @@ describe('HeaderComponent', () => {
           NoopAnimationsModule,
         ],
         providers: [
+          {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
           {provide: CalendarModalService, useValue: calendarModalServiceStub},
           {provide: AboutDoubtfireModal, useValue: emptyProvider},
           {provide: IsActiveUnitRole, useValue: emptyProvider},
@@ -197,6 +200,24 @@ describe('HeaderComponent', () => {
 
       fixture = TestBed.createComponent(HeaderComponent);
       component = fixture.componentInstance;
+    });
+
+    it('opens the shared tutorial from the existing account menu when eligible', async () => {
+      const tutorial = TestBed.inject(StudentOnboardingService) as unknown as {
+        available: boolean;
+        replay: ReturnType<typeof vi.fn>;
+      };
+      tutorial.available = true;
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('[aria-label="Open account menu"]').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const entries = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].filter(
+        (entry) => entry.textContent.includes('Tutorial and Help'),
+      );
+      expect(entries.length).toBe(1);
+      entries[0].click();
+      expect(tutorial.replay).toHaveBeenCalledOnce();
     });
 
     it('renders the calendar button in the header', () => {

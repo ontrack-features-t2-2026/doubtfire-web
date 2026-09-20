@@ -1,0 +1,21 @@
+Tutorial implementation validation, 21 September 2026 (Australia/Melbourne)
+Initial base: d16f6201caff78082e5e83c540320dbee5871404 (11.0.x)
+Node: v22.23.2; Angular CLI 22.0.9; Angular22.0.3; TypeScript6.0.3; Vitest4.1.9
+Dependencies: unchanged package-lock SHA1 1f2acc374d8e3af819dab13862cf8fbbb017bf3d
+
+Focused tests (20 September2026 23:30 UTC):
+ng test --watch=false --progress=false --runner-config=/tmp/tutorial-vitest.config.mjs
+  --include='src/app/student-onboarding/*.spec.ts'
+  --include='src/app/config/constants/doubtfire-constants.spec.ts'
+  --include='src/app/welcome/welcome.component.spec.ts'
+  --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts'
+  --include='src/app/common/header/header.component.spec.ts'
+Runner configuration: {test:{maxWorkers:1,fileParallelism:false,pool:'threads'}}
+Exit0; 6 test files passed;89 tests passed;4.35s test execution.
+
+Initial ngc -p src/tsconfig.app.json --noEmit passed before final history-gate changes.
+Final full typecheck, full lint, production build and post-rebase test results will
+be appended before PR handover. A prior parallel run timed out starting workers
+while the host was suspended/busy and executed no tests; serial retry above passed.
+Browser/synthetic harness results and limitations are recorded separately; no
+human pilot, real screen-reader session or approval has been claimed.
