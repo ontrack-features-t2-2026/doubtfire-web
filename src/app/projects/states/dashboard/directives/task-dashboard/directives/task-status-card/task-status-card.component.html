@@ -1,6 +1,7 @@
 <mat-card appearance="outlined">
   @if (triggers?.length > 0) {
     <mat-form-field appearance="outline" class="px-2.5 pt-2.5">
+      <mat-label>Task status</mat-label>
       <mat-select
         [disabled]="task?.blockedByPrerequisiteTasks() && !isTutor"
         [value]="$safeNavigationMigration(task?.status)"
@@ -12,14 +13,14 @@
               style="margin-right: 10px"
               [status]="$safeNavigationMigration(task?.status)"
             ></status-icon>
-            <h2 class="mb-0">{{ task?.statusLabel() }}</h2>
+            <span class="mb-0 text-xl">{{ task?.statusLabel() }}</span>
           </span>
         </mat-select-trigger>
         @for (trigger of triggers; track trigger) {
           <mat-option [value]="trigger.status">
             <div class="flex items-center">
               <status-icon [showTooltip]="false" [status]="trigger.status"></status-icon>
-              <h5 class="m-0 ml-2">{{ trigger.label }}</h5>
+              <span class="m-0 ml-2">{{ trigger.label }}</span>
             </div>
           </mat-option>
         }
@@ -33,7 +34,7 @@
           style="margin-right: 10px"
           [status]="$safeNavigationMigration(task?.status)"
         ></status-icon>
-        <h5>{{ task?.statusLabel() }}</h5>
+        <span>{{ task?.statusLabel() }}</span>
       </span>
     </mat-card-title>
   }
