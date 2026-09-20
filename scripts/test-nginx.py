@@ -6,6 +6,7 @@ database, external port, or production credentials are used.
 """
 
 import gzip
+from http.client import HTTPException
 import json
 from pathlib import Path
 import re
@@ -54,7 +55,9 @@ class NginxTest(unittest.TestCase):
             try:
                 cls.request("/")
                 break
-            except URLError:
+            except (URLError, ConnectionError, TimeoutError, HTTPException):
+                # Docker can publish the port before the Nginx worker is ready,
+                # including a reset after TCP connects but before HTTP headers.
                 time.sleep(0.1)
         else:
             raise RuntimeError("Nginx did not become ready")
