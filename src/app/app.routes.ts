@@ -67,6 +67,16 @@ export const routes: Routes = [
   {path: 'success-close', component: SuccessCloseComponent},
   {path: 'edit_profile', component: EditProfileComponent},
   {path: 'notifications', component: NotificationsPageComponent},
+  ...['coursemap', 'coursemap/:courseMapId'].map((path) => ({
+    path,
+    loadComponent: () =>
+      import('./courseflow/coursemap/coursemap.component').then((m) => m.CoursemapComponent),
+    canActivate: [roleWhitelistGuard],
+    data: {
+      pageTitle: 'Course Flow',
+      roleWhitelist: ['Student', 'Tutor', 'Convenor', 'Admin', 'Auditor'],
+    },
+  })),
   {
     path: 'unit-hub',
     loadComponent: () => import('./unit-hub/unit-hub.component').then((m) => m.UnitHubComponent),

@@ -1,33 +1,24 @@
-import {Component, OnInit} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {MatListModule} from '@angular/material/list';
 import {
   CdkDragDrop,
   DragDropModule,
   moveItemInArray,
   transferArrayItem,
-  CdkDrag,
 } from '@angular/cdk/drag-drop';
-import {MatIconModule} from '@angular/material/icon';
-import {MatMenuModule} from '@angular/material/menu';
-import {HttpClientModule} from '@angular/common/http';
-import {HttpClient} from '@angular/common/http';
-import {AuthenticationService} from 'src/app/api/services/authentication.service';
-import {StateService, Transition} from '@uirouter/core';
-import {AlertService} from 'src/app/common/services/alert.service';
-import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
-import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
-import {UnitService} from 'src/app/api/services/unit.service';
-import {Unit, UnitDefinition} from 'src/app/api/models/doubtfire-model';
+import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {FormsModule} from '@angular/forms';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
 import {MatButtonModule} from '@angular/material/button';
-import {Course, CourseMap, CourseMapUnit} from 'src/app/api/models/doubtfire-model';
-import {CourseService} from 'src/app/api/services/course.service';
-import {CourseMapService} from 'src/app/api/services/course-map.service';
-import {UnitDefinitionService} from 'src/app/api/services/unit-definition.service';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
+import {MatMenuModule} from '@angular/material/menu';
+import {ActivatedRoute} from '@angular/router';
+import {catchError, forkJoin, of, switchMap} from 'rxjs';
+import {Unit, UnitDefinition} from 'src/app/api/models/doubtfire-model';
+import {CourseMapUnit} from 'src/app/api/models/doubtfire-model';
 import {CourseMapUnitService} from 'src/app/api/services/course-map-unit.service';
+import {UnitDefinitionService} from 'src/app/api/services/unit-definition.service';
+import {UnitService} from 'src/app/api/services/unit.service';
 
 type CourseUnit = Unit | UnitDefinition;
 
@@ -45,88 +36,39 @@ interface DraggedUnitData {
   sourceSlotIndex?: number;
 }
 
-type signInData =
-  | {
-      username: string;
-      password: string;
-      remember: boolean;
-      autoLogin: boolean;
-      auth_token?: string;
-    }
-  | {
-      auth_token: string;
-      username: string;
-      remember: boolean;
-      password?: string;
-      autoLogin?: boolean;
-    };
-
 @Component({
-  selector: 'coursemap',
+  selector: 'f-coursemap',
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './coursemap.component.html',
   styleUrls: ['./coursemap.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    MatListModule,
     DragDropModule,
     MatIconModule,
-    HttpClientModule,
     FormsModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatMenuModule,
   ],
-  providers: [
-    UnitService,
-    CourseService,
-    CourseMapService,
-    UnitDefinitionService,
-    CourseMapUnitService,
-  ],
 })
 export class CoursemapComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
   constructor(
-    private authService: AuthenticationService,
-    private state: StateService,
-    private constants: DoubtfireConstants,
-    private http: HttpClient,
-    private transition: Transition,
-    private globalState: GlobalStateService,
-    private alerts: AlertService,
+    private route: ActivatedRoute,
     private unitService: UnitService,
-    private courseService: CourseService,
-    private courseMapService: CourseMapService,
     private unitDefinitionService: UnitDefinitionService,
     private courseMapUnitService: CourseMapUnitService,
   ) {}
 
-  signingIn: boolean;
-  showCredentials = false;
-  invalidCredentials: boolean;
-  api: string;
-  SSOLoginUrl: unknown;
-  authMethodLoaded: boolean;
-  externalName: unknown;
-  formData: signInData;
   unitCode = '';
-  unit: Unit | null = null;
   errorMessage: string | null = null;
+  loadError: string | null = null;
+  loading = true;
   units: Unit[] = [];
   requiredUnits: UnitDefinition[] = [];
-  courses: Course[] = [];
-  courseMapUnits: CourseMapUnit[];
-
-  // Temporarily creating a course until database is populated with real data
-  testCourse: Course = {
-    id: '12345',
-    name: 'Introduction to Programming',
-    code: 'CS101',
-    year: 2024,
-    version: 'v1.0',
-    url: 'http://university.edu/courses/cs101',
-  };
+  private definitions: UnitDefinition[] = [];
+  private requiredCodes: Set<string> = new Set();
 
   readonly trimesterKeys: ('trimester1' | 'trimester2' | 'trimester3')[] = [
     'trimester1',
@@ -135,130 +77,107 @@ export class CoursemapComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.formData = {
-      username: '',
-      password: '',
-      remember: false,
-      autoLogin: localStorage.getItem('autoLogin') ? true : false,
-    };
-    this.unitService.getUnits().subscribe({
-      next: (data: Unit[]) => {
-        this.units = data;
-        this.errorMessage = null;
-      },
-      error: (err) => {
-        this.errorMessage = 'Error fetching units';
-        console.error('Error fetching units:', err);
-      },
-    });
-    //fetching courses.
-    this.courseService.createCourse(this.testCourse); //temporarily creating course until database is populated with real data
-    this.courseService.getCourses().subscribe({
-      next: (data: Course[]) => {
-        this.courses = data;
-        console.log('Courses:', this.courses); // Optional: Log the courses to verify
-      },
-      error: (err) => {
-        this.errorMessage = 'Error fetching courses';
-        console.error('Error fetching courses:', err);
-      },
-    });
-    //temporarily adding unit definition until database is populated with real data
-    this.unitDefinitionService.addUnitDefinition(
-      'Data Capture Technology',
-      'Data capture technologies',
-      'SIT115',
-      '1',
-    );
-    this.formData = {
-      username: '',
-      password: '',
-      remember: false,
-      autoLogin: localStorage.getItem('autoLogin') ? true : false,
-    };
-    //fetching units
-    this.unitService.getUnits().subscribe({
-      next: (data: Unit[]) => {
-        this.units = data;
-        this.errorMessage = null;
-      },
-      error: (err) => {
-        this.errorMessage = 'Error fetching units';
-        console.error('Error fetching units:', err);
-      },
-    });
-    //fetching unit definitions
-    this.unitDefinitionService.getDefinitions().subscribe({
-      next: (data: UnitDefinition[]) => {
-        this.requiredUnits = data;
-        this.errorMessage = null;
-      },
-      error: (err) => {
-        this.errorMessage = 'Error fetching units';
-        console.error('Error fetching unit definitions:', err);
-      },
-    });
-    //temporarily create coursemap with id of 1 until database is loaded
-    this.courseMapService.addCourseMap(1, 1);
-    //add empty units to coursemap to initialise study periods
-    this.courseMapUnitService.getCourseMapUnitsById(1).subscribe(
-      (data: CourseMapUnit[]) => {
-        // Pass the entire array to populateYearsArray
-        this.populateYearsArray(data);
-      },
-      (err) => {
-        this.errorMessage = 'Error fetching courseMapUnits';
-        console.error('Error fetching courseMapUnits:', err);
-      },
-    );
+    this.route.paramMap
+      .pipe(
+        switchMap((params) => {
+          this.loading = true;
+          this.loadError = null;
+          this.errorMessage = null;
+          this.requiredUnits = [];
+          this.electiveUnits = [];
+          this.years = [];
+          this.addYear();
+          const id = params.get('courseMapId');
+          if (id !== null && !/^[1-9]\d*$/.test(id)) {
+            this.loading = false;
+            this.loadError = 'Invalid course map ID.';
+            return of(null);
+          }
+          // A new draft does not read another user's map or create demo database records.
+          return forkJoin({
+            units: this.unitService.getUnits(),
+            definitions: this.unitDefinitionService.getDefinitions(),
+            slots: id ? this.courseMapUnitService.getCourseMapUnitsById(Number(id)) : of([]),
+          }).pipe(
+            catchError(() => {
+              this.loading = false;
+              this.loadError = 'Course data could not be loaded. Please try again later.';
+              return of(null);
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((data) => {
+        if (!data) {
+          return;
+        }
+        const {units, definitions, slots} = data;
+        this.units = units;
+        this.definitions = definitions;
+        this.requiredUnits = [...definitions];
+        this.requiredCodes = new Set(definitions.map((unit) => unit.code));
+        this.populateYearsArray(slots);
+        this.loading = false;
+      });
   }
 
-  populateYearsArray(courseMapUnits: CourseMapUnit[]) {
-    this.years = [];
-
-    courseMapUnits.forEach((unit) => {
-      console.log('Processing unit with yearSlot:', unit.yearSlot); // Log the yearSlot value
-
-      // Find the year object with the same yearSlot value
-      let existingYear = this.years.find((y) => y.year === unit.yearSlot);
-
-      // If no year object exists, create a new one
-      if (!existingYear) {
-        existingYear = {
-          year: unit.yearSlot,
-          trimester1: [null, null, null, null],
-          trimester2: [null, null, null, null],
-          trimester3: [null, null, null, null],
+  populateYearsArray(courseMapUnits: CourseMapUnit[]): void {
+    if (!courseMapUnits.length) {
+      return;
+    }
+    const years = [];
+    const placed: Set<string> = new Set();
+    for (const slot of courseMapUnits) {
+      const definition = this.definitions.find((item) => item.id === slot.unitId);
+      const teachingUnit = this.units.find((item) => item.id === slot.unitId);
+      if (definition && teachingUnit && definition.code !== teachingUnit.code) {
+        this.errorMessage = 'Some saved course-map entries have ambiguous unit IDs.';
+        continue;
+      }
+      const unit = definition ?? teachingUnit;
+      if (
+        !unit ||
+        !Number.isInteger(slot.yearSlot) ||
+        slot.yearSlot < 1 ||
+        !Number.isInteger(slot.teachingPeriodSlot) ||
+        slot.teachingPeriodSlot < 1 ||
+        slot.teachingPeriodSlot > 3 ||
+        !Number.isInteger(slot.unitSlot) ||
+        slot.unitSlot < 1 ||
+        slot.unitSlot > 4 ||
+        placed.has(unit.code)
+      ) {
+        this.errorMessage = 'Some saved course-map entries could not be displayed.';
+        continue;
+      }
+      let year = years.find((item) => item.year === slot.yearSlot);
+      if (!year) {
+        year = {
+          year: slot.yearSlot,
+          trimester1: Array(4).fill(null),
+          trimester2: Array(4).fill(null),
+          trimester3: Array(4).fill(null),
         };
-        this.years.push(existingYear);
+        years.push(year);
       }
-
-      switch (unit.teachingPeriodSlot) {
-        case 1:
-          if (!existingYear.trimester1.includes(unit)) {
-            existingYear.trimester1.push(unit);
-          }
-          break;
-        case 2:
-          if (!existingYear.trimester2.includes(unit)) {
-            existingYear.trimester2.push(unit);
-          }
-          break;
-        case 3:
-          if (!existingYear.trimester3.includes(unit)) {
-            existingYear.trimester3.push(unit);
-          }
-          break;
-        default:
-          console.warn('Unknown teaching period slot:', unit.teachingPeriodSlot);
+      const trimester = year[this.trimesterKeys[slot.teachingPeriodSlot - 1]];
+      if (trimester[slot.unitSlot - 1]) {
+        this.errorMessage = 'Some saved course-map entries occupy the same slot.';
+        continue;
       }
-    });
-    console.log(this.years[0]);
+      trimester[slot.unitSlot - 1] = unit;
+      placed.add(unit.code);
+    }
+    if (years.length) {
+      this.years = years.sort((a, b) => a.year - b.year);
+    }
+    this.requiredUnits = this.requiredUnits.filter((unit) => !placed.has(unit.code));
   }
 
   years = [
     {
-      year: 0,
+      year: new Date().getFullYear(),
       trimester1: [null, null, null, null],
       trimester2: [null, null, null, null],
       trimester3: [null, null, null, null],
@@ -266,8 +185,7 @@ export class CoursemapComponent implements OnInit {
   ];
 
   maxElectiveUnits = 5;
-  electiveUnits: Unit[] = [];
-  allTrimesters = [this.years[0].trimester1, this.years[0].trimester2, this.years[0].trimester3];
+  electiveUnits: CourseUnit[] = [];
 
   getTrimesterNumber(key: string): number {
     return parseInt(key.replace('trimester', ''), 10);
@@ -292,7 +210,7 @@ export class CoursemapComponent implements OnInit {
           year[trimesterKey].forEach((unit: CourseUnit | null) => {
             if (unit) {
               // Check if the unit's ID is NOT in the requiredUnits list
-              const isRequired = this.requiredUnits.some((reqUnit) => reqUnit.id === unit.id);
+              const isRequired = this.requiredCodes.has(unit.code);
               if (!isRequired) {
                 // If it's not required, it's considered an elective for counting purposes
                 count++;
@@ -310,51 +228,49 @@ export class CoursemapComponent implements OnInit {
       this.years.length > 0 ? this.years[this.years.length - 1].year + 1 : new Date().getFullYear();
     const newYear = {
       year: nextYear,
-      trimester1: [],
-      trimester2: [],
-      trimester3: [],
+      trimester1: Array(4).fill(null),
+      trimester2: Array(4).fill(null),
+      trimester3: Array(4).fill(null),
     };
     this.years.push(newYear);
   }
 
-  deleteYear(index: number) {
+  private returnUnit(unit: CourseUnit): void {
+    if (this.requiredCodes.has(unit.code)) {
+      if (!this.requiredUnits.some((item) => item.code === unit.code)) {
+        this.requiredUnits.push(unit as UnitDefinition);
+      }
+    } else if (!this.electiveUnits.some((item) => item.code === unit.code)) {
+      this.electiveUnits.push(unit);
+    }
+  }
+
+  deleteYear(index: number): void {
+    const year = this.years[index];
+    if (!year) {
+      return;
+    }
+    this.trimesterKeys.forEach((key) =>
+      year[key]?.forEach((unit) => unit && this.returnUnit(unit)),
+    );
     this.years.splice(index, 1);
   }
 
-  deleteTrimester(yearIndex: number, trimesterIndex: number) {
+  deleteTrimester(yearIndex: number, trimesterIndex: number): void {
     const year = this.years[yearIndex];
-    if (!year) {
-      console.error(`Cannot delete trimester: Year at index ${yearIndex} not found.`);
+    const key = this.trimesterKeys[trimesterIndex];
+    if (!year || !key) {
       return;
     }
-
-    const trimesterKey = this.trimesterKeys[trimesterIndex]; // Use the keys array
-    const trimesterToDelete = year[trimesterKey];
-
-    if (trimesterToDelete && Array.isArray(trimesterToDelete)) {
-      const validUnits = trimesterToDelete.filter((unit): unit is CourseUnit => unit !== null);
-
-      // Iterate through units in the deleted trimester
-      validUnits.forEach((unit) => {
-        // Check if the unit is a required unit
-        const isRequired = this.requiredUnits.some((reqUnit) => reqUnit.id === unit.id);
-
-        if (isRequired) {
-          // If required, add it back to the requiredUnits list if not already present
-          if (!this.requiredUnits.some((reqUnit) => reqUnit.id === unit.id)) {
-            this.requiredUnits.push(unit as UnitDefinition); // Cast needed
-            console.log(`Moved required unit ${unit.code} back to list from deleted trimester.`);
-          }
-        }
-      });
-    }
-
-    year[trimesterKey] = null;
-    console.log(`Deleted ${trimesterKey} from year ${yearIndex}`);
+    year[key]?.forEach((unit) => unit && this.returnUnit(unit));
+    year[key] = null;
   }
 
   addTrimester(yearIndex: number) {
     const year = this.years[yearIndex];
+    if (!year) {
+      return;
+    }
 
     if (!year.trimester1) {
       year.trimester1 = [null, null, null, null];
@@ -370,13 +286,21 @@ export class CoursemapComponent implements OnInit {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   countTrimesters(year: any): number {
     let trimesterCount = 0;
-    if (year.trimester1) trimesterCount++;
-    if (year.trimester2) trimesterCount++;
-    if (year.trimester3) trimesterCount++;
+    if (year.trimester1) {
+      trimesterCount++;
+    }
+    if (year.trimester2) {
+      trimesterCount++;
+    }
+    if (year.trimester3) {
+      trimesterCount++;
+    }
     return trimesterCount;
   }
 
-  drop(event: CdkDragDrop<SlotContext | CourseUnit[], CdkDrag<DraggedUnitData>, DraggedUnitData>) {
+  drop(
+    event: CdkDragDrop<SlotContext | CourseUnit[], SlotContext | CourseUnit[], DraggedUnitData>,
+  ) {
     const previousContainer = event.previousContainer;
     const currentContainer = event.container;
     const previousIndex = event.previousIndex;
@@ -384,7 +308,19 @@ export class CoursemapComponent implements OnInit {
 
     // Data of the item being dragged (from [cdkDragData])
     const draggedData = event.item.data;
+    if (!draggedData?.unit) {
+      return;
+    }
     const unitToMove = draggedData.unit;
+    const source =
+      draggedData.sourceContainerId === 'slot'
+        ? this.years[draggedData.sourceYearIndex]?.[draggedData.sourceTrimesterKey]
+        : previousContainer.data;
+    const sourceIndex =
+      draggedData.sourceContainerId === 'slot' ? draggedData.sourceSlotIndex : previousIndex;
+    if (!Array.isArray(source) || source[sourceIndex] !== unitToMove) {
+      return;
+    }
 
     // Data of the target container (from [cdkDropListData])
     const targetContainerData = currentContainer.data;
@@ -406,7 +342,10 @@ export class CoursemapComponent implements OnInit {
         // Dropping onto a slot
         const targetContext = targetContainerData as SlotContext;
         const {yearIndex, trimesterKey, slotIndex} = targetContext;
-        const targetTrimesterArray = this.years[yearIndex][trimesterKey];
+        const targetTrimesterArray = this.years[yearIndex]?.[trimesterKey];
+        if (!targetTrimesterArray || slotIndex < 0 || slotIndex >= 4) {
+          return;
+        }
         const existingUnitInSlot = targetTrimesterArray[slotIndex];
 
         if (!existingUnitInSlot) {
@@ -442,6 +381,12 @@ export class CoursemapComponent implements OnInit {
       } else {
         // Dropping onto a list (requiredUnits or electiveUnits)
         const targetList = targetContainerData as CourseUnit[];
+        if (
+          (targetList === this.requiredUnits) !== this.requiredCodes.has(unitToMove.code) ||
+          targetList.some((unit) => unit.code === unitToMove.code)
+        ) {
+          return;
+        }
 
         if (sourceIsSlot) {
           // Moving from a slot to a list
@@ -464,7 +409,7 @@ export class CoursemapComponent implements OnInit {
   }
 
   fetchUnitByCode(): void {
-    if (!this.unitCode) {
+    if (!this.unitCode.trim()) {
       this.errorMessage = 'Please enter a unit code';
       return;
     }
@@ -483,7 +428,7 @@ export class CoursemapComponent implements OnInit {
         if (year[trimesterKey]) {
           year[trimesterKey].forEach((unit: CourseUnit | null) => {
             if (unit?.code === trimmedCode) {
-              const isRequired = this.requiredUnits.some((reqUnit) => reqUnit.id === unit.id);
+              const isRequired = this.requiredCodes.has(unit.code);
               if (!isRequired) {
                 electiveAlreadyInSlots = true;
               }
@@ -507,7 +452,7 @@ export class CoursemapComponent implements OnInit {
     const foundUnit = this.units.find((unit) => unit.code === trimmedCode);
 
     if (foundUnit) {
-      const isRequired = this.requiredUnits.some((reqUnit) => reqUnit.id === foundUnit.id);
+      const isRequired = this.requiredCodes.has(foundUnit.code);
       if (isRequired) {
         this.errorMessage = `Unit ${trimmedCode} is a required unit, not an elective.`;
         return;
@@ -539,14 +484,7 @@ export class CoursemapComponent implements OnInit {
         `Removed unit ${unitToRemove.code} from slot ${yearIndex}-${trimesterKey}-${slotIndex}`,
       );
 
-      const isRequired = this.requiredUnits.some((reqUnit) => reqUnit.id === unitToRemove.id);
-
-      if (isRequired) {
-        if (!this.requiredUnits.some((reqUnit) => reqUnit.id === unitToRemove.id)) {
-          this.requiredUnits.push(unitToRemove as UnitDefinition); // Cast needed if CourseUnit type
-          console.log(`Added required unit ${unitToRemove.code} back to list.`);
-        }
-      }
+      this.returnUnit(unitToRemove);
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

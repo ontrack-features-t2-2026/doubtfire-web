@@ -1,15 +1,13 @@
-import {Unit, CourseMapUnit} from 'src/app/api/models/doubtfire-model';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import API_URL from 'src/app/config/constants/apiURL';
+import {CourseMapUnit, Unit} from 'src/app/api/models/doubtfire-model';
+import API_URL from 'src/app/config/constants/apiUrl';
 
 @Injectable({
   providedIn: 'root',
-}
-)
+})
 export class CourseMapUnitService {
-
   constructor(private http: HttpClient) {}
 
   private baseUrl: string = `${API_URL}/coursemapunit`;

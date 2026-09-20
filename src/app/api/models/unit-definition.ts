@@ -4,4 +4,3 @@ export interface UnitDefinition {
   description: string;
   code: string;
 }
-

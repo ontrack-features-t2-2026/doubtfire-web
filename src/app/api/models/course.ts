@@ -6,4 +6,3 @@ export interface Course {
   version: string;
   url: string;
 }
-

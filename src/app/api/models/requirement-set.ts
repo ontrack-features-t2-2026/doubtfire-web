@@ -5,4 +5,3 @@ export interface RequirementSet {
   unitId: number;
   requirementId: number;
 }
-

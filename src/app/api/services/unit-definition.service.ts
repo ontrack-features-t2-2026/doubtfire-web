@@ -1,12 +1,11 @@
-import {UnitDefinition} from 'src/app/api/models/doubtfire-model';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {HttpClient, HttpParams} from '@angular/common/http';
-
-import API_URL from 'src/app/config/constants/apiURL';
+import {UnitDefinition} from 'src/app/api/models/doubtfire-model';
+import API_URL from 'src/app/config/constants/apiUrl';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UnitDefinitionService {
   constructor(private http: HttpClient) {}
@@ -15,7 +14,7 @@ export class UnitDefinitionService {
 
   // Get unit-definitions
   getDefinitions(): Observable<UnitDefinition[]> {
-    console.log("fetched unit definitions");
+    console.log('fetched unit definitions');
     return this.http.get<UnitDefinition[]>(this.baseUrl);
   }
 
@@ -24,7 +23,7 @@ export class UnitDefinitionService {
     return this.http.get<UnitDefinition>(url);
   }
 
-  searchUnitDefinitions(searchId?:number, searchName?: string, ): Observable<[UnitDefinition]> {
+  searchUnitDefinitions(searchId?: number, searchName?: string): Observable<[UnitDefinition]> {
     let params = new HttpParams();
     if (searchId) {
       params = params.set('id', searchId.toString());
@@ -42,12 +41,12 @@ export class UnitDefinitionService {
     code: string,
     version: string,
   ): Observable<UnitDefinition> {
-    let params = new HttpParams();
+    const params = new HttpParams();
     params.set('name', name);
     params.set('description', description);
     params.set('code', code);
     params.set('version', version);
-    console.log("added unit definition");
+    console.log('added unit definition');
     return this.http.post<UnitDefinition>(this.baseUrl, {params});
   }
 
@@ -67,14 +66,14 @@ export class UnitDefinitionService {
     return this.http.put<UnitDefinition>(url, {params});
   }
 
-  deleteUnitDefinition(unitId:number): Observable<void> {
+  deleteUnitDefinition(unitId: number): Observable<void> {
     const params = new HttpParams();
     const url = `${this.baseUrl}/:id:`;
     params.set('unitId', unitId.toString());
     return this.http.delete<void>(url, {params});
   }
 
-  removeUnitFromUnitDefinition(unitId:number, unitDefinitionId:number): Observable<void> {
+  removeUnitFromUnitDefinition(unitId: number, unitDefinitionId: number): Observable<void> {
     const params = new HttpParams();
     const url = `${this.baseUrl}/:id:`;
     params.set('unitId', unitId.toString());

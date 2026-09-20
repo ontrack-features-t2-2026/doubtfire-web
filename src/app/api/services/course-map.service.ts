@@ -1,14 +1,13 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { CourseMap } from '../models/doubtfire-model';
-import API_URL from 'src/app/config/constants/apiURL';
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import API_URL from 'src/app/config/constants/apiUrl';
+import {CourseMap} from '../models/doubtfire-model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CourseMapService {
-
   private baseUrl: string = `${API_URL}/coursemap`;
   constructor(private http: HttpClient) {}
 
@@ -27,13 +26,13 @@ export class CourseMapService {
   // Add a new course map
   addCourseMap(userId: number, courseId: number): Observable<CourseMap> {
     const url = `${this.baseUrl}`;
-    return this.http.post<CourseMap>(url, { userId, courseId });
+    return this.http.post<CourseMap>(url, {userId, courseId});
   }
 
   // Update an existing course map by its ID
   updateCourseMap(courseMapId: number, userId: number, courseId: number): Observable<CourseMap> {
     const url = `${this.baseUrl}/courseMapId/${courseMapId}`;
-    return this.http.put<CourseMap>(url, { userId, courseId });
+    return this.http.put<CourseMap>(url, {userId, courseId});
   }
 
   // Delete a course map by its ID

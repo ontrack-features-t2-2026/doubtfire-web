@@ -1,7 +1,7 @@
-import {Observable} from 'rxjs';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import API_URL from 'src/app/config/constants/apiURL';
+import {Observable} from 'rxjs';
+import API_URL from 'src/app/config/constants/apiUrl';
 
 @Injectable()
 export class RequirementSet {
@@ -25,7 +25,8 @@ export class RequirementSet {
     name: string,
     description: string,
     unitId: string,
-    requirementId: number): Observable<RequirementSet> {
+    requirementId: number,
+  ): Observable<RequirementSet> {
     const params = new HttpParams();
 
     params.set('requirementSetId', requirementSetGroupId.toString());
@@ -41,7 +42,8 @@ export class RequirementSet {
     requirementSetGroupId: number,
     name: string,
     description: string,
-    code: string,): Observable<RequirementSet> {
+    _code: string,
+  ): Observable<RequirementSet> {
     const params = new HttpParams();
 
     params.set('requirementSetId', requirementSetGroupId.toString());
@@ -54,5 +56,4 @@ export class RequirementSet {
     const url = `${this.baseUrl}/requirementSetId/${requirementSetGroupId}`;
     return this.http.delete<RequirementSet>(url);
   }
-
 }

@@ -378,5 +378,4 @@ export class UnitService extends CachedEntityService<Unit> {
     const url = `${API_URL}/units/`;
     return this.http.get<Unit[]>(url);
   }
-
 }
