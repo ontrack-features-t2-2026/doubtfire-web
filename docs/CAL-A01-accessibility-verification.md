@@ -25,7 +25,13 @@ The real local application was exercised through keyboard input in the Codex in-
 
 ![Download options at phone width](calendar/evidence-20260921/keyboard-mobile-download.png)
 
-No screen reader was run and no recording was captured. Accessibility-tree text is not evidence that a screen reader announced it. The Mac locked before the native-app portion could be completed. **CAL-A01 remains open** for the screen-reader session and recording, plus the unchecked items below.
+The first native-app attempt paused when the Mac locked. The task later resumed after the Mac was unlocked, but no successful screen-reader session or recording has been verified. Accessibility-tree text is not evidence that a screen reader announced it. **CAL-A01 remains open** for the screen-reader session and recording.
+
+### Resumed attempt and current environment blocker
+
+On the resumed attempt, VoiceOver was switched on in macOS settings, but the native-app inventory continued to report `isRunning: false`; two direct launch attempts timed out. No actual VoiceOver speech or live caption output was observed. OBS 32.1.2 crashed during initial scene creation and was recovered in Safe Mode. An empty **OnTrack CAL-A01 Evidence** scene was added and Mic/Aux was muted, but no recording was started.
+
+Native UI automation then repeatedly failed with `codex app-server exited before returning a response`. A fresh CUA reset also failed with `Sky Computer Use native pipe startup failed`, preventing further testing or cleanup. The final attempt to turn VoiceOver off ended with the same app-server failure, so its final setting is unverified. These are verification-environment failures, not evidence that the calendar controls passed or failed screen-reader use. A working native UI connection is required to verify the setting, complete the actual screen-reader pass and attach the recording to the PR.
 
 ## Remaining validation
 
