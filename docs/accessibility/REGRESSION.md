@@ -1,6 +1,6 @@
 # Manual accessibility regression pack
 
-This is the reusable A11Y-T02 test pack. It is a procedure, not a record of passing tests. Use the [baseline](https://github.com/ontrack-features-t2-2026/doubtfire-web/pull/243) and record results in the format below. [Automated commands](AUTHORING.md#verification-and-pr-evidence) complement these checks.
+This is the reusable A11Y-T02 test pack. It is a procedure, not a record of passing tests. Use the [merged baseline](../A11Y-D01-Accessibility-Baseline_Phase1.md) and record results in the format below. The local `npm run test:a11y` gate and [other automated commands](AUTHORING.md#verification-and-pr-evidence) complement these checks; jsdom scans leave contrast, incomplete results, actual keyboard behaviour and assistive-technology output for the relevant browser/manual checks.
 
 ## Setup and run record
 

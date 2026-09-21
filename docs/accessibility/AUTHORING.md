@@ -1,6 +1,6 @@
 # Accessibility contribution guide
 
-Use this guide for frontend changes and reviews. WCAG 2.2 AA is the improvement target, not a claim of compliance. Start with the [A11Y-D01 baseline PR](https://github.com/ontrack-features-t2-2026/doubtfire-web/pull/243), the [manual regression pack](REGRESSION.md), and the [remediation and handover register](REMEDIATION.md). The register distinguishes merged code, proposed fixes, and checks still needing a person.
+Use this guide for frontend changes and reviews. WCAG 2.2 AA is the improvement target, not a claim of compliance. Start with the [merged A11Y-D01 baseline](../A11Y-D01-Accessibility-Baseline_Phase1.md), the [manual regression pack](REGRESSION.md), and the [remediation and handover register](REMEDIATION.md). The register distinguishes merged code, changes awaiting review, and checks still needing a person.
 
 ## Controls and structure
 
@@ -48,6 +48,7 @@ Use the Node version in [package.json](../../package.json) and the lockfile. Fro
 npm ci
 npm run lint
 npm run typecheck
+npm run test:a11y
 npm run test:ci
 npm run build
 ```
@@ -58,6 +59,26 @@ Run targeted component tests through the Angular runner, which compiles template
 npx ng test --no-watch --no-progress --include='src/app/common/pdf-viewer/pdf-viewer.component.spec.ts'
 ```
 
-Add regression coverage to a rendered component/overlay for the behaviour changed: accessible name and state, keyboard activation, focus restoration, errors, or announcements. A test that replaces the template with an empty string cannot establish template accessibility. Include a relevant negative case so a removed label or lost key path causes a failure. Do not cite a helper that is not present in the branch being reviewed.
+Use the local [expectAccessible helper](../../src/app/common/testing/accessibility.ts) in an asynchronous test with real timers. Render the real component template and attach its fixture to the document before scanning; a detached element is rejected. For example, after configuring the real component and its dependencies with TestBed:
+
+```ts
+import {expectAccessible} from 'src/app/common/testing/accessibility';
+
+it('exposes accessible controls', async () => {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  const element = fixture.nativeElement as HTMLElement;
+  expect(element.isConnected).toBe(true);
+  const results = await expectAccessible(element);
+  expect(results.violations).toEqual([]);
+  // Review results.incomplete separately; it is not a list of passing checks.
+});
+```
+
+For Material menus/dialogs, open the real overlay and scan its attached content, then close it during cleanup. The helper disables **only `color-contrast`** because jsdom cannot measure layout/colour reliably. It does not fetch external stylesheets, apply a severity filter, or maintain an accepted-violations baseline. A detected violation fails with rule names and selectors; incomplete results remain available for manual investigation. Check contrast using the status-colour math tests, compiled theme tests, and actual browser measurements. A clean DOM scan does not establish keyboard activation, geometry, screen-reader output or full WCAG conformance.
+
+Keep behavioural regression tests alongside the scan: accessible state, keyboard activation, focus restoration, errors and announcements. A test that replaces the template with an empty string cannot establish template accessibility. Include a negative case so a removed label or lost key path causes a failure; the [helper tests](../../src/app/common/testing/accessibility.spec.ts) demonstrate unnamed-button and unassociated-label failures.
+
+Preserve the existing theme CI check, `npx vitest run scripts/theme/theme-surfaces.spec.ts`, as well as `test:a11y` and the full Angular suite. The theme script tests compiled styles/configuration directly; Angular component tests still use `ng test`. If the separate coverage PR switches the full suite to `test:coverage`, retain that command and its artifact upload alongside the accessibility gate rather than replacing them.
 
 Record the exact web/API/deploy commit combination, command results and relevant [manual test IDs](REGRESSION.md) in the PR. Mark unrun checks as not run with a reason. Attach only sanitised demonstration evidence. Automated checks find some defects; they do not establish screen-reader usability, complete journeys or full WCAG conformance. A developer and an independent tester should review the evidence before the maintainer merges.
