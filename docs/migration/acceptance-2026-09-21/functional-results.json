@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-21T05:03:24.018Z",
+  "browser": "153.0.8010.48",
+  "webBuildRevision": "a9e7af46f (combined validation artifact; analytics source66e3e2056)",
+  "apiRevision": "d7f7a5b9c2d34ef279ac3a70bc58823def64005c",
+  "unitId": 9,
+  "checks": [
+    "All three charts render real SVG with authenticated API data.",
+    "Whole-unit grade counts, status total and all five completion summary values match actual API payloads.",
+    "Tutorial filter (T1 — Mary Jacobi) matches the API subgroup and affects all three charts.",
+    "Task filter (C0.4 — sint) shows one task and its four tutorial enrolments.",
+    "Grade grouping matches every API grade summary and explicitly uses whole-unit data.",
+    "390px dark-theme screenshot captured for visual inspection; tables retain the numeric values.",
+    "One intercepted503 hides only the failed chart; Retry reloads all actual API statistics and clears the alert."
+  ],
+  "pageErrors": [],
+  "limits": "Synthetic isolated database; TII feature metadata mocked, outbound providers blocked. The503 is injected only in this browser."
+}

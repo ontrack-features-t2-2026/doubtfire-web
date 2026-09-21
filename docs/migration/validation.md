@@ -62,3 +62,12 @@ frontend startup; it is not an authenticated convenor session. The
 [analytics guide](analytics.md#verification) gives the remaining real-data walkthrough
 for a reviewer with a seeded/live API. No production data, author feedback, organisation
 permission changes or Planner card state is claimed by these checks.
+
+## Authenticated follow-up — 21 September 2026
+
+The later [full application acceptance](acceptance-2026-09-21.md) exercised all three
+charts through an authenticated synthetic convenor and the merged API. It records
+source/artifact provenance, actual endpoint values, filters, retry and settled narrow
+visuals. That follow-up found and verified a focused dark-theme SVG label correction;
+its compiled-SCSS overlay evidence is explicitly distinguished from a new Angular build.
+The earlier results above remain the record of their stated revision and scope.
