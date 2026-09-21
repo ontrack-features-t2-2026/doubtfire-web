@@ -93,6 +93,20 @@
   }
 }
 
+@media (max-width: 599.98px) {
+  .unit-card-slot {
+    width: 300px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .unit-card {
+    width: 100%;
+    max-width: 300px;
+    margin-right: 0;
+  }
+}
+
 :host {
   --mat-progress-bar-track-height: 16px;
   --mat-progress-bar-active-indicator-height: 16px;
