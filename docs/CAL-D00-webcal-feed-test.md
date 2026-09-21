@@ -4,7 +4,7 @@ Before treating the WebCal feed as limited, this records what the implementation
 
 ## Feed shape
 
-The feed is a single per-student iCalendar (`Webcal#to_ical`). The calendar declares a product id from the institution config. API PR #147 corrects the refresh value to `PT4H` on both `X-PUBLISHED-TTL` and `REFRESH-INTERVAL`. This is a four-hour refresh hint; each calendar client decides when it actually refreshes.
+The feed is a single per-student iCalendar (`Webcal#to_ical`). The calendar declares a product id from the institution config. Merged API PR #147 corrected the refresh value to `PT4H` on both `X-PUBLISHED-TTL` and `REFRESH-INTERVAL`. This is a four-hour refresh hint; each calendar client decides when it actually refreshes.
 
 ## Which tasks appear
 
@@ -24,7 +24,13 @@ Each task definition produces one **end (due) event**, and also a **start event*
 - **Reminder:** if the student has set a reminder, each event carries a display alarm that triggers the configured time before the event.
 - **Custom properties:** `X-DOUBTFIRE-UNIT` (unit id) and `X-DOUBTFIRE-TASK` (task definition id).
 
-The feed does not set a description, URL, or location on events, and it does not exclude completed tasks; every applicable task definition appears regardless of submission state.
+Task events do not set a description, URL, or location, and the feed does not exclude submitted or completed tasks; every applicable task definition appears regardless of submission state.
+
+## Optional learning sessions
+
+The current API also includes published HelpHubs, lectures and classes when `include_learning_sessions` is enabled. These are timed UTC events with their real end times, stable occurrence UIDs, a sequence and last-modified timestamp, optional location and joining URL. Cancelled sessions carry `STATUS:CANCELLED` and omit joining links. Sessions are restricted to current active units in which the student remains enrolled, and use the same unit exclusions; grade filtering only applies to tasks.
+
+Source checked on 20 September 2026 against API `bb360dfa626f30e22c1382e20ef43c06ce6b38fa` and web `a35f2826ddff8a816175490c108f1794779c3254`. The server's equal task DTSTART/DTEND is a compatibility risk requiring a separate client check; the unit file exporter uses a next-day exclusive end.
 
 ## Calendar-client verification status
 
@@ -34,7 +40,7 @@ The source analysis above has not yet been confirmed in a live calendar client. 
 2. Confirm the event titles and all-day dates against the generated feed.
 3. Exclude a unit through the modal, refresh the subscription, and record whether its events disappear.
 
-Replace this section with the actual observations before claiming client verification is complete.
+Record actual observations before claiming client verification is complete. [CAL-C01](CAL-C01-calendar-compatibility.md) supplies the import fixture and explicitly records which client checks have not been performed.
 
 ## Takeaway
 
