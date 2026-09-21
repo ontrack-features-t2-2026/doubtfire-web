@@ -5,6 +5,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatDialog} from '@angular/material/dialog';
 import {provideNoopAnimations} from '@angular/platform-browser/animations';
+import {of} from 'rxjs';
 import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
@@ -52,7 +53,18 @@ describe('TaskCommentComposerComponent phone actions', () => {
         {provide: EmojiService, useValue: {}},
         {provide: TaskCommentsViewerComponent, useValue: {}},
         {provide: AlertService, useValue: {}},
-        {provide: TaskCommentService, useValue: {}},
+        {
+          provide: TaskCommentService,
+          useValue: {
+            attachmentPolicy: () =>
+              of({
+                version: 1,
+                categories: [],
+                max_bytes_exclusive: 30_000_000,
+                max_selection_count: 5,
+              }),
+          },
+        },
         {provide: UserService, useValue: {currentUser: {id: 1}}},
       ],
       schemas: [NO_ERRORS_SCHEMA],

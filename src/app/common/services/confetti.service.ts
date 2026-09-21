@@ -1,10 +1,17 @@
 import confetti from 'canvas-confetti';
-import {Injectable} from '@angular/core';
+import {Injectable, InjectionToken, inject} from '@angular/core';
+
+export const CONFETTI: InjectionToken<typeof confetti> = new InjectionToken('Confetti', {
+  providedIn: 'root',
+  factory: () => confetti,
+});
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConfettiService {
+  private readonly launch = inject(CONFETTI);
+
   public canon(x: number = 0, y: number = 0, angle = 210): void {
     if (
       typeof window !== 'undefined' &&
@@ -14,7 +21,7 @@ export class ConfettiService {
       return;
     }
 
-    confetti({
+    this.launch({
       angle: angle,
       spread: 80,
       particleCount: 100,
