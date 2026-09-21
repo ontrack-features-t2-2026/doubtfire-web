@@ -173,8 +173,8 @@
         name="commentComposer"
         placeholder="Aa"
         role="textbox"
-        [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
         [attr.aria-disabled]="!contentEditableValue() || recording"
+        [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
         [attr.contenteditable]="contentEditableValue() && !recording"
         [attr.tabindex]="contentEditableValue() && !recording ? 0 : -1"
         [class.active]="($userIsTyping | async) === false"
@@ -197,11 +197,11 @@
         @if (isEditing) {
           <button
             aria-label="Save edited comment"
+            class="composer-inline-action"
             id="saveEditedCommentButton"
+            mat-icon-button
             matTooltip="Save edited comment"
             matTooltipShowDelay="400"
-            class="composer-inline-action"
-            mat-icon-button
             type="button"
             (click)="saveEditedComment()"
           >
@@ -210,11 +210,11 @@
         }
         <button
           aria-label="Choose an emoji"
+          class="composer-inline-action"
           id="emojiButton"
+          mat-icon-button
           matTooltip="Choose an emoji"
           matTooltipShowDelay="400"
-          class="composer-inline-action"
-          mat-icon-button
           type="button"
           [attr.aria-expanded]="showEmojiPicker"
           (click)="this.showEmojiPicker = !this.showEmojiPicker"
@@ -226,11 +226,11 @@
         @if (!isEditing) {
           <button
             aria-label="Choose feedback templates"
+            class="composer-inline-action"
             id="feedbackTemplateButton"
+            mat-icon-button
             matTooltip="Choose feedback templates"
             matTooltipShowDelay="400"
-            class="composer-inline-action"
-            mat-icon-button
             type="button"
             [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
