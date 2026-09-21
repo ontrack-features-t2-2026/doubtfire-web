@@ -52,7 +52,7 @@ A contributor can finish this without production access:
    returns three synthetic active units with 15 tasks, and sends no email or
    push. It substitutes local Monaco assets and blocks new service-worker
    registration; it cannot remove a worker already controlling the origin, so
-   the fresh-profile/site-data step is required. This fixture it is not a backend or push test.
+   the fresh-profile/site-data step is required. This fixture does not exercise the backend or push delivery.
 2. Start VoiceOver on macOS or NVDA on Windows. Record OS, browser and
    screen-reader versions. Use the reader's standard keyboard commands;
    [Apple's VoiceOver command reference](https://support.apple.com/en-ie/guide/voiceover/cpvokys01/mac)
@@ -237,7 +237,8 @@ finishes before rollover initialises, including a delayed response and hard
 reload. Record the current-source/browser evidence on the ticket and close the
 misdiagnosed failure. [Web PR #276](https://github.com/ontrack-features-t2-2026/doubtfire-web/pull/276)
 makes the default independent of API/cache ordering and documents the exact
-selection rule and five regression tests.
+selection rule and five regression tests. Its clean-install CI passed 1,257
+tests plus 14 theme checks, with build, lint and CodeQL also passing.
 Do not claim that this ordering change fixed an empty dropdown.
 
 After the additions have been reviewed, another authorised reviewer decides
