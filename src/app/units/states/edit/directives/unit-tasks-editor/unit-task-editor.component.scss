@@ -14,3 +14,29 @@
   color: #ef4444 !important;
   -webkit-text-fill-color: #ef4444 !important;
 }
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.task-list-surface {
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+}
+
+.task-list-row:hover {
+  background: var(--ot-color-hover);
+}
+
+.task-list-row-selected,
+.task-list-row-selected:hover {
+  background: var(--ot-color-selected);
+  color: var(--ot-color-selected-text);
+}
+
+.empty-task-state {
+  border-color: var(--ot-color-border);
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text-muted);
+}
