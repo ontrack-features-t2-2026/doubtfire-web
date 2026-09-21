@@ -146,6 +146,8 @@ and browser permission.
 
 ## Resources
 
+See the [documentation index](docs/index.md) for setup, feature guides and contributor handovers.
+
 Doubtfire Web is an [Angular](https://angular.dev) application using
 [Angular Material](https://material.angular.dev/). Production is served as a
 static progressive web application by Nginx.
@@ -157,3 +159,9 @@ Refer to [CONTRIBUTING.md](CONTRIBUTING.md)
 ## License
 
 Licensed under GNU Affero General Public License (AGPL) v3
+
+## Frontend maintenance
+
+- [CSS style guide](docs/css-style-guide.md) and [remaining layout catalogue](docs/migration/ui-catalogue.md)
+- [Legacy source audit](docs/migration/legacy-audit.md) and [Unit Statistics charts](docs/migration/analytics.md)
+- [Migration recovery register](docs/migration/recovery-register.md) and [upstream PR triage](docs/migration/open-pr-triage.md)

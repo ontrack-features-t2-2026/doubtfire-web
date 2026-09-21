@@ -4,8 +4,7 @@
 // The bare :root selector means the app is correct in light mode even if the
 // pre-hydration marker script never runs.
 
-:root,
-:root[data-ot-theme='light'] {
+@mixin theme-tokens {
   // --- 7. Semantic ---
   --ot-color-page: #fafafa;
   --ot-color-surface: #ffffff;
@@ -83,4 +82,9 @@
   --ot-color-selected: #e7e7ff;
   --ot-color-selected-text: #212121;
   --ot-color-hover: rgba(0, 0, 0, 0.04);
+}
+
+:root,
+:root[data-ot-theme='light'] {
+  @include theme-tokens;
 }

@@ -70,6 +70,21 @@ describe('buildIcsCalendar', () => {
     expect(ics).toContain('DTEND;VALUE=DATE:20270101');
   });
 
+  it.each([
+    [2028, 1, 28, '20280228', '20280229'],
+    [2028, 1, 29, '20280229', '20280301'],
+    [2026, 9, 4, '20261004', '20261005'],
+    [2026, 3, 5, '20260405', '20260406'],
+  ])(
+    'keeps civil all-day dates at leap/DST boundaries: %i-%i-%i',
+    (year, month, day, start, end) => {
+      const task = buildTask({dueDate: new Date(Number(year), Number(month), Number(day))});
+      const ics = buildIcsCalendar([task]);
+      expect(ics).toContain(`DTSTART;VALUE=DATE:${start}`);
+      expect(ics).toContain(`DTEND;VALUE=DATE:${end}`);
+    },
+  );
+
   it('includes STATUS, X-DOUBTFIRE-UNIT, X-DOUBTFIRE-TASK and UID', () => {
     const dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
     const task = buildTask({unitId: 7, taskDefId: 42, dueDate});

@@ -50,6 +50,24 @@ export class Task extends Entity {
 
   status: TaskStatusEnum = 'not_started';
   dueDate: Date;
+  effectiveDeadline?: Date;
+  effectiveDeadlineDate?: Date;
+  effectiveDeadlineReason?: string;
+  effectiveDeadlineSourceId?: number;
+
+  public get effectiveDeadlineExplanation(): string {
+    switch (this.effectiveDeadlineReason) {
+      case 'post_feedback_extension':
+        return 'Extended after feedback requiring further action.';
+      case 'approved_extension':
+        return 'Includes an approved extension.';
+      case 'flexible_date':
+        return 'Your planned submission date.';
+      default:
+        return 'The standard due date for this task.';
+    }
+  }
+
   extensions: number;
   scormExtensions: number;
   submissionDate: Date;
