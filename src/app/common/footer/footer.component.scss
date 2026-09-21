@@ -202,3 +202,62 @@
     color: rgba(0, 0, 0, 0.25);
   }
 }
+
+// The inbox also exposes this same action bar below the submission on phones.
+// Keep the desktop arrangement intact while allowing every existing action to fit.
+@media (max-width: 599.98px) {
+  .footer {
+    height: auto;
+    min-height: 0;
+    padding: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    white-space: normal;
+
+    .footer-content {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    // The phone submission header already provides student navigation.
+    .footer-student {
+      display: none;
+    }
+
+    .footer-assessment,
+    .footer-utilities {
+      flex: 1 1 100%;
+      min-width: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .center-buttons {
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .button {
+        width: 44px;
+        height: 44px;
+        margin: 0;
+        padding: 10px;
+        transform: none;
+      }
+    }
+
+    .footer-moderation {
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+    .footer-utilities .mat-mdc-icon-button {
+      margin: 0;
+    }
+
+    f-project-progress-bar {
+      flex: 1 1 80px;
+      max-width: 120px;
+      margin: 0 4px;
+    }
+  }
+}

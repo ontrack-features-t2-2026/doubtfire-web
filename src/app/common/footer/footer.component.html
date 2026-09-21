@@ -126,10 +126,10 @@
     </span>
   </ng-template>
 
-  <div class="flex w-full">
-    <f-user-badge class="flex-1" [selectedTask]="selectedTask"></f-user-badge>
+  <div class="footer-content flex w-full">
+    <f-user-badge class="footer-student flex-1" [selectedTask]="selectedTask"></f-user-badge>
     <div
-      class="flex items-center"
+      class="footer-assessment flex items-center"
       [ngClass]="hideMainActionButtonsForModeration ? 'w-full justify-center' : 'justify-between'"
     >
       @if (viewType !== 'moderation' && !hideMainActionButtonsForModeration) {
@@ -147,7 +147,10 @@
                 <ng-container [ngTemplateOutlet]="statusActionButtons"></ng-container>
                 <mat-divider class="mx-2.5" [vertical]="true"></mat-divider>
               } @else {
-                <f-moderation class="ml-[100px] pl-[125px]" [task]="selectedTask"></f-moderation>
+                <f-moderation
+                  class="footer-moderation ml-[100px] pl-[125px]"
+                  [task]="selectedTask"
+                ></f-moderation>
               }
 
               <button
@@ -183,7 +186,7 @@
       }
     </div>
 
-    <div class="flex flex-1 flex-row items-center justify-end">
+    <div class="footer-utilities flex flex-1 flex-row items-center justify-end">
       <!-- @if (selectedTask?.similaritiesDetected) {
         <div class="relative inline-block">
           <div
