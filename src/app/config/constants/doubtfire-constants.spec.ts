@@ -266,4 +266,16 @@ describe('DoubtfireConstants', () => {
     expect(service.IsPushEnabled.value).toBe(false);
     expect(service.VapidPublicKey.value).toBe('');
   });
+  it('keeps tutorial disabled for older APIs and accepts only an explicit authenticated true', () => {
+    const service = bootstrap();
+    const base = {overseerEnabled: false, tiiEnabled: false, d2lEnabled: false};
+    expect(service.IsTutorialEnabled.value).toBe(false);
+    service.applyAuthenticatedSettings({...base, tutorialEnabled: true});
+    expect(service.IsTutorialEnabled.value).toBe(true);
+    service.applyAuthenticatedSettings(base);
+    expect(service.IsTutorialEnabled.value).toBe(false);
+    service.applyAuthenticatedSettings({...base, tutorialEnabled: true});
+    service.resetAuthenticatedSettings();
+    expect(service.IsTutorialEnabled.value).toBe(false);
+  });
 });

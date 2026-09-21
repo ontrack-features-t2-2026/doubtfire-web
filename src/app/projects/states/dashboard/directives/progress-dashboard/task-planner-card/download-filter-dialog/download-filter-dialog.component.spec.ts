@@ -121,7 +121,9 @@ describe('DownloadFilterDialogComponent', () => {
       'mat-dialog-actions button[color="primary"]',
     );
     expect(confirmButton.disabled).toBe(true);
-    expect(fixture.nativeElement.textContent).toContain('No tasks match this selection.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No tasks with due dates match this selection.',
+    );
   });
 
   it('enables confirm when the selection matches at least one task', () => {
@@ -133,6 +135,21 @@ describe('DownloadFilterDialogComponent', () => {
       'mat-dialog-actions button[color="primary"]',
     );
     expect(confirmButton.disabled).toBe(false);
+  });
+
+  it('announces the result count and the empty state in a persistent status region', () => {
+    matchingTaskCountStub.mockReturnValue(2);
+    fixture.detectChanges();
+    const status: HTMLElement = fixture.nativeElement.querySelector('[role="status"]');
+    expect(status.getAttribute('aria-atomic')).toBe('true');
+    expect(status.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '2 tasks with due dates ready to download.',
+    );
+
+    matchingTaskCountStub.mockReturnValue(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="status"]')).toBe(status);
+    expect(status.textContent).toContain('No tasks with due dates match this selection.');
   });
 
   it('closes the dialog with the current selection when confirmed', () => {

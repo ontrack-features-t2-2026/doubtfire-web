@@ -5,6 +5,7 @@
     </div>
     <mat-slide-toggle
       #webcalToggle
+      aria-label="Enable web calendar"
       class="mr-5 shrink-0"
       matTooltipPosition="above"
       [checked]="webcal && webcal.enabled"
@@ -19,7 +20,13 @@
 
   <div class="!max-h-none min-h-0 flex-1 overflow-y-auto" mat-dialog-content>
     @if (!webcal) {
-      <mat-progress-spinner class="mx-auto" color="accent" mode="indeterminate" [diameter]="36">
+      <mat-progress-spinner
+        aria-label="Loading web calendar"
+        class="mx-auto"
+        color="accent"
+        mode="indeterminate"
+        [diameter]="36"
+      >
       </mat-progress-spinner>
     }
 
@@ -52,39 +59,40 @@
 
             <mat-card-content>
               <div class="pb-4">
-                <mat-chip-listbox>
+                <mat-chip-set aria-label="Included units" role="group">
                   @for (project of includedProjects; track project) {
-                    <mat-chip-option
-                      [disabled]="working"
-                      [removable]="true"
-                      [selectable]="false"
-                      (removed)="includeExclusion(project)"
-                    >
+                    <mat-chip [disabled]="working" (removed)="includeExclusion(project)">
                       {{ project.unit.code }} {{ project.unit.name }}
-                      <mat-icon matChipRemove>cancel</mat-icon>
-                    </mat-chip-option>
+                      <button
+                        matChipRemove
+                        type="button"
+                        [attr.aria-label]="'Exclude ' + project.unit.code + ' from web calendar'"
+                        [disabled]="working"
+                        [tabIndex]="0"
+                      >
+                        <mat-icon aria-hidden="true">cancel</mat-icon>
+                      </button>
+                    </mat-chip>
                   }
-                  @if (excludedProjects.length > 0) {
-                    <mat-chip-option
-                      [disabled]="working"
-                      [matMenuTriggerFor]="menu"
-                      [selectable]="false"
-                    >
-                      <mat-icon class="mt-1">add</mat-icon>
-                      <mat-menu #menu="matMenu">
-                        @for (project of excludedProjects; track project) {
-                          <button
-                            mat-menu-item
-                            [disabled]="working"
-                            (click)="removeExclusion(project)"
-                          >
-                            {{ project.unit.code }} {{ project.unit.name }}
-                          </button>
-                        }
-                      </mat-menu>
-                    </mat-chip-option>
-                  }
-                </mat-chip-listbox>
+                </mat-chip-set>
+                @if (excludedProjects.length > 0) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="working"
+                    [matMenuTriggerFor]="menu"
+                  >
+                    <mat-icon aria-hidden="true">add</mat-icon>
+                    Add unit
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    @for (project of excludedProjects; track project) {
+                      <button mat-menu-item [disabled]="working" (click)="removeExclusion(project)">
+                        {{ project.unit.code }} {{ project.unit.name }}
+                      </button>
+                    }
+                  </mat-menu>
+                }
               </div>
 
               <mat-checkbox
@@ -129,6 +137,7 @@
                     newReminderUnit !== webcal.reminder.unit))
               ) {
                 <button
+                  aria-label="Save reminder changes"
                   class="ml-4"
                   color="primary"
                   mat-icon-button
@@ -140,6 +149,7 @@
                   <mat-icon>save</mat-icon>
                 </button>
                 <button
+                  aria-label="Cancel reminder changes"
                   mat-icon-button
                   matTooltip="Cancel"
                   matTooltipPosition="above"

@@ -15,9 +15,13 @@
     <td *matCellDef="let upreq" mat-cell style="width: 20%">
       <mat-select placeholder="File Type" [(ngModel)]="upreq.type">
         <mat-option value="code">Code</mat-option>
-        <mat-option value="document">Document</mat-option>
+        <mat-option value="document">PDF</mat-option>
+        <mat-option value="csv">Spreadsheet (CSV, XLS, XLSX)</mat-option>
         <mat-option value="image">Image</mat-option>
-        <mat-option value="zip">ZIP</mat-option>
+        <mat-option value="zip">Archive (ZIP, TAR, TAR.GZ, TGZ)</mat-option>
+        @if (upreq.type === 'archive') {
+          <mat-option value="archive">Archive (legacy)</mat-option>
+        }
       </mat-select>
     </td>
   </ng-container>

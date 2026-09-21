@@ -16,4 +16,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Check theme first paint, compiled surfaces and contrast
+        run: npx vitest run scripts/theme/theme-surfaces.spec.ts
       - run: npm run test:ci

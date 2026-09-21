@@ -24,6 +24,7 @@ import {TaskCommentsViewerComponent} from './task-comments-viewer.component';
 const taskCommentServiceStub = {
   commentAdded$: EMPTY,
   fetchAll: vi.fn(),
+  downloadAttachment: vi.fn(),
 };
 const taskServiceStub = {
   taskStatusUpdated$: EMPTY,
@@ -55,6 +56,13 @@ describe('TaskCommentsViewerComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(TaskCommentsViewerComponent);
     component = fixture.componentInstance;
+  });
+
+  it('routes drag and drop through the composer confirmation and policy flow', () => {
+    component.commentComposer = {uploadFiles: vi.fn()};
+    const files = [new File(['a,b'], 'results.csv')];
+    component.uploadFiles(files);
+    expect(component.commentComposer.uploadFiles).toHaveBeenCalledWith(files);
   });
 
   it('should create', () => {
@@ -172,6 +180,24 @@ describe('TaskCommentsViewerComponent bubble actions', () => {
     fixture.detectChanges();
     component.loading = false;
     fixture.detectChanges();
+  });
+
+  it('shows generic attachment metadata as text and downloads through the authorized service', () => {
+    Object.assign(comment, {
+      commentType: 'spreadsheet',
+      attachmentFileName: '<img src=x onerror=alert(1)>.xlsx',
+      attachmentByteSize: 1024,
+    });
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector(
+      'button[aria-label^="Download "]',
+    ) as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.getAttribute('aria-label')).toContain('<img src=x onerror=alert(1)>.xlsx');
+    expect(fixture.nativeElement.textContent).toContain('Download only');
+    expect(fixture.nativeElement.querySelector('img, iframe, object, embed')).toBeNull();
+    button.click();
+    expect(taskCommentServiceStub.downloadAttachment).toHaveBeenCalledWith(comment);
   });
 
   it('renders accessible empty-state text from the real template after loading', () => {

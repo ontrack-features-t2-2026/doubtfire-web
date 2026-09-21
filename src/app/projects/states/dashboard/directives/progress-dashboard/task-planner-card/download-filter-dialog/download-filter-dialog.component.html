@@ -22,11 +22,18 @@
 
   <p class="mb-3 text-sm text-[color:var(--ot-color-text-muted)]">{{ directionLabel }}</p>
 
-  <mat-checkbox [(ngModel)]="excludeCompleted">Exclude completed tasks</mat-checkbox>
+  <mat-checkbox [(ngModel)]="excludeCompleted">
+    Exclude submitted and completed tasks
+  </mat-checkbox>
 
-  @if (!canConfirm) {
-    <p class="mt-3 text-sm text-red-600">No tasks match this selection.</p>
-  }
+  <p aria-atomic="true" class="mt-3 text-sm" role="status">
+    @if (canConfirm) {
+      {{ matchingTaskCount }} {{ matchingTaskCount === 1 ? 'task' : 'tasks' }} with due dates ready
+      to download.
+    } @else {
+      No tasks with due dates match this selection.
+    }
+  </p>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
