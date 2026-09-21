@@ -105,7 +105,6 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
 
   panelOpenState = false;
   loading = true;
-  skeletonRows = Array.from({length: 12}, (_, index) => index);
 
   definedTasksPipe = new TasksOfTaskDefinitionPipe();
   tasksInTutorialsPipe = new TasksInTutorialsPipe();

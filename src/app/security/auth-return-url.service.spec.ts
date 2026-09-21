@@ -88,4 +88,48 @@ describe('AuthReturnUrlService', () => {
 
     expect(service.consume()).toBeNull();
   });
+
+  it('keeps a one-use in-memory destination when browser storage is blocked', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Blocked', 'SecurityError');
+    });
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Blocked', 'SecurityError');
+    });
+
+    expect(service.remember('/projects/2/dashboard')).toBe(true);
+    expect(service.consume()).toBe('/projects/2/dashboard');
+    expect(service.consume()).toBeNull();
+  });
+
+  it.each(['not-json', 'null', '[]', '{"url":42,"capturedAt":1000}'])(
+    'ignores corrupt stored state %s after a page reload',
+    (stored) => {
+      sessionStorage.setItem('doubtfire_auth_return_url', stored);
+      expect(new AuthReturnUrlService().consume()).toBeNull();
+      expect(sessionStorage.getItem('doubtfire_auth_return_url')).toBeNull();
+    },
+  );
+
+  it('rejects a future timestamp and removes it permanently', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    sessionStorage.setItem(
+      'doubtfire_auth_return_url',
+      JSON.stringify({url: '/projects/2', capturedAt: 2_000}),
+    );
+    expect(service.consume()).toBeNull();
+    expect(service.consume()).toBeNull();
+  });
+
+  it('accepts a return at the expiry boundary but rejects it one millisecond later', () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    service.remember('/projects/2');
+    now.mockReturnValue(1_000 + 30 * 60 * 1_000);
+    expect(service.consume()).toBe('/projects/2');
+
+    now.mockReturnValue(1_000);
+    service.remember('/projects/2');
+    now.mockReturnValue(1_001 + 30 * 60 * 1_000);
+    expect(service.consume()).toBeNull();
+  });
 });

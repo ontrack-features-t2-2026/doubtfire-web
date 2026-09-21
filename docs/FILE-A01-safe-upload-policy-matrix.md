@@ -1,3 +1,5 @@
+> Implementation update: see [the tested upload and chat guide](safe-upload-and-chat-guide.md) for the current contract, spreadsheet pipeline correction, chat XLS exclusion and exact limits. This document retains the earlier design record.
+
 # FILE-A01 Current vs Approved Format and Limit Matrix
 
 ## Policy Principles

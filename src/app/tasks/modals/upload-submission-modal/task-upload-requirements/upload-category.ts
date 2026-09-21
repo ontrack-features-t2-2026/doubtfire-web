@@ -2,7 +2,7 @@ import {UploadRequirement} from 'src/app/api/models/task-definition';
 import {ACCEPTED_TYPES} from 'src/app/common/file-uploader/file-upload-types';
 
 const CATEGORY_LABELS: Record<keyof typeof ACCEPTED_TYPES, string> = {
-  document: 'Document',
+  document: 'PDF',
   csv: 'Spreadsheet',
   code: 'Code',
   image: 'Image',

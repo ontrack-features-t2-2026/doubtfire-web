@@ -1,0 +1,113 @@
+Tutorial implementation validation — 21 September 2026 (Australia/Melbourne)
+
+Initial base: d16f6201caff78082e5e83c540320dbee5871404 (11.0.x)
+Rebased base: a35f2826d (11.0.x); upstream changes retained without conflicts.
+Node v22.23.2; Angular CLI 22.0.9; Angular 22.0.3; TypeScript 6.0.3; Vitest 4.1.9.
+Dependency lockfile unchanged: SHA1 1f2acc374d8e3af819dab13862cf8fbbb017bf3d.
+Commands below were run with this Node runtime; NG_BUILD_MAX_WORKERS=2 limited
+build concurrency. No API writes or production-account actions were performed.
+
+1. Full application typecheck
+   node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js -p src/tsconfig.app.json --noEmit
+   Started 2026-09-20 23:34:28 UTC; exit 0.
+
+2. Full repository lint
+   node node_modules/@angular/cli/bin/ng.js lint --max-warnings 0
+   Started 2026-09-20 23:35:29 UTC; exit 0, all files passed linting.
+
+3. Focused feature and existing-profile regression suite
+   node node_modules/@angular/cli/bin/ng.js test --watch=false --progress=false
+     --runner-config=/tmp/tutorial-vitest.config.mjs
+     --include='src/app/student-onboarding/*.spec.ts'
+     --include='src/app/config/constants/doubtfire-constants.spec.ts'
+     --include='src/app/welcome/welcome.component.spec.ts'
+     --include='src/app/common/edit-profile-form/edit-profile-form.component.spec.ts'
+     --include='src/app/common/header/header.component.spec.ts'
+   Runner config: export default {test:{maxWorkers:1,fileParallelism:false,pool:'threads'}};
+   Completed 2026-09-20 23:39 UTC; exit 0, 95 tests passed in 6 files.
+   Test execution 21.21 seconds; includes actual account-menu replay and protected
+   profile/SCORM routes, in addition to eligibility, state, targets and controls.
+
+4. Final service delta verification
+   Same command/runner config, restricted to
+     --include='src/app/student-onboarding/student-onboarding.service.spec.ts'
+   Completed 2026-09-20 23:41 UTC; exit 0, 47 tests passed in 1 file, 3.50 seconds.
+   Includes 3 additional cases: pending eligibility becomes staff; bounded history
+   timeout; automatic/replay focus return. Combined unique coverage is 98 tests,
+   not 95 + 47 (44 service cases were re-run).
+   Focused ESLint on final service and test file: exit 0.
+
+5. Production application build
+   node node_modules/@angular/cli/bin/ng.js build --configuration production --progress=false
+   Started 2026-09-20 23:39:34 UTC; completed 23:41:37 UTC; exit 0.
+   Initial output 11.45 MB raw / 2.08 MB estimated transfer.
+   Warnings remain in unchanged dependencies/styles: eval/minifier notice,
+   CommonJS packages, existing component style budgets and 46 skipped selectors.
+   No new tutorial dependency or tutorial style-budget warning was introduced.
+
+6. Diff hygiene
+   git diff --check: exit 0.
+   Tutorial targets preserve upstream header/dropdown/dashboard changes. The
+   standalone module import was placed away from another pending PR's insertion.
+
+Earlier attempts: the first test pass identified test-environment localStorage and
+focus-timer assumptions, which were corrected. A later parallel worker launch
+executed no tests after the host was suspended/busy; the serial retries above
+passed. Neither failed attempt was represented as a successful run.
+
+Manual evidence is tracked in validation.md. The preview mounts actual tutorial
+code with synthetic account/history services and real Angular Router events; its
+surrounding targets are synthetic. Browser checks cannot substitute for full-app
+QA, real assistive-technology sessions, human pilot participation or reviewer approval.
+
+Final eligibility and theme correction (production code 0ff843477):
+- Independent API inspection found that the ordinary projects listing excludes
+  withdrawn enrolments even with include_inactive=true. The eligibility gate now
+  uses GET /projects/history with no owner/query argument. The exact response
+  {hasProjects:false} alone qualifies; withdrawn/inactive/current history,
+  malformed responses and older APIs are replay-only. API companion 73836040
+  supplies this bounded authenticated boolean; its own tests are in the API PR.
+- Primary actions explicitly select the existing M2 Material primary palette.
+  The portable browser fixture now imports the real global styles/index/theme
+  marker/fonts/assets and does not override tutorial button styling.
+- Focused changed-area suite completed 2026-09-20 23:50 UTC: 75 tests passed in
+  3 files (service, component, header); exit 0; 1.87 seconds. This replaces the
+  earlier history-query coverage above. Combined unique focused coverage is now
+  104 tests. Focused lint and git diff --check passed.
+- Merge-tree against PR #261 head f471ac986332631ceba359ea79b9dc6ae27a0d38
+  completed without conflicts after separating account-menu insertions.
+
+Combined tutorial/migration compatibility validation:
+- Tutorial code: 0ff843477300c7848003c6612f534f75c5727e7f.
+- Migration code: 66e3e20565ab1c61e0158f9fcf3a8d896dcdb11c.
+- Temporary local tree: bfa13f35d5e3da731cd7b3b4492c30b542ec2f9d; local commit
+  a9e7af46f3eb17c4fefbac168a46688c73496286. Never pushed or merged on GitHub.
+- Node 22.23.2, npm 11.19.0; full test:ci suite passed 1,158 tests in 151 files,
+  31.38 seconds test execution after 24.54 seconds test compilation.
+- Production build passed in 51.672 seconds on 2026-09-21 Australia/Melbourne.
+- Root integration review checked 39 pairwise combinations against the published
+  branch heads and relevant pending PRs; all merge-tree checks were conflict-free.
+  This records those checked heads, not a promise about future upstream changes.
+
+Portable browser QA tooling:
+- serve.mjs syntax check passed and the real theme/asset fixture compiled and ran.
+- check.mjs syntax check passed. Playwright is external optional QA tooling;
+  no production package or lockfile dependency was added.
+- Firefox required temporary app-data directories for its host runtime startup;
+  no OS privacy permission or sandbox setting was changed.
+- Its inline-link protocol scroll helper could leave the second text line clipped.
+  Real wheel and keyboard End scroll exposed the complete link. Final checks use
+  Tab (Option+Tab for WebKit's macOS link policy), End and settled DOM geometry.
+  This was a harness interaction correction, not a production CSS change.
+
+Final synthetic browser matrix (production code unchanged at 0ff843477):
+- Chrome 153.0.8010.48: all 15 named checks passed.
+- Microsoft Edge 153.0.4234.32: all 15 named checks passed.
+- Firefox 155.0: all 15 named checks passed.
+- WebKit 26.6: all 15 named checks passed (not native Safari).
+- Browser rerun exit 0; no page errors across the asserted contexts.
+- Checked-in evidence includes per-engine result JSON, eight accessibility-tree
+  snapshots and five representative synthetic Chrome screenshots.
+- Desktop 1280x900, narrow 390x844 and 320x568, light/dark themes and reduced-motion
+  preference were exercised. The 200% scenario is CSS zoom, not native browser zoom.
+- Human assistive-technology/pilot/review and full-app acceptance remain pending.
