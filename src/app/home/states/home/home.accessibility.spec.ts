@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {RouterLink, provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
@@ -26,7 +27,7 @@ describe('Home unit navigation accessibility', () => {
       teachingPeriodProgress: 50,
     };
     await TestBed.configureTestingModule({
-      imports: [CommonModule, RouterLink],
+      imports: [CommonModule, RouterLink, MatProgressBarModule],
       declarations: [HomeComponent, IsActiveUnitRole],
       providers: [
         provideRouter([]),
@@ -39,7 +40,9 @@ describe('Home unit navigation accessibility', () => {
             showHeader: vi.fn(),
             setView: vi.fn(),
             onLoad: (fn: () => void) => fn(),
-            unitRolesSubject: of([{unit, role: 'Tutor'}]),
+            unitRolesSubject: of([
+              {unit: {...unit, name: 'Teaching demonstration unit'}, role: 'Tutor'},
+            ]),
             projectsSubject: of([{id: 12, unit}]),
           },
         },
@@ -60,7 +63,7 @@ describe('Home unit navigation accessibility', () => {
       '/projects/12/dashboard',
     ]);
     expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
-      'Demonstration unit - Tutor',
+      'Teaching demonstration unit - Tutor',
       'Demonstration unit',
     ]);
     for (const link of links) {
@@ -81,6 +84,21 @@ describe('Home unit navigation accessibility', () => {
   it('passes automated accessibility checks for the student and staff entry points', async () => {
     await fixture.whenStable();
     await expectAccessible(fixture.nativeElement);
+  });
+
+  it('names both rendered progress bars as time through their own teaching period', async () => {
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const bars = [...element.querySelectorAll<HTMLElement>('[role="progressbar"]')];
+    expect(bars.map((bar) => bar.getAttribute('aria-label'))).toEqual([
+      'Teaching period progress for Teaching demonstration unit',
+      'Teaching period progress for Demonstration unit',
+    ]);
+    expect(bars.map((bar) => bar.getAttribute('aria-valuenow'))).toEqual(['50', '50']);
+    await expectAccessible(element);
+
+    bars[0].removeAttribute('aria-label');
+    await expect(expectAccessible(element)).rejects.toThrow('aria-progressbar-name');
   });
 
   it('uses one control for each view-all destination', () => {
