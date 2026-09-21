@@ -418,6 +418,8 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     try {
+      // Scope the ink-safe palette to this export; keep the account preference intact.
+      ganttEl.classList.add('ot-gantt-export');
       await this.renderAllGanttBars(ganttEl);
       this.resetGanttScroll(scrollElements);
       window.scrollTo(windowScrollPosition.left, windowScrollPosition.top);
@@ -439,6 +441,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.classList.remove('ot-gantt-export');
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

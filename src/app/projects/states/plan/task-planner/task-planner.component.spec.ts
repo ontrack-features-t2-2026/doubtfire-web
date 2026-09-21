@@ -1,5 +1,5 @@
 import {GanttPrintService} from '@worktile/gantt';
-import {afterEach, beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {EmbeddedViewRef, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
@@ -322,5 +322,62 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     bar.dispatchEvent(new FocusEvent('focus'));
 
     expect(component.overlayLines).toBe(true);
+  });
+});
+
+describe('TaskPlannerComponent ink-safe image export', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it.each([false, true])('restores the screen after export (capture fails: %s)', async (fails) => {
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    const root = document.createElement('ngx-gantt');
+    root.style.cssText = 'width: 640px; height: 400px; overflow: hidden;';
+    root.innerHTML = '<div class="gantt-side"></div><div class="gantt-main-container"></div>';
+    const scroll = root.querySelector<HTMLElement>('.gantt-main-container')!;
+    scroll.scrollLeft = 31;
+    scroll.scrollTop = 47;
+    scroll.scrollTo = vi.fn((left: number, top: number) => {
+      scroll.scrollLeft = left;
+      scroll.scrollTop = top;
+    }) as unknown as typeof scroll.scrollTo;
+    const windowScroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const rootTheme = document.documentElement.getAttribute('data-ot-theme');
+    const savedTheme = localStorage.getItem('ontrack.theme.preference');
+    const download = vi.fn();
+    const reportError = vi.fn();
+    const capture = vi.fn(async () => {
+      expect(root.classList.contains('ot-gantt-export')).toBe(true);
+      expect(document.documentElement.getAttribute('data-ot-theme')).toBe(rootTheme);
+      expect(localStorage.getItem('ontrack.theme.preference')).toBe(savedTheme);
+      if (fails) {
+        throw new Error('synthetic capture failure');
+      }
+      return document.createElement('canvas');
+    });
+    Object.assign(component, {
+      ganttComponent: {element: root, view: {width: 1000}},
+      project: {unit: {code: 'TEST'}},
+      ganttPrintService: {html2canvas: capture},
+      alertService: {error: reportError},
+      renderAllGanttBars: async () => {},
+      waitForStableLayout: async () => {},
+      nextAnimationFrame: async () => {},
+      downloadCanvas: download,
+    });
+
+    await component.saveImage();
+
+    expect(capture).toHaveBeenCalledOnce();
+    expect(root.classList.contains('ot-gantt-export')).toBe(false);
+    expect(root.style.width).toBe('640px');
+    expect(root.style.height).toBe('400px');
+    expect(root.style.overflow).toBe('hidden');
+    expect(scroll.scrollLeft).toBe(31);
+    expect(scroll.scrollTop).toBe(47);
+    expect(windowScroll).toHaveBeenCalled();
+    expect(document.documentElement.getAttribute('data-ot-theme')).toBe(rootTheme);
+    expect(localStorage.getItem('ontrack.theme.preference')).toBe(savedTheme);
+    expect(download).toHaveBeenCalledTimes(fails ? 0 : 1);
+    expect(reportError).toHaveBeenCalledTimes(fails ? 1 : 0);
   });
 });
