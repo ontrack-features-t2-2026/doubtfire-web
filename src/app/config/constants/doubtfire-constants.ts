@@ -17,6 +17,7 @@ export interface AuthenticatedSettingsResponseFormat {
   d2lEnabled: boolean;
   // Optional so an existing caller that predates push still type-checks, and
   // because applyAuthenticatedSettings already defaults both below.
+  tutorialEnabled?: boolean;
   pushEnabled?: boolean;
   vapidPublicKey?: string | null;
 }
@@ -73,6 +74,9 @@ export class DoubtfireConstants {
    * Whether or not the TurnItIn integration is enabled.
    */
   public IsTiiEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  /** Institution-level tutorial switch, populated only after authentication. */
+  public IsTutorialEnabled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   /**
    * Whether the api has VAPID keys configured. False means push cannot work at
@@ -146,6 +150,7 @@ export class DoubtfireConstants {
     this.IsOverseerEnabled.next(result.overseerEnabled);
     this.IsTiiEnabled.next(result.tiiEnabled);
     this.IsD2LEnabled.next(result.d2lEnabled);
+    this.IsTutorialEnabled.next(result.tutorialEnabled === true);
     this.IsPushEnabled.next(result.pushEnabled ?? false);
     this.VapidPublicKey.next(result.vapidPublicKey ?? '');
   }
@@ -161,6 +166,7 @@ export class DoubtfireConstants {
     this.IsOverseerEnabled.next(false);
     this.IsTiiEnabled.next(false);
     this.IsD2LEnabled.next(false);
+    this.IsTutorialEnabled.next(false);
     this.IsPushEnabled.next(false);
     this.VapidPublicKey.next('');
   }

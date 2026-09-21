@@ -13,6 +13,17 @@
     @if (task) {
       <f-task-date-slider [task]="task" />
     }
+    @if (task?.effectiveDeadlineDate) {
+      <p class="effective-deadline">
+        <strong
+          >Effective submission date: {{ task.effectiveDeadlineDate | date: 'fullDate' }}.</strong
+        >
+        {{ task.effectiveDeadlineExplanation }}
+        @if (task.effectiveDeadlineReason !== 'flexible_date') {
+          The deadline is the end of this day anywhere on earth.
+        }
+      </p>
+    }
     <ul>
       <li>{{ grades.names[taskDef?.targetGrade] }} Task</li>
 

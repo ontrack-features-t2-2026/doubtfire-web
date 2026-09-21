@@ -3,6 +3,7 @@ import {TestBed} from '@angular/core/testing';
 import {of, throwError} from 'rxjs';
 import {
   THEME_ACCOUNT_ID_STORAGE_KEY,
+  THEME_BROWSER_COLORS,
   THEME_STORAGE_KEY,
   THEME_UPDATED_AT_STORAGE_KEY,
   ThemeService,
@@ -76,6 +77,32 @@ describe('ThemeService', () => {
     } else {
       delete (window as unknown as {matchMedia?: unknown}).matchMedia;
     }
+  });
+
+  it('updates browser chrome on initial paint and live System changes', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.append(meta);
+    try {
+      const mql = stubMatchMedia(false);
+      const svc = inject();
+      expect(meta.content).toBe(THEME_BROWSER_COLORS.light);
+      mql.matches = true;
+      mql.dispatch();
+      expect(meta.content).toBe(THEME_BROWSER_COLORS.dark);
+      expect(svc.preference()).toBe('system');
+      svc.setPreference('light');
+      expect(meta.content).toBe(THEME_BROWSER_COLORS.light);
+    } finally {
+      meta.remove();
+    }
+  });
+
+  it('still applies the root theme when browser metadata is absent', () => {
+    const svc = inject();
+    expect(() => svc.setPreference('dark')).not.toThrow();
+    expect(marker()).toBe('dark');
+    expect(document.documentElement.style.colorScheme).toBe('dark');
   });
 
   it('is created', () => {

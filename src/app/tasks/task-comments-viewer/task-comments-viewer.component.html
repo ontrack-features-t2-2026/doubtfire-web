@@ -204,6 +204,30 @@
                       </button>
                     }
 
+                    @if (
+                      comment.commentType === 'document' || comment.commentType === 'spreadsheet'
+                    ) {
+                      <div class="flex max-w-full flex-col gap-2 p-3 break-all">
+                        <strong>{{ comment.attachmentFileName || 'Attachment' }}</strong>
+                        <span
+                          >{{
+                            comment.commentType === 'spreadsheet' ? 'Spreadsheet' : 'Document'
+                          }}
+                          · {{ comment.attachmentByteSize }} bytes · Download only</span
+                        >
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [attr.aria-label]="
+                            'Download ' + (comment.attachmentFileName || 'attachment')
+                          "
+                          (click)="downloadAttachment(comment)"
+                        >
+                          <mat-icon aria-hidden="true">download</mat-icon>Download
+                        </button>
+                        <p>{{ comment.text }}</p>
+                      </div>
+                    }
                     @switch (comment.commentType) {
                       @case ('extension') {
                         <div class="comment-extension">
@@ -311,6 +335,7 @@
   <!--/comment-list-->
   <div class="comments-footer" id="commentComposerFoter">
     <task-comment-composer
+      #commentComposer
       [sharedData]="sharedCommentComposerData"
       [task]="task"
     ></task-comment-composer>

@@ -52,10 +52,12 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   staffFilter: 'all' | 'mine' = 'all';
   filteredSuggestions: string[] = [];
   loadingStudents = true;
+  studentsLoadFailed = false;
   unit: Unit;
 
   private subscriptions: Subscription[] = [];
   private studentCacheSub?: Subscription;
+  private studentLoadSub?: Subscription;
   public sortState: Sort = {active: 'name', direction: 'asc'};
 
   constructor(
@@ -71,16 +73,17 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
     this.subscriptions.push(
       this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
+        this.studentLoadSub?.unsubscribe();
+        this.studentCacheSub?.unsubscribe();
         if (!unit) {
-          this.loadingStudents = false;
+          this.loadingStudents = true;
+          this.studentsLoadFailed = false;
           return;
         }
 
-        this.loadingStudents = true;
         this.unit = unit;
         this.staffFilter = unit.myRole === 'Tutor' ? 'mine' : 'all';
 
-        this.studentCacheSub?.unsubscribe();
         this.studentCacheSub = this.unit.studentCache.values.subscribe(() => {
           this.updateSuggestions();
           this.updateDataSource();
@@ -88,15 +91,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.updateSuggestions();
         this.updateDataSource();
-        this.projectService
-          .loadStudents(this.unit)
-          .pipe(
-            first(),
-            finalize(() => {
-              this.loadingStudents = false;
-            }),
-          )
-          .subscribe();
+        this.loadStudents();
       }),
     );
   }
@@ -107,6 +102,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.studentLoadSub?.unsubscribe();
     this.studentCacheSub?.unsubscribe();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
   }
@@ -114,6 +110,27 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   public onSearchChange(): void {
     this.updateSuggestions();
     this.updateDataSource(true);
+  }
+
+  public loadStudents(): void {
+    // Unsubscribe first: finalize from the previous request must not end this load.
+    this.studentLoadSub?.unsubscribe();
+    this.loadingStudents = true;
+    this.studentsLoadFailed = false;
+
+    this.studentLoadSub = this.projectService
+      .loadStudents(this.unit)
+      .pipe(
+        first(),
+        finalize(() => {
+          this.loadingStudents = false;
+        }),
+      )
+      .subscribe({
+        error: () => {
+          this.studentsLoadFailed = true;
+        },
+      });
   }
 
   public setStaffFilter(filter: 'all' | 'mine'): void {

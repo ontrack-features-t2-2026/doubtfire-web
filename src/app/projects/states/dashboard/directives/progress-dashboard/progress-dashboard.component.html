@@ -38,6 +38,7 @@
               <mat-label>Select Target Grade</mat-label>
               <mat-select
                 aria-label="Target grade"
+                data-onboarding-target="target-grade"
                 [disabled]="isUpdatingTargetGrade || viewingOtherStudentProject"
                 [value]="project.targetGrade"
                 (selectionChange)="updateTargetGrade($event.value)"

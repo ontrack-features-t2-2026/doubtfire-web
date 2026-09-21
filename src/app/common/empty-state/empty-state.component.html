@@ -1,0 +1,12 @@
+<div
+  class="flex w-full flex-col items-center justify-center gap-2 p-6 text-center text-[color:var(--ot-color-text-muted)]"
+>
+  <mat-icon aria-hidden="true" class="scale-125">{{ icon }}</mat-icon>
+  <p class="text-base font-semibold text-[color:var(--ot-color-text)]">{{ heading }}</p>
+  <p class="text-sm text-[color:var(--ot-color-text)]">{{ message }}</p>
+  @if (actionLabel) {
+    <button class="mt-2" mat-stroked-button type="button" (click)="action.emit()">
+      {{ actionLabel }}
+    </button>
+  }
+</div>

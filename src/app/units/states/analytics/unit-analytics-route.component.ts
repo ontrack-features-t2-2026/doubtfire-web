@@ -9,9 +9,15 @@ import {
   OnInit,
 } from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {Observable, Subscription, distinctUntilChanged, of} from 'rxjs';
+import {Observable, Subscription, catchError, distinctUntilChanged, forkJoin, of} from 'rxjs';
 import {SidekiqJob} from 'src/app/api/models/sidekiq-job';
 import {Unit} from 'src/app/api/models/unit';
+import {
+  TargetGradeStat,
+  TaskCompletionStats,
+  TaskStatusStats,
+  UnitService,
+} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
@@ -29,6 +35,13 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
 
   public unit: Unit;
 
+  public tutorialId: number | null = null;
+  public taskStatusStats: TaskStatusStats | null = null;
+  public targetGradeStats: TargetGradeStat[] | null = null;
+  public taskCompletionStats: TaskCompletionStats | null = null;
+  public statisticsLoading = false;
+  public statisticsFailed = false;
+  private statisticsSub?: Subscription;
   private unitSub?: Subscription;
 
   constructor(
@@ -38,6 +51,7 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private alertService: AlertService,
     private route: ActivatedRoute,
+    private unitService: UnitService,
     @Inject(LOCALE_ID) private locale: string,
   ) {}
 
@@ -47,11 +61,39 @@ export class UnitAnalyticsComponent implements OnInit, OnDestroy {
       ?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id))
       .subscribe((unit) => {
         this.unit = unit;
+        this.tutorialId = null;
+        this.loadStatistics();
       });
   }
 
   ngOnDestroy(): void {
     this.unitSub?.unsubscribe();
+    this.statisticsSub?.unsubscribe();
+  }
+
+  public loadStatistics(): void {
+    this.statisticsSub?.unsubscribe();
+    this.taskStatusStats = null;
+    this.targetGradeStats = null;
+    this.taskCompletionStats = null;
+    this.statisticsFailed = false;
+    this.statisticsLoading = !!this.unit;
+    if (!this.unit) {
+      return;
+    }
+    this.statisticsSub = forkJoin({
+      statuses: this.unitService
+        .taskStatusCountByTutorial(this.unit)
+        .pipe(catchError(() => of(null))),
+      grades: this.unitService.targetGradeStats(this.unit).pipe(catchError(() => of(null))),
+      completion: this.unitService.taskCompletionStats(this.unit).pipe(catchError(() => of(null))),
+    }).subscribe(({statuses, grades, completion}) => {
+      this.taskStatusStats = statuses;
+      this.targetGradeStats = grades;
+      this.taskCompletionStats = completion;
+      this.statisticsFailed = statuses === null || grades === null || completion === null;
+      this.statisticsLoading = false;
+    });
   }
 
   get role() {
