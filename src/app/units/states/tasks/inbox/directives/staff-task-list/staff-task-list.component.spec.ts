@@ -20,6 +20,7 @@ import {CsvResultModalService} from 'src/app/common/modals/csv-result-modal/csv-
 import {CsvUploadModalService} from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {SelectedTaskService} from 'src/app/projects/states/dashboard/selected-task.service';
 import {StaffTaskListComponent} from './staff-task-list.component';
 
@@ -300,7 +301,14 @@ describe('StaffTaskListComponent rendered empty state', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [StaffTaskListComponent],
-      imports: [CommonModule, FormsModule, MatMenuModule, MatSelectModule, ScrollingModule],
+      imports: [
+        CommonModule,
+        FormsModule,
+        MatMenuModule,
+        MatSelectModule,
+        ScrollingModule,
+        SkeletonLoaderComponent,
+      ],
       providers: [
         {provide: SelectedTaskService, useValue: {setSelectedTask: () => {}}},
         {provide: AlertService, useValue: emptyProvider},
@@ -358,6 +366,9 @@ describe('StaffTaskListComponent rendered empty state', () => {
 
   it('keeps the empty state hidden while the list is loading', () => {
     expect(emptyState().hidden).toBe(true);
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).not.toBeNull();
+    finishLoading();
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).toBeNull();
   });
 
   it('keeps the empty state hidden before a result is available', () => {

@@ -1,40 +1,17 @@
 <ng-template #TaskListSkeleton>
-  <div class="h-full overflow-hidden">
-    <ngx-skeleton-loader
-      [theme]="{height: '48px', 'border-radius': '16px', margin: '0 0 14px'}"
-    ></ngx-skeleton-loader>
-    @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
-      <div class="flex h-[60px] items-center gap-[10px] px-[6px]">
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '8px', height: '8px', margin: '0'}"
-        ></ngx-skeleton-loader>
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '30px', height: '30px', margin: '0'}"
-        ></ngx-skeleton-loader>
-        <div class="min-w-0 flex-1">
-          <ngx-skeleton-loader
-            [theme]="{height: '10px', width: '78%', 'border-radius': '999px', margin: '6px 0'}"
-          ></ngx-skeleton-loader>
-          <ngx-skeleton-loader
-            [theme]="{height: '10px', width: '56%', 'border-radius': '999px', margin: '6px 0'}"
-          ></ngx-skeleton-loader>
-        </div>
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '32px', height: '32px', margin: '0'}"
-        ></ngx-skeleton-loader>
-      </div>
-    }
+  <div aria-busy="true" aria-label="Loading task inbox" class="h-full overflow-hidden">
+    <f-skeleton-loader shape="row" [count]="1"></f-skeleton-loader>
+    <f-skeleton-loader shape="list-row" [count]="8"></f-skeleton-loader>
   </div>
 </ng-template>
 
 <ng-template #BlankPanelSkeleton>
-  <ngx-skeleton-loader
+  <f-skeleton-loader
     class="block size-full"
-    [theme]="{height: '100%', width: '100%', 'border-radius': '8px', margin: '0'}"
-  ></ngx-skeleton-loader>
+    shape="card"
+    [count]="1"
+    [theme]="{height: '100%'}"
+  ></f-skeleton-loader>
 </ng-template>
 
 @if (!isMobileView) {
