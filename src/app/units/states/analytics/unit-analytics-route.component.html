@@ -24,18 +24,46 @@
       </mat-card-content>
     </mat-card>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Statistics tutorial</mat-label>
+      <mat-select [(ngModel)]="tutorialId">
+        <mat-option [value]="null">Whole unit</mat-option>
+        @for (tutorial of unit?.tutorials ?? []; track tutorial.id) {
+          <mat-option [value]="tutorial.id"
+            >{{ tutorial.abbreviation }} — {{ tutorial.tutorName }}</mat-option
+          >
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>
+      Counts include tutorial enrolments. Students enrolled in multiple tutorial streams may
+      contribute more than once to whole-unit counts.
+    </p>
+    @if (statisticsLoading) {
+      <p role="status">Loading unit statistics…</p>
+    }
+    @if (statisticsFailed) {
+      <p role="alert">Some statistics could not be loaded.</p>
+      <button mat-button (click)="loadStatistics()">Retry statistics</button>
+    }
+    @if (taskStatusStats !== null) {
+      <f-summary-task-status-scatter
+        [data]="taskStatusStats"
+        [tutorialId]="tutorialId"
+        [unit]="unit"
+      />
+    }
+    @if (targetGradeStats !== null) {
+      <f-target-grade-pie-chart [data]="targetGradeStats" [tutorialId]="tutorialId" [unit]="unit" />
+    }
+    @if (taskCompletionStats !== null) {
+      <f-task-completion-box-plot
+        [data]="taskCompletionStats"
+        [tutorialId]="tutorialId"
+        [unit]="unit"
+      />
+    }
+
     <f-analytics-tutor-times [downloadCsvFn]="downloadCsv" [unit]="unit"></f-analytics-tutor-times>
   </div>
 </f-page-container>
-<!--
-
-  TODO: Re-implement the following charts using ngx-charts:
-    TODO: Task Status Stats (Summary Chart)
-      - View distribution of tasks by their current status either unit-wide or broken down into a specific tutorial or task
-    TODO: Target Grade Stats (Pie Chart)
-      - View distribution of student target grades either unit-wide or broken down into a specific tutorial
-    TODO: Task Completion Stats (Box Plot)
-      - View how tasks have been marked as completed as a box plot
-
-  TODO: We also want each of these as sub-states
--->

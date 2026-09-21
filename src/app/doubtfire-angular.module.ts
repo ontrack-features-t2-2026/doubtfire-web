@@ -397,6 +397,9 @@ import {FUnitTaskListComponent} from './units/task-viewer/directives/unit-task-l
 import {TaskViewerStateComponent} from './units/task-viewer/task-viewer-state.component';
 import {UnitRootStateComponent} from './units/unit-root-state.component';
 import {ProgressBurndownChartComponent} from './visualisations/progress-burndown-chart/progress-burndown-chart.component';
+import {SummaryTaskStatusScatterComponent} from './visualisations/summary-task-status-scatter/summary-task-status-scatter.component';
+import {TargetGradePieChartComponent} from './visualisations/target-grade-pie-chart/target-grade-pie-chart.component';
+import {TaskCompletionBoxPlotComponent} from './visualisations/task-completion-box-plot/task-completion-box-plot.component';
 import {TaskStatusPieChartComponent} from './visualisations/task-status-pie-chart/task-status-pie-chart.component';
 import {TaskVisualisationComponent} from './visualisations/task-visualisation/task-visualisation.component';
 import {WelcomeComponent} from './welcome/welcome.component';
@@ -473,6 +476,9 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     DashboardListItemComponent,
     DashboardExpandedListItemComponent,
     TaskStatusPieChartComponent,
+    SummaryTaskStatusScatterComponent,
+    TargetGradePieChartComponent,
+    TaskCompletionBoxPlotComponent,
     AlertComponent,
     AddEngagementDialogComponent,
     EngagementPassportCardComponent,
