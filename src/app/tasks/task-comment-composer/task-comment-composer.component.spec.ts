@@ -16,7 +16,7 @@ function composerFor(currentUser: {id: number | null}): TaskCommentComposerCompo
     {} as never, // commentsViewer
     {} as never, // alerts
     {} as never, // taskCommentService
-    {} as never, // cdRef
+    {markForCheck: vi.fn()} as never, // cdRef
     userService as never,
     {isDark: () => false} as never, // theme
   );
@@ -283,6 +283,63 @@ describe('TaskCommentComposerComponent clipboard image paste', () => {
 
     component.postAttachmentComment(new File(['image'], 'failed.png', {type: 'image/png'}));
 
-    expect(alerts.error).toHaveBeenCalledWith('Upload failed', 2000);
+    expect(alerts.error).toHaveBeenCalledWith('Upload failed', 6000);
+  });
+});
+
+describe('server-owned chat attachment policy', () => {
+  const policy = {
+    version: 1,
+    max_bytes_exclusive: 30_000_000,
+    max_selection_count: 5,
+    categories: [
+      {id: 'document', name: 'Document', extensions: ['docx'], preview: 'download'},
+      {id: 'spreadsheet', name: 'Spreadsheet', extensions: ['csv', 'xlsx'], preview: 'download'},
+    ],
+  };
+
+  it('shows exact requirements and confirms DOCX, CSV and XLSX even with empty browser MIME', () => {
+    const component = composerFor({id: 1});
+    component.attachmentPolicy = policy;
+    component.dialog = {open: vi.fn(() => ({afterClosed: () => of(false)}))} as never;
+    const alerts = {error: vi.fn()};
+    (component as unknown as {alerts: typeof alerts}).alerts = alerts;
+    component.uploadFiles(
+      ['report.DOCX', 'results.csv', 'results.xlsx'].map((name) => new File(['data'], name)),
+    );
+    expect(component.dialog.open).toHaveBeenCalledTimes(3);
+    expect(component.attachmentAccept).toBe('.docx,.csv,.xlsx');
+    expect(component.attachmentGuidance).toContain('smaller than 30 MB');
+    expect(alerts.error).not.toHaveBeenCalled();
+  });
+
+  it('rejects excluded formats, empty files, exact boundary and excessive selection before confirmation', () => {
+    const component = composerFor({id: 1});
+    component.attachmentPolicy = policy;
+    component.dialog = {open: vi.fn()} as never;
+    const alerts = {error: vi.fn()};
+    (component as unknown as {alerts: typeof alerts}).alerts = alerts;
+    const boundary = new File(['data'], 'large.csv');
+    Object.defineProperty(boundary, 'size', {value: 30_000_000});
+    component.uploadFiles([new File(['x'], 'macro.xlsm'), new File([], 'empty.csv'), boundary]);
+    component.uploadFiles(Array.from({length: 6}, () => new File(['x'], 'a.csv')));
+    expect(component.dialog.open).not.toHaveBeenCalled();
+    expect(alerts.error).toHaveBeenCalledTimes(4);
+  });
+
+  it('fails closed when policy cannot be loaded and preserves a draft on proxy 413', () => {
+    const component = composerFor({id: 1});
+    const alerts = {error: vi.fn()};
+    (component as unknown as {alerts: typeof alerts}).alerts = alerts;
+    component.input = {first: {nativeElement: {innerText: 'My draft'}}} as never;
+    component.uploadFiles([new File(['x'], 'a.csv')]);
+    expect(alerts.error).toHaveBeenCalledWith(expect.stringContaining('unavailable'), 6000);
+    (component as unknown as {taskCommentService: unknown}).taskCommentService = {
+      addComment: () => throwError(() => ({status: 413, error: '<html>Request too large</html>'})),
+    };
+    component.postAttachmentComment(new File(['x'], 'a.csv'));
+    expect(component.input.first.nativeElement.innerText).toBe('My draft');
+    expect(component.attachmentsUploading).toBe(0);
+    expect(alerts.error).toHaveBeenCalledWith(expect.stringContaining('too large'), 6000);
   });
 });
