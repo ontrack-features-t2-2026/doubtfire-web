@@ -50,10 +50,11 @@ version tests before retiring an ID. Never reuse an old ID for another purpose.
 The [DOC-10 / TUT-D03 contract](https://github.com/ontrack-features-t2-2026/github-guide/blob/main/onboarding-tutorial-trigger-and-state-rules.md)
 contains the decision table. Automatic eligibility requires observing incomplete
 profile setup and a successful current-user history request returning **zero**
-projects, including inactive projects. The request uses `GET /projects` with
-`include_inactive=true`, `include_task_definitions=false`, `page=1`, `per_page=1`;
-one row is enough to disqualify the automatic offer. Authentication supplies the
-owner. No user ID is sent and no project data is retained.
+projects, including withdrawn and inactive projects. The request uses the
+authenticated `GET /projects/history` response `{hasProjects:boolean}`. Only the
+exact response `{hasProjects:false}` establishes empty history. Authentication
+supplies the owner; no user ID or query arguments are sent and no project details
+are returned or retained. A missing/older endpoint is replay-only.
 
 This intentionally excludes some newly enrolled students who already have a
 project. Unknown/error/non-empty history is replay-only. An empty active-project
@@ -76,10 +77,14 @@ read/write failures and a failed/timed-out history request fail open to normal u
 
 ## Validation and handover
 
-See [test traceability and QA](validation.md) and the [threat model](threat-model.md).
+See [test traceability and QA](validation.md), the [portable browser fixture](browser-qa/README.md)
+and the [threat model](threat-model.md).
 The original welcome/profile component and its tests remain in place. The API
 change PR-TUT-17 supplies a default-false environment switch; no tutorial progress
 endpoint, database migration or deployment change is required by this frontend.
+Automatic eligibility does require the new bounded own-user `/projects/history`
+read endpoint, which includes withdrawn history; the ordinary projects list cannot
+prove its absence.
 
 Status: implemented for PR review, with release/pilot decisions pending. Existing
 TUT-UX01 prototype documents explicitly record pending human approvals. Do not

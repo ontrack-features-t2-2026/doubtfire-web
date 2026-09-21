@@ -1,16 +1,15 @@
 # Tutorial validation and evidence
 
 TUT-T01 / TUT-Q01 / TUT-MVP01. Feature branch base: web `11.0.x`
-`d16f6201caff78082e5e83c540320dbee5871404`, then rebased onto `a35f2826d`. PR links and final
-commit combination are recorded in the PR description and central guide evidence
-index. Do not interpret a workbook checklist as evidence of execution.
+`d16f6201caff78082e5e83c540320dbee5871404`, then rebased onto `a35f2826d`. The implementation is proposed in [web PR #263](https://github.com/ontrack-features-t2-2026/doubtfire-web/pull/263);
+[guide PR #12](https://github.com/ontrack-features-t2-2026/github-guide/pull/12) records the coordinated rules and handover. Do not interpret a workbook checklist as evidence of execution.
 
 ## Automated traceability
 
 | Requirement / ticket | Evidence |
 | --- | --- |
 | TUT-W01 shell and controls | Component tests render welcome, step, confirmation, completion, Back/Next/Skip/Dismiss/Close/Finish and accessible names. |
-| TUT-W02 new/returning/staff eligibility | Service tests require incomplete profile plus empty own history; suppress non-empty/unknown/error and inactive history; wait readiness and safe route. |
+| TUT-W02 new/returning/staff eligibility | Service tests require incomplete profile plus explicit false own-history boolean; suppress true/unknown/error history (API includes withdrawn/inactive enrolments); wait readiness and safe route. |
 | TUT-W02 persistence / privacy | Service tests exercise resume, skip, dismiss, completion, replay preservation, account replacement, malformed/future records, blocked reads/writes and stale history. |
 | TUT-W03 real targets / fallback | Component/target tests resolve all four attribute contracts; ignore hidden, inert, detached and zero-size targets; show written fallback. Header regression tests compile the shared controls. |
 | TUT-W03 no automatic actions | Service state snapshots and route spy; component locate action scrolls without clicking; no write API exists in tutorial source. |
@@ -33,12 +32,15 @@ npm run test:ci -- --include='src/app/student-onboarding/*.spec.ts' --include='s
 
 On a busy host, Vitest may need one worker. An external runner config can set
 `test: {maxWorkers: 1, fileParallelism: false, pool: 'threads'}` and be passed with
-`--runner-config=<path>`. This changes scheduling, not assertions. No API tests
-are required for browser progress; API switch tests belong to PR-TUT-17.
+`--runner-config=<path>`. This changes scheduling, not assertions. Browser progress remains local. The API switch and authenticated own-history
+endpoint have separate API tests in the companion change.
 
 Actual command results and limitations are recorded in [verification.txt](verification.txt).
 
-## Manual QA matrix
+## Browser fixture and manual QA matrix
+
+The [portable fixture](browser-qa/README.md) mounts the production tutorial with
+its real global theme and synthetic surrounding controls.
 
 Record browser/version, viewport/zoom, input method, synthetic scenario, result,
 evidence and owner for each run. Automated jsdom checks do not constitute browser,
@@ -46,21 +48,32 @@ screen-reader or pilot sign-off.
 
 | Scenario | Required checks | Status |
 | --- | --- | --- |
-| New student, zero history, after setup | Welcome; all four steps; Back/Next; completion; reload | Automated state/control checks; full app manual acceptance pending |
-| Existing/in-progress/skipped/completed/dismissed | Eligibility; resume; skip later; permanent suppression; manual replay | Automated; real session acceptance pending |
-| Student/staff/anonymous, disabled flag | Correct visibility; no interrupted setup/auth | Automated; deployed setting verification pending |
-| No unit/project, missing/hidden/delayed target | Explanation; Next/Close; normal page remains usable | Automated; full app screenshots pending |
-| History timeout/failure, storage failure | Normal use, no retries/loop; replay/warning | Automated; real browser storage-policy QA pending |
-| Keyboard only | Heading focus; visible focus; tab order; modal exit; non-modal step navigation; return focus | Component checks; real keyboard matrix pending |
-| Screen reader / accessibility inspector | Named dialogs/controls; step title/count; decorative highlight ignored | Semantic checks; human assistive-technology run pending |
-| Desktop / 390px / 320px / 200% zoom | All controls reachable; no lost target; readable panel; scrolling | Responsive CSS; browser evidence pending |
-| Reduced motion | No essential animation; explicit locate scroll is instant | CSS/implementation; system preference run pending |
-| Chrome / Edge / Firefox / Safari where available | Same flows and failure states | Browser run evidence must be attached individually |
-| Route changes and browser Back | Current target refreshes or falls back; no tutorial navigation side effects | Service route tests; full app history run pending |
+| New student, zero history, after setup | Welcome; all four steps; Back/Next; completion; reload | State/control tests and synthetic browser matrix passed; full-app manual acceptance pending |
+| Existing/in-progress/skipped/completed/dismissed | Eligibility; resume; skip later; permanent suppression; manual replay | Unit tests and synthetic browser lifecycle checks passed; real session acceptance pending |
+| Student/staff/anonymous, disabled flag | Correct visibility; no interrupted setup/auth | Service tests plus synthetic staff/disabled cases passed; deployed setting verification pending |
+| No unit/project, missing/hidden/delayed target | Explanation; Next/Close; normal page remains usable | Target tests passed; synthetic missing-unit/control screenshots captured |
+| History timeout/failure, storage failure | Normal use, no retries/loop; replay/warning | Service tests and synthetic browser storage failure/replay checks passed; institution browser-policy QA pending |
+| Keyboard only | Heading focus; visible focus; tab order; modal exit; non-modal step navigation; return focus | Component tests plus browser Tab, Escape and narrow-panel keyboard scrolling checked; full-app keyboard acceptance pending |
+| Screen reader / accessibility inspector | Named dialogs/controls; step title/count; decorative highlight ignored | Browser accessibility-tree snapshots captured; human assistive-technology run pending |
+| Desktop / 390px / 320px / 200% zoom | All controls reachable; no lost target; readable panel; scrolling | Synthetic viewports and 200% CSS zoom checked; native browser 200% zoom remains pending |
+| Reduced motion | No essential animation; explicit locate scroll is instant | Synthetic browser context uses reduced-motion preference and asserts no panel animation |
+| Chrome / Edge / Firefox / Safari where available | Same flows and failure states | Individual engine/version results in the linked evidence; WebKit is not a native Safari run |
+| Route changes and browser Back | Current target refreshes or falls back; no tutorial navigation side effects | Service tests and synthetic real Angular Router/browser Back checks passed; full-app history acceptance pending |
 
-The synthetic visual harness mounts production tutorial code with mocked account
-and enrolment services. Any resulting screenshots must be labelled as harness
-checks; they do not prove full application routing or server authentication.
+The [browser evidence](browser-qa/evidence/README.md) records the exact engine
+versions and assertions against production code `0ff843477`. It mounts production
+tutorial code, real global theme and real Angular Router events with synthetic
+accounts, history responses and surrounding controls. It does not establish full
+application routing, API authorization, actual enrolled projects, human screen
+reader behavior or native browser zoom.
+
+## Combined compatibility check
+
+A temporary local tree combined tutorial `0ff843477` and migration `66e3e2056`.
+Its full suite passed **1,158 tests in 151 files** and its production build passed.
+The tree and exact heads are recorded in [combined-validation.json](browser-qa/evidence/combined-validation.json).
+This snapshot was neither pushed nor merged on GitHub. The branch combination
+checks and test evidence support review; they do not substitute for reviewer approval.
 
 ## Pilot and closure boundaries
 
@@ -70,7 +83,7 @@ TUT-U01-FIXES requires actual triaged findings before a fix can be attributed to
 pilot. No names, assessments or invented observations belong in evidence.
 
 Human prototype/security approvals, second-contributor review, versioned fallback
-recording, full browser/assistive-technology QA and pilot sessions remain pending.
+recording, full-application/native-browser-zoom/assistive-technology QA and pilot sessions remain pending.
 This handover completes the repository implementation and reproducible test assets;
 it does not claim those external review activities happened or that PRs merged.
 
@@ -82,11 +95,11 @@ it does not claim those external review activities happened or that PRs merged.
 | TUT-W02 | Auth/profile/history gate, browser state, resume, skip, completion, dismissal, version handling and failure behavior implemented. |
 | TUT-W03 | Four existing controls annotated; exact DOC-11 copy and safe fallbacks implemented; no automatic actions. |
 | TUT-W04 | One role/flag-gated account-menu replay entry and written guide link implemented. |
-| TUT-T01 | 98 unique focused tests, unchanged welcome/profile regressions, full lint/typecheck/build and command evidence supplied. |
+| TUT-T01 | 104 unique focused tests, unchanged welcome/profile regressions, full lint/typecheck/build, combined 1,158-test compatibility run and command evidence supplied. |
 | TUT-S01 | Data flow, fields, trust boundaries, dependency decision and security tests supplied; human approval pending. |
-| TUT-Q01 | Automated semantics/state/route checks and reproducible manual matrix supplied; browser harness evidence is supplemental to full-app and assistive-technology QA. |
+| TUT-Q01 | Automated semantics/state/route checks, reproducible browser fixture, engine evidence and manual matrix supplied; synthetic evidence is supplemental to full-app and assistive-technology QA. |
 | TUT-D04 | Implementation locations, maintenance/version rules, troubleshooting and handover supplied; central guides updated in github-guide; second human review/video pending. |
 | TUT-MVP01 | Evidence index and honest handover supplied; PR review, pilot and full release validation pending, no merge claimed. |
-| PR-TUT-17 | Separate API default-false runtime flag change; this frontend consumes the authenticated response and resets on sign-out. |
+| PR-TUT-17 | Separate API default-false runtime flag and bounded own-history endpoint change; this frontend consumes the authenticated response and resets on sign-out. |
 | TUT-U01-RUN | Existing pilot script/templates linked; real representative participants cannot be fabricated by repository work. |
 | TUT-U01-FIXES | Requires actual pilot findings; no invented critical/high issues, participant findings or approvals. |

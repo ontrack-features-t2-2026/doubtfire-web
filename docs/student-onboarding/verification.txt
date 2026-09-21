@@ -59,3 +59,55 @@ Manual evidence is tracked in validation.md. The preview mounts actual tutorial
 code with synthetic account/history services and real Angular Router events; its
 surrounding targets are synthetic. Browser checks cannot substitute for full-app
 QA, real assistive-technology sessions, human pilot participation or reviewer approval.
+
+Final eligibility and theme correction (production code 0ff843477):
+- Independent API inspection found that the ordinary projects listing excludes
+  withdrawn enrolments even with include_inactive=true. The eligibility gate now
+  uses GET /projects/history with no owner/query argument. The exact response
+  {hasProjects:false} alone qualifies; withdrawn/inactive/current history,
+  malformed responses and older APIs are replay-only. API companion 73836040
+  supplies this bounded authenticated boolean; its own tests are in the API PR.
+- Primary actions explicitly select the existing M2 Material primary palette.
+  The portable browser fixture now imports the real global styles/index/theme
+  marker/fonts/assets and does not override tutorial button styling.
+- Focused changed-area suite completed 2026-09-20 23:50 UTC: 75 tests passed in
+  3 files (service, component, header); exit 0; 1.87 seconds. This replaces the
+  earlier history-query coverage above. Combined unique focused coverage is now
+  104 tests. Focused lint and git diff --check passed.
+- Merge-tree against PR #261 head f471ac986332631ceba359ea79b9dc6ae27a0d38
+  completed without conflicts after separating account-menu insertions.
+
+Combined tutorial/migration compatibility validation:
+- Tutorial code: 0ff843477300c7848003c6612f534f75c5727e7f.
+- Migration code: 66e3e20565ab1c61e0158f9fcf3a8d896dcdb11c.
+- Temporary local tree: bfa13f35d5e3da731cd7b3b4492c30b542ec2f9d; local commit
+  a9e7af46f3eb17c4fefbac168a46688c73496286. Never pushed or merged on GitHub.
+- Node 22.23.2, npm 11.19.0; full test:ci suite passed 1,158 tests in 151 files,
+  31.38 seconds test execution after 24.54 seconds test compilation.
+- Production build passed in 51.672 seconds on 2026-09-21 Australia/Melbourne.
+- Root integration review checked 39 pairwise combinations against the published
+  branch heads and relevant pending PRs; all merge-tree checks were conflict-free.
+  This records those checked heads, not a promise about future upstream changes.
+
+Portable browser QA tooling:
+- serve.mjs syntax check passed and the real theme/asset fixture compiled and ran.
+- check.mjs syntax check passed. Playwright is external optional QA tooling;
+  no production package or lockfile dependency was added.
+- Firefox required temporary app-data directories for its host runtime startup;
+  no OS privacy permission or sandbox setting was changed.
+- Its inline-link protocol scroll helper could leave the second text line clipped.
+  Real wheel and keyboard End scroll exposed the complete link. Final checks use
+  Tab (Option+Tab for WebKit's macOS link policy), End and settled DOM geometry.
+  This was a harness interaction correction, not a production CSS change.
+
+Final synthetic browser matrix (production code unchanged at 0ff843477):
+- Chrome 153.0.8010.48: all 15 named checks passed.
+- Microsoft Edge 153.0.4234.32: all 15 named checks passed.
+- Firefox 155.0: all 15 named checks passed.
+- WebKit 26.6: all 15 named checks passed (not native Safari).
+- Browser rerun exit 0; no page errors across the asserted contexts.
+- Checked-in evidence includes per-engine result JSON, eight accessibility-tree
+  snapshots and five representative synthetic Chrome screenshots.
+- Desktop 1280x900, narrow 390x844 and 320x568, light/dark themes and reduced-motion
+  preference were exercised. The 200% scenario is CSS zoom, not native browser zoom.
+- Human assistive-technology/pilot/review and full-app acceptance remain pending.
