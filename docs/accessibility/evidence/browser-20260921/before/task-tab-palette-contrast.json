@@ -1,0 +1,98 @@
+[
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#3939ff",
+    "backgroundToken": "--ot-color-page",
+    "background": "#fafafa",
+    "contrast": 6.281
+  },
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#3939ff",
+    "backgroundToken": "--ot-color-surface",
+    "background": "#ffffff",
+    "contrast": 6.556
+  },
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#3939ff",
+    "backgroundToken": "--ot-color-surface-raised",
+    "background": "#ffffff",
+    "contrast": 6.556
+  },
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#616161",
+    "backgroundToken": "--ot-color-page",
+    "background": "#fafafa",
+    "contrast": 5.934
+  },
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#616161",
+    "backgroundToken": "--ot-color-surface",
+    "background": "#ffffff",
+    "contrast": 6.193
+  },
+  {
+    "theme": "light",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#616161",
+    "backgroundToken": "--ot-color-surface-raised",
+    "background": "#ffffff",
+    "contrast": 6.193
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#818cf8",
+    "backgroundToken": "--ot-color-page",
+    "background": "#0f1216",
+    "contrast": 6.295
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#818cf8",
+    "backgroundToken": "--ot-color-surface",
+    "background": "#171b21",
+    "contrast": 5.794
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-link",
+    "foreground": "#818cf8",
+    "backgroundToken": "--ot-color-surface-raised",
+    "background": "#1f2530",
+    "contrast": 5.155
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#99a2b0",
+    "backgroundToken": "--ot-color-page",
+    "background": "#0f1216",
+    "contrast": 7.287
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#99a2b0",
+    "backgroundToken": "--ot-color-surface",
+    "background": "#171b21",
+    "contrast": 6.707
+  },
+  {
+    "theme": "dark",
+    "foregroundToken": "--ot-color-text-muted",
+    "foreground": "#99a2b0",
+    "backgroundToken": "--ot-color-surface-raised",
+    "background": "#1f2530",
+    "contrast": 5.968
+  }
+]

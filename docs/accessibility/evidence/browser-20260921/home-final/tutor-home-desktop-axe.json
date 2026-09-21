@@ -1,0 +1,19 @@
+{
+  "url": "/home",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">ST</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        }
+      ]
+    }
+  ],
+  "passes": 27
+}

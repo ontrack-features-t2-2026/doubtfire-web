@@ -1,0 +1,150 @@
+
+> doubtfire@11.0.0-45 build
+> ng build --configuration production
+
+❯ Building...
+main-3CTCDXRV.js (2:242343): Use of eval in "main-3CTCDXRV.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+✔ Building...
+Initial chunk files   | Names              |  Raw size | Estimated transfer size
+main-3CTCDXRV.js      | main               |  10.83 MB |                 1.95 MB
+styles-T7BI73YY.css   | styles             | 384.48 kB |                29.88 kB
+scripts-XPQB2DJX.js   | scripts            | 353.02 kB |               102.35 kB
+polyfills-6ZEAHAKR.js | polyfills          |  35.81 kB |                11.63 kB
+
+                      | Initial total      |  11.60 MB |                 2.09 MB
+
+Lazy chunk files      | Names              |  Raw size | Estimated transfer size
+chunk-GKOCFWSR.css    | -                  | 305.04 kB |                86.85 kB
+main-7F7ULBEH.css     | -                  | 305.04 kB |                86.85 kB
+chunk-1ACdcdLg.js     | html2canvas        | 167.53 kB |                34.92 kB
+chunk-AJu_gMT6.js     | unit-hub-component |  70.23 kB |                16.04 kB
+chunk-Bflhpag0.js     | -                  |  27.49 kB |                 6.39 kB
+chunk-HaPRlHHy.js     | tsMode             |  22.89 kB |                 5.62 kB
+chunk-2447BewY.js     | solidity           |  18.48 kB |                 2.50 kB
+chunk-BbdVCU1V.js     | powerquery         |  16.83 kB |                 4.18 kB
+chunk-COTlpZKN.js     | freemarker2        |  15.67 kB |                 3.38 kB
+chunk-BtLKq4wx.js     | abap               |  14.05 kB |                 4.61 kB
+chunk-CM51EsF1.js     | pgsql              |  13.35 kB |                 3.84 kB
+chunk-C8gH0wkB.js     | redshift           |  11.69 kB |                 3.71 kB
+chunk-BzQ3chhd.js     | mysql              |  11.16 kB |                 3.52 kB
+chunk-Bjwx1yDv.js     | sql                |  10.19 kB |                 3.32 kB
+chunk-eVsbk55f.js     | elixir             |  10.14 kB |                 2.24 kB
+...and 76 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [65.823 seconds] - 2026-09-21T06:47:28.660Z
+
+▲ [WARNING] src/app/unit-hub/unit-hub.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 1.40 kB with a total of 7.40 kB.
+
+
+▲ [WARNING] src/app/demo/demo-controls/demo-controls.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 2.30 kB with a total of 8.30 kB.
+
+
+▲ [WARNING] src/app/projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 369 bytes with a total of 6.37 kB.
+
+
+▲ [WARNING] src/app/tasks/task-comments-viewer/task-comments-viewer.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 4.76 kB with a total of 10.76 kB.
+
+
+▲ [WARNING] src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 167.58 kB with a total of 173.58 kB.
+
+
+▲ [WARNING] src/app/projects/states/tutor-discussion/tutor-discussion.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 168.07 kB with a total of 174.07 kB.
+
+
+▲ [WARNING] src/app/home/states/home/home.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 168.14 kB with a total of 174.14 kB.
+
+
+▲ [WARNING] src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 169.55 kB with a total of 175.55 kB.
+
+
+▲ [WARNING] src/app/common/header/unit-dropdown/unit-dropdown.component.scss exceeded maximum budget. Budget 6.00 kB was not met by 166.41 kB with a total of 172.41 kB.
+
+
+▲ [WARNING] Module 'lottie-web' used by 'src/app/doubtfire-angular.module.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'html2canvas' used by '../a11y-keyboard-20260920/node_modules/@worktile/gantt/fesm2022/worktile-gantt.mjs' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'jszip' used by 'src/app/common/archive-viewer/archive-viewer.component.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'moment' used by 'src/app/common/header/notification-bell/notification-bell.component.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'qrcode' used by 'src/app/common/modals/qr-modal/qr-modal.component.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] Module 'ansi-to-html' used by 'src/app/projects/states/dashboard/directives/task-dashboard/directives/task-overseer-report/task-overseer-report.component.ts' is not ESM
+
+  CommonJS or AMD dependencies can cause optimization bailouts.
+  For more information see: https://angular.dev/tools/cli/build#configuring-commonjs-dependencies
+
+
+▲ [WARNING] 48 rules skipped due to selector errors:
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+  & -> Empty sub-selector
+
+
+Output location: <web-worktree>/dist

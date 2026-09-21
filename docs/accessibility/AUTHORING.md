@@ -2,6 +2,8 @@
 
 Use this guide for frontend changes and reviews. WCAG 2.2 AA is the improvement target, not a claim of compliance. Start with the [merged A11Y-D01 baseline](../A11Y-D01-Accessibility-Baseline_Phase1.md), the [manual regression pack](REGRESSION.md), and the [remediation and handover register](REMEDIATION.md). The register distinguishes merged code, changes awaiting review, and checks still needing a person.
 
+For ticket acceptance and reviewer handover, follow the [closure guide](CLOSURE.md) and [run record](RUN-RECORD.md). The [A01 audit](evidence/a01/A01-LINT-AUDIT.md) records the main-branch findings and the fixed-stack scan separately.
+
 ## Controls and structure
 
 - Use `<button type="button">` for actions and `<a [routerLink]="...">` or a real `href` for navigation. Adding `tabindex` to a clickable container does not supply activation keys or button semantics. Keep links and buttons out of other links and buttons.

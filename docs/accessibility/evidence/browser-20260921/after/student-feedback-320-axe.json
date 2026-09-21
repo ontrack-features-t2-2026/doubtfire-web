@@ -1,0 +1,45 @@
+{
+  "url": "/projects/1/dashboard/1.2P/feedback",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        {
+          "target": [
+            "f-unit-code"
+          ],
+          "html": "<f-unit-code _ngcontent-ng-c40233...=\"\" data-onboarding-targ...=\"unit-selector\" class=\"mat-mdc-tooltip-trig...\" _nghost-ng-c42417668...=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-describedby=\"cdk-describedby-mess...\" cdk-describedby-host=\"ng-1\">",
+          "failureSummary": "Fix all of the following:\n  Check that there is no problem if the ARIA attribute is ignored on this element: aria-expanded=\"false\""
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "svg[width=\"32\"][height=\"32\"][_ngcontent-ng-c2005649891=\"\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#comment-3 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-5\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">ST</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#comment-9 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-5\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">ST</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        }
+      ]
+    }
+  ],
+  "passes": 24
+}

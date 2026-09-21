@@ -1,0 +1,39 @@
+{
+  "source_branch_label": "origin/11.0.x",
+  "source_revision": "d16f6201caff78082e5e83c540320dbee5871404",
+  "input_name": "lint-before.json",
+  "input_sha256": "65f25e5b2533947489d4012ac16fd86e387e29d02c782e03d99ffb1032759197",
+  "result_records": 229,
+  "affected_files": 15,
+  "raw_messages": 37,
+  "distinct_source_elements": 25,
+  "fatal_errors": 0,
+  "warnings": 0,
+  "suppressed_messages": 0,
+  "source_verification": "All 15 affected-file embedded source strings exactly equal their git blobs at the recorded revision.",
+  "verified_source_files": [
+    "src/app/common/feedback-template-editor/feedback-template-editor.component.html",
+    "src/app/common/learning-outcome-editor/learning-outcome-editor.component.html",
+    "src/app/common/modals/date-change-modal/task-date-slider.component.html",
+    "src/app/dashboard/f-cross-dashboard.component.html",
+    "src/app/projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-detail-dialog/engagement-detail-dialog.component.html",
+    "src/app/projects/states/staff-notes/staff-notes.component.html",
+    "src/app/projects/states/tutor-notes/tutor-notes.component.html",
+    "src/app/tasks/task-comment-composer/attachment-confirmation-dialog/attachment-confirmation-dialog.component.html",
+    "src/app/tasks/task-comment-composer/task-comment-composer.component.html",
+    "src/app/tasks/task-comments-viewer/pdf-image-comment/pdf-image-comment.component.html",
+    "src/app/tasks/task-comments-viewer/task-comments-viewer.component.html",
+    "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
+    "src/app/units/states/edit/directives/unit-tasks-editor/unit-task-editor.component.html",
+    "src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.html",
+    "src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.html"
+  ],
+  "lockfile_versions": {
+    "eslint": "10.6.0",
+    "angular-eslint": "22.0.0",
+    "@angular-eslint/eslint-plugin-template": "22.0.0",
+    "@angular/compiler": "22.0.3"
+  },
+  "deduplication_key": "recorded source revision + repository-relative file path + byte offset of verified element opening tag",
+  "runtime_provenance": "Execution timestamp, Node/npm runtime, npm ci log, and process exit code are not recorded in the supplied JSON."
+}

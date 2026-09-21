@@ -1,0 +1,98 @@
+{
+  "viewport": 320,
+  "width": 320,
+  "matchMedia": true,
+  "cardChain": [
+    {
+      "tag": "DIV",
+      "class": "unit-card-slot ng-star-inserted",
+      "left": 16,
+      "width": 288,
+      "computed": "288px",
+      "max": "100%"
+    },
+    {
+      "tag": "A",
+      "class": "removeStyle ng-star-inserted",
+      "left": 16,
+      "width": 288,
+      "computed": "288px",
+      "max": "none"
+    },
+    {
+      "tag": "MAT-CARD",
+      "class": "mat-mdc-card mdc-card unit-card",
+      "left": 16,
+      "width": 288,
+      "computed": "288px",
+      "max": "300px"
+    }
+  ],
+  "overflow": [
+    {
+      "tag": "DIV",
+      "class": "cdk-live-announcer-element cdk-visually-hidden",
+      "text": "",
+      "left": -1,
+      "right": 0,
+      "width": 1,
+      "display": "block",
+      "visibility": "visible",
+      "position": "absolute",
+      "overflowX": "hidden",
+      "html": "<div class=\"cdk-live-announcer-element cdk-visually-hidden\" aria-atomic=\"true\" aria-live=\"polite\" id=\"cdk-live-announcer-0\"></div>"
+    },
+    {
+      "tag": "DIV",
+      "class": "cdk-describedby-message-container cdk-visually-hidden",
+      "text": "View previous unitsView current units22% through the teaching period.",
+      "left": -1,
+      "right": 0,
+      "width": 1,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "absolute",
+      "overflowX": "hidden",
+      "html": "<div class=\"cdk-describedby-message-container cdk-visually-hidden\" style=\"visibility: hidden;\"><div id=\"cdk-describedby-message-ng-1-4\" role=\"tooltip\">View previous units</div><div id=\"cdk-describedby-message-ng-1-5\" role=\"tooltip\">View current units</div><div id=\"cdk-describedby-message-ng-1-6\" role=\"tooltip\">22% through the teaching period.</div></div>"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "text": "View previous units",
+      "left": -1,
+      "right": 0,
+      "width": 1,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "static",
+      "overflowX": "visible",
+      "html": "<div id=\"cdk-describedby-message-ng-1-4\" role=\"tooltip\">View previous units</div>"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "text": "View current units",
+      "left": -1,
+      "right": 0,
+      "width": 1,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "static",
+      "overflowX": "visible",
+      "html": "<div id=\"cdk-describedby-message-ng-1-5\" role=\"tooltip\">View current units</div>"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "text": "22% through the teaching period.",
+      "left": -1,
+      "right": 0,
+      "width": 1,
+      "display": "block",
+      "visibility": "hidden",
+      "position": "static",
+      "overflowX": "visible",
+      "html": "<div id=\"cdk-describedby-message-ng-1-6\" role=\"tooltip\">22% through the teaching period.</div>"
+    }
+  ]
+}

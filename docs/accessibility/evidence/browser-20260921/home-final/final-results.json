@@ -1,0 +1,189 @@
+{
+  "webRevision": "3d61bd58cd587c240c163235629b9df63533ab28",
+  "webTree": "b796910a5d8d9af01beef80c6d7e3959f04ad51d",
+  "sourceProvenance": "Coordinator confirmed the frozen source ran before it was committed; no source changes since the retest. Original base and source diff hash retained in results.json.",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "base": "http://127.0.0.1:4314",
+  "browser": "Chrome 153.0.8010.48",
+  "samples": [
+    {
+      "sample": "student-home-desktop",
+      "width": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      },
+      "landmarks": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      },
+      "progressbars": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "value": "22"
+        }
+      ],
+      "axeViolations": 0,
+      "axeIncomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "screenshot": "student-home-desktop.png",
+      "axeFile": "student-home-desktop-axe.json"
+    },
+    {
+      "sample": "student-home-320",
+      "width": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      },
+      "landmarks": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      },
+      "progressbars": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "value": "22"
+        }
+      ],
+      "axeViolations": 0,
+      "axeIncomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "screenshot": "student-home-320.png",
+      "axeFile": "student-home-320-axe.json"
+    },
+    {
+      "sample": "tutor-home-desktop",
+      "width": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      },
+      "landmarks": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      },
+      "progressbars": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "value": "22"
+        }
+      ],
+      "axeViolations": 0,
+      "axeIncomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "screenshot": "tutor-home-desktop.png",
+      "axeFile": "tutor-home-desktop-axe.json"
+    },
+    {
+      "sample": "tutor-home-320",
+      "width": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 320,
+        "geometrySource": "geometry-settled/overflow.json",
+        "cardChain": [
+          {
+            "tag": "DIV",
+            "class": "unit-card-slot ng-star-inserted",
+            "left": 16,
+            "width": 288,
+            "computed": "288px",
+            "max": "100%"
+          },
+          {
+            "tag": "A",
+            "class": "removeStyle ng-star-inserted",
+            "left": 16,
+            "width": 288,
+            "computed": "288px",
+            "max": "none"
+          },
+          {
+            "tag": "MAT-CARD",
+            "class": "mat-mdc-card mdc-card unit-card",
+            "left": 16,
+            "width": 288,
+            "computed": "288px",
+            "max": "300px"
+          }
+        ]
+      },
+      "landmarks": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      },
+      "progressbars": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "value": "22"
+        }
+      ],
+      "axeViolations": 0,
+      "axeIncomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "screenshot": "geometry-settled/tutor-home-320.png",
+      "axeFile": "tutor-home-320-axe.json"
+    }
+  ],
+  "nativeUnitEnter": [
+    {
+      "id": "student-unit-enter",
+      "status": "pass",
+      "details": {
+        "before": {
+          "tag": "A",
+          "name": "Synthetic Upload and Submission Lab",
+          "focused": true,
+          "href": "/projects/1/dashboard"
+        },
+        "route": "/projects/1/dashboard"
+      }
+    },
+    {
+      "id": "tutor-unit-enter",
+      "status": "pass",
+      "details": {
+        "before": {
+          "tag": "A",
+          "name": "Synthetic Upload and Submission Lab - Tutor",
+          "focused": true,
+          "href": "/units/1/tasks/inbox"
+        },
+        "route": "/units/1/tasks/inbox"
+      }
+    }
+  ],
+  "businessWriteAttempts": 0,
+  "pageErrors": [],
+  "supersededObservation": {
+    "source": "results.json:tutor-home-320-width",
+    "immediateWidth": 332,
+    "reason": "Measured before responsive resize settled. Two animation frames, rendered screenshot and repeat geometry confirmed320px on the same source.",
+    "authoritativeSource": "geometry-settled/overflow.json"
+  },
+  "limits": "Read-only Home views only. No screen-reader, native zoom, complete reflow or mutation-journey claims. Axe incomplete checks are retained."
+}

@@ -1,0 +1,192 @@
+{
+  "recordedAt": "2026-09-21T06:36:01.938Z",
+  "base": "http://127.0.0.1:4314",
+  "webBaseRevision": "788fac88be24626178d8b994193db7cbadf98704",
+  "webSourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiProvenance": "Private synthetic fixture manifest and API runtime provenance document. Database authentication. No deploy repository checkout executed.",
+  "scope": "Read-only actual Chrome with synthetic API fixtures. Normal auth and token refresh allowed; other business writes blocked. Viewport width observations, focus/Enter, landmarks, rendered axe and explicit tab states. No full reflow, native zoom, screen reader, mobile Safari or mutation-journey claims.",
+  "checks": [
+    {
+      "id": "student-home-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "home-settled",
+      "status": "pass",
+      "details": "Actual synthetic project link visible; global splash and local spinners absent."
+    },
+    {
+      "id": "home-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "home-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "home-desktop-axe",
+      "status": "findings",
+      "details": {
+        "violations": [
+          {
+            "id": "aria-progressbar-name",
+            "impact": "serious",
+            "nodes": 1
+          }
+        ],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 26
+      }
+    },
+    {
+      "id": "home-320-width",
+      "status": "fail",
+      "details": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 331,
+        "bodyWidth": 331
+      }
+    },
+    {
+      "id": "home-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "home-320-axe",
+      "status": "findings",
+      "details": {
+        "violations": [
+          {
+            "id": "aria-progressbar-name",
+            "impact": "serious",
+            "nodes": 1
+          }
+        ],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 26
+      }
+    },
+    {
+      "id": "tutor-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "staff-inbox-desktop-settled",
+      "status": "pass",
+      "details": {
+        "rows": 4,
+        "busy": 0
+      }
+    },
+    {
+      "id": "staff-inbox-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/units/1/tasks/inbox",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "staff-inbox-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "staff-inbox-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 28
+      }
+    },
+    {
+      "id": "staff-empty-search",
+      "status": "pass",
+      "details": "Named inbox filter leads to textual empty state."
+    },
+    {
+      "id": "staff-inbox-restored-settled",
+      "status": "pass",
+      "details": {
+        "rows": 4,
+        "busy": 0
+      }
+    },
+    {
+      "id": "staff-inbox-320-settled",
+      "status": "pass",
+      "details": {
+        "rows": 4,
+        "busy": 0
+      }
+    },
+    {
+      "id": "staff-inbox-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/units/1/tasks/inbox",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "staff-inbox-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "staff-inbox-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "browser": "Chrome 153.0.8010.48"
+}
