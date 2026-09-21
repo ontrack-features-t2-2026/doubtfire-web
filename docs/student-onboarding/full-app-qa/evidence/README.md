@@ -65,8 +65,8 @@ not exact video seek positions.
   cleanup steps. The recording used separate headless contexts.
 - Complete the [manual acceptance sequence](../README.md#exact-acceptance-sequence)
   for keyboard-only Back/Skip/Escape, native focus/route Back, integrated reload/
-  dismissal/failure/staff/flag-off, narrow sizes and reduced motion if full-app
-  acceptance is required. The existing [four-engine component fixture](../../browser-qa/evidence/README.md)
+  dismissal/failure/staff/flag-off, narrow sizes and reduced motion to finish
+  TUT-Q01 application acceptance. The existing [four-engine component fixture](../../browser-qa/evidence/README.md)
   already covers those corresponding state/failure/layout cases in isolation.
 - Native Safari was not exposed in the supported computer-use environment.
   Earlier WebKit engine evidence is labelled separately and is not Safari.
