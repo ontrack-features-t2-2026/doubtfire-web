@@ -7,11 +7,14 @@ fixtures, not a production student account or a running backend.
 ## Automated checks
 
 - Dashboard and global project-loading tests: **4 files, 100 tests passed**.
+- [GitHub Test CI run 35562123693](https://github.com/ontrack-features-t2-2026/doubtfire-web/actions/runs/35562123693):
+  **162 files, 1,267 tests passed**, plus 14 theme checks, using a clean install.
 - Targeted TypeScript/template lint: passed with zero warnings.
 - Production build on Node 22.23.2: passed. Existing dependency sourcemap,
   CSS selector and `eval` warnings remain visible in build output.
-- Chrome 153.0.8010.48: **24 browser scenarios passed**, no page errors.
-  [Machine-readable results](browser-results.json) record the measurements.
+- Chrome 153.0.8010.48 and WebKit 26.6: **25 browser scenarios passed in each**,
+  with no page errors. [Chrome results](browser-results.json) and
+  [WebKit results](browser-results-webkit.json) record the measurements.
 - Local merge simulations with web PR #251 (keyboard controls) and #264
   (comment unread count/coverage) completed without conflicts.
 
@@ -22,7 +25,8 @@ case also covers the layout width of a 1280 px window at 200% reflow; it does
 not claim a manual browser zoom or screen-reader test.
 
 Keyboard checks opened/toggled the checkbox filter menu and returned focus to
-its trigger. Feedback available/no feedback/unavailable filters produced 6/6/3
+its trigger. The unread badge and all four due-date warning colour pairs
+meet 4.5:1 text contrast in the compiled CSS. Feedback available/no feedback/unavailable filters produced 6/6/3
 tasks, clearing restored 15, and a no-match search retained input focus. Active
 refresh loading and failure retained the three cards and button focus; retry
 recovered. An empty response rendered the explicit empty state. A previous-unit

@@ -1,5 +1,5 @@
 {
-  "browser": "153.0.8010.48",
+  "browser": "26.6",
   "results": [
     {
       "width": 320,
@@ -203,7 +203,6 @@
     "/api/projects/?include_inactive=false&include_task_definitions=true",
     "/api/notifications/unread_count",
     "/api/tasks/recommended?page=1&per_page=50",
-    "/api/notifications/unread_count",
     "/api/notifications/unread_count",
     "/api/projects/?include_inactive=false&include_task_definitions=true",
     "/api/projects/?include_inactive=false&include_task_definitions=true",
