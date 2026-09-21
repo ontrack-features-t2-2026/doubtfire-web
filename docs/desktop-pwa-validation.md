@@ -21,7 +21,8 @@ Test environment: macOS, Node 22.23.2, Angular 22.0.3, Chrome 153.0.8010.48.
 A disposable persistent Chrome profile loaded the actual production output from
 an isolated loopback HTTP server. Only public branding/auth-method responses were
 stubbed; authentication returned a signed-out result. No real account or live
-institutional server was used. No OS app was installed into the user's profile.
+institutional server was used. This automated run did not install an OS app;
+the separate interactive checks below did.
 
 Passed:
 
@@ -52,11 +53,66 @@ attempts were corrected in the test harness, without changing production code.
 
 ![390px viewport installation help](evidence/desktop-pwa-20260921/mobile-install.png)
 
+## Interactive macOS installation
+
+Using the actual production build at an isolated loopback origin with signed-out
+API fixtures, native UI checks passed on macOS 27.0 (26A428):
+
+| Browser              | Observed result                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chrome 153.0.8010.48 | Browser installation created an OS application with the manifest name and `/index.html` start URL. The app launched in a standalone window, showed **OnTrack app help**, and relaunched after closing. Uninstall removed the application. A second pass through the foreground in-page Install button opened Chrome's native prompt, allowed cancellation and retry, and reinstalled with the same application ID. The temporary app was then uninstalled again. |
+| Safari 27.0          | The help dialog offered manual instructions without a Chromium-only Install button. **File → Add to Dock** selected `/index.html`; the temporary app, named **OnTrack Desktop QA**, opened in its own window, showed the installed help state, and relaunched successfully. The app was quit and moved to Bin through Finder; removal was verified.                                                                                                              |
+
+These checks used normal local browser profiles and native installation
+confirmations. Temporary applications were removed afterwards; unrelated browser
+data was not cleared. They establish local installation behavior, not a result
+for an institutional HTTPS origin or authenticated Safari session.
+
+[Native installation record](evidence/desktop-pwa-20260921/native-install-results.json)
+
+## Database authentication against an isolated API
+
+A separate Rails/MariaDB stack with synthetic demo fixtures served real API
+responses to the production web build through a loopback proxy. A disposable
+Chrome profile passed nine authentication checks: protected-route redirection,
+incorrect-password rejection, successful sign-in returning to `/notifications`,
+loading seeded notification records, authenticated reload through the refresh
+cookie, logout, rejection of the revoked access token, inability to refresh the
+logged-out session, and denial of a protected route after logout. There were no
+uncaught page errors. Credentials and tokens are excluded from the evidence.
+
+The [authentication evidence and reproduction guide](evidence/desktop-pwa-20260921/authenticated-checks/README.md)
+record the API source/runtime and fixture scope. This exercised database
+authentication in a normal browser, not institutional SSO or an authenticated
+installed Safari app. The application's existing external editor/font assets
+were allowed to load; these checks do not establish offline authentication.
+
+## Real worker update and recovery
+
+The [portable regression harness](evidence/desktop-pwa-20260921/update-checks/README.md)
+passed eight checks in a disposable Chrome profile using copies of the production
+build, synthetic release markers and signed-out API fixtures. The actual worker
+downloaded release B and the application's Reload notice appeared. The existing
+document and a synthetic unsaved textarea value survived for ten seconds until
+the user action; Reload then loaded B successfully.
+
+Restoring the identical original A manifest left both existing and newly opened
+clients on cached B. Publishing the same A asset bytes with a fresh Angular
+manifest timestamp produced a distinct recovery version. The real Reload action
+returned to A, preserving app identity and scope, with worker state `NORMAL`.
+The recovered shell also reloaded offline and recovered on reconnect. There were
+no uncaught page errors. This is a coherent synthetic-release regression, not a
+Docker image publication or production rollback rehearsal.
+
+[Machine-readable update/recovery results](evidence/desktop-pwa-20260921/update-checks/results.json)
+
 ## Not yet exercised
 
-OS installation/relaunch/uninstall on Windows, macOS and Linux; actual Safari,
-Edge and Firefox implementations; institutional SSO; authenticated student/staff
-workflows; live Web Push; two-release update/rollback; and real Android/iOS
-installation regression. Complete the [staging acceptance checklist](desktop-pwa.md#required-staging-acceptance)
-before production rollout. Headless browser and unit-test results are not a
-claim that those combinations passed.
+Windows and Linux OS installation; Edge and Firefox installation; institutional
+SSO; authenticated Safari sessions; course submission/download workflows; live
+Web Push; and real Android/iOS installation regression. The currently documented
+hosting address was not reachable during this session, so no public HTTPS
+deployment or production acceptance is claimed. Complete the applicable
+[staging acceptance checklist](desktop-pwa.md#required-staging-acceptance) on the
+intended origin before production rollout. Local results do not certify browser
+and platform combinations that were not exercised.

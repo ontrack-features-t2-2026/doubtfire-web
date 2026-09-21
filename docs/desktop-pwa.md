@@ -54,6 +54,13 @@ it. Failed background checks while offline are handled and later polling
 continues. Angular's worker also checks on navigation. There is no forced reload
 when the connection returns.
 
+For recovery, rebuild the previous source as a new release with a freshly
+generated Angular service-worker manifest. Restoring an identical older image
+can leave clients on the newer cached release because Angular ignores manifest
+versions it already knows. Publish the complete recovery build, preserve app
+identity, and verify the Reload notice actually returns an existing client to
+the intended version. The companion deployment runbook covers this procedure.
+
 Push notifications reuse the API's current Web Push setup and the user's opt-in
 settings. Installing does not grant notification permission or configure VAPID
 keys. Delivery depends on browser/OS settings and background-process policies;
