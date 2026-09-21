@@ -4,11 +4,12 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {MatIconTestingModule} from '@angular/material/icon/testing';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {Router} from '@angular/router';
+import {Router, RouterLink, provideRouter} from '@angular/router';
 import {Observable, defer, of} from 'rxjs';
 import {AuthenticationService, Unit} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
@@ -25,6 +26,7 @@ import {QrModalService} from '../modals/qr-modal/qr-modal.service';
 import {SidekiqJobsModalService} from '../modals/sidekiq-jobs-modal/sidekiq-jobs-modal.service';
 import {TutorNotesModalService} from '../modals/tutor-notes-modal/tutor-notes-modal.service';
 import {IsActiveUnitRole} from '../pipes/is-active-unit-role.pipe';
+import {expectAccessible} from '../testing/accessibility';
 import {HeaderComponent} from './header.component';
 
 const emptyProvider = {};
@@ -150,10 +152,12 @@ describe('HeaderComponent', () => {
         imports: [
           MatButtonModule,
           MatIconModule,
+          MatIconTestingModule,
           MatMenuModule,
           MatToolbarModule,
           MatTooltipModule,
           NoopAnimationsModule,
+          RouterLink,
         ],
         providers: [
           {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
@@ -192,7 +196,7 @@ describe('HeaderComponent', () => {
           {provide: SidekiqJobService, useValue: {sidekiqJobsSubject: of([])}},
           {provide: SidekiqJobsModalService, useValue: emptyProvider},
           {provide: QrModalService, useValue: emptyProvider},
-          {provide: Router, useValue: {url: '/projects/1/dashboard'}},
+          provideRouter([]),
           {provide: TutorNotesModalService, useValue: emptyProvider},
         ],
         schemas: [NO_ERRORS_SCHEMA],
@@ -200,6 +204,36 @@ describe('HeaderComponent', () => {
 
       fixture = TestBed.createComponent(HeaderComponent);
       component = fixture.componentInstance;
+    });
+
+    it('gives the rendered logo link a name and a real home destination', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const logo = fixture.nativeElement.querySelector('a[href="/home"]') as HTMLAnchorElement;
+      expect(logo).not.toBeNull();
+      expect(logo.getAttribute('aria-label')).toBe('Home');
+      expect(logo.querySelector('mat-icon').getAttribute('aria-hidden')).toBe('true');
+      const results = await expectAccessible(logo);
+      expect(results.passes.some((rule) => rule.id === 'link-name')).toBe(true);
+
+      // The SVG is decorative: losing the link's name must fail the regression.
+      logo.removeAttribute('aria-label');
+      await expect(expectAccessible(logo)).rejects.toThrow('link-name');
+    });
+
+    it('exposes one banner only while the responsive header is shown', () => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('[role="banner"]').length).toBe(1);
+
+      breakpointObserverStub.isMatched.mockReturnValue(true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('[role="banner"]').length).toBe(1);
+      expect(fixture.nativeElement.querySelector('a[href="/home"]')).toBeNull();
+
+      component.showHeader = false;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role="banner"]')).toBeNull();
     });
 
     it('opens the shared tutorial from the existing account menu when eligible', async () => {

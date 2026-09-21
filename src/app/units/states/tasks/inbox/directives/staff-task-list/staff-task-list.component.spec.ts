@@ -10,7 +10,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {ActivatedRoute, Router} from '@angular/router';
 import {EMPTY, Subject, of} from 'rxjs';
-import {UserService} from 'src/app/api/models/doubtfire-model';
+import {User, UserService} from 'src/app/api/models/doubtfire-model';
 import {Task} from 'src/app/api/models/task';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
@@ -403,13 +403,16 @@ describe('StaffTaskListComponent rendered empty state', () => {
     expect(status.querySelector('p').hasAttribute('aria-hidden')).toBe(false);
   });
 
-  it('separates native task selection from the overflow action and names narrow rows', async () => {
+  it.each([
+    {displayName: 'Demo Student'},
+    Object.assign(new User(), {firstName: 'Demo', lastName: 'Student'}),
+  ])('names native task rows with an optional display name or the model name', async (student) => {
     const task = {
       id: 1,
       taskKeyToIdString: () => 'task-1',
       statusClass: () => 'need-help',
       statusLabel: () => 'Need Help',
-      project: {student: {displayName: 'Demo Student'}},
+      project: {student},
       definition: {abbreviation: '1.1P', name: 'Demonstration task'},
       daysSinceSubmission: () => 0,
       hasGrade: () => false,
@@ -421,6 +424,8 @@ describe('StaffTaskListComponent rendered empty state', () => {
     const select = fixture.nativeElement.querySelector('button[aria-pressed]') as HTMLButtonElement;
     expect(select).toBeTruthy();
     expect(select.getAttribute('aria-label')).toBe('Demo Student, 1.1P: Demonstration task');
+    expect(select.querySelector('.student-name').textContent).toContain('Demo Student');
+    expect(select.querySelector('h4')).toBeNull();
     expect(select.querySelector('button, a, input, [role="option"]')).toBeNull();
     expect(select.tabIndex).toBe(0);
     const summary = document.getElementById(select.getAttribute('aria-describedby'));

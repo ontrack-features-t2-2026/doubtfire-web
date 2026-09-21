@@ -83,6 +83,14 @@ describe('DemoControlsComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.ppi-preview__choices button').length).toBe(5);
   });
 
+  it('keeps the named demo section inside the app-owned main landmark', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('main, [role="main"]')).toBeNull();
+    const section = element.querySelector('section.demo-controls');
+    expect(section.getAttribute('aria-labelledby')).toBe('demo-controls-title');
+    expect(section.querySelector('#demo-controls-title').textContent.trim()).toBe('Demo controls');
+  });
+
   it('persists the switch and reloads to avoid mixed entity caches', () => {
     fixture.componentInstance.setDemoMode({checked: true} as MatSlideToggleChange);
 
