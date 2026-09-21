@@ -9,11 +9,12 @@ focused correction and its verification are described below.
 ## Runtime and provenance
 
 - Browser: Google Chrome `153.0.8010.48`, automated with Playwright, in an isolated profile.
-- Web: existing full production artifact `a9e7af46f`, whose analytics source is
+- Web: existing full application default/development artifact `a9e7af46f`, whose analytics source is
   `66e3e20565ab1c61e0158f9fcf3a8d896dcdb11c`, served on localhost:4320.
   The three chart components, shared chart styles and Unit Statistics route were
   compared with merged web `283b493367681d1abab23e5fe7c633ba3a57e5c2`; they are identical.
-  This was not a newly built Angular artifact.
+  The recorded combined build used the default/development configuration, not the
+  production configuration. This was not a newly built Angular artifact.
 - API: merged `11.0.x` at `d7f7a5b9c2d34ef279ac3a70bc58823def64005c`, running on
   localhost:3011 with its own disposable database and Redis. Eight synthetic enrolled
   learners, two tutorials and four tasks give non-zero, varied completion summaries.
@@ -58,8 +59,9 @@ Its regression script tests the served application by default. For this constrai
 local run, `ANALYTICS_STYLE_OVERLAY=1` compiled that checkout's actual SCSS with Sass
 and applied the resulting CSS under the three component host selectors to the existing
 artifact. **These screenshots and contrast results demonstrate a compiled source SCSS
-overlay, not a rebuild of the Angular application with the fix.** Normal CI builds and
-the script's default served-build mode provide the separate integration check.
+overlay, not a rebuild of the Angular application with the fix.** GitHub CI compiled the correction and passed its build, lint and test checks.
+The script's default served-build mode is available for a later browser run against
+a newly built bundle; that mode was not executed in this acceptance run.
 
 [Raw theme measurements](acceptance-2026-09-21/theme-results.json) include baseline
 fills, every rendered label, explicit mark fills and chart widths. Each phase asserted
