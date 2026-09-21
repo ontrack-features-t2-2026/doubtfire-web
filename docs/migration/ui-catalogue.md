@@ -1,8 +1,22 @@
-# Remaining layout migration catalogue (MG-04)
+# Layout migration catalogue (MG-04)
+
+## Current status — 21 September 2026
+
+Rechecked against merged web `11.0.x` at
+`283b493367681d1abab23e5fe7c633ba3a57e5c2`: **zero Flex Layout directive
+occurrences, zero `FlexLayoutModule`/`MediaObserver` imports, and no
+`ng-flex-layout` dependency**. Commit `0caa10617` completed the teardown on
+20 September. There are no remaining templates to convert for this inventory.
+
+The following audit is retained at its original source revision so its counts
+remain reproducible. Its conversion order and live-import warnings describe
+that historical revision, not work still required on the current branch.
+
+## Historical inventory — 20 September 2026
 
 Verified on 20 September 2026 against web `11.0.x` at `d16f6201caff78082e5e83c540320dbee5871404`.
 This is a source inventory, not measured student usage. The workbook's August counts
-are historical: **10 occurrences across 2 templates** remain.
+were already historical: **10 occurrences across 2 templates** remained at this SHA.
 Ranking uses route frequency and task relevance, not attribute counts or invented analytics.
 
 | Priority | Template                                                                               | fx occurrences | Rationale                                               |
@@ -10,9 +24,8 @@ Ranking uses route frequency and task relevance, not attribute counts or invente
 | 1        | `src/app/projects/states/dashboard/project-dashboard/project-dashboard.component.html` |              9 | Student project dashboard: a frequent task entry point. |
 | 2        | `src/app/welcome/welcome.component.html`                                               |              1 | Welcome screen: primarily first entry.                  |
 
-Convert the project dashboard first and welcome second. There is no third candidate
-left in this inventory; adding one would misstate the remaining work. Coordinate the
-welcome edit with first-time tutorial work and the dashboard with theme/accessibility PRs.
+The recommended order at this revision was project dashboard first, welcome second.
+There was no third candidate. Both conversions have since been completed.
 
 ## TypeScript and package wiring
 
@@ -60,6 +73,15 @@ runs; check component styles before replacing a custom class that happens to sha
 Material legacy appearance remains at `src/app/units/states/edit/directives/unit-staff-editor/unit-staff-editor.component.html:21`. This is the older button-toggle appearance, not the removed form-field appearance.
 
 ## Reproduce the counts
+
+Current status (the first two commands produce no matches):
+
+```sh
+git grep -nE 'fx[A-Z][A-Za-z]*' 283b49336 -- 'src/**/*.html'
+git grep -nE 'ng-flex-layout|FlexLayoutModule|MediaObserver' 283b49336 -- package.json 'src/**/*.ts'
+```
+
+Historical inventory:
 
 ```sh
 git grep -nE 'fx[A-Z][A-Za-z]*' d16f6201c -- '*.html'
