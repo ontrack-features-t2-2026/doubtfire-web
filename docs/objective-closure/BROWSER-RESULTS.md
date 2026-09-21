@@ -37,3 +37,13 @@ A final source-frozen WebKit probe at `c3c1aa02e` still failed before completing
 5. [chrome-task-sheet-pdf-dark-desktop.png](evidence/chrome-task-sheet-pdf-dark-desktop.png) — real PDF canvas and dark surrounding controls.
 
 See [the compact matrix](evidence/theme-browser-matrix.json) for executed checks and failures. Full local route captures and ARIA snapshots remain in the private QA output directory; the representative screenshots below are committed with this report.
+
+## Completed follow-up checks
+
+After combining #251 and the Gantt fixes, source `64d6acd65` passes [15 Chrome chat groups](evidence/chat-combined-chrome.json), [two Firefox](evidence/viewer-combined-firefox.json) and [two WebKit](evidence/viewer-combined-webkit.json) viewer checks. This does not resolve the separate authenticated WebKit theme failure. The latest `ebd97e4a2` changes only attribute order required by lint.
+
+The [actual chart export](evidence/gantt-export-result.json) uses light tokens and black-on-yellow bar text (13.31:1), then restores the screen's Dark palette without changing the saved preference. [Download PNG](evidence/gantt-ink-safe.png) contains the complete synthetic timeline. [Chromium print-to-PDF](evidence/gantt-print.pdf) uses readable light colours but retains viewport clipping; it is not a full-range print pagination result. The synthetic flexible-date setting was restored after capture.
+
+To repeat: use a disposable unit with flexible dates enabled, sign in as its synthetic student, choose Dark and open Plan Tasks. Select Download Chart, inspect the saved PNG labels and full timeline, then verify the app remains Dark. Print the same page to a landscape PDF and inspect its actual output. Restore the fixture setting. This tests Chromium's print path; it does not certify native Safari or physical printing.
+
+The [native WebKit diagnostics](evidence/webkit-native-faults.json) record six Networking-process IPC/guard terminations coinciding with the earlier frame errors. The triggering request remains unknown. The final chart capture was run after restarting the frontend to clear a stale development error overlay from the temporary conflict-resolution state; the final application compiled and the fresh capture passed.

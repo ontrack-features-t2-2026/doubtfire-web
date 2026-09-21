@@ -1,0 +1,65 @@
+{
+  "source": "64d6acd65fe264b1519f1b77610c17433af72f7b",
+  "base": "http://127.0.0.1:4311",
+  "status": "passed",
+  "scope": "Real app synthetic student, actual Download Chart and Chromium print-to-PDF. No native Safari or physical print claim.",
+  "barContrast": [
+    {
+      "foreground": "rgb(0, 0, 0)",
+      "background": "#ffc53d",
+      "ratio": 13.30588531799902
+    },
+    {
+      "foreground": "rgb(0, 0, 0)",
+      "background": "#ffc53d",
+      "ratio": 13.30588531799902
+    },
+    {
+      "foreground": "rgb(0, 0, 0)",
+      "background": "#ffc53d",
+      "ratio": 13.30588531799902
+    }
+  ],
+  "before": {
+    "marker": "dark",
+    "preference": "dark",
+    "surface": "#171b21"
+  },
+  "download": {
+    "name": "SYN101-Task-Plan.png",
+    "error": null
+  },
+  "exportFrames": [
+    {
+      "surface": "#ffffff",
+      "color": "rgb(33, 33, 33)",
+      "marker": "dark",
+      "preference": "dark"
+    }
+  ],
+  "after": {
+    "marker": "dark",
+    "preference": "dark",
+    "surface": "#171b21"
+  },
+  "print": {
+    "surface": "#ffffff",
+    "foreground": "#212121",
+    "preference": "dark"
+  },
+  "validation": {
+    "angularTests": "64 passed in9files:21planner tests including6 rendered foreground states and2 export cleanup paths, plus composer/viewer/upload requirements",
+    "eslint": "Targeted Gantt files passed; combined-composer attribute order was subsequently corrected at ebd97e4a2. See current full CI checks.",
+    "prettier": "passed",
+    "diffCheck": "passed"
+  },
+  "fixture": {
+    "unitId": 1,
+    "temporaryFlexibleDates": true,
+    "originalFlexibleDates": false,
+    "rows": "Three original synthetic task definitions; temporary9.9P has been removed",
+    "restoration": "Verified restored tofalse in isolated database after capture; see gantt-fixture-adjustment.json",
+    "restoredFlexibleDates": false
+  },
+  "printLimit": "Actual Chromium A4 landscape PDF is light/ink-safe; timeline retains viewport clipping. Full-range timeline export is PNG, not browser-print pagination."
+}

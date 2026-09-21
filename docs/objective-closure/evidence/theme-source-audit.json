@@ -1,13 +1,13 @@
 {
-  "commit": "c3c1aa02ecbb9522d7ec8d3dab00cfade15f2690",
-  "source": "git revision c3c1aa02ecbb9522d7ec8d3dab00cfade15f2690",
+  "commit": "ebd97e4a25a6de9c484b873ccb14559995c21f07",
+  "source": "git revision HEAD",
   "scope": "tracked SCSS, HTML and TypeScript under src, excluding spec files; regex candidates, not confirmed defects",
-  "rawHits": 1185,
-  "deduplicatedFiles": 142,
+  "rawHits": 1187,
+  "deduplicatedFiles": 141,
   "deduplicatedComponentDirectories": 105,
   "classifications": {
     "comment-or-example": 34,
-    "semantic-review": 546,
+    "semantic-review": 548,
     "special-surface": 196,
     "decorative-review": 56,
     "print-or-browser": 1,
@@ -790,19 +790,19 @@
     },
     {
       "file": "src/app/common/learning-outcome-editor/learning-outcome-editor.component.html",
-      "line": 120,
+      "line": 136,
       "value": "border-gray-200",
       "classification": "special-surface"
     },
     {
       "file": "src/app/common/learning-outcome-editor/learning-outcome-editor.component.html",
-      "line": 120,
+      "line": 136,
       "value": "bg-white",
       "classification": "special-surface"
     },
     {
       "file": "src/app/common/learning-outcome-editor/learning-outcome-editor.component.html",
-      "line": 122,
+      "line": 138,
       "value": "text-gray-900",
       "classification": "special-surface"
     },
@@ -1360,61 +1360,61 @@
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 266,
+      "line": 273,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 266,
+      "line": 273,
       "value": "bg-gray-50",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 287,
+      "line": 294,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 293,
+      "line": 300,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 313,
+      "line": 320,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 313,
+      "line": 320,
       "value": "bg-white",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 322,
+      "line": 329,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 330,
+      "line": 337,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 345,
+      "line": 352,
       "value": "text-white",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/dashboard/f-cross-dashboard.component.html",
-      "line": 348,
+      "line": 355,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
@@ -1882,19 +1882,19 @@
     },
     {
       "file": "src/app/home/states/home/home.component.html",
-      "line": 87,
+      "line": 88,
       "value": "#fff",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.html",
-      "line": 148,
+      "line": 152,
       "value": "color: white",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.html",
-      "line": 160,
+      "line": 163,
       "value": "color: white",
       "classification": "semantic-review"
     },
@@ -1912,67 +1912,73 @@
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 40,
+      "line": 31,
+      "value": "#006b80",
+      "classification": "semantic-review"
+    },
+    {
+      "file": "src/app/home/states/home/home.component.scss",
+      "line": 48,
       "value": "#ffffff",
       "classification": "decorative-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 40,
+      "line": 48,
       "value": "#ffffff",
       "classification": "decorative-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 41,
+      "line": 49,
       "value": "#ffffff",
       "classification": "decorative-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 41,
+      "line": 49,
       "value": "#ffffff",
       "classification": "decorative-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 55,
+      "line": 63,
       "value": "color: white",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 58,
+      "line": 66,
       "value": "color: white",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 69,
+      "line": 77,
       "value": "rgb(0, 0, 0)",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 99,
+      "line": 107,
       "value": "#c6d6dd",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 102,
+      "line": 110,
       "value": "#fff",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 117,
+      "line": 125,
       "value": "#243746",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/home/states/home/home.component.scss",
-      "line": 123,
+      "line": 131,
       "value": "#006b80",
       "classification": "semantic-review"
     },
@@ -2637,15 +2643,15 @@
       "classification": "semantic-review"
     },
     {
-      "file": "src/app/projects/states/plan/task-planner/task-planner.component.html",
-      "line": 88,
-      "value": "text-white",
+      "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
+      "line": 275,
+      "value": "#03c6fc",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
       "line": 275,
-      "value": "#03c6fc",
+      "value": "text-black",
       "classification": "semantic-review"
     },
     {
@@ -2657,7 +2663,7 @@
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
       "line": 277,
-      "value": "text-white",
+      "value": "text-black",
       "classification": "semantic-review"
     },
     {
@@ -2710,31 +2716,31 @@
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
-      "line": 729,
+      "line": 732,
       "value": "#3333ff",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
-      "line": 742,
+      "line": 745,
       "value": "rgba(0, 121, 216, 0.1)",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
-      "line": 745,
+      "line": 748,
       "value": "rgba(91, 183, 91, 0.1)",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
-      "line": 748,
+      "line": 751,
       "value": "rgba(49, 176, 213, 0.1)",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
-      "line": 751,
+      "line": 754,
       "value": "rgba(49, 176, 213, 0.1)",
       "classification": "semantic-review"
     },
@@ -2776,31 +2782,31 @@
     },
     {
       "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
-      "line": 26,
+      "line": 28,
       "value": "text-gray-600",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
-      "line": 28,
+      "line": 30,
       "value": "text-gray-400",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
-      "line": 111,
+      "line": 113,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
-      "line": 114,
+      "line": 116,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
-      "line": 122,
+      "line": 124,
       "value": "text-gray-600",
       "classification": "semantic-review"
     },
@@ -2986,37 +2992,37 @@
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 26,
+      "line": 28,
       "value": "text-gray-600",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 28,
+      "line": 30,
       "value": "text-gray-400",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 71,
+      "line": 73,
       "value": "text-gray-400",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 141,
+      "line": 143,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 162,
+      "line": 164,
       "value": "border-gray-300",
       "classification": "semantic-review"
     },
     {
       "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
-      "line": 170,
+      "line": 172,
       "value": "text-gray-600",
       "classification": "semantic-review"
     },
@@ -3214,13 +3220,19 @@
     },
     {
       "file": "src/app/tasks/task-comment-composer/task-comment-composer.component.scss",
-      "line": 213,
+      "line": 63,
+      "value": "#006b80",
+      "classification": "semantic-review"
+    },
+    {
+      "file": "src/app/tasks/task-comment-composer/task-comment-composer.component.scss",
+      "line": 214,
       "value": "rgba(0, 0, 0, 0.5)",
       "classification": "decorative-review"
     },
     {
       "file": "src/app/tasks/task-comment-composer/task-comment-composer.component.scss",
-      "line": 226,
+      "line": 227,
       "value": "rgba(0, 0, 0, 0.5)",
       "classification": "decorative-review"
     },
@@ -4132,25 +4144,25 @@
     },
     {
       "file": "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
-      "line": 134,
+      "line": 136,
       "value": "bg-gray-100",
       "classification": "special-surface"
     },
     {
       "file": "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
-      "line": 146,
+      "line": 148,
       "value": "bg-gray-100",
       "classification": "special-surface"
     },
     {
       "file": "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
-      "line": 403,
+      "line": 406,
       "value": "bg-gray-50",
       "classification": "special-surface"
     },
     {
       "file": "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
-      "line": 411,
+      "line": 414,
       "value": "text-gray-500",
       "classification": "special-surface"
     },
