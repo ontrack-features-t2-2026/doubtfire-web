@@ -105,11 +105,12 @@
 
 .comments-sidebar--mobile {
   position: fixed;
+  box-sizing: border-box;
   top: 56px;
   right: 0;
   bottom: 0;
-  min-width: 375px;
-  width: 375px !important;
+  min-width: 0;
+  width: min(375px, 100vw) !important;
   border-radius: 0 !important;
   padding: 8px;
   box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
@@ -124,4 +125,8 @@
   transform: translateY(-50%);
   background: var(--ot-color-surface, white);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+
+.comments-sidebar--mobile .comments-sidebar__collapse {
+  left: 0;
 }

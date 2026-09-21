@@ -207,6 +207,17 @@
           <task-comments-viewer [task]="taskData.selectedTask"> </task-comments-viewer>
         }
       </div>
+      <f-footer
+        class="z-10 block shrink-0"
+        role="region"
+        [attr.aria-label]="
+          'Assessment actions for ' +
+          taskData?.selectedTask?.definition.abbreviation +
+          ', ' +
+          taskData?.selectedTask?.project.student.displayName
+        "
+        [viewType]="viewType"
+      ></f-footer>
     </div>
   </div>
 }
