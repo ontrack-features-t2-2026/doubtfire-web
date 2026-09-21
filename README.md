@@ -146,6 +146,8 @@ and browser permission.
 
 ## Resources
 
+See the [documentation index](docs/index.md) for setup, feature guides and contributor handovers.
+
 Doubtfire Web is an [Angular](https://angular.dev) application using
 [Angular Material](https://material.angular.dev/). Production is served as a
 static progressive web application by Nginx.

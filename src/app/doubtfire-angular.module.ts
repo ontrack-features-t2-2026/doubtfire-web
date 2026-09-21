@@ -310,6 +310,7 @@ import {InstallPromptService} from './sessions/install-prompt/install-prompt.ser
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 import {CheckForUpdateService} from './sessions/service-worker-updater/check-for-update.service';
 import {SignInComponent} from './sessions/states/sign-in/sign-in.component';
+import {StudentOnboardingComponent} from './student-onboarding/student-onboarding.component';
 import {FeedbackAppealModalComponent} from './tasks/modals/feedback-appeal-modal/feedback-appeal-modal.component';
 import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 import {SubmissionTypeModalComponent} from './tasks/modals/submission-type-modal/submission-type-modal.component';
@@ -833,6 +834,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ClipboardModule,
     DragDropModule,
     ScrollingModule,
+    StudentOnboardingComponent,
     MatToolbarModule,
     MatSidenavModule,
     MatFormFieldModule,
