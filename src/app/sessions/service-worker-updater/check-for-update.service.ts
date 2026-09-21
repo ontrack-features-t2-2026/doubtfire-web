@@ -65,7 +65,9 @@ export class CheckForUpdateService implements OnDestroy {
 
   public checkForUpdate(): void {
     if (this.updates.isEnabled) {
-      void this.updates.checkForUpdate();
+      // Installed apps can stay open while offline. A failed background check
+      // must not surface as an unhandled rejection or stop future polling.
+      void this.updates.checkForUpdate().catch(() => undefined);
     }
   }
 }

@@ -75,6 +75,16 @@ describe('CheckForUpdateService', () => {
     expect(updates.checkForUpdate).toHaveBeenCalledTimes(2);
   });
 
+  it('continues polling after an offline update check fails', async () => {
+    updates.checkForUpdate.mockRejectedValueOnce(new Error('Network unavailable'));
+    appIsStable.next(true);
+    await vi.advanceTimersByTimeAsync(APP_STABILITY_DELAY_MS);
+    expect(updates.checkForUpdate).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(UPDATE_CHECK_INTERVAL_MS);
+    expect(updates.checkForUpdate).toHaveBeenCalledTimes(2);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('does not poll after the service is destroyed', async () => {
     appIsStable.next(true);
     await vi.advanceTimersByTimeAsync(APP_STABILITY_DELAY_MS);

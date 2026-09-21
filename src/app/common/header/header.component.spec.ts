@@ -2,7 +2,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {MatButtonModule} from '@angular/material/button';
+import {MatButton, MatButtonModule} from '@angular/material/button';
+import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -25,6 +26,7 @@ import {QrModalService} from '../modals/qr-modal/qr-modal.service';
 import {SidekiqJobsModalService} from '../modals/sidekiq-jobs-modal/sidekiq-jobs-modal.service';
 import {TutorNotesModalService} from '../modals/tutor-notes-modal/tutor-notes-modal.service';
 import {IsActiveUnitRole} from '../pipes/is-active-unit-role.pipe';
+import {PwaInstallDialogComponent} from '../pwa/pwa-install-dialog.component';
 import {HeaderComponent} from './header.component';
 
 const emptyProvider = {};
@@ -74,6 +76,10 @@ describe('HeaderComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [HeaderComponent],
       providers: [
+        {
+          provide: MatDialog,
+          useValue: {open: vi.fn().mockReturnValue({afterClosed: () => of(undefined)})},
+        },
         {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
         {provide: CalendarModalService, useValue: emptyProvider},
         {provide: AboutDoubtfireModal, useValue: emptyProvider},
@@ -100,6 +106,18 @@ describe('HeaderComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(HeaderComponent);
     component = fixture.componentInstance;
+  });
+
+  it('opens installation help from the account menu action', () => {
+    const trigger = {focus: vi.fn()} as unknown as MatButton;
+    component.openInstallHelp(trigger);
+    expect(trigger.focus).toHaveBeenCalledOnce();
+    expect(TestBed.inject(MatDialog).open).toHaveBeenCalledWith(PwaInstallDialogComponent, {
+      width: '560px',
+      maxWidth: 'calc(100vw - 32px)',
+      autoFocus: 'first-heading',
+      restoreFocus: false,
+    });
   });
 
   it('should create', () => {
@@ -156,6 +174,10 @@ describe('HeaderComponent', () => {
           NoopAnimationsModule,
         ],
         providers: [
+          {
+            provide: MatDialog,
+            useValue: {open: vi.fn().mockReturnValue({afterClosed: () => of(undefined)})},
+          },
           {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
           {provide: CalendarModalService, useValue: calendarModalServiceStub},
           {provide: AboutDoubtfireModal, useValue: emptyProvider},

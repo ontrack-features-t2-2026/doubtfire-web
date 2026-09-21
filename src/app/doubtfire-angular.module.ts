@@ -221,6 +221,9 @@ import {SafePipe} from './common/pipes/safe.pipe';
 import {ProjectCardComponent} from './common/project-card/project-card.component';
 import {ProjectProgressBarComponent} from './common/project-progress-bar/project-progress-bar.component';
 import {ProjectProgressGaugeComponent} from './common/project-progress/project-progress-gauge.component';
+import {PwaConnectionStatusComponent} from './common/pwa-connection/pwa-connection-status.component';
+import {PwaInstallButtonComponent} from './common/pwa/pwa-install-button.component';
+import {PwaInstallService} from './common/pwa/pwa-install.service';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {EmojiService} from './common/services/emoji.service';
 import {GradeService} from './common/services/grade.service';
@@ -303,7 +306,6 @@ import {StaffNotesComponent} from './projects/states/staff-notes/staff-notes.com
 import {TutorDiscussionComponent} from './projects/states/tutor-discussion/tutor-discussion.component';
 import {TutorNotesComponent} from './projects/states/tutor-notes/tutor-notes.component';
 import {TutorialsComponent} from './projects/states/tutorials/tutorials.component';
-import {InstallPromptService} from './sessions/install-prompt/install-prompt.service';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
@@ -743,7 +745,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
-    InstallPromptService,
     TaskOutcomeAlignmentService,
     // rootScopeProvider,
     {provide: MAT_DATE_LOCALE, useValue: enAU},
@@ -895,6 +896,8 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     NgxSkeletonLoaderModule,
     EmptyStateComponent,
     SkeletonLoaderComponent,
+    PwaInstallButtonComponent,
+    PwaConnectionStatusComponent,
   ],
   bootstrap: [AppComponent],
 })
@@ -907,7 +910,7 @@ export class DoubtfireAngularModule {
     private constants: DoubtfireConstants,
     private title: Title,
     private updater: CheckForUpdateService,
-    private installer: InstallPromptService,
+    private installer: PwaInstallService,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
   ) {

@@ -114,6 +114,7 @@
     </mat-menu>
 
     <button
+      #accountMenuButton
       aria-label="Open account menu"
       class="account-menu-trigger"
       data-onboarding-target="account-menu"
@@ -169,6 +170,10 @@
       <button data-onboarding-target="calendar" mat-menu-item (click)="openCalendar()">
         <mat-icon aria-label="Edit calendar" matListItemIcon>calendar_month</mat-icon>
         Calendar
+      </button>
+      <button mat-menu-item (click)="openInstallHelp(accountMenuButton)">
+        <mat-icon aria-hidden="true" matListItemIcon>install_desktop</mat-icon>
+        {{ pwaInstall.isInstalled() ? 'App installation' : 'Install OnTrack' }}
       </button>
       <button mat-menu-item (click)="openAboutModal()">
         <mat-icon aria-label="About" matListItemIcon>info</mat-icon>
