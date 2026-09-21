@@ -17,6 +17,7 @@ import {AuthenticationService} from 'src/app/api/services/authentication.service
 import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
 import {NotificationBellComponent} from './notification-bell.component';
 
@@ -721,9 +722,11 @@ describe('NotificationBellComponent', () => {
       fixture.detectChanges();
     });
 
-    it('registers every dropdown action in MatMenu keyboard order', () => {
+    it('registers every dropdown action in MatMenu keyboard order', async () => {
       unreadCount.next(1);
       fixture.detectChanges();
+      await fixture.whenStable();
+      await expectAccessible(panel());
 
       const menuItems = Array.from(panel().querySelectorAll<HTMLElement>('[role="menuitem"]'));
 
