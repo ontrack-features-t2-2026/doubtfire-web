@@ -22,7 +22,9 @@ The browser run covered 320, 390, 640, 768, 1024 and 1440 CSS pixels in both
 density modes. At every width the document matched the viewport width, all
 three cards retained visible project links, and long names wrapped. The 640 px
 case also covers the layout width of a 1280 px window at 200% reflow; it does
-not claim a manual browser zoom or screen-reader test.
+not itself claim an actual browser zoom or screen-reader test. The later
+[native Chrome check](native-browser-check.json) verified actual 200% page zoom,
+search and filter focus return; VoiceOver speech remains unverified.
 
 Keyboard checks opened/toggled the checkbox filter menu and returned focus to
 its trigger. The unread badge and all four due-date warning colour pairs
@@ -55,3 +57,17 @@ screen-reader sign-off and institutional acceptance remain reviewer activities.
 
 API and deploy are compatibility references, not services exercised by this
 browser run. No calendar integration, push service or real email was used.
+
+## Repeatable local acceptance fixture
+
+After `npm ci` and `npm run build -- --configuration production`, run
+`node docs/evidence/cross-project-ui/preview.mjs` and open
+`http://127.0.0.1:4328/dashboard`. Set `DASHBOARD_PREVIEW_PORT` if that local port
+is occupied. Use a fresh browser profile, or clear site data and unregister any
+existing worker for that origin first. The helper binds only to loopback, uses
+synthetic API responses, serves Monaco assets locally, and blocks new worker
+registration; it cannot remove an existing controlling worker. It sends no
+email or push. Stop it with Ctrl-C.
+
+See the [ticket closeout guide](../../remaining-ticket-closeout.md) for the
+remaining spoken-output checks and evidence required from reviewers/operators.
