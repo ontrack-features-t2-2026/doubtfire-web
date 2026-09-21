@@ -48,7 +48,12 @@
               <td *matCellDef="let groupSet" mat-cell (click)="selectGroupSet(groupSet)">
                 @if (editingGroupSetId === groupSet.id && editingGroupSetModel) {
                   <mat-form-field appearance="outline" class="w-full">
-                    <input matInput required [(ngModel)]="editingGroupSetModel.name" />
+                    <input
+                      aria-label="Name"
+                      matInput
+                      required
+                      [(ngModel)]="editingGroupSetModel.name"
+                    />
                   </mat-form-field>
                 } @else {
                   {{ groupSet.name || 'No Name Set' }}
@@ -62,6 +67,7 @@
                 @if (editingGroupSetId === groupSet.id && editingGroupSetModel) {
                   <mat-form-field appearance="outline" class="w-full">
                     <input
+                      aria-label="Capacity"
                       matInput
                       min="2"
                       type="number"
@@ -79,7 +85,10 @@
               <td *matCellDef="let groupSet" mat-cell (click)="selectGroupSet(groupSet)">
                 @if (editingGroupSetId === groupSet.id && editingGroupSetModel) {
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-select [(ngModel)]="editingGroupSetModel.allowStudentsToCreateGroups">
+                    <mat-select
+                      aria-label="Create Groups"
+                      [(ngModel)]="editingGroupSetModel.allowStudentsToCreateGroups"
+                    >
                       @for (opt of studentStaffOptions; track opt.value) {
                         <mat-option [value]="opt.value">{{ opt.text }}</mat-option>
                       }
@@ -96,7 +105,10 @@
               <td *matCellDef="let groupSet" mat-cell (click)="selectGroupSet(groupSet)">
                 @if (editingGroupSetId === groupSet.id && editingGroupSetModel) {
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-select [(ngModel)]="editingGroupSetModel.allowStudentsToManageGroups">
+                    <mat-select
+                      aria-label="Manage Groups"
+                      [(ngModel)]="editingGroupSetModel.allowStudentsToManageGroups"
+                    >
                       @for (opt of studentStaffOptions; track opt.value) {
                         <mat-option [value]="opt.value">{{ opt.text }}</mat-option>
                       }
@@ -113,7 +125,10 @@
               <td *matCellDef="let groupSet" mat-cell (click)="selectGroupSet(groupSet)">
                 @if (editingGroupSetId === groupSet.id && editingGroupSetModel) {
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-select [(ngModel)]="editingGroupSetModel.keepGroupsInSameClass">
+                    <mat-select
+                      aria-label="Restrict to Tutorials"
+                      [(ngModel)]="editingGroupSetModel.keepGroupsInSameClass"
+                    >
                       @for (opt of tutorialOptions; track opt.value) {
                         <mat-option [value]="opt.value">{{ opt.text }}</mat-option>
                       }

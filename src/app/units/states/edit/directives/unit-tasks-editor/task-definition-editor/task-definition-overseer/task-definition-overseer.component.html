@@ -127,9 +127,11 @@
         </div>
         <div cdkDropList class="example-list" (cdkDropListDropped)="drop($event)">
           @for (step of overseerSteps; track step.id) {
-            <div
+            <button
               cdkDrag
-              class="example-box"
+              class="example-box w-full text-left"
+              type="button"
+              [attr.aria-pressed]="selectedOverseerStep?.id === step.id"
               [ngClass]="{
                 'bg-gray-100': selectedOverseerStep?.id === step.id,
               }"
@@ -137,17 +139,18 @@
             >
               <mat-icon cdkDragHandle class="cursor-move">drag_indicator</mat-icon>
               {{ step.sortOrder }}. {{ step.name ?? 'Untitled Step' }}
-            </div>
+            </button>
           }
           @if (newOverseerStep) {
-            <div
+            <button
               cdkDrag
               cdkDragDisabled
-              class="example-box bg-gray-100"
+              class="example-box w-full bg-gray-100 text-left"
+              type="button"
               (click)="selectStep(newOverseerStep)"
             >
               {{ newOverseerStep.sortOrder }}. {{ newOverseerStep.name || 'Untitled Step' }}
-            </div>
+            </button>
           }
         </div>
       </mat-drawer>

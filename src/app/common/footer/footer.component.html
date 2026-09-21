@@ -28,7 +28,7 @@
       } @else {
         <div>
           <button
-            aria-label=""
+            aria-label="Mark as Redo"
             class="button status-chip redo"
             mat-icon-button
             matTooltip="Mark as Redo"
@@ -52,7 +52,7 @@
         </button> -->
         </div>
         <button
-          aria-label=""
+          aria-label="Mark as Resubmit"
           class="button status-chip fix-and-resubmit"
           mat-icon-button
           matTooltip="Mark as Resubmit"
@@ -66,13 +66,16 @@
 
         @if (selectedTask && selectedTask.suggestedTaskStatus) {
           <button
-            aria-label=""
             class="button extra-large-button status-chip suggested-task-status"
             mat-icon-button
             matTooltip="Recommended: Mark as {{
               taskService.statusData(selectedTask.suggestedTaskStatus).label
             }}"
             matTooltipPosition="above"
+            [attr.aria-label]="
+              'Recommended: Mark as ' +
+              taskService.statusData(selectedTask.suggestedTaskStatus).label
+            "
             [disabled]="
               !actionButtonEnabled ||
               (selectedTask?.suggestedTaskStatus === 'complete' && !selectedTask?.canMarkComplete)
@@ -148,7 +151,7 @@
               }
 
               <button
-                aria-label=""
+                aria-label="Action options"
                 class="button small-button"
                 mat-icon-button
                 matTooltip="Action options"
@@ -254,7 +257,7 @@
       }
 
       <button
-        aria-label=""
+        aria-label="Submission Options"
         class="button small-button"
         mat-icon-button
         matTooltip="Submission Options"
@@ -332,7 +335,7 @@
         </button>
       </mat-menu>
       <button
-        aria-label=""
+        aria-label="Download submitted files"
         class="button small-button"
         mat-icon-button
         matTooltip="Download submitted files"
@@ -343,7 +346,7 @@
         <mat-icon class="small-icon">sim_card_download</mat-icon>
       </button>
       <button
-        aria-label=""
+        aria-label="Download Submission"
         class="button small-button"
         mat-icon-button
         matTooltip="Download Submission"

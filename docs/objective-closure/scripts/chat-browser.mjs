@@ -138,7 +138,7 @@ for (const name of selected) {
     await check('composer-accessible-name-and-emoji-keyboard', async () => {
       assert.equal(await editor.getAttribute('role'), 'textbox');
       assert.equal(await editor.getAttribute('aria-label'), 'Task comment');
-      const emoji = page.getByRole('button', {name: 'Emoji picker button', exact: true});
+      const emoji = page.getByRole('button', {name: 'Choose an emoji', exact: true});
       await emoji.focus();
       await page.keyboard.press('Enter');
       assert.equal(await emoji.getAttribute('aria-expanded'), 'true');

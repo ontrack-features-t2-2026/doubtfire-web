@@ -56,7 +56,7 @@
   [hidden]="!emojiSearchMode || !(emojiSearchResults?.length > 0)"
 >
   @for (emoji of emojiSearchResults; track emoji) {
-    <mat-list-item (click)="emojiSelected(emoji.native)">
+    <button mat-list-item type="button" (click)="emojiSelected(emoji.native)">
       <div class="flex flex-row items-center justify-start">
         <ngx-emoji set="apple" style="align-items: center" [emoji]="emoji" [size]="20"></ngx-emoji>
         <div class="emoji-details flex flex-col items-start justify-center">
@@ -64,7 +64,7 @@
           <div style="font-size: 10px">{{ emoji.colons }}</div>
         </div>
       </div>
-    </mat-list-item>
+    </button>
   }
 </mat-action-list>
 
@@ -167,13 +167,16 @@
     >
       <div
         #commentInput
+        aria-multiline="true"
         enterkeyhint="send"
         id="textField"
         name="commentComposer"
         placeholder="Aa"
         role="textbox"
         [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
+        [attr.aria-disabled]="!contentEditableValue() || recording"
         [attr.contenteditable]="contentEditableValue() && !recording"
+        [attr.tabindex]="contentEditableValue() && !recording ? 0 : -1"
         [class.active]="($userIsTyping | async) === false"
         [hidden]="recording"
         (beforeinput)="handleBeforeInput($event)"
@@ -194,10 +197,11 @@
         @if (isEditing) {
           <button
             aria-label="Save edited comment"
-            class="composer-inline-action"
             id="saveEditedCommentButton"
             matTooltip="Save edited comment"
             matTooltipShowDelay="400"
+            class="composer-inline-action"
+            mat-icon-button
             type="button"
             (click)="saveEditedComment()"
           >
@@ -205,11 +209,12 @@
           </button>
         }
         <button
-          aria-label="Emoji picker button"
-          class="composer-inline-action"
+          aria-label="Choose an emoji"
           id="emojiButton"
           matTooltip="Choose an emoji"
           matTooltipShowDelay="400"
+          class="composer-inline-action"
+          mat-icon-button
           type="button"
           [attr.aria-expanded]="showEmojiPicker"
           (click)="this.showEmojiPicker = !this.showEmojiPicker"
@@ -220,11 +225,12 @@
       <div id="innerButtons" [hidden]="recording || !isStaff">
         @if (!isEditing) {
           <button
-            aria-label="Feedback template button"
-            class="composer-inline-action"
+            aria-label="Choose feedback templates"
             id="feedbackTemplateButton"
             matTooltip="Choose feedback templates"
             matTooltipShowDelay="400"
+            class="composer-inline-action"
+            mat-icon-button
             type="button"
             [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
