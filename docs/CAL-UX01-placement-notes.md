@@ -1,16 +1,27 @@
 # CAL-UX01: Placement and styling of the calendar controls
 
-This note records where each calendar control was placed and why. The controls were built to match the app's existing Material markup and icon conventions so they read as native rather than bolted on, which is what this ticket set out to ensure.
+The calendar controls appear in the running application as shown below. These screenshots were captured on 21 September 2026 using the [synthetic CAL101 fixture](calendar/evidence-20260921/environment.md), after implementation. They record the current placement; they are not historical before-and-after screenshots.
 
-- **Add to Google Calendar (CAL-F01):** in the task description card's action row, as a `mat-stroked-button` with a `mat-icon` sized to match the existing Task Sheet and Resources buttons already in that row.
-- **Download .ics and its options (CAL-F02, F06, F07, F09):** the button is in the Progress Dashboard's "Plan Your Tasks" card, below the existing "View Task Planner" button. Its options open in a standard `mat-dialog`: the grade selector mirrors the Task Planner's Target Grade `mat-select`, the grade range is a `mat-button-toggle-group` stacked vertically so it fits a phone, and the submitted/completed exclusion control is a standard `mat-checkbox`, so the card and the dialog keep one visual language.
-- **Header calendar button (CAL-F04):** a `mat-icon-button` beside the QR icon in the header, with a tooltip. It is intentionally unguarded, since WebCal is a global feed rather than a unit-scoped action.
-- **Download a copy (CAL-F08):** in the Web calendar modal, next to the subscription URL controls, so subscribe and download sit together.
+## Task action
 
-## Reviewable placement mockup
+**Add to Google Calendar (CAL-F01)** appears in the task description card's action row. Its outlined button and calendar icon use the same Material conventions as the task's other resource actions. Resource buttons depend on the files available for that task; this synthetic task shows the calendar action by itself.
 
-![Placement illustration for task, unit download, options and Web calendar controls](calendar/calendar-controls.svg)
+![Calendar action at the bottom of a task description card](calendar/evidence-20260921/ontrack-task-action-row.png)
 
-The committed SVG is a synthetic placement mockup, not a screenshot of a running application. It shows the action order, phone-friendly stacked controls, the HD-only selection and the separate subscription flow. Real application screenshots remain useful for manual visual verification.
+## Unit download and global calendar
 
-Opening download options focuses Grade; result counts announce filter changes. Unit exclusion and Add unit use named native buttons. See [CAL-A01](CAL-A01-accessibility-verification.md) for the checks and remaining manual evidence.
+**Download .ics (CAL-F02)** sits below **View Task Planner** in the Progress Dashboard's **Plan Your Tasks** card. The global calendar icon is in the top header beside the QR icon. Its placement lets a student reach the subscription settings without opening a particular task.
+
+![Plan Your Tasks card and the header calendar icon in the running application](calendar/evidence-20260921/ontrack-dashboard.png)
+
+## Download options
+
+The download button opens a standard Material dialog. **Grade** appears first, followed by vertically stacked grade-range choices, the submitted/completed-task checkbox, the result count, and the action buttons. The screenshot records **High Distinction + This grade and above**, which selects exactly the one HD task in this fixture.
+
+![Actual HD-only Download options dialog](calendar/evidence-20260921/filter-hd-only.png)
+
+The actual [grade and submitted-task exports](calendar/evidence-20260921/exports/README.md) confirm the selections shown by these controls. The original [placement illustration](calendar/calendar-controls.svg) remains available as design documentation; the screenshots above provide the application evidence.
+
+**Download a copy (CAL-F08)** belongs to the Web calendar dialog alongside its subscription URL controls. That is the live-feed copy action; the unit download and its local grade/status filters remain in the Progress Dashboard.
+
+Opening Download options focuses Grade; the result count is a status message. See [CAL-A01](CAL-A01-accessibility-verification.md) for keyboard and assistive-technology verification. These desktop screenshots establish placement and styling; they do not establish a separate mobile or screen-reader test result.

@@ -22,20 +22,39 @@ node docs/calendar/generate-fixture.cjs /tmp/ontrack-calendar-builder.cjs
 
 The generator supplies only synthetic task objects; the real event/date/escaping logic comes from the compiled production builder. Its timestamps and dates are fixed, so regenerating the file should produce no diff. A local `.gitattributes` entry preserves the fixture's required CRLF line endings in Git.
 
-## Client results
+## Client results recorded on 21 September 2026
 
-| Client           | Import        | Subscription refresh | Evidence                       |
-| ---------------- | ------------- | -------------------- | ------------------------------ |
-| Google Calendar  | Not performed | Not performed        | No authenticated client tested |
-| Outlook Calendar | Not performed | Not performed        | No authenticated client tested |
-| Apple Calendar   | Not performed | Not performed        | No calendar client tested      |
+The four-event compatibility fixture was imported into real calendar applications. This is separate from the [six CAL101 option-filter downloads](calendar/evidence-20260921/exports/README.md), which demonstrate grade and submitted-task filtering.
 
-The file-level tests are evidence of generated format, not proof of compatibility in these three applications. CAL-C01's three-client acceptance condition remains unverified.
+| Client | Import result | Date and text verification | Evidence / remaining work |
+| --- | --- | --- | --- |
+| Apple Calendar | Four fixture events imported | All four appeared on the intended all-day dates, without an extra day; Unicode title value checked through native accessibility text | Native Calendar screenshots below |
+| Google Calendar | Application reported 4 of 4 events imported | Date, all-day duration and full-text checks remain pending | Complete the four individual event checks and retain screenshots |
+| Outlook Calendar | Pending | Pending | Import the fixture and record the same four event checks |
 
-For each client, create a disposable calendar, import the fixture and verify exactly four all-day events, their dates, the complete Unicode title and no extra day. Record app/version, OS, timezone, date, import result and a screenshot using only synthetic data. Separately subscribe using a seeded test account, change a due date and unit exclusion, and record when the client refreshes; imported files do not refresh. Delete the disposable calendar after recording results.
+The Apple test used **Calendar 27.0 (3073)** on **macOS 27.0**, with the system timezone set to **Australia/Melbourne**. The Google import used **Chrome 153.0.8010.48** on the same system. CAL-C01 is **not yet complete** because Google's detailed event checks and Outlook's import/verification remain outstanding. File-format tests and successful import counts alone do not establish those results.
+
+### Apple Calendar observations
+
+| Fixture case | Observed all-day date | Screenshot |
+| --- | --- | --- |
+| Unicode, escaped punctuation and long title | 20 September 2026 | [Unicode event](calendar/evidence-20260921/apple-unicode.png) |
+| Melbourne daylight-saving start | 4 October 2026 | [Daylight-saving event](calendar/evidence-20260921/apple-dst.png) |
+| Year boundary | 31 December 2026 | [Year-boundary event](calendar/evidence-20260921/apple-year-boundary.png) |
+| Leap day | 29 February 2028 | [Leap-day event](calendar/evidence-20260921/apple-leap-day.png) |
+
+Each event occupied its intended day rather than continuing into an additional day. The Unicode event retained its complete title in the native accessibility value, including the accented text, emoji, punctuation, backslash and line break. Its long title is visibly truncated by the event-detail viewport; the screenshot therefore does not show the entire title at once.
+
+![Imported Unicode event on 20 September 2026 in Apple Calendar](calendar/evidence-20260921/apple-unicode.png)
+
+### Checks still to perform
+
+For Google Calendar, inspect the four imported events individually and record their dates, all-day duration and complete Unicode title. For Outlook, create a disposable calendar, import the same fixture, confirm exactly four events, and perform the same checks. Record the client/version, OS, timezone, date and screenshots using only synthetic data.
+
+Subscription refresh is a separate operation: an imported file never refreshes. Live-feed observations belong in [CAL-D00](CAL-D00-webcal-feed-test.md); neither Apple's successful file import nor Google's 4-of-4 message proves that a subscription updates correctly.
 
 ## Live-feed difference that needs special attention
 
-The API WebCal feed and **Download a copy** use the server serializer, while the unit **Download .ics** uses the frontend builder. On API commit `bb360dfa626f30e22c1382e20ef43c06ce6b38fa`, task events set `DTEND` equal to `DTSTART`. The frontend uses an exclusive next-day `DTEND`. Test the live feed separately: a successful unit-file import does not validate the server's zero-duration all-day representation. The live feed also has optional timed HelpHub/class events, start dates and alarms absent from this frontend fixture.
+The API WebCal feed and **Download a copy** use the server serializer, while the unit **Download .ics** uses the frontend builder. On the tested API commit `d7f7a5b9c2d34ef279ac3a70bc58823def64005c`, task events set `DTEND` equal to `DTSTART`. The frontend uses an exclusive next-day `DTEND`. Test the live feed separately: a successful unit-file import does not validate the server's zero-duration all-day representation. The live feed also has optional timed HelpHub/class events, start dates and alarms absent from this frontend fixture.
 
 This report does not change the server contract or claim the existing feed works in a particular client without an observed result.

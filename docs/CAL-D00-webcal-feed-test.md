@@ -34,7 +34,11 @@ Source checked on 20 September 2026 against API `bb360dfa626f30e22c1382e20ef43c0
 
 ## Calendar-client verification status
 
-The source analysis above has not yet been confirmed in a live calendar client. To complete that evidence:
+On 21 September 2026, the [isolated fixture](calendar/evidence-20260921/environment.md) was served by API `d7f7a5b9` and web `283b49336`. The real Web calendar switch enabled the synthetic account's feed. A direct HTTP diagnostic returned five events: four CAL101 tasks, including the submitted and complete tasks, and one CAL102 task. Start dates, reminders and learning sessions were off. This confirms the server response, not calendar-client rendering.
+
+Apple Calendar 27.0 reached its subscription confirmation, but warned that the local `127.0.0.1` feed used an insecure HTTP connection. Confirmation was requested before continuing; the Mac subsequently locked. No live subscription, calendar refresh or removal observation is claimed. **CAL-D00 remains open.** No subscription URL or token is included in this evidence.
+
+To complete the calendar-client evidence once the Mac is unlocked and the local connection warning has been approved:
 
 1. Subscribe as a seeded student and record the client, client version, and test date.
 2. Confirm the event titles and all-day dates against the generated feed.

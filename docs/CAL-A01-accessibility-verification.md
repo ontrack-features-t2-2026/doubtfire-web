@@ -10,7 +10,24 @@ The Web calendar switch, loading spinner and reminder save/cancel actions have e
 
 These are DOM/component checks. They do not establish screen-reader output, rendered contrast, browser Tab order or a completed manual accessibility audit.
 
-## Manual validation still to record
+## Observed keyboard pass — 21 September 2026
+
+The real local application was exercised through keyboard input in the Codex in-app Chromium browser at web `283b49336`, using the [synthetic fixture](calendar/evidence-20260921/environment.md). This was an agent-operated UI pass, not a human screen-reader audit.
+
+- Enter on **Download .ics** opened the dialog with focus on **Grade**. Home and arrow keys selected the grades; Space changed the grade range and exclusion checkbox.
+- Tab moved from Grade to the selected grade-range radio, then the exclusion checkbox, then Cancel. With a valid result the Download button was available.
+- Pass / Up to this grade / exclusion on produced the empty message and disabled Download. Tab from Cancel skipped that disabled button and wrapped to Grade.
+- Escape, Cancel and a successful download returned focus to the dashboard's **Download .ics** opener.
+- In Web calendar, the first loading state focused Close. Tab reached **Enable web calendar** after loading; Space enabled it. Saving temporarily disabled the affected controls. Unit removal and the Add unit menu were keyboard operable.
+- At a 390 × 844 viewport, all download options and both action buttons were visible without horizontal clipping. The normal viewport was restored afterward.
+
+![Empty result and disabled Download](calendar/evidence-20260921/keyboard-empty-state.png)
+
+![Download options at phone width](calendar/evidence-20260921/keyboard-mobile-download.png)
+
+No screen reader was run and no recording was captured. Accessibility-tree text is not evidence that a screen reader announced it. The Mac locked before the native-app portion could be completed. **CAL-A01 remains open** for the screen-reader session and recording, plus the unchecked items below.
+
+## Remaining validation
 
 Use synthetic student data. Record browser, OS and screen-reader versions, date, viewport and the commit tested. Do not put real subscription tokens in recordings.
 
@@ -21,4 +38,4 @@ Use synthetic student data. Record browser, OS and screen-reader versions, date,
 5. Trigger a save and verify disabled controls cannot activate. Check confirmation dialog focus and return focus after cancellation.
 6. Repeat at 200% zoom and a phone-width viewport. Check focus visibility, scrolling and no horizontal clipping. Repeat in the supported light/dark themes.
 
-No keyboard-only recording or screen-reader session was performed for this change. Add the recording and observations here after that independent pass; do not mark manual validation complete from automated results alone.
+The checklist above is the full repeatable procedure; the observations in the preceding section identify the portions already exercised. The 200% zoom, theme variants, full WebCal control traversal, confirmation focus and spoken announcements remain unverified. Add the recording and actual observations before marking the ticket complete.
