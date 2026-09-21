@@ -64,5 +64,5 @@ The focused component tests cover combined filters, missing metadata, actual
 task/feedback hrefs, stale data and recovery, duplicate refresh suppression,
 focus retention, counts and density. Route tests cover student access and
 scope restoration. Browser, test and build results for this change are recorded
-in the PR and committed validation record. Real screen-reader sign-off remains
+in the [validation record](evidence/cross-project-ui/README.md) and PR. Real screen-reader sign-off remains
 a reviewer activity; automated accessible-name assertions do not claim it.

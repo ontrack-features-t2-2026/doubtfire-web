@@ -1,0 +1,185 @@
+{
+  "browser": "153.0.8010.48",
+  "results": [
+    {
+      "width": 320,
+      "density": "comfortable",
+      "viewport": 320,
+      "scrollWidth": 320,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 320,
+      "density": "compact",
+      "viewport": 320,
+      "scrollWidth": 320,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 390,
+      "density": "comfortable",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 390,
+      "density": "compact",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 640,
+      "density": "comfortable",
+      "viewport": 640,
+      "scrollWidth": 640,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 640,
+      "density": "compact",
+      "viewport": 640,
+      "scrollWidth": 640,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 768,
+      "density": "comfortable",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 768,
+      "density": "compact",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 1024,
+      "density": "comfortable",
+      "viewport": 1024,
+      "scrollWidth": 1024,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 1024,
+      "density": "compact",
+      "viewport": 1024,
+      "scrollWidth": 1024,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 1440,
+      "density": "comfortable",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "width": 1440,
+      "density": "compact",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "cardCount": 3,
+      "hiddenLinks": 0
+    },
+    {
+      "scenario": "stale-error",
+      "cards": 3,
+      "focusRetained": true
+    },
+    {
+      "scenario": "recovered",
+      "focusRetained": true
+    },
+    {
+      "scenario": "Feedback available",
+      "expectedTasks": 6,
+      "focusRetained": true
+    },
+    {
+      "scenario": "No staff feedback",
+      "expectedTasks": 6,
+      "focusRetained": true
+    },
+    {
+      "scenario": "Feedback unavailable",
+      "expectedTasks": 3,
+      "focusRetained": true
+    },
+    {
+      "scenario": "All feedback states",
+      "expectedTasks": 15,
+      "focusRetained": true
+    },
+    {
+      "scenario": "no-matches",
+      "cards": 0,
+      "focusRetained": true
+    },
+    {
+      "scenario": "keyboard-filter",
+      "toggled": true
+    },
+    {
+      "scenario": "filter-focus-return",
+      "focusRetained": true
+    },
+    {
+      "scenario": "loading",
+      "cards": 3,
+      "focusRetained": true
+    },
+    {
+      "scenario": "empty-active",
+      "cards": 0
+    },
+    {
+      "scenario": "previous-recovered",
+      "cards": 1,
+      "focusRetained": true
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "/api/settings/public",
+    "/api/auth/signout_url",
+    "/api/auth/access-token",
+    "/api/settings",
+    "/api/campuses/",
+    "/api/teaching_periods/",
+    "/api/notifications/unread_count",
+    "/api/unit_roles/",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/notifications/unread_count",
+    "/api/tasks/recommended?page=1&per_page=50",
+    "/api/notifications/unread_count",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/notifications/unread_count",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/tasks/recommended?page=1&per_page=50",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/tasks/recommended?page=1&per_page=50",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/tasks/recommended?page=1&per_page=50",
+    "/api/projects/?include_inactive=false&include_task_definitions=true",
+    "/api/tasks/recommended?page=1&per_page=50",
+    "/api/projects/?include_inactive=true&include_task_definitions=true",
+    "/api/notifications/unread_count",
+    "/api/projects/?include_inactive=true&include_task_definitions=true"
+  ]
+}
