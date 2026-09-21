@@ -1,3 +1,9 @@
+<p class="m-2 text-sm" id="chat-attachment-guidance" role="status">{{ attachmentGuidance }}</p>
+@if (attachmentsUploading > 0) {
+  <p aria-live="polite" class="m-2" role="status">
+    Uploading {{ attachmentsUploading }} attachment(s)… Your draft is unchanged.
+  </p>
+}
 <emoji-mart
   class="emoji-picker"
   emoji="thumbsup"
@@ -115,22 +121,24 @@
 
         @if (!isEditing) {
           <button
+            aria-describedby="chat-attachment-guidance"
             aria-label="Attach a file"
             class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Attach a file"
             matTooltipShowDelay="400"
             type="button"
+            [disabled]="!attachmentPolicy"
             [hidden]="$userIsTyping | async"
             (click)="openFile()"
           >
             <mat-icon class="message-inbox-icon">attach_file</mat-icon>
             <input
               #uploader
-              accept="audio/*,image/*,.pdf"
               multiple="multiple"
               style="display: none"
               type="file"
+              [accept]="attachmentAccept"
               (change)="uploadFiles($event.target.files)"
             />
           </button>

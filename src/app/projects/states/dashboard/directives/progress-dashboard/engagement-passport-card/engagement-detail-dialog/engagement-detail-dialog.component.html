@@ -230,9 +230,11 @@
         }
 
         @if (comments.length === 0) {
-          <p class="py-2 text-center text-sm text-[color:var(--ot-color-text-muted)]">
-            No comments yet.
-          </p>
+          <f-empty-state
+            heading="No comments yet"
+            icon="chat_bubble_outline"
+            message="Use the comment field below to start a conversation about this engagement."
+          ></f-empty-state>
         }
 
         <span #commentsEnd aria-hidden="true"></span>

@@ -41,16 +41,16 @@
   min-width: 0;
   max-width: 100%;
   padding: 0.4rem 0.6rem;
-  border: 1px solid rgba(127, 127, 127, 0.35);
+  border: 1px solid var(--ot-color-border);
   border-radius: 0.4rem;
-  background: rgba(127, 127, 127, 0.08);
+  background: var(--ot-color-surface);
   color: inherit;
   font: inherit;
   line-height: 1.25;
   cursor: pointer;
 
   &:hover {
-    background: rgba(127, 127, 127, 0.16);
+    background: var(--ot-color-hover);
   }
 
   &:focus-visible {
@@ -60,8 +60,8 @@
 }
 
 .progress-burndown__legend-item--hidden {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--ot-color-disabled-surface);
+  color: var(--ot-color-text-muted);
 
   .progress-burndown__legend-label {
     text-decoration: line-through;
@@ -90,7 +90,7 @@
   box-sizing: border-box;
   padding: 0.65rem 0.75rem;
   border-radius: 0.45rem;
-  background: rgba(127, 127, 127, 0.1);
+  background: var(--ot-color-surface-raised);
   font-size: 0.875rem;
   line-height: 1.4;
   overflow-wrap: anywhere;

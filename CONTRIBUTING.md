@@ -6,6 +6,10 @@ We welcome additions and extensions to Doubtfire that help progress our goal of 
 
 This guide provides high-level details on how to contribute to the Doubtfire Web repository.
 
+See the [documentation index](docs/index.md) for feature guides and shared
+contracts, and the team's [AI drafting standard](https://github.com/ontrack-features-t2-2026/github-guide/blob/main/ai-drafting-standard.md)
+for documentation review expectations.
+
 Before continuing, **please read the [contributing document](https://github.com/doubtfire-lms/doubtfire-deploy/blob/development/CONTRIBUTING.md)**, as this outlines the Git workflow you should be following.
 
 ## Table of Contents

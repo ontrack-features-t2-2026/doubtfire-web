@@ -10,13 +10,19 @@ On a task's page, the task card shows an **Add to Google Calendar** button. It o
 
 On a unit's **Progress Dashboard**, the **Plan Your Tasks** card has a **Download .ics** button. It opens a **Download options** dialog, and confirming there downloads an `.ics` calendar file containing the due dates for that unit's tasks, which you can import into Google Calendar, Apple Calendar, Outlook, or any calendar app.
 
+![Calendar control locations and download options, shown with synthetic data](calendar/calendar-controls.svg)
+
+This illustration shows placement and labels; it is not a live application screenshot.
+
 The dialog has three choices:
 
 - **Grade.** Choose a grade level. It defaults to your current target grade.
 - **Up to this grade** or **This grade and above.** Up to this grade is the default and includes only the tasks required up to that grade, so if you are targeting a Credit you will not get the Distinction and High Distinction tasks. This grade and above includes that grade's tasks and every higher grade's instead.
-- **Exclude completed tasks.** On by default, so the file contains only the work still outstanding. Untick it to include tasks you have already finished.
+- **Exclude submitted and completed tasks.** On by default. Tasks awaiting feedback, discussion or demonstration, and final-state tasks, are left out. Tasks marked Redo or Fix and resubmit stay in the download because they require another submission. Untick it to include all matching dated tasks.
 
-If nothing matches your choices, the dialog says so and its download button stays disabled. Your choices are not saved to your profile and do not change your target grade.
+For HD-only tasks, choose **High Distinction** and **This grade and above**. Choosing **Up to this grade** with High Distinction includes Pass, Credit and Distinction tasks too.
+
+The dialog announces how many tasks with valid due dates match your choices. Tasks without a resolvable due date cannot become calendar events. If nothing matches your choices, the dialog says so and its download button stays disabled. Your choices are not saved to your profile and do not change your target grade.
 
 The downloaded file is named after the unit and the options you chose (for example `COS10001-tasks-HD-outstanding.ics`, or `COS10001-tasks-D-and-above-outstanding.ics`), so downloads for different grades or settings do not overwrite each other. Like any downloaded file, it is a snapshot: it does not update if your dates later change.
 
@@ -31,6 +37,9 @@ In the Web calendar dialog, enable the calendar to generate your personal subscr
 - **Choose which units to include.** The dialog lists your units as chips. Remove a unit to leave it out of the feed, and add it back from the menu.
 - **Set a reminder.** Optionally have your calendar remind you a set time before each event.
 - **Include start dates.** Optionally add each task's start date as well as its due date.
+- **Include unit HelpHubs, lectures and classes.** Opt in to published session times and joining links. Your unit exclusions also apply to sessions. This is disabled in demo mode.
+
+The subscription uses the saved target grade for each unit and continues to include submitted/completed tasks. The download dialog's local filters do not alter it. Keep the subscription URL private: anyone with the URL can retrieve its events. Regenerating the URL or disabling the calendar revokes the existing link; clients must subscribe again with the new URL.
 
 To subscribe, copy the URL and add it in your calendar app: in Google Calendar choose Add other calendars then From URL; in Apple Calendar choose File then New Calendar Subscription; in Outlook choose Add calendar then Subscribe from web. Then paste the URL.
 
@@ -44,3 +53,9 @@ If you want the current state of your subscription as a one-off file rather than
 - One unit's dates as they stand today, with grade or outstanding-only filtering: **Download .ics** on the Progress Dashboard.
 - A calendar that keeps itself up to date across your units: **subscribe** to the WebCal feed.
 - A one-off snapshot of that whole feed: **Download a copy** in the dialog.
+
+## Keyboard use and client support
+
+Open Download .ics with Enter or Space; focus moves to Grade. Use Tab to reach the remaining options, Download and Cancel. Escape dismisses the dialog and returns focus to the opener. The result count is a status message. See [accessibility verification](CAL-A01-accessibility-verification.md) for completed component checks and the manual checks still to record.
+
+See [compatibility evidence](CAL-C01-calendar-compatibility.md) for a synthetic import fixture and the three-client verification matrix. Calendar imports, subscription refreshes and screen-reader output have not been manually verified by this change.

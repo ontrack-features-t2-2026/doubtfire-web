@@ -4,6 +4,10 @@
     <base href="/" />
     <meta content="no-referrer" name="referrer" />
 
+    <meta content="#fafafa" name="theme-color" />
+    <!-- CSP: this inline pre-boot theme script depends on unsafe-inline in nginx.conf.
+         Before removing it, allow this exact script's SHA-256 in script-src or
+         serve a per-response nonce. Otherwise dark first paint stops working. -->
     <!-- THM-F04 pre-boot theme marker. Runs synchronously before any stylesheet
          so the resolved theme is painted before Angular boots and there is no
          incorrect-theme flash. Mirrors ThemeService.applyResolved and reads the
@@ -25,6 +29,9 @@
         stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
       document.documentElement.setAttribute('data-ot-theme', resolved);
       document.documentElement.style.colorScheme = resolved;
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute('content', resolved === 'dark' ? '#0f1216' : '#fafafa');
     </script>
 
     <link
@@ -44,7 +51,6 @@
     <link href="/assets/icons/apple-touch-icon.png" rel="apple-touch-icon" />
     <!-- 180×180 -->
     <link href="/manifest.webmanifest" rel="manifest" />
-    <meta content="#3939ff" name="theme-color" />
 
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta charset="utf-8" />
