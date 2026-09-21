@@ -171,6 +171,8 @@
         id="textField"
         name="commentComposer"
         placeholder="Aa"
+        role="textbox"
+        [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
         [attr.contenteditable]="contentEditableValue() && !recording"
         [class.active]="($userIsTyping | async) === false"
         [hidden]="recording"
@@ -190,37 +192,45 @@
       }
       <div id="innerButtons" [hidden]="recording">
         @if (isEditing) {
-          <mat-icon
+          <button
             aria-label="Save edited comment"
-            id="emojiButton"
+            class="composer-inline-action"
+            id="saveEditedCommentButton"
             matTooltip="Save edited comment"
             matTooltipShowDelay="400"
+            type="button"
             (click)="saveEditedComment()"
           >
-            check</mat-icon
-          >
+            <mat-icon aria-hidden="true">check</mat-icon>
+          </button>
         }
-        <mat-icon
+        <button
           aria-label="Emoji picker button"
+          class="composer-inline-action"
           id="emojiButton"
           matTooltip="Choose an emoji"
           matTooltipShowDelay="400"
+          type="button"
+          [attr.aria-expanded]="showEmojiPicker"
           (click)="this.showEmojiPicker = !this.showEmojiPicker"
         >
-          emoji_emotions</mat-icon
-        >
+          <mat-icon aria-hidden="true">emoji_emotions</mat-icon>
+        </button>
       </div>
       <div id="innerButtons" [hidden]="recording || !isStaff">
         @if (!isEditing) {
-          <mat-icon
+          <button
             aria-label="Feedback template button"
+            class="composer-inline-action"
             id="feedbackTemplateButton"
             matTooltip="Choose feedback templates"
             matTooltipShowDelay="400"
+            type="button"
+            [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
           >
-            task</mat-icon
-          >
+            <mat-icon aria-hidden="true">task</mat-icon>
+          </button>
         }
       </div>
     </div>
