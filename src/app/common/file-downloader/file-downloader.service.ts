@@ -10,6 +10,7 @@ interface FileDownloaderData {
   failure: (error: any) => void;
 
   binaryData: Blob[];
+  totalSize?: number;
 }
 
 @Injectable({
@@ -22,65 +23,44 @@ export class FileDownloaderService {
   ) {}
 
   private processPartialBlob(data: FileDownloaderData) {
-    // We now need to ask for the next part of the file
     const range = data.response.headers.get('Content-Range');
-    if (range) {
-      // The range header is in the format "bytes start-end/totalSize"
-      const parts = range.split('/');
+    const match = /^bytes (\d+)-(\d+)\/(\d+)$/i.exec(range ?? '');
+    const received = data.binaryData.reduce((size, blob) => size + blob.size, 0);
+    const [start, end, totalSize] = match ? match.slice(1).map(Number) : [];
 
-      // Split into the range and the total size
-      if (parts.length === 2) {
-        // Parse the total size and the range
-        const totalSize = parseInt(parts[1], 10);
-
-        // Extract the range after the "bytes" part
-        const contentRange = parts[0].split(' ')[1];
-
-        // Extract the parts of the range
-        const contentRangeParts = contentRange.split('-');
-
-        // If we have two parts, we have a valid range and size
-        if (contentRangeParts.length === 2) {
-          const start = parseInt(contentRangeParts[0], 10);
-          const end = parseInt(contentRangeParts[1], 10);
-
-          // Check the start is the same as the length of the binary data received
-          if (start !== data.binaryData.map((value) => value.size).reduce((pv, cv) => pv + cv, 0)) {
-            console.log('Error: start != oldLen');
-            this.alerts.error('Error downloading file part received out of order');
-          }
-          data.binaryData.push(data.response.body);
-
-          // If the end is less than the total size, we need to request the next part
-          if (end + 1 < totalSize) {
-            const rangeHeader = {Range: `bytes=${end + 1}-${totalSize}`};
-            this.httpClient
-              .get(data.url, {responseType: 'blob', observe: 'response', headers: rangeHeader})
-              .subscribe({
-                next: (response2) => {
-                  data.response = response2;
-                  this.processHttpResponse(data);
-                },
-                error: (error) => {
-                  if (data.failure) {
-                    data.failure(error);
-                  }
-                },
-              });
-            return;
-          } else {
-            // we have all of the data, so we can report success
-            this.reportSuccess(data);
-          }
-        }
-      }
-    } else {
-      // no range... so we can't do anything!
-      console.log('Error reading response from server - no range with 206 response');
-      if (data.failure) {
-        data.failure('Unable to read data from server');
-      }
+    if (
+      !match ||
+      ![start, end, totalSize].every(Number.isSafeInteger) ||
+      start !== received ||
+      end < start ||
+      end >= totalSize ||
+      data.response.body?.size !== end - start + 1 ||
+      (data.totalSize !== undefined && data.totalSize !== totalSize)
+    ) {
+      data.failure?.('Unable to read data from server: invalid or out-of-order file range');
+      return;
     }
+
+    data.totalSize = totalSize;
+    data.binaryData.push(data.response.body);
+    if (end + 1 === totalSize) {
+      this.reportSuccess(data);
+      return;
+    }
+
+    this.httpClient
+      .get(data.url, {
+        responseType: 'blob',
+        observe: 'response',
+        headers: {Range: `bytes=${end + 1}-${totalSize - 1}`},
+      })
+      .subscribe({
+        next: (response) => {
+          data.response = response;
+          this.processHttpResponse(data);
+        },
+        error: (error) => data.failure?.(error),
+      });
   }
 
   private processHttpResponse(data: FileDownloaderData) {
@@ -88,8 +68,9 @@ export class FileDownloaderService {
     if (data.response.status === 206) {
       this.processPartialBlob(data);
     } else {
-      // Save the binary data we have received so far
-      data.binaryData.push(data.response.body);
+      // A server can ignore Range and return the complete file with 200.
+      // Replace previous parts rather than appending the full file to them.
+      data.binaryData = [data.response.body];
       this.reportSuccess(data);
     }
   }

@@ -16,7 +16,6 @@ import {adapterFactory} from 'angular-calendar/date-adapters/date-fns';
 import {enAU} from 'date-fns/locale';
 import player from 'lottie-web';
 import {PdfViewerModule} from 'ng2-pdf-viewer';
-import {FlexLayoutModule} from 'ng-flex-layout';
 import {LottieComponent, provideLottieOptions} from 'ngx-lottie';
 // TODO: replace back to original ngx-monaco-editor-v2 once it supports angular 22
 import {MonacoEditorModule} from 'ngx-monaco-editor-v2-alternative';
@@ -813,7 +812,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
   imports: [
     PreviousSubmissionsComponent,
     ThemeToggleComponent,
-    FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,
     DemoToolsModule,
