@@ -12,8 +12,8 @@ import {Observable, Subscription} from 'rxjs';
  *
  * This service owns the token layer's marker and the resolved-theme signal. The
  * no-flash <head> script (THM-F04), the Tailwind dark variant (THM-F03), the
- * accessible toggle (THM-F02) and the browser theme-color chrome (THM-W01) are
- * deliberately out of scope here.
+ * accessible toggle (THM-F02) consume this service. Browser theme-color chrome
+ * follows the resolved page colour (THM-M04).
  */
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -23,6 +23,12 @@ const THEME_PREFERENCES: readonly ThemePreference[] = ['light', 'dark', 'system'
 
 /** Duplicated as a literal in the THM-F04 no-flash script; THM-T01 asserts they match. */
 export const THEME_STORAGE_KEY = 'ontrack.theme.preference';
+
+/** Keep in sync with the pre-boot script and page tokens (regression-tested). */
+export const THEME_BROWSER_COLORS: Record<ResolvedTheme, string> = {
+  light: '#fafafa',
+  dark: '#0f1216',
+};
 export const THEME_UPDATED_AT_STORAGE_KEY = 'ontrack.theme.preference.updatedAt';
 export const THEME_ACCOUNT_ID_STORAGE_KEY = 'ontrack.theme.preference.accountId';
 
@@ -412,6 +418,9 @@ export class ThemeService {
     // Only ever 'light' or 'dark' reaches the attribute. Section 5.
     root.setAttribute('data-ot-theme', resolved);
     root.style.colorScheme = resolved;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', THEME_BROWSER_COLORS[resolved]);
   }
 
   private prefersDark(): boolean {
