@@ -126,6 +126,26 @@ describe('Inbox phone assessment actions', () => {
     expect(selectedTask.value.updateTaskStatus).toHaveBeenCalledExactlyOnceWith('complete');
   });
 
+  it('names phone assessment actions when the optional display name is absent', () => {
+    Object.assign(selectedTask.value.project.student, {
+      displayName: undefined,
+      name: 'Alex Student',
+    });
+    fixture.detectChanges();
+
+    expect(footer().getAttribute('aria-label')).toBe('Assessment actions for 1.1P, Alex Student');
+  });
+
+  it('uses a meaningful region name before a task is selected', () => {
+    selectedTask.next(null);
+    fixture.componentInstance.taskData.selectedTask = null;
+    fixture.detectChanges();
+
+    expect(footer().getAttribute('aria-label')).toBe('Assessment actions');
+    expect(footer().querySelector('f-user-badge')).toBeNull();
+    expect(footer().querySelector('f-project-progress-bar')).toBeNull();
+  });
+
   it('uses the existing claim action and retains the same claim and completion guards', () => {
     fixture.componentInstance.viewType = 'overflow';
     fixture.detectChanges();

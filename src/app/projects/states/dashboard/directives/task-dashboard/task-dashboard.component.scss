@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 .empty-state-icon {
   height: 120px;
   width: 120px;
@@ -12,6 +14,21 @@
 
 :host ::ng-deep .task-dashboard-tabs {
   .mat-mdc-tab-header {
+    // Filled-control primary colours are not text colours on every theme surface.
+    @include mat.tabs-overrides(
+      (
+        active-label-text-color: var(--ot-color-link),
+        active-focus-label-text-color: var(--ot-color-link),
+        active-hover-label-text-color: var(--ot-color-link),
+        active-indicator-color: var(--ot-color-link),
+        active-focus-indicator-color: var(--ot-color-link),
+        active-hover-indicator-color: var(--ot-color-link),
+        inactive-label-text-color: var(--ot-color-text-muted),
+        inactive-focus-label-text-color: var(--ot-color-text-muted),
+        inactive-hover-label-text-color: var(--ot-color-text-muted),
+      )
+    );
+
     justify-content: center;
     max-width: 100%;
     overflow-x: auto;
