@@ -19,9 +19,19 @@ const types = {
   '.webmanifest': 'application/manifest+json', '.wasm': 'application/wasm',
 };
 const server = createServer((incoming, outgoing) => {
+  // Accept only origin-form targets. Absolute/protocol-relative URLs must never
+  // select a destination, including targets that the URL parser normalises.
+  if (!incoming.url?.startsWith('/') || incoming.url.startsWith('//') || incoming.url.includes('\\')) {
+    outgoing.writeHead(400).end('Invalid request target.');
+    return;
+  }
   const url = new URL(incoming.url, 'http://127.0.0.1');
   if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
-    const proxy = request(new URL(incoming.url, upstream), {
+    const proxy = request({
+      protocol: 'http:',
+      hostname: '127.0.0.1',
+      port: upstream.port || 80,
+      path: url.pathname + url.search,
       method: incoming.method,
       headers: {...incoming.headers, host: upstream.host},
     }, response => {

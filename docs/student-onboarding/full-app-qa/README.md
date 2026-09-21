@@ -140,8 +140,10 @@ TUTORIAL_API_URL=http://127.0.0.1:3011 \
 node /absolute/path/to/reviewed-checkout/docs/student-onboarding/full-app-qa/serve-built.mjs
 ```
 
-It binds only to loopback and streams `/api` requests to the isolated API. Stop
-with Ctrl+C. A default build lacks the production service-worker artifact; a
+It binds only to loopback and streams `/api` requests to the configured loopback
+API. Request targets cannot select another host or port. Run the helper's proxy
+regression with `node --test docs/student-onboarding/full-app-qa/serve-built.test.mjs`.
+Stop with Ctrl+C. A default build lacks the production service-worker artifact; a
 registration warning in this preview is not a tutorial defect. Do not use this
 server as a deployment recipe.
 
