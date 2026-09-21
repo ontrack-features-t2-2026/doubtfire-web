@@ -11,6 +11,8 @@ mat-card-content {
 .chart {
   height: 360px;
   min-width: 320px;
+  // SVG labels inherit fill separately from the surrounding theme's text colour.
+  fill: currentColor;
 }
 
 table {
