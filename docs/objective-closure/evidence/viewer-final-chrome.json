@@ -1,0 +1,40 @@
+{
+  "browser": "chrome",
+  "checks": [
+    {
+      "id": "post-and-view-handout-pdf",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "keyboardFocus": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(255, 255, 255)",
+        "textColor": "rgb(255, 255, 255)"
+      },
+      "viewerBytes": 608,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-screenshot-png",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "keyboardFocus": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(255, 255, 255)",
+        "textColor": "rgb(255, 255, 255)"
+      },
+      "viewerBytes": 639,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    }
+  ],
+  "selectedChecks": ["post-and-view-handout-pdf", "post-and-view-screenshot-png"],
+  "errors": [],
+  "testedWeb": "c3c1aa02ecbb9522d7ec8d3dab00cfade15f2690",
+  "testedApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "version": "153.0.8010.48",
+  "status": "passed",
+  "recordedAt": "2026-09-21T05:48:13.420Z"
+}

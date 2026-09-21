@@ -1,0 +1,26 @@
+{
+  "stage": "verify-submission-history",
+  "recordedAt": "2026-09-21T05:20:45.243Z",
+  "browser": "Chrome 153.0.8010.48",
+  "webBaseline": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+  "webWorkingTree": "objectives-closure-web-20260921 with accessibility fixes",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "scope": "Real local Angular application and synthetic backend; automated browser/AX/keyboard check, not human usability or screen-reader observation.",
+  "checks": [
+    {
+      "id": "live-ui-completed-status-and-history-download",
+      "status": "passed",
+      "taskState": "Awaiting Feedback",
+      "historyCurrent": true,
+      "downloadFilename": "submission-4.zip",
+      "retained": {
+        "entry": "000-csv.xlsx",
+        "bytes": 1452,
+        "sha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c"
+      },
+      "originalSha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c",
+      "byteIdentical": true
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,39 @@
+{
+  "stage": "chair-footer-fix",
+  "recordedAt": "2026-09-21T05:23:49.640Z",
+  "browser": "Chrome 153.0.8010.48",
+  "webBaseline": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+  "webWorkingTree": "objectives-closure-web-20260921 with accessibility fixes",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "scope": "Real local Angular application and synthetic backend; automated browser/AX/keyboard check, not human usability or screen-reader observation.",
+  "checks": [
+    {
+      "id": "chair-accessible-names-and-native-keyboard-category",
+      "status": "passed",
+      "categoryRestored": "Spreadsheet (CSV, XLS, XLSX)",
+      "historyRestored": true,
+      "definitionWrites": 0
+    },
+    {
+      "id": "dark-footer-uses-semantic-surface-and-readable-text",
+      "status": "passed",
+      "theme": "dark",
+      "semanticSurface": "rgb(23, 27, 33)",
+      "footer": {
+        "background": "rgb(23, 27, 33)",
+        "foreground": "rgb(230, 232, 236)",
+        "contrast": 14.08735137307994
+      },
+      "addButton": {
+        "background": "rgb(84, 87, 229)",
+        "foreground": "rgb(255, 255, 255)",
+        "contrast": 5.424015815822033
+      }
+    },
+    {
+      "id": "chair-fixture-remains-unchanged-after-reload",
+      "status": "passed"
+    }
+  ],
+  "status": "passed"
+}
