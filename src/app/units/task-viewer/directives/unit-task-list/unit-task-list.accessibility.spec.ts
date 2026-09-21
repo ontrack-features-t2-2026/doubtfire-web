@@ -13,6 +13,7 @@ import {RouterLink, provideRouter} from '@angular/router';
 import {BehaviorSubject} from 'rxjs';
 import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
 import {StatusIconComponent} from 'src/app/common/status-icon/status-icon.component';
+import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {FUnitTaskListComponent} from './unit-task-list.component';
 
 // Use Material's real list implementation: a schema-only render cannot reveal
@@ -64,6 +65,7 @@ describe('FUnitTaskListComponent native task actions', () => {
       fixture.componentInstance.isCollapsed = collapsed;
       fixture.detectChanges();
       await fixture.whenStable();
+      await expectAccessible(fixture.nativeElement);
       const row: HTMLButtonElement = fixture.nativeElement.querySelector('.mat-mdc-list-item');
       // jsdom does not synthesize browser click defaults for keyboard events.
       // Native button semantics supply Enter/Space activation without custom handlers.
