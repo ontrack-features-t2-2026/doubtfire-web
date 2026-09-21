@@ -286,6 +286,30 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     view?.destroy();
   });
 
+  it.each([
+    {state: 'highlighted', background: '#03c6fc', foreground: 'text-black'},
+    {state: 'above-target', background: '#9ca3af', foreground: 'text-black'},
+    {state: 'past-deadline', background: '#cd3704', foreground: 'text-white'},
+    {state: 'blocked', background: '#e88307', foreground: 'text-black'},
+    {state: 'close-deadline', background: '#ffc53d', foreground: 'text-black'},
+    {state: 'normal', background: '#0e467b', foreground: 'text-white'},
+  ])('renders one contrasting foreground for $state bars', ({state, background, foreground}) => {
+    const item = Object.assign(plannerItem('contrast'), {highlighted: state === 'highlighted'});
+    vi.spyOn(component, 'isAboveTargetGrade').mockReturnValue(state === 'above-target');
+    vi.spyOn(component, 'isPastFeedbackDeadline').mockReturnValue(state === 'past-deadline');
+    vi.spyOn(component, 'isBlockedByPrerequisite').mockReturnValue(state === 'blocked');
+    vi.spyOn(component, 'isCloseToFeedbackDeadline').mockReturnValue(state === 'close-deadline');
+    component.items = [item] as never;
+    bar.remove();
+    view.destroy();
+    bar = stampBar(item);
+
+    expect(bar.classList.contains(`[--bar-bg:${background}]`)).toBe(true);
+    expect(
+      [...bar.classList].filter((name) => name === 'text-black' || name === 'text-white'),
+    ).toEqual([foreground]);
+  });
+
   it('gives the bar a role and a tab stop, so a keyboard can reach it', () => {
     expect(bar.getAttribute('role')).toBe('button');
     expect(bar.getAttribute('tabindex')).toBe('0');
