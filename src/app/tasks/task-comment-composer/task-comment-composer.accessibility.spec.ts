@@ -6,6 +6,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog} from '@angular/material/dialog';
 import {provideNoopAnimations} from '@angular/platform-browser/animations';
+import {of} from 'rxjs';
 import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
@@ -30,7 +31,18 @@ describe('Shared task comment controls', () => {
         {provide: EmojiService, useValue: {}},
         {provide: TaskCommentsViewerComponent, useValue: {scrollDown: vi.fn()}},
         {provide: AlertService, useValue: {}},
-        {provide: TaskCommentService, useValue: {}},
+        {
+          provide: TaskCommentService,
+          useValue: {
+            attachmentPolicy: () =>
+              of({
+                version: 1,
+                max_bytes_exclusive: 10_000_000,
+                max_selection_count: 5,
+                categories: [{id: 'pdf', name: 'PDF', extensions: ['pdf'], preview: 'pdf'}],
+              }),
+          },
+        },
         {provide: UserService, useValue: {currentUser: {id: 1}}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
