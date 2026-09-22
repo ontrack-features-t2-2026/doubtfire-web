@@ -178,13 +178,17 @@ async function release(directory, label, timestamp) {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
         });
         res.end(await readFile(file));
-      } catch (error) {
-        res.writeHead(500);
-        res.end(String(error));
+      } catch {
+        res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8'});
+        res.end('Internal server error');
       }
     });
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     report.origin = `http://127.0.0.1:${server.address().port}`;
+    const invalidPathResponse = await fetch(report.origin + '/%');
+    assert.equal(invalidPathResponse.status, 500);
+    assert.equal(await invalidPathResponse.text(), 'Internal server error');
+    report.checks.push('Malformed request paths return a generic error without exception details.');
     context = await chromium.launchPersistentContext(join(runDirectory, 'profile'), {
       executablePath,
       headless: true,
