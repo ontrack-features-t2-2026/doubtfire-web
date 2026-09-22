@@ -1,0 +1,21 @@
+{
+  "tutorial": "0ff843477300c7848003c6612f534f75c5727e7f",
+  "migration": "66e3e20565ab1c61e0158f9fcf3a8d896dcdb11c",
+  "tree": "bfa13f35d5e3da731cd7b3b4492c30b542ec2f9d",
+  "localValidationCommit": "a9e7af46f3eb17c4fefbac168a46688c73496286",
+  "note": "Temporary local compatibility snapshot, never pushed or merged on GitHub.",
+  "date": "2026-09-21 Australia/Melbourne",
+  "node": "22.23.2",
+  "npm": "11.19.0",
+  "tests": {
+    "result": "passed",
+    "files": 151,
+    "tests": 1158,
+    "testDurationSeconds": 31.38,
+    "testBuildSeconds": 24.54
+  },
+  "productionBuild": {
+    "result": "passed",
+    "durationSeconds": 51.672
+  }
+}

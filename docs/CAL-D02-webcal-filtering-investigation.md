@@ -12,7 +12,7 @@ The premise that a student must "subscribe to everything or nothing" is not accu
 .where.not(units: { id: WebcalUnitExclusion.where(webcal_id: id).select(:unit_id) })
 ```
 
-This is already editable from the front end. The Web calendar modal shows the student's units as removable chips (`calendar-modal.component`), and toggling a chip adds or removes a `WebcalUnitExclusion`.
+This is already editable from the front end. The current UI is illustrated in the [placement mockup](calendar/calendar-controls.svg). The Web calendar modal shows the student's units as removable chips (`calendar-modal.component`), and toggling a chip adds or removes a `WebcalUnitExclusion`.
 
 **Grade.** The same query only includes task definitions at or below the student's target grade:
 
@@ -31,7 +31,7 @@ So the feed is already limited to the tasks the student needs for their saved ta
 ## What finer filtering would take
 
 - **Grade selection independent of target grade.** The grade filter is a single clause in `Webcal#task_definitions`, so parameterising it is the small part. The larger part is deciding where the selected grade lives: either a new query parameter threaded from `webcal_public_api.rb` into `to_ical`/`task_definitions`, or a stored per-webcal grade override on the `Webcal` model, plus a control in the modal to set it. A stored setting is more consistent with how unit exclusions already work.
-- **Exclude completed tasks.** This needs the feed to consider each task's submission state, which means loading the student's `Task` records (the feed already loads them for date resolution in `to_ical`) and skipping those in a final state. This is a change inside `to_ical`, plus a per-webcal toggle if it should be optional.
+- **Exclude completed tasks.** This needs the feed to consider each task's submission state, which means loading the student's `Task` records (the feed already loads them for date resolution in `to_ical`) and skipping the submitted/final states selected by the product policy. The unit download now treats Redo and Fix and resubmit as outstanding, while submitted states awaiting assessment or discussion are excluded. Reuse that definition if extending the feed so the controls agree. This is a change inside `to_ical`, plus a per-webcal toggle if it should be optional.
 - **Per-request variants.** Supporting URL parameters on the public endpoint would let a client hold several filtered subscriptions from one webcal, but it widens the public surface and is not needed for the two cases above. A stored per-webcal setting is the lower-risk route.
 
 ## Assessment
@@ -44,3 +44,7 @@ Unit filtering is already complete. Grade filtering exists but is tied to the sa
 - `doubtfire-api/app/models/webcal_unit_exclusion.rb`
 - `doubtfire-api/app/api/webcal_public_api.rb`
 - `doubtfire-web/src/app/common/modals/calendar-modal/calendar-modal.component.ts` (unit exclusion chips)
+
+## Scope check on 20 September 2026
+
+Rechecked the model, exclusions and public/settings APIs at API `bb360dfa626f30e22c1382e20ef43c06ce6b38fa`. The unit download already supports local grade/range/submission filters; it does not need a database migration or new public endpoint. No feed-filter behavior is changed by the calendar completion PR. Optional learning-session events also respect unit exclusions, and should remain independent of task grade/submission filters.

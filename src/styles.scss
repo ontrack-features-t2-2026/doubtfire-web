@@ -8,13 +8,14 @@
 // app stays correct even if the pre-hydration marker script (THM-F04) never runs.
 @use 'styles/tokens/light';
 @use 'styles/tokens/dark';
+@use 'styles/theme-special-surfaces';
 @use 'tailwindcss';
 @config '../tailwind.config.js';
 
 @include mat.elevation-classes();
 @include mat.app-background();
 
-@import '../node_modules/angular-calendar/css/angular-calendar.css';
+// angular-calendar layout and palette are loaded by theme-special-surfaces.
 
 // Keep Angular's [hidden] bindings stronger than display utilities such as Tailwind's .flex.
 [hidden] {
@@ -112,4 +113,16 @@ body.split-pane-resizing pdf-viewer {
 :root[data-ot-theme='dark'] body {
   background-color: var(--ot-color-page);
   color: var(--ot-color-text);
+}
+
+// Print the application chrome in Light as well as switching semantic tokens.
+// Keep this in the global stylesheet: components import theme.scss for palette
+// variables and must not each emit a duplicate print theme. Use the same
+// specificity as the on-screen Dark block without changing the
+// root marker or the user's saved preference.
+@media print {
+  :root,
+  :root[data-ot-theme='dark'] {
+    @include mat.all-component-colors($theme);
+  }
 }

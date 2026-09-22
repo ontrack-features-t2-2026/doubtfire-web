@@ -13,6 +13,7 @@ import {
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import API_URL from 'src/app/config/constants/apiUrl';
+import {AttachmentPolicy} from '../models/task-comment/attachment-policy';
 import {DiscussionComment} from '../models/task-comment/discussion-comment';
 import {ExtensionComment} from '../models/task-comment/extension-comment';
 import {ScormExtensionComment} from '../models/task-comment/scorm-extension-comment';
@@ -70,6 +71,9 @@ export class TaskCommentService extends CachedEntityService<TaskComment> {
       'recipientReadTime',
       'replyToId',
       'isNew',
+      'attachmentFileName',
+      'attachmentMimeType',
+      'attachmentByteSize',
       {
         keys: ['text', 'comment'],
         toEntityFn: (data, _key, _entity) => {
@@ -166,6 +170,17 @@ export class TaskCommentService extends CachedEntityService<TaskComment> {
         const task = other as Task;
         task.numNewComments = 0;
       }),
+    );
+  }
+
+  public attachmentPolicy(): Observable<AttachmentPolicy> {
+    return this.apiHttpClient.get<AttachmentPolicy>(`${API_URL}/task_comments/upload_policy`);
+  }
+
+  public downloadAttachment(comment: TaskComment): void {
+    this.downloader.downloadFile(
+      comment.attachmentUrl.replace('as_attachment=false', 'as_attachment=true'),
+      comment.attachmentFileName || `comment-${comment.id}`,
     );
   }
 

@@ -12,7 +12,7 @@ import {of} from 'rxjs';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
-import {TaskStatusEnum} from 'src/app/api/models/task-status';
+import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 import {Unit} from 'src/app/api/models/unit';
 import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
@@ -375,6 +375,78 @@ describe('TaskPlannerCardComponent', () => {
 
     const tasks = component['tasksForDownload']();
     expect(tasks.map((task) => task.definition.id)).toEqual([2, 4]);
+  });
+
+  it.each([0, 1, 2, 3])('exports exactly the tasks up to grade %i', async (grade) => {
+    component.project = buildProjectWithTasks(
+      [0, 1, 2, 3].map((targetGrade) => ({targetGrade, dueDate: new Date(2026, 8, 20)})),
+    );
+    fixture.detectChanges();
+    component.selectedDownloadGrade = grade;
+    const createUrl = vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:grade');
+
+    component.downloadIcs();
+
+    const calendar = await (createUrl.mock.calls[0][0] as Blob).text();
+    expect(calendar.match(/^UID:.+$/gm)?.map((uid) => uid.trim())).toEqual(
+      [0, 1, 2, 3].filter((value) => value <= grade).map((value) => `UID:E-${value + 1}`),
+    );
+    expect(component.project.targetGrade).toBe(0);
+  });
+
+  it.each([0, 1, 2, 3])('exports exactly the tasks from grade %i and above', async (grade) => {
+    component.project = buildProjectWithTasks(
+      [0, 1, 2, 3].map((targetGrade) => ({targetGrade, dueDate: new Date(2026, 8, 20)})),
+    );
+    fixture.detectChanges();
+    component.selectedDownloadGrade = grade;
+    component.downloadDirection = 'andAbove';
+    const createUrl = vi.spyOn(window.URL, 'createObjectURL').mockReturnValue('blob:grade');
+
+    component.downloadIcs();
+
+    const calendar = await (createUrl.mock.calls[0][0] as Blob).text();
+    expect(calendar.match(/^UID:.+$/gm)?.map((uid) => uid.trim())).toEqual(
+      [0, 1, 2, 3].filter((value) => value >= grade).map((value) => `UID:E-${value + 1}`),
+    );
+  });
+
+  it('excludes every submitted/final state but keeps work that needs resubmission', () => {
+    component.project = buildProjectWithTasks(
+      TaskStatus.STATUS_KEYS.map((status) => ({status, dueDate: new Date(2026, 8, 20)})),
+    );
+    fixture.detectChanges();
+
+    expect(component['tasksForDownload']().map((task) => task.status)).toEqual([
+      'not_started',
+      'redo',
+      'need_help',
+      'working_on_it',
+      'fix_and_resubmit',
+    ]);
+    component.excludeCompleted = false;
+    expect(component['tasksForDownload']().map((task) => task.status)).toEqual(
+      TaskStatus.STATUS_KEYS,
+    );
+  });
+
+  it('counts only resolvable dates and blocks a file when the selection has none', () => {
+    component.project = buildProjectWithTasks([
+      {targetGrade: 0},
+      {targetGrade: 0, dueDate: new Date('invalid')},
+      {targetGrade: 2, dueDate: new Date(2026, 8, 20)},
+    ]);
+    fixture.detectChanges();
+    matDialogStub.open.mockReturnValue({afterClosed: () => of(undefined)});
+
+    component.openDownloadDialog();
+
+    const options = matDialogStub.open.mock.calls[0][1];
+    expect(options.autoFocus).toBe('first-tabbable');
+    expect(options.data.matchingTaskCount(0, 'upTo', true)).toBe(0);
+    expect(options.data.matchingTaskCount(2, 'upTo', true)).toBe(1);
+    component.downloadIcs();
+    expect(fileDownloaderStub.downloadBlobToFile).not.toHaveBeenCalled();
   });
 
   it('inserts -and-above into the filename for the and-above direction, leaving up-to filenames unchanged', () => {

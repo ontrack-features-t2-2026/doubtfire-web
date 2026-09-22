@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, it} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   HttpRequest,
   provideHttpClient,
@@ -26,7 +26,7 @@ describe('TaskCommentService discussion comments', () => {
         provideHttpClientTesting(),
         {provide: EmojiService, useValue: {}},
         {provide: UserService, useValue: {cache: {getOrCreate: () => ({})}}},
-        {provide: FileDownloaderService, useValue: {}},
+        {provide: FileDownloaderService, useValue: {downloadFile: vi.fn()}},
         {provide: TestAttemptService, useValue: {cache: {getOrCreate: () => ({})}}},
       ],
     });
@@ -37,6 +37,36 @@ describe('TaskCommentService discussion comments', () => {
 
   afterEach(() => {
     httpMock.verify();
+  });
+
+  it('loads attachment guidance from the authenticated API policy endpoint', () => {
+    let received: unknown;
+    taskCommentService.attachmentPolicy().subscribe((policy) => {
+      received = policy;
+    });
+    const request = httpMock.expectOne('http://localhost:3000/api/task_comments/upload_policy');
+    expect(request.request.method).toBe('GET');
+    const policy = {
+      version: 1,
+      max_bytes_exclusive: 30_000_000,
+      max_selection_count: 5,
+      categories: [],
+    };
+    request.flush(policy);
+    expect(received).toEqual(policy);
+  });
+
+  it('uses the authenticated downloader and forces attachment disposition for generic files', () => {
+    taskCommentService.downloadAttachment({
+      id: 1,
+      attachmentFileName: 'results.xlsx',
+      attachmentUrl:
+        'http://localhost:3000/api/projects/1/task_def_id/2/comments/1?as_attachment=false',
+    } as TaskComment);
+    expect(TestBed.inject(FileDownloaderService).downloadFile).toHaveBeenCalledWith(
+      'http://localhost:3000/api/projects/1/task_def_id/2/comments/1?as_attachment=true',
+      'results.xlsx',
+    );
   });
 
   it('posts a discussion reply without expecting an entity response', () => {

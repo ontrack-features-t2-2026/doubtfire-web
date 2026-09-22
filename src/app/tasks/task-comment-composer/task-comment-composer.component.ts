@@ -13,13 +13,14 @@ import {
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
+  OnInit,
   QueryList,
   SimpleChanges,
   ViewChild,
   ViewChildren,
 } from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {BehaviorSubject, Subscription} from 'rxjs';
+import {BehaviorSubject, Subscription, finalize} from 'rxjs';
 import {
   FeedbackTemplate,
   Task,
@@ -27,6 +28,11 @@ import {
   TaskCommentService,
 } from 'src/app/api/models/doubtfire-model';
 import {UserService} from 'src/app/api/models/doubtfire-model';
+import {
+  AttachmentPolicy,
+  attachmentCategory,
+  attachmentError,
+} from 'src/app/api/models/task-comment/attachment-policy';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {ThemeService} from 'src/app/common/theme/theme.service';
@@ -50,21 +56,6 @@ export interface TaskCommentComposerData {
   editingComment: TaskComment;
 }
 
-const ACCEPTED_FILE_TYPES = [
-  'audio/mpeg',
-  'audio/vorbis',
-  'audio/mp4',
-  'audio/ogg',
-  'audio/wav',
-  'audio/x-wav',
-  'audio/webm',
-  'image/png',
-  'image/pdf',
-  'application/pdf',
-  'image/gif',
-  'image/jpg',
-  'image/jpeg',
-];
 const APPROVED_CLIPBOARD_IMAGE_TYPES = [
   'image/png',
   'image/bmp',
@@ -89,7 +80,7 @@ const APPROVED_CLIPBOARD_IMAGE_TYPES = [
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnChanges {
+export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnChanges, OnInit {
   @Input() task: Task;
   @Input() sharedData: TaskCommentComposerData;
 
@@ -146,6 +137,43 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     } catch (e) {
       console.error('Error loading submitted tasks:', e);
     }
+  }
+
+  public attachmentPolicy: AttachmentPolicy | null = null;
+  public attachmentPolicyFailed = false;
+  public attachmentsUploading = 0;
+
+  ngOnInit(): void {
+    this.taskCommentService.attachmentPolicy().subscribe({
+      next: (policy) => {
+        this.attachmentPolicy = policy;
+        this.cdRef.markForCheck();
+      },
+      error: () => {
+        this.attachmentPolicyFailed = true;
+        this.cdRef.markForCheck();
+      },
+    });
+  }
+
+  public get attachmentAccept(): string {
+    return (
+      this.attachmentPolicy?.categories
+        .flatMap((item) => item.extensions.map((ext) => `.${ext}`))
+        .join(',') || ''
+    );
+  }
+
+  public get attachmentGuidance(): string {
+    if (!this.attachmentPolicy) {
+      return this.attachmentPolicyFailed
+        ? 'Attachment requirements are unavailable. Reload to try again. You can still send text.'
+        : 'Loading attachment requirements…';
+    }
+    const formats = this.attachmentPolicy.categories
+      .map((item) => `${item.name}: ${item.extensions.join(', ').toUpperCase()}`)
+      .join('; ');
+    return `${formats}. Each file must be smaller than ${this.attachmentPolicy.max_bytes_exclusive / 1_000_000} MB. Select up to ${this.attachmentPolicy.max_selection_count} files; confirm each separately.`;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -659,20 +687,28 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   }
 
   uploadFiles(files: ArrayLike<File>) {
+    if (!this.attachmentPolicy) {
+      this.alerts.error('Attachment requirements are unavailable. Reload and try again.', 6000);
+      return;
+    }
+    if (files.length > this.attachmentPolicy.max_selection_count) {
+      this.alerts.error(
+        `Choose at most ${this.attachmentPolicy.max_selection_count} attachments at a time.`,
+        6000,
+      );
+      this.resetUploader();
+      return;
+    }
     const acceptedFiles: File[] = [];
-
     Array.from(files).forEach((file) => {
-      if (
-        ACCEPTED_FILE_TYPES.includes(file.type) ||
-        file.type.startsWith('audio/') ||
-        file.type.startsWith('image/')
-      ) {
-        acceptedFiles.push(file);
+      if (!attachmentCategory(this.attachmentPolicy, file)) {
+        this.alerts.error('Unsupported attachment format. Choose one of the listed formats.', 6000);
+      } else if (file.size === 0 || file.size >= this.attachmentPolicy.max_bytes_exclusive) {
+        this.alerts.error('Attachments must not be empty and must be smaller than 30 MB.', 6000);
       } else {
-        this.alerts.error('Cannot upload that file - only images, audio, and PDFs.', 4000);
+        acceptedFiles.push(file);
       }
     });
-
     this.confirmAttachmentsSequentially(acceptedFiles);
     this.resetUploader();
   }
@@ -755,16 +791,20 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     });
   }
 
-  // # Upload image files as comments to a given task
-  postAttachmentComment(file) {
-    this.taskCommentService.addComment(this.task, file, 'file', null).subscribe(
-      (_tc: TaskComment) => {
-        this.commentsViewer.scrollDown();
-      },
-      (error: Error) => {
-        this.alerts.error(error.message, 2000);
-      },
-    );
+  postAttachmentComment(file: File) {
+    this.attachmentsUploading++;
+    this.taskCommentService
+      .addComment(this.task, file, 'file', null)
+      .pipe(
+        finalize(() => {
+          this.attachmentsUploading--;
+          this.cdRef.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => this.commentsViewer.scrollDown(),
+        error: (error) => this.alerts.error(attachmentError(error), 6000),
+      });
   }
 
   private confirmAttachmentsSequentially(files: File[], index: number = 0) {
@@ -775,6 +815,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     const dialogRef = this.dialog.open(AttachmentConfirmationDialogComponent, {
       data: {
         file: files[index],
+        category: attachmentCategory(this.attachmentPolicy, files[index])?.name,
       },
       maxWidth: '720px',
       width: 'min(92vw, 720px)',

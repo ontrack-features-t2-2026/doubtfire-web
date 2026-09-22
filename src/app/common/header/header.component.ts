@@ -17,6 +17,7 @@ import {DoubtfireConstants, LogoSettings} from 'src/app/config/constants/doubtfi
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
+import {StudentOnboardingService} from 'src/app/student-onboarding/student-onboarding.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
 import {CalendarModalService} from '../modals/calendar-modal/calendar-modal.service';
 import {QrModalService} from '../modals/qr-modal/qr-modal.service';
@@ -85,6 +86,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private router: Router,
     private tutorNotesModal: TutorNotesModalService,
     readonly demoMode: DemoModeStore,
+    readonly studentOnboarding: StudentOnboardingService,
   ) {}
 
   public externalName: string;

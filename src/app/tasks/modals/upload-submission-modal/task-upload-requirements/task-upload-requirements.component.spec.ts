@@ -43,7 +43,7 @@ describe('TaskUploadRequirementsComponent', () => {
       const text = (fixture.nativeElement as HTMLElement).textContent;
       expect(text).toContain('Files required:');
       expect(text).toContain('2');
-      expect(text).toContain('Document');
+      expect(text).toContain('PDF');
       expect(text).toContain('PDF');
       expect(text).toContain('Spreadsheet');
       expect(text).toContain('CSV');
