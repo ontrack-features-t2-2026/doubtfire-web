@@ -61,13 +61,25 @@
           </div>
         } @else {
           <mat-form-field appearance="outline" class="data-entry">
-            <input formControlName="abbreviation" matInput placeholder="Abbreviation" required />
+            <input
+              aria-label="Abbreviation"
+              formControlName="abbreviation"
+              matInput
+              placeholder="Abbreviation"
+              required
+            />
           </mat-form-field>
         }
       </td>
       <td *matFooterCellDef mat-footer-cell>
         <mat-form-field appearance="outline" class="data-entry">
-          <input formControlName="abbreviation" matInput placeholder="Abbreviation" required />
+          <input
+            aria-label="Abbreviation"
+            formControlName="abbreviation"
+            matInput
+            placeholder="Abbreviation"
+            required
+          />
         </mat-form-field>
       </td>
     </ng-container>
@@ -119,13 +131,25 @@
           </div>
         } @else {
           <mat-form-field appearance="outline" class="data-entry">
-            <input formControlName="meetingLocation" matInput placeholder="Location" required />
+            <input
+              aria-label="Location"
+              formControlName="meetingLocation"
+              matInput
+              placeholder="Location"
+              required
+            />
           </mat-form-field>
         }
       </td>
       <td *matFooterCellDef mat-footer-cell>
         <mat-form-field appearance="outline" class="data-entry">
-          <input formControlName="meetingLocation" matInput placeholder="Location" required />
+          <input
+            aria-label="Location"
+            formControlName="meetingLocation"
+            matInput
+            placeholder="Location"
+            required
+          />
         </mat-form-field>
       </td>
     </ng-container>
@@ -176,6 +200,7 @@
         } @else {
           <mat-form-field appearance="outline" class="data-entry">
             <input
+              aria-label="Time"
               formControlName="meetingTime"
               matInput
               placeholder="Time"
@@ -187,7 +212,13 @@
       </td>
       <td *matFooterCellDef mat-footer-cell>
         <mat-form-field appearance="outline" class="data-entry">
-          <input formControlName="meetingTime" matInput placeholder="Time" required />
+          <input
+            aria-label="Time"
+            formControlName="meetingTime"
+            matInput
+            placeholder="Time"
+            required
+          />
         </mat-form-field>
       </td>
     </ng-container>
@@ -235,13 +266,25 @@
           <div>{{ tutorial.numStudents }} / {{ tutorial.capacity }}</div>
         } @else {
           <mat-form-field appearance="outline" class="data-entry">
-            <input formControlName="capacity" matInput placeholder="Capacity" required />
+            <input
+              aria-label="Capacity"
+              formControlName="capacity"
+              matInput
+              placeholder="Capacity"
+              required
+            />
           </mat-form-field>
         }
       </td>
       <td *matFooterCellDef mat-footer-cell>
         <mat-form-field appearance="outline" class="data-entry">
-          <input formControlName="capacity" matInput placeholder="Capacity" required />
+          <input
+            aria-label="Capacity"
+            formControlName="capacity"
+            matInput
+            placeholder="Capacity"
+            required
+          />
         </mat-form-field>
       </td>
     </ng-container>

@@ -6,23 +6,39 @@
     </div>
     <div class="flex flex-wrap items-center gap-3 md:justify-end">
       <div class="flex items-center">
-        <label>Definitions CSV</label>
+        <span>Definitions CSV</span>
         <div class="flex items-center">
-          <button mat-icon-button (click)="unit.downloadTaskDefinitionsCsv()">
+          <button
+            aria-label="Download task definitions CSV"
+            mat-icon-button
+            (click)="unit.downloadTaskDefinitionsCsv()"
+          >
             <mat-icon>download</mat-icon>
           </button>
-          <button mat-icon-button (click)="uploadTaskDefinitionsCsv()">
+          <button
+            aria-label="Upload task definitions CSV"
+            mat-icon-button
+            (click)="uploadTaskDefinitionsCsv()"
+          >
             <mat-icon>upload_file</mat-icon>
           </button>
         </div>
       </div>
       <div class="flex items-center">
-        <label>Resources as Zip</label>
+        <span>Resources as Zip</span>
         <div class="flex items-center">
-          <button mat-icon-button (click)="unit.downloadAllTaskResourcesZip()">
+          <button
+            aria-label="Download task resources ZIP"
+            mat-icon-button
+            (click)="unit.downloadAllTaskResourcesZip()"
+          >
             <mat-icon>download</mat-icon>
           </button>
-          <button mat-icon-button (click)="uploadTaskResourcesZip()">
+          <button
+            aria-label="Upload task resources ZIP"
+            mat-icon-button
+            (click)="uploadTaskResourcesZip()"
+          >
             <mat-icon>upload_file</mat-icon>
           </button>
         </div>
