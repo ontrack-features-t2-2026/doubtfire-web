@@ -16,6 +16,12 @@ A modern, lightweight learning management system.
 - [Contributing](#contributing)
 - [License](#license)
 
+## Desktop and mobile app
+
+OnTrack can be installed as a desktop PWA from a supported browser. See the
+[desktop app guide](docs/desktop-pwa.md) for installation, release checks and the
+browser acceptance checklist. Desktop and mobile use the same web build and API.
+
 ## Getting Started
 
 OnTrack Web requires Node.js 22.22.3 or newer. The exact handover version is in

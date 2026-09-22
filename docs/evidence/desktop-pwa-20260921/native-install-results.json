@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-21",
+  "webRevision": "28779a601d6aec4e242bf0dd0a991d868f78d832",
+  "os": "macOS 27.0 (26A428)",
+  "method": "Interactive native browser and operating-system UI, with accessibility-tree and application-bundle verification",
+  "origin": "http://127.0.0.1:50778",
+  "productionAssets": true,
+  "syntheticSignedOutApi": true,
+  "chrome": {
+    "version": "153.0.8010.48",
+    "result": "PASS",
+    "checks": [
+      "Browser install confirmation creates OnTrack learning and feedback OS application",
+      "Application launch opens standalone window with OnTrack app help state",
+      "Close and relaunch load OnTrack sign-in successfully",
+      "Native uninstall removes application bundle",
+      "Foreground in-page Install button opens browser confirmation after uninstall",
+      "Cancel and subsequent retry work",
+      "Reinstallation preserves the original browser application ID and /index.html start URL",
+      "Reinstalled temporary application is removed through native uninstall"
+    ],
+    "appId": "ekcifanagjjfgnlpalmcncfjeocipbjk",
+    "startUrl": "http://127.0.0.1:50778/index.html",
+    "temporaryAppRemoved": true
+  },
+  "safari": {
+    "version": "27.0",
+    "result": "PASS",
+    "checks": [
+      "Installation help offers Safari instructions without a Chromium-only Install button",
+      "File > Add to Dock selects /index.html and creates OnTrack Desktop QA application",
+      "Application opens standalone OnTrack sign-in with installed help state",
+      "Quit and relaunch load OnTrack successfully",
+      "Quit and Finder Move to Bin remove the temporary application bundle"
+    ],
+    "startUrl": "http://127.0.0.1:50778/index.html",
+    "temporaryAppRemoved": true
+  },
+  "notExercised": [
+    "Windows and Linux operating-system installation",
+    "Edge and Firefox installation",
+    "Institutional HTTPS origin or SSO",
+    "Authenticated installed-app session",
+    "Live Web Push delivery",
+    "Android and iOS installation"
+  ]
+}
