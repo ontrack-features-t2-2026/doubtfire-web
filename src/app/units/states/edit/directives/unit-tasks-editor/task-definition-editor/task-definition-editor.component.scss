@@ -1,0 +1,31 @@
+:host {
+  display: block;
+  min-width: 0;
+  color: var(--ot-color-text);
+}
+
+.editor-surface {
+  background: var(--ot-color-surface);
+}
+
+.editor-hint {
+  color: var(--ot-color-text-muted);
+}
+
+.section-link {
+  color: var(--ot-color-text);
+
+  &:hover {
+    background: var(--ot-color-hover);
+  }
+
+  &.section-link-active {
+    background: var(--ot-color-selected);
+    color: var(--ot-color-selected-text);
+  }
+}
+
+section {
+  max-width: 100%;
+  overflow-x: auto;
+}

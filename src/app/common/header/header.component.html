@@ -1,6 +1,7 @@
 @if (showHeader) {
   <mat-toolbar
     class="flex items-center justify-start"
+    role="banner"
     style="min-height: 85px"
     [ngClass]="{inbox: globalState.isInboxState}"
   >
@@ -11,9 +12,9 @@
         </a>
       }
 
-      <a class="pt-2.5" routerLink="/home">
+      <a aria-label="Home" class="pt-2.5" routerLink="/home">
         <mat-icon
-          aria-label="Formatif logo"
+          aria-hidden="true"
           class="formatif-icon"
           style="margin-right: 20px; margin-left: 20px"
           svgIcon="formatif-logo"
@@ -114,6 +115,7 @@
     </mat-menu>
 
     <button
+      #accountMenuButton
       aria-label="Open account menu"
       class="account-menu-trigger"
       data-onboarding-target="account-menu"
@@ -173,6 +175,10 @@
       <button mat-menu-item routerLink="/coursemap">
         <mat-icon aria-hidden="true" matListItemIcon>directions</mat-icon>
         Course Flow
+      </button>
+      <button mat-menu-item (click)="openInstallHelp(accountMenuButton)">
+        <mat-icon aria-hidden="true" matListItemIcon>install_desktop</mat-icon>
+        {{ pwaInstall.isInstalled() ? 'App installation' : 'Install OnTrack' }}
       </button>
       <button mat-menu-item (click)="openAboutModal()">
         <mat-icon aria-label="About" matListItemIcon>info</mat-icon>

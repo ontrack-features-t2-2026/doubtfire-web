@@ -55,7 +55,7 @@ screen-reader or pilot sign-off.
 | History timeout/failure, storage failure | Normal use, no retries/loop; replay/warning | Service tests and synthetic browser storage failure/replay checks passed; institution browser-policy QA pending |
 | Keyboard only | Heading focus; visible focus; tab order; modal exit; non-modal step navigation; return focus | Component tests plus browser Tab, Escape and narrow-panel keyboard scrolling checked; full-app keyboard acceptance pending |
 | Screen reader / accessibility inspector | Named dialogs/controls; step title/count; decorative highlight ignored | Browser accessibility-tree snapshots captured; human assistive-technology run pending |
-| Desktop / 390px / 320px / 200% zoom | All controls reachable; no lost target; readable panel; scrolling | Synthetic viewports and 200% CSS zoom checked; native browser 200% zoom remains pending |
+| Desktop / 390px / 320px / 200% zoom | All controls reachable; no lost target; readable panel; scrolling | Synthetic viewports and 200% CSS zoom checked; native 200% welcome is verified below; remaining panels need native zoom acceptance |
 | Reduced motion | No essential animation; explicit locate scroll is instant | Synthetic browser context uses reduced-motion preference and asserts no panel animation |
 | Chrome / Edge / Firefox / Safari where available | Same flows and failure states | Individual engine/version results in the linked evidence; WebKit is not a native Safari run |
 | Route changes and browser Back | Current target refreshes or falls back; no tutorial navigation side effects | Service tests and synthetic real Angular Router/browser Back checks passed; full-app history acceptance pending |
@@ -70,7 +70,7 @@ reader behavior or native browser zoom.
 ## Combined compatibility check
 
 A temporary local tree combined tutorial `0ff843477` and migration `66e3e2056`.
-Its full suite passed **1,158 tests in 151 files** and its production build passed.
+Its full suite passed **1,158 tests in 151 files** and its default development build passed.
 The tree and exact heads are recorded in [combined-validation.json](browser-qa/evidence/combined-validation.json).
 This snapshot was neither pushed nor merged on GitHub. The branch combination
 checks and test evidence support review; they do not substitute for reviewer approval.
@@ -82,7 +82,7 @@ TUT-U01-RUN requires at least three representative people, including a novice.
 TUT-U01-FIXES requires actual triaged findings before a fix can be attributed to the
 pilot. No names, assessments or invented observations belong in evidence.
 
-Human prototype/security approvals, second-contributor review, versioned fallback
+Human prototype/security approvals, second-contributor review, independent review of the versioned fallback
 recording, full-application/native-browser-zoom/assistive-technology QA and pilot sessions remain pending.
 This handover completes the repository implementation and reproducible test assets;
 it does not claim those external review activities happened or that PRs merged.
@@ -103,3 +103,23 @@ it does not claim those external review activities happened or that PRs merged.
 | PR-TUT-17 | Separate API default-false runtime flag and bounded own-history endpoint change; this frontend consumes the authenticated response and resets on sign-out. |
 | TUT-U01-RUN | Existing pilot script/templates linked; real representative participants cannot be fabricated by repository work. |
 | TUT-U01-FIXES | Requires actual pilot findings; no invented critical/high issues, participant findings or approvals. |
+
+## Full application follow-up
+
+The [full-app acceptance package](full-app-qa/evidence/README.md) adds actual
+synthetic sign-in/profile completion followed by the automatic welcome, a native
+Chrome 200% welcome capture, and the enrolled-student four-step/completion/replay
+flow against real API data in Chrome, Edge and Firefox. A 29-second annotated
+fallback recording is supplied, pending a second human review.
+
+This uses the pinned local combined **default/development** artifact, whose exact
+tree can be reconstructed from published parents as documented. It does not claim
+a deployed production acceptance run. The earlier combined build label was corrected
+from production to default/development after inspecting the original command log.
+The separate original tutorial production build result remains unchanged.
+
+The [follow-up limits and exact next steps](full-app-qa/evidence/README.md#exact-limits-and-remaining-acceptance)
+identify integrated state/failure/native keyboard/zoom checks still outstanding,
+the native Mac-lock interruption, unsupported native Safari, and the human reviews
+and representative-user pilot. Previously passed fixture and automated state tests
+remain distinct evidence.

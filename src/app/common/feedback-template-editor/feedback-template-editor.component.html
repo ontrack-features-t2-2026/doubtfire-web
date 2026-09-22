@@ -142,11 +142,11 @@
         ></mat-paginator>
         <span class="flex-grow"></span>
         @if (context) {
-          <label>Feedback CSV</label>
-          <button mat-icon-button (click)="downloadCsv()">
+          <span>Feedback CSV</span>
+          <button aria-label="Download feedback CSV" mat-icon-button (click)="downloadCsv()">
             <mat-icon>download</mat-icon>
           </button>
-          <button mat-icon-button (click)="uploadCsv()">
+          <button aria-label="Upload feedback CSV" mat-icon-button (click)="uploadCsv()">
             <mat-icon>upload_file</mat-icon>
           </button>
           <span class="flex-grow"></span>

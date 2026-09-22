@@ -258,55 +258,72 @@
               <div
                 class="inbox-entry flex items-center"
                 [ngClass]="{hover: rowActionsShown(task)}"
-                (click)="setSelectedTask(task)"
                 (mouseout)="hideTaskActions(task)"
                 (mouseover)="showTaskActionsForPointer(task)"
               >
-                <span
-                  class="notification"
-                  [ngClass]="{
-                    active: task.numNewComments > 0 || task.similaritiesDetected,
-                    similarities: task.similaritiesDetected,
-                  }"
-                ></span>
-                <user-icon class="self-center" [size]="30" [user]="task.project.student">
-                </user-icon>
-                <div class="task-list-data flex-1 truncate" [hidden]="isNarrow">
-                  <h4 class="student-name flex min-w-0 items-center gap-0.5">
-                    @if (task.moderationType === 'escalation') {
-                      <mat-icon
-                        class="shrink-0 text-amber-500"
-                        matTooltip="This task has been escalated by the student"
-                        >gavel</mat-icon
-                      >
-                    }
-                    @if (getWarningIcon(task) === 'warning') {
-                      <mat-icon
-                        class="shrink-0 text-amber-500"
-                        matTooltip="Feedback due soon — please review before it escalates."
-                      >
-                        warning
-                      </mat-icon>
-                    } @else if (getWarningIcon(task) === 'overflow') {
-                      <mat-icon
-                        class="shrink-0 text-red-500"
-                        [matTooltip]="
-                          'Feedback overdue by ' +
-                          task.daysSinceSubmission() +
-                          ' days — this task has been escalated for urgent review.'
-                        "
-                      >
-                        watch_later
-                      </mat-icon>
-                    }
+                <button
+                  class="flex min-w-0 flex-1 items-center text-left"
+                  type="button"
+                  [attr.aria-describedby]="'task-summary-' + task.taskKeyToIdString()"
+                  [attr.aria-label]="
+                    (task.project.student.displayName || task.project.student.name) +
+                    ', ' +
+                    task.definition.abbreviation +
+                    ': ' +
+                    task.definition.name
+                  "
+                  [attr.aria-pressed]="isSelectedTask(task)"
+                  (blur)="hideTaskActionsForFocus(task)"
+                  (click)="setSelectedTask(task)"
+                  (focus)="showTaskActionsForFocus(task)"
+                >
+                  <span
+                    class="notification"
+                    [ngClass]="{
+                      active: task.numNewComments > 0 || task.similaritiesDetected,
+                      similarities: task.similaritiesDetected,
+                    }"
+                  ></span>
+                  <user-icon class="self-center" [size]="30" [user]="task.project.student">
+                  </user-icon>
+                  <div class="task-list-data flex-1 truncate" [hidden]="isNarrow">
+                    <div class="student-name flex min-w-0 items-center gap-0.5">
+                      @if (task.moderationType === 'escalation') {
+                        <mat-icon
+                          class="shrink-0 text-amber-500"
+                          matTooltip="This task has been escalated by the student"
+                          >gavel</mat-icon
+                        >
+                      }
+                      @if (getWarningIcon(task) === 'warning') {
+                        <mat-icon
+                          class="shrink-0 text-amber-500"
+                          matTooltip="Feedback due soon — please review before it escalates."
+                        >
+                          warning
+                        </mat-icon>
+                      } @else if (getWarningIcon(task) === 'overflow') {
+                        <mat-icon
+                          class="shrink-0 text-red-500"
+                          [matTooltip]="
+                            'Feedback overdue by ' +
+                            task.daysSinceSubmission() +
+                            ' days — this task has been escalated for urgent review.'
+                          "
+                        >
+                          watch_later
+                        </mat-icon>
+                      }
 
-                    <span class="truncate">{{ task.project.student.displayName }}</span>
-                  </h4>
-                  <div class="task-details truncate">
-                    {{ task.definition.abbreviation }} -
-                    {{ task.definition.name }}
-                  </div>
-                  <!-- <div class="muted" [hidden]="!isSelectedTask(task)">
+                      <span class="truncate">{{
+                        task.project.student.displayName || task.project.student.name
+                      }}</span>
+                    </div>
+                    <div class="task-details truncate">
+                      {{ task.definition.abbreviation }} -
+                      {{ task.definition.name }}
+                    </div>
+                    <!-- <div class="muted" [hidden]="!isSelectedTask(task)">
                 <p class="mat-small">
                   {{ task.shortTutorialDescription() }}
                 </p>
@@ -315,22 +332,48 @@
                   Assessed {{ task.timesAssessed }} time{{ task.timesAssessed === 1 ? '' : 's' }}
                 </p>
               </div> -->
-                </div>
-                @if (task.hasGrade()) {
-                  <div matTooltip="The grade assigned to the submission" matTooltipPosition="above">
-                    <mat-chip-option style="margin-right: 6px" [hidden]="isNarrow"
-                      >{{ task.gradeDesc() }}
-                    </mat-chip-option>
                   </div>
-                }
-                <status-icon
-                  class="ml-2"
-                  matBadge="{{ task.qualityPts }}/{{ task.definition.maxQualityPts }}"
-                  matBadgePosition="before"
-                  [hidden]="isNarrow"
-                  [matBadgeHidden]="!task.hasQualityPoints()"
-                  [status]="task.status"
-                ></status-icon>
+                  @if (task.hasGrade()) {
+                    <div
+                      matTooltip="The grade assigned to the submission"
+                      matTooltipPosition="above"
+                    >
+                      <span class="mr-1.5" [hidden]="isNarrow">{{ task.gradeDesc() }} </span>
+                    </div>
+                  }
+                  <status-icon
+                    class="ml-2"
+                    matBadge="{{ task.qualityPts }}/{{ task.definition.maxQualityPts }}"
+                    matBadgePosition="before"
+                    [hidden]="isNarrow"
+                    [matBadgeHidden]="!task.hasQualityPoints()"
+                    [status]="task.status"
+                  ></status-icon>
+                </button>
+                <span class="sr-only" [id]="'task-summary-' + task.taskKeyToIdString()">
+                  {{ task.statusLabel() }}.
+                  @if (task.hasGrade()) {
+                    Grade: {{ task.gradeDesc() }}.
+                  }
+                  @if (task.hasQualityPoints()) {
+                    Quality: {{ task.qualityPts }} of {{ task.definition.maxQualityPts }}.
+                  }
+                  @if (task.numNewComments > 0) {
+                    {{ task.numNewComments }} new comments.
+                  }
+                  @if (task.similaritiesDetected) {
+                    Similarities detected.
+                  }
+                  @if (task.moderationType === 'escalation') {
+                    Escalated by the student.
+                  }
+                  @if (getWarningIcon(task) === 'warning') {
+                    Feedback due soon.
+                  }
+                  @if (getWarningIcon(task) === 'overflow') {
+                    Feedback overdue.
+                  }
+                </span>
                 <div class="overflow" [hidden]="isNarrow">
                   <!-- <mat-icon class="warn-icon" *ngIf="task.similaritiesDetected">remove_red_eye</mat-icon> -->
 

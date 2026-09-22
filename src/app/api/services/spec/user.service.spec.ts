@@ -231,92 +231,71 @@ describe('UserService', () => {
     });
   });
 
-  it('should cache the result of a get request', () => {
-    const user = new User();
-    user.id = 1;
-    user.lastName = 'renzella';
-    user.firstName = 'Jake';
-    user.nickname = 'jake';
-    user.hasRunFirstTimeSetup = false;
-    user.email = 'jake@jake.jake';
-    user.studentId = '1';
-    user.username = 'test';
-    user.optInToResearch = true;
-    user.receivePortfolioNotifications = false;
-    user.receiveFeedbackNotifications = false;
-    user.receiveTaskNotifications = false;
+  it('maps a snake_case response once and reuses the cached user on get', () => {
+    let fetchedUser: User;
+    userService.get(1).subscribe((user) => (fetchedUser = user));
 
-    userService.get(1).subscribe();
-
-    const req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
-      expect(request.url).toEqual('http://localhost:3000/api/users/1');
-      expect(request.method).toBe('GET');
-      return true;
+    const request = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      id: 1,
+      first_name: 'andrew',
+      last_name: 'cain',
+      student_id: 'student-1',
+      has_run_first_time_setup: true,
+      receive_feedback_notifications: true,
     });
-    const user2 = user;
-    user2.id = 1;
-    req.flush(user2);
 
-    userService.get(1).subscribe();
-
-    httpMock.expectNone((_request: HttpRequest<object>): boolean => {
-      return true;
+    expect(fetchedUser).toMatchObject({
+      id: 1,
+      firstName: 'andrew',
+      lastName: 'cain',
+      studentId: 'student-1',
+      hasRunFirstTimeSetup: true,
+      receiveFeedbackNotifications: true,
     });
+
+    let cachedUser: User;
+    userService.get(1).subscribe((user) => (cachedUser = user));
+    expect(cachedUser).toBe(fetchedUser);
+    expect(cachedUser.firstName).toBe('andrew');
+    httpMock.expectNone('http://localhost:3000/api/users/1');
   });
 
-  it('should cache fetch/get', () => {
-    let user = new User();
-    user.id = 1;
-    user.lastName = 'renzella';
-    user.firstName = 'Jake';
-    user.nickname = 'jake';
-    user.hasRunFirstTimeSetup = false;
-    user.email = 'jake@jake.jake';
-    user.studentId = '1';
-    user.username = 'test';
-    user.optInToResearch = true;
-    user.receivePortfolioNotifications = false;
-    user.receiveFeedbackNotifications = false;
-    user.receiveTaskNotifications = false;
+  it('maps a refreshed response onto the same cached user', () => {
+    let cachedUser: User;
+    userService.get(1).subscribe((user) => (cachedUser = user));
+    const initialRequest = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(initialRequest.request.method).toBe('GET');
+    initialRequest.flush({
+      id: 1,
+      first_name: 'andrew',
+      last_name: 'cain',
+      student_id: 'student-1',
+      receive_feedback_notifications: true,
+    });
+    expect(cachedUser.firstName).toBe('andrew');
 
-    // 1 request here
-    userService.get(1).subscribe((data) => {
-      user = data;
+    let refreshedUser: User;
+    userService.fetch(1).subscribe((user) => (refreshedUser = user));
+    const refreshRequest = httpMock.expectOne('http://localhost:3000/api/users/1');
+    expect(refreshRequest.request.method).toBe('GET');
+    refreshRequest.flush({
+      id: 1,
+      first_name: 'fred',
+      last_name: 'smith',
+      student_id: 'student-2',
+      receive_feedback_notifications: false,
     });
 
-    let req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
-      expect(request.url).toEqual('http://localhost:3000/api/users/1');
-      expect(request.method).toBe('GET');
-      return true;
+    expect(refreshedUser).toBe(cachedUser);
+    expect(cachedUser).toMatchObject({
+      firstName: 'fred',
+      lastName: 'smith',
+      studentId: 'student-2',
+      receiveFeedbackNotifications: false,
     });
-
-    const user2 = new User();
-    Object.keys(user).forEach((key) => (user2[key] = user[key]));
-    user2.id = 1;
-    req.flush(user2);
-
-    let user3: User;
-
-    // 1 request here
-    userService.fetch(1).subscribe((data) => {
-      expect(data).toBe(user);
-      user3 = data;
-    });
-
-    req = httpMock.expectOne((request: HttpRequest<object>): boolean => {
-      expect(request.url).toEqual('http://localhost:3000/api/users/1');
-      expect(request.method).toBe('GET');
-      return true;
-    });
-
-    const user4 = new User();
-    Object.keys(user2).forEach((key) => (user4[key] = user2[key]));
-    user4.firstName = 'fred';
-    req.flush(user4);
-    expect(user3).toBe(user);
-
-    httpMock.expectNone((_request: HttpRequest<object>): boolean => {
-      return true;
-    });
+    userService.get(1).subscribe((user) => expect(user).toBe(refreshedUser));
+    httpMock.expectNone('http://localhost:3000/api/users/1');
   });
 });

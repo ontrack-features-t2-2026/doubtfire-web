@@ -70,3 +70,7 @@ A seeded/authenticated API session is required for that final real-data walkthro
 unit fixtures are not evidence that a production account was exercised.
 
 See the [recorded validation results](validation.md) for the final full-suite run and source revisions.
+
+The [21 September authenticated walkthrough](acceptance-2026-09-21.md) now records
+the seeded full-app exercise, actual API payload comparisons, filtering/retry and
+settled responsive/theme checks, including the discovered SVG label contrast fix.

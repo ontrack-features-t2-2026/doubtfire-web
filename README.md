@@ -16,6 +16,12 @@ A modern, lightweight learning management system.
 - [Contributing](#contributing)
 - [License](#license)
 
+## Desktop and mobile app
+
+OnTrack can be installed as a desktop PWA from a supported browser. See the
+[desktop app guide](docs/desktop-pwa.md) for installation, release checks and the
+browser acceptance checklist. Desktop and mobile use the same web build and API.
+
 ## Getting Started
 
 OnTrack Web requires Node.js 22.22.3 or newer. The exact handover version is in
@@ -59,6 +65,10 @@ npm run typecheck
 npm run test:ci
 npm run deploy
 ```
+
+`npm run test:ci` runs the unit suite with Vitest through Angular's test builder.
+The test target is configured in `angular.json`; shared setup lives in `src/vitest-setup.ts`.
+`npm run test:coverage` writes reports to `coverage/`; Test CI publishes the `web-coverage` artifact.
 
 ## Production build and handover
 

@@ -1,0 +1,374 @@
+{
+  "recordedAt": "2026-09-21T06:31:15.922Z",
+  "base": "http://127.0.0.1:4314",
+  "webBaseRevision": "2c4e1ac0235896f59aea33f94c33125f7f91fdfe",
+  "webSourceDiffSha256": "2b5d7bf3acd683540c3a37bf8d2961aea25717bbfa649c8e7393af5df3f2a0ed",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiProvenance": "Private synthetic fixture manifest and API runtime provenance document. Database authentication. No deploy repository checkout executed.",
+  "scope": "Read-only actual Chrome with synthetic API fixtures. Normal auth and token refresh allowed; other business writes blocked. Viewport width observations, focus/Enter, landmarks, rendered axe and explicit tab states. No full reflow, native zoom, screen reader, mobile Safari or mutation-journey claims.",
+  "checks": [
+    {
+      "id": "sign-in-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/sign_in",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "sign-in-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 0,
+        "expectedBanner": 0
+      }
+    },
+    {
+      "id": "sign-in-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 25
+      }
+    },
+    {
+      "id": "sign-in-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/sign_in",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "sign-in-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 0,
+        "expectedBanner": 0
+      }
+    },
+    {
+      "id": "sign-in-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 25
+      }
+    },
+    {
+      "id": "student-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "home-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "home-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "home-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 23
+      }
+    },
+    {
+      "id": "home-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "home-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "home-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 23
+      }
+    },
+    {
+      "id": "student-dashboard-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/projects/1/dashboard",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "student-dashboard-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-task-enter",
+      "status": "pass",
+      "details": {
+        "before": {
+          "tag": "BUTTON",
+          "name": null,
+          "focused": true
+        },
+        "route": "/projects/1/dashboard/1.2P"
+      }
+    },
+    {
+      "id": "student-task-desktop-settled",
+      "status": "pass",
+      "details": "Expected task pane visible; no visible spinner, skeleton or aria-busy=true."
+    },
+    {
+      "id": "student-task-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/projects/1/dashboard/1.2P",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "student-task-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-task-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 39
+      }
+    },
+    {
+      "id": "student-task-320-settled",
+      "status": "pass",
+      "details": "Expected task pane visible; no visible spinner, skeleton or aria-busy=true."
+    },
+    {
+      "id": "student-task-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/projects/1/dashboard/1.2P",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "student-task-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-task-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 38
+      }
+    },
+    {
+      "id": "student-feedback-320-settled",
+      "status": "pass",
+      "details": "Expected task pane visible; no visible spinner, skeleton or aria-busy=true."
+    },
+    {
+      "id": "student-feedback-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/projects/1/dashboard/1.2P/feedback",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "student-feedback-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-feedback-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 24
+      }
+    },
+    {
+      "id": "unit-hub-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/unit-hub",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "unit-hub-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "unit-hub-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 30
+      }
+    },
+    {
+      "id": "demo-controls-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/demo-controls",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "demo-controls-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "demo-controls-desktop-axe",
+      "status": "findings",
+      "details": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 6
+          }
+        ],
+        "incomplete": [
+          "aria-prohibited-attr",
+          "color-contrast"
+        ],
+        "passes": 37
+      }
+    },
+    {
+      "id": "tutor-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "staff-inbox-desktop-settled",
+      "status": "incomplete",
+      "details": "locator.waitFor: Error: strict mode violation: locator('df-staff-task-list [aria-busy=\"true\"]') resolved to 49 elements:\n    1) <div aria-busy=\"true\" aria-label=\"Loading tasks\" _ngcontent-ng-c327837805=\"\" class=\"min-h-0 flex-1 overflow-hidden pt-[10px] ng-star-inserted\">…</div> aka getByLabel('Loading tasks')\n    2) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader circle progress ng-star-inserted\">…</div> aka getByLabel('loading').nth(1)\n    3) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader progress ng-star-inserted\">…</div> aka getByLabel('loading').nth(2)\n    4) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader progress ng-star-inserted\">…</div> aka getByLabel('loading').nth(3)\n    5) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader circle progress ng-star-inserted\">…</div> aka getByLabel('loading').nth(4)\n    6) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader circle progress ng-star-inserted\">…</div> aka getByLabel('loading').nth(5)\n    7) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader progress ng-star-inserted\">…</div> aka getByLabel('loading', { exact: true }).nth(5)\n    8) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader progress ng-star-inserted\">…</div> aka locator('div:nth-child(2) > .min-w-0 > ngx-skeleton-loader:nth-child(2) > .skeleton-loader')\n    9) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader circle progress ng-star-inserted\">…</div> aka locator('div:nth-child(2) > .shrink-0.ng-star-inserted > .skeleton-loader')\n    10) <div tabindex=\"-1\" aria-busy=\"true\" aria-valuemin=\"0\" role=\"progressbar\" aria-valuemax=\"100\" aria-label=\"loading\" aria-valuetext=\"Loading...\" _ngcontent-ng-c1211887358=\"\" class=\"skeleton-loader circle progress ng-star-inserted\">…</div> aka locator('div:nth-child(3) > ngx-skeleton-loader > .skeleton-loader').first()\n    ...\n\nCall log:\n\u001b[2m  - waiting for locator('df-staff-task-list [aria-busy=\"true\"]') to be hidden\u001b[22m\n"
+    },
+    {
+      "id": "staff-inbox-desktop-not-settled-width",
+      "status": "pass",
+      "details": {
+        "route": "/units/1/tasks/inbox",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "staff-inbox-desktop-not-settled-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "browser": "Chrome 153.0.8010.48"
+}

@@ -2,7 +2,10 @@
 
 Use this guide for new components and incremental layout migration. It describes
 repository conventions verified against `11.0.x` at `d16f6201c` on 20 September 2026.
-It is submitted for review; no conversation or approval from Brian/Maple is implied.
+The layout status below was rechecked on 21 September 2026 against `11.0.x`
+at `283b493367681d1abab23e5fe7c633ba3a57e5c2`. On that date, the requester confirmed
+that they knew of no external CSS guide. This records the requester's knowledge;
+it does not claim a conversation or approval from Brian/Maple.
 The [theme contract](theme/THEME-CONTRACT.md) governs colour and theme behaviour.
 
 ## Choose the existing layer
@@ -58,16 +61,16 @@ legacy templates, not a pattern for new components. See the
 The former `MIGRATION-GUIDE.md` was deleted on 15 September; do not follow old
 copies that instruct AngularJS downgrades or Bootstrap conversion.
 
-## Retire layout directives incrementally
+## Layout migration is complete
 
-The migration workstream calls for new layout to use Tailwind and eventual removal
-of `ng-flex-layout`. Source evidence alone does not constitute lead approval of a
-new policy: the dependency and `FlexLayoutModule` remain live until their callers
-are converted. The current [catalogue](migration/ui-catalogue.md) has two templates:
-**project dashboard first, welcome second**. There is no third outstanding template
-to add merely to match the older ticket count.
+Use Tailwind for new layout. Commit `0caa10617` completed the Flex Layout teardown
+on 20 September 2026: `ng-flex-layout`, `FlexLayoutModule` and their remaining
+template directives are absent from the current application. The
+[catalogue](migration/ui-catalogue.md) retains the dated two-template inventory as
+historical evidence; it is no longer an outstanding conversion list. Do not
+reintroduce the removed dependency when bringing changes forward from older branches.
 
-For `fxLayoutAlign`, the first value controls the main axis and the second the
+When porting older code, for `fxLayoutAlign` the first value controls the main axis and the second the
 cross axis: a row with `center start` becomes `justify-center items-start`.
 `fxFlex` requires inspection of its numeric/basis value. `fxShow`/`fxHide` can need
 responsive utilities plus application state; `MediaObserver` has no direct CSS

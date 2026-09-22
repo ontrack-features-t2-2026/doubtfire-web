@@ -1,0 +1,190 @@
+{
+  "violations": [
+    {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "help": "ARIA progressbar nodes must have an accessible name",
+      "nodes": [
+        {
+          "target": [
+            "mat-progress-bar"
+          ],
+          "failureSummary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        }
+      ]
+    },
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "help": "Buttons must have discernible text",
+      "nodes": [
+        {
+          "target": [
+            ".mat-mdc-chip-action"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+        }
+      ]
+    },
+    {
+      "id": "empty-heading",
+      "impact": "minor",
+      "help": "Headings should not be empty",
+      "nodes": [
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        },
+        {
+          "target": [
+            ".mat-h4"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        }
+      ]
+    },
+    {
+      "id": "link-name",
+      "impact": "serious",
+      "help": "Links must have discernible text",
+      "nodes": [
+        {
+          "target": [
+            ".pt-2\\.5"
+          ],
+          "failureSummary": "Fix all of the following:\n  Element is in tab order and does not have accessible text\n\nFix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "nodes": [
+        {
+          "target": [
+            ".items-center.flex[_ngcontent-ng-c4023340239=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".grow[_ngcontent-ng-c327837805=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".mt-2\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#task-summary-task-key-4-1-2P"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#task-summary-task-key-4-2-1P"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#task-summary-task-key-4-1-1P"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#task-summary-task-key-5-1-1P"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".mt-1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-project-progress-bar"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "mat-chip-listbox"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        [
+          "f-unit-code"
+        ]
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        [
+          "svg[width=\"32\"][height=\"32\"][shape-rendering=\"geometricPrecision\"] > text > tspan"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .self-center > svg[shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"][text-anchor=\"middle\"] > text > tspan"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .self-center > svg[shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"][text-anchor=\"middle\"] > text > tspan"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .self-center > svg[shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"][text-anchor=\"middle\"] > text > tspan"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .self-center > svg[shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"][text-anchor=\"middle\"] > text > tspan"
+        ],
+        [
+          "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+        ]
+      ]
+    }
+  ],
+  "passes": 27
+}

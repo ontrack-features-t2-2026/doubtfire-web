@@ -2,7 +2,7 @@
 <span class="center-buttons mx-3 flex justify-around gap-3">
   @if (task.moderationType === 'random_sample' || task.moderationType === 'first_feedback') {
     <button
-      aria-label=""
+      aria-label="Show more from this tutor"
       class="button"
       mat-icon-button
       matTooltip="Show more from this tutor"
@@ -13,7 +13,7 @@
       <mat-icon>flag</mat-icon>
     </button>
     <button
-      aria-label=""
+      aria-label="Snooze task"
       class="button large-button"
       mat-icon-button
       matTooltip="Snooze task"
@@ -24,7 +24,7 @@
       <mat-icon>snooze</mat-icon>
     </button>
     <button
-      aria-label=""
+      aria-label="Dismiss moderation task"
       class="button large-button"
       mat-icon-button
       matTooltip="Dismiss moderation task"
@@ -35,7 +35,7 @@
       <mat-icon>archive</mat-icon>
     </button>
     <button
-      aria-label=""
+      aria-label="Show less from this tutor"
       class="button"
       mat-icon-button
       matTooltip="Show less from this tutor"
@@ -47,7 +47,7 @@
     </button>
   } @else if (task.moderationType === 'escalation') {
     <button
-      aria-label=""
+      aria-label="Overturn"
       class="button"
       mat-icon-button
       matTooltip="Overturn"
@@ -60,7 +60,7 @@
     </button>
 
     <button
-      aria-label=""
+      aria-label="Upheld"
       class="button"
       mat-icon-button
       matTooltip="Upheld"

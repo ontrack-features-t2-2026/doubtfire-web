@@ -78,6 +78,7 @@ read/write failures and a failed/timed-out history request fail open to normal u
 ## Validation and handover
 
 See [test traceability and QA](validation.md), the [portable browser fixture](browser-qa/README.md)
+the [targeted full-application acceptance and recording](full-app-qa/README.md),
 and the [threat model](threat-model.md).
 The original welcome/profile component and its tests remain in place. The API
 change PR-TUT-17 supplies a default-false environment switch; no tutorial progress

@@ -1,0 +1,60 @@
+{
+  "recordedAt": "2026-09-21T05:47:02.685Z",
+  "base": "http://127.0.0.1:4311",
+  "stage": "authenticated",
+  "testedWeb": "c3c1aa02ecbb9522d7ec8d3dab00cfade15f2690",
+  "testedApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "evidenceScope": "Real locally served Angular application with disposable synthetic backend fixtures. WebKit is Playwright WebKit, not Safari. Color-scheme is emulated; CSS zoom is not native browser zoom. Keyboard/DOM checks are automation, not a human screen-reader/usability assessment.",
+  "results": [
+    {
+      "browser": "webkit",
+      "status": "failed",
+      "checks": [
+        {
+          "id": "real-profile-theme-controls-and-account-persistence",
+          "status": "failed",
+          "radioNames": "- radiogroup \"Appearance\":\n  - radio \"Light\"\n  - text: Light\n  - radio \"Dark\" [checked]\n  - text: Dark\n  - radio \"System\"\n  - text: System",
+          "accountWrites": [
+            {
+              "status": 200,
+              "preference": "light"
+            }
+          ],
+          "keyboardArrowSelection": "passed",
+          "peerProgressContrast": {
+            "foreground": "rgb(153, 162, 176)",
+            "background": "rgb(23, 27, 33)",
+            "ratio": 6.706500401671376
+          },
+          "error": "page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"\n    at choosePreference (<repo>/docs/objective-closure/scripts/theme-browser.mjs:266:32)\n    at async authenticated (<repo>/docs/objective-closure/scripts/theme-browser.mjs:363:30)\n    at async file://<repo>/docs/objective-closure/scripts/theme-browser.mjs:822:41"
+        },
+        {
+          "id": "real-calendar-modal-keyboard-and-layout",
+          "status": "failed",
+          "error": "locator.focus: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Open your calendar subscription settings', exact: true })\u001b[22m\n\n    at authenticated (<repo>/docs/objective-closure/scripts/theme-browser.mjs:443:18)\n    at async file://<repo>/docs/objective-closure/scripts/theme-browser.mjs:822:41"
+        },
+        {
+          "id": "route-student-overview",
+          "path": "/projects/1/dashboard",
+          "status": "failed",
+          "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4311/projects/1/dashboard\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at authenticated (<repo>/docs/objective-closure/scripts/theme-browser.mjs:479:18)\n    at async file://<repo>/docs/objective-closure/scripts/theme-browser.mjs:822:41"
+        },
+        {
+          "id": "route-task-chat-history",
+          "path": "/projects/1/dashboard/1.2P/feedback",
+          "status": "failed",
+          "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4311/projects/1/dashboard/1.2P/feedback\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at authenticated (<repo>/docs/objective-closure/scripts/theme-browser.mjs:479:18)\n    at async file://<repo>/docs/objective-closure/scripts/theme-browser.mjs:822:41"
+        },
+        {
+          "id": "route-student-gantt",
+          "path": "/projects/1/plan",
+          "status": "failed",
+          "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4311/projects/1/plan\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at authenticated (<repo>/docs/objective-closure/scripts/theme-browser.mjs:479:18)\n    at async file://<repo>/docs/objective-closure/scripts/theme-browser.mjs:822:41"
+        }
+      ],
+      "version": "26.6",
+      "executable": "Playwright bundled WebKit executable",
+      "pageErrors": []
+    }
+  ]
+}

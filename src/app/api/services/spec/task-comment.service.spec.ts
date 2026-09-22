@@ -7,9 +7,11 @@ import {
 } from '@angular/common/http';
 import {HttpTestingController, provideHttpClientTesting} from '@angular/common/http/testing';
 import {TestBed} from '@angular/core/testing';
-import {TaskComment} from 'src/app/api/models/doubtfire-model';
+import {Task, TaskComment} from 'src/app/api/models/doubtfire-model';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {AuthenticationService} from '../authentication.service';
+import {NotificationService} from '../notification.service';
 import {TaskCommentService} from '../task-comment.service';
 import {TestAttemptService} from '../test-attempt.service';
 import {UserService} from '../user.service';
@@ -17,13 +19,17 @@ import {UserService} from '../user.service';
 describe('TaskCommentService discussion comments', () => {
   let taskCommentService: TaskCommentService;
   let httpMock: HttpTestingController;
+  let notificationService: NotificationService;
+  let isAuthenticated: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    isAuthenticated = vi.fn().mockReturnValue(true);
     TestBed.configureTestingModule({
       providers: [
         TaskCommentService,
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
+        {provide: AuthenticationService, useValue: {isAuthenticated}},
         {provide: EmojiService, useValue: {}},
         {provide: UserService, useValue: {cache: {getOrCreate: () => ({})}}},
         {provide: FileDownloaderService, useValue: {downloadFile: vi.fn()}},
@@ -33,6 +39,66 @@ describe('TaskCommentService discussion comments', () => {
 
     taskCommentService = TestBed.inject(TaskCommentService);
     httpMock = TestBed.inject(HttpTestingController);
+    notificationService = TestBed.inject(NotificationService);
+  });
+
+  it('refreshes the bell once after reading comments and uses the server count', () => {
+    const counts: number[] = [];
+    const subscription = notificationService.unreadCount$.subscribe((count) => counts.push(count));
+    notificationService.refreshUnreadCount().subscribe();
+    httpMock.expectOne('http://localhost:3000/api/notifications/unread_count').flush({count: 5});
+
+    const task = {numNewComments: 2} as Task;
+    let comments: TaskComment[];
+    taskCommentService.query({projectId: 1, taskDefinitionId: 2}, task).subscribe((result) => {
+      comments = result;
+    });
+    httpMock.expectOne('http://localhost:3000/api/projects/1/task_def_id/2/comments/').flush([]);
+
+    expect(comments).toEqual([]);
+    expect(task.numNewComments).toBe(0);
+    httpMock.expectOne('http://localhost:3000/api/notifications/unread_count').flush({count: 3});
+    expect(counts).toEqual([0, 5, 3]);
+    subscription.unsubscribe();
+  });
+
+  it('does not request an unread count for a signed-out user', () => {
+    isAuthenticated.mockReturnValue(false);
+    const task = {numNewComments: 2} as Task;
+    taskCommentService.query({projectId: 1, taskDefinitionId: 2}, task).subscribe();
+    httpMock.expectOne('http://localhost:3000/api/projects/1/task_def_id/2/comments/').flush([]);
+
+    expect(task.numNewComments).toBe(0);
+    httpMock.expectNone('http://localhost:3000/api/notifications/unread_count');
+  });
+
+  it('still returns comments when the badge refresh fails', () => {
+    const task = {numNewComments: 2} as Task;
+    const next = vi.fn();
+    const error = vi.fn();
+    taskCommentService.query({projectId: 1, taskDefinitionId: 2}, task).subscribe({next, error});
+    httpMock.expectOne('http://localhost:3000/api/projects/1/task_def_id/2/comments/').flush([]);
+    httpMock.expectOne('http://localhost:3000/api/notifications/unread_count').flush(null, {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+
+    expect(next).toHaveBeenCalledWith([]);
+    expect(error).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh the badge or clear unread comments when comments fail to load', () => {
+    const task = {numNewComments: 2} as Task;
+    const error = vi.fn();
+    taskCommentService.query({projectId: 1, taskDefinitionId: 2}, task).subscribe({error});
+    httpMock.expectOne('http://localhost:3000/api/projects/1/task_def_id/2/comments/').flush(null, {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+
+    expect(error).toHaveBeenCalledOnce();
+    expect(task.numNewComments).toBe(2);
+    httpMock.expectNone('http://localhost:3000/api/notifications/unread_count');
   });
 
   afterEach(() => {

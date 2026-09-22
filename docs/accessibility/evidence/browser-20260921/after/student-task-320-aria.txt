@@ -1,0 +1,102 @@
+- banner:
+  - text: SYN101
+  - button "Dashboard"
+  - button "Open account menu":
+    - img: SS
+- main:
+  - text: 1.2P Report and Feedback
+  - navigation "Project dashboard navigation":
+    - button "Show project overview": Overview
+    - button "Show task list": Tasks
+    - button "Show task details" [pressed]: Details
+    - button "Show feedback": Feedback
+  - region "Selected task":
+    - tablist:
+      - tab "Task Details" [selected]
+      - tab "Task Sheet"
+      - tab "Your Submission"
+    - tabpanel "Task Details"
+    - button "Task actions"
+    - text: Task Learning Outcomes These outcomes describe the key skills and knowledge you are aiming to achieve by completing this task.
+    - table:
+      - rowgroup:
+        - row "O5 Quis veniam eos amet. Linked outcomes for O5":
+          - cell "O5"
+          - cell "Quis veniam eos amet."
+          - cell "Linked outcomes for O5":
+            - list "Linked outcomes for O5":
+              - listitem: O1
+        - row "O6 Cupiditate explicabo omnis excepturi. Linked outcomes for O6":
+          - cell "O6"
+          - cell "Cupiditate explicabo omnis excepturi."
+          - cell "Linked outcomes for O6":
+            - list "Linked outcomes for O6":
+              - listitem: O2
+    - paragraph: 1.2P
+    - text: Report and Feedback
+    - paragraph: Synthetic task for browser verification. Upload the requested evidence and discuss the result.
+    - text: "Complete By:"
+    - slider "Complete By:" [disabled]: "4"
+    - text: 27 Sep
+    - paragraph:
+      - strong: "Effective submission date: Sunday, September 27, 2026."
+      - text: The standard due date for this task. The deadline is the end of this day anywhere on earth.
+    - list:
+      - listitem: Pass Task
+      - listitem: Start Date — I'm aiming to start this task by Thu 10 Sep.
+      - listitem: Due Date — I'm aiming to submit this task by Sun 27 Sep.
+      - listitem: Feedback Deadline — To receive feedback, I must submit this task by Sun 4 Oct.
+    - button "Task Sheet"
+    - link "Add to Google Calendar, opens in a new tab":
+      - /url: https://calendar.google.com/calendar/render?action=TEMPLATE&text=SYN101%3A%201.2P%3A%20Report%20and%20Feedback&dates=20260927%2F20260928
+      - text: Add to Google Calendar
+    - text: Task status
+    - combobox "Task status":
+      - img "Resubmit"
+      - text: Resubmit
+    - paragraph: It looks like your work is on the right track, but it does require some extra work to achieve the required standard. Review your submission and the feedback from your tutor. Fix the issues identified, and resubmit it to be reassessed. Make sure to check your submission thoroughly, and note any limit on the number of times each task can be reassessed.
+    - button "Upload Submission"
+    - button "Request extension"
+    - button "More task options"
+    - text: Aim To Complete Soon - Due in 6 Days
+    - paragraph:
+      - text: This task's due date is
+      - strong: 27 Sep
+      - text: . You should aim to complete this task before then to keep your progress on track.
+    - text: Submission
+    - paragraph: You can choose to download your submission or the files you uploaded below.
+    - paragraph:
+      - text: You uploaded this submission
+      - strong: 01/01/1970
+      - text: .
+    - paragraph: If you feel there has been an error in your submission, you can request to regenerate your submission under the "Actions" dropdown menu.
+    - button "Download submission"
+    - button "More download options"
+    - text: Previous submissions
+    - paragraph: Retained versions, newest first. Only files selected for submission history are included.
+    - status
+    - list:
+      - listitem:
+        - strong: Previous submission
+        - text: — latest retained archive
+        - paragraph: "Archive file: submission-3.zip"
+        - paragraph:
+          - time: Sep 20, 2026, 2:46:58 PM
+        - button "Download archived submission Sep 20, 2026, 2:46:58 PM": Download files
+      - listitem:
+        - strong: Previous submission
+        - paragraph: "Archive file: submission-2.zip"
+        - paragraph:
+          - time: Sep 19, 2026, 2:46:58 PM
+        - button "Download archived submission Sep 19, 2026, 2:46:58 PM": Download files
+      - listitem:
+        - strong: Previous submission
+        - paragraph: "Archive file: submission-1.zip"
+        - paragraph:
+          - time: Sep 18, 2026, 2:46:58 PM
+        - paragraph: Files unavailable. This archive may have been removed, may be incomplete, or may use an older format.
+    - button "Refresh history"
+    - article "Peer Progress Indicator":
+      - text: Peer Progress Indicator Anonymous peers at your target grade
+      - strong: Peer progress is unavailable for this unit
+      - text: Enable demo mode to show live peer comparison data.

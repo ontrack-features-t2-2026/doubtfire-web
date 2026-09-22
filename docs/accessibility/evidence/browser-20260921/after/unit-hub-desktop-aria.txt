@@ -1,0 +1,77 @@
+- banner:
+  - link "Home":
+    - /url: /home
+  - button "Select Unit"
+  - button "Switch to light theme"
+  - button "Notifications"
+  - button "Open your calendar subscription settings"
+  - button "Open account menu":
+    - img: SS
+- main:
+  - region "Unit Hub":
+    - link "Home":
+      - /url: /home
+    - paragraph: YOUR LEARNING, TOGETHER
+    - heading "Unit Hub" [level=1]
+    - paragraph: Announcements, HelpHubs and classes for the units you belong to.
+    - button "Calendar settings"
+    - region "Study essentials":
+      - heading "Study essentials" [level=2]
+      - paragraph: Your Deakin services, together.
+      - text: Opens in a new tab
+      - list:
+        - listitem:
+          - link "DeakinSync Your unit sites and university services. Opens in a new tab":
+            - /url: https://sync.deakin.edu.au/
+            - strong: DeakinSync
+            - text: Your unit sites and university services. Opens in a new tab
+        - listitem:
+          - link "CloudDeakin Learning materials and assessments. Opens in a new tab":
+            - /url: https://d2l.deakin.edu.au/
+            - strong: CloudDeakin
+            - text: Learning materials and assessments. Opens in a new tab
+        - listitem:
+          - link "StudentConnect Enrolment, fees and results. Opens in a new tab":
+            - /url: https://studentconnect.deakin.edu.au/connect/webconnect
+            - strong: StudentConnect
+            - text: Enrolment, fees and results. Opens in a new tab
+        - listitem:
+          - link "STAR timetable Your timetable and calendar guidance. Opens in a new tab":
+            - /url: https://www.deakin.edu.au/students/study-support/study-timetables
+            - strong: STAR timetable
+            - text: Your timetable and calendar guidance. Opens in a new tab
+        - listitem:
+          - link "Deakin Library Books, articles and unit readings. Opens in a new tab":
+            - /url: https://www.deakin.edu.au/library
+            - strong: Deakin Library
+            - text: Books, articles and unit readings. Opens in a new tab
+        - listitem:
+          - link "Student Central Course advice and student enquiries. Opens in a new tab":
+            - /url: https://www.deakin.edu.au/students/help/student-central
+            - strong: Student Central
+            - text: Course advice and student enquiries. Opens in a new tab
+    - text: Showing updates for
+    - combobox "Showing updates for":
+      - option "All my units" [selected]
+      - option "SYN101 · Synthetic Upload and Submission Lab"
+    - navigation "Type of update":
+      - button "All updates" [pressed]
+      - button "Announcements"
+      - button "Sessions"
+    - region "Announcements":
+      - heading "Announcements" [level=2]
+      - text: "0"
+      - heading "You're up to date" [level=3]
+      - paragraph: No announcements have been published for these units.
+    - region "HelpHubs & classes":
+      - heading "HelpHubs & classes" [level=2]
+      - text: "0"
+      - paragraph: Times shown in Australia/Melbourne. Scheduled sessions through 20 Dec 2026.
+      - heading "No sessions scheduled yet" [level=3]
+      - paragraph: Your teaching team can add HelpHubs, lectures and other classes here.
+      - complementary:
+        - strong: Keep your calendar up to date
+        - paragraph: Google Calendar and .ics buttons add a copy of one session. Copies do not update automatically. In Calendar settings, opt in to HelpHubs and classes and subscribe to receive schedule changes.
+        - paragraph: For Google, set up the subscription in a desktop browser; it will then appear in your mobile calendar. Calendar providers control refresh times.
+        - button "Open calendar settings"
+    - paragraph: Only members of a unit can see its updates. Content comes from your teaching team or connected unit announcement channels; linked meetings may also require your university sign-in.

@@ -3,5 +3,8 @@
 }
 
 .form-container {
+  min-width: 0;
+  width: 100%;
   max-width: 800px;
+  padding-inline: 1rem;
 }
