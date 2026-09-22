@@ -1,0 +1,215 @@
+{
+  "audit": "A11Y-A01",
+  "date": "2026-09-21",
+  "repository": "ontrack-features-t2-2026/doubtfire-web",
+  "rules": [
+    {
+      "rule_id": "@angular-eslint/template/mouse-events-have-key-events",
+      "raw_messages": 0,
+      "distinct_elements": 0,
+      "affected_files": 0,
+      "stack_raw_messages": 0,
+      "stack_distinct_elements": 0
+    },
+    {
+      "rule_id": "@angular-eslint/template/label-has-associated-control",
+      "raw_messages": 11,
+      "distinct_elements": 11,
+      "affected_files": 4,
+      "stack_raw_messages": 0,
+      "stack_distinct_elements": 0
+    },
+    {
+      "rule_id": "@angular-eslint/template/click-events-have-key-events",
+      "raw_messages": 12,
+      "distinct_elements": 12,
+      "affected_files": 10,
+      "stack_raw_messages": 0,
+      "stack_distinct_elements": 0
+    },
+    {
+      "rule_id": "@angular-eslint/template/interactive-supports-focus",
+      "raw_messages": 14,
+      "distinct_elements": 14,
+      "affected_files": 12,
+      "stack_raw_messages": 0,
+      "stack_distinct_elements": 0
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "August ticket reference",
+      "date": "2026-08-08",
+      "revision": null,
+      "scanned_files": 206,
+      "affected_files": 18,
+      "raw_messages": 78,
+      "distinct_elements": null,
+      "provenance": "Ticket totals only; no raw manifest or exact revision supplied."
+    },
+    {
+      "label": "Historical origin/11.0.x",
+      "revision": "d16f6201caff78082e5e83c540320dbee5871404",
+      "scanned_files": 229,
+      "affected_files": 15,
+      "raw_messages": 37,
+      "distinct_elements": 25,
+      "raw_json_sha256": "65f25e5b2533947489d4012ac16fd86e387e29d02c782e03d99ffb1032759197"
+    },
+    {
+      "label": "Current origin/11.0.x audit",
+      "revision": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+      "scanned_files": 236,
+      "affected_files": 15,
+      "raw_messages": 37,
+      "distinct_elements": 25,
+      "exit_code": 1,
+      "json_file": "main-results.json",
+      "json_sha256": "87aad0f3f913a1ab4eb7e64839010a1d860442270fd4a8f381bc1a5f4e9b10c0"
+    },
+    {
+      "label": "Accessibility review stack audit",
+      "revision": "94068e0758954791e074f723602cd44792a3684b",
+      "scanned_files": 236,
+      "affected_files": 0,
+      "raw_messages": 0,
+      "distinct_elements": 0,
+      "exit_code": 0,
+      "json_file": "stack-results.json",
+      "json_sha256": "9c322df83a67e18b92c50c84ef7876dd9dfa55f7b4eda060312da8c867485788"
+    }
+  ],
+  "environment": {
+    "node": "26.8.1",
+    "npm": "11.19.0",
+    "os": "macOS 27.0",
+    "eslint": "10.6.0",
+    "angular_eslint": "22.0.0",
+    "main_install": "npm ci --ignore-scripts in a fresh archive of main; completed in 15s",
+    "provenance": "Recorded environment and lint exit statuses; installation output retained."
+  },
+  "source_verification": {
+    "affected_embedded_source_matches": 15,
+    "affected_source_files": 15,
+    "opening_tag_mapping": "All 37 current diagnostic starts select verified opening tags from main Git blobs. Deduplication uses revision + file + UTF-8 opening byte offset.",
+    "cross_revision_mapping": "The same 25 source elements are matched by file, within-file element order, tag and identical direct event bindings; IDs E001-E025 and message order are preserved.",
+    "messages_with_changed_diagnostic_coordinates": 9,
+    "files_with_changed_coordinates": 5,
+    "suppressed_messages_main": 0,
+    "suppressed_messages_stack": 0
+  },
+  "files": [
+    {
+      "file_id": "F01",
+      "file": "src/app/common/feedback-template-editor/feedback-template-editor.component.html",
+      "raw_messages": 1,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F02",
+      "file": "src/app/common/learning-outcome-editor/learning-outcome-editor.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 2
+    },
+    {
+      "file_id": "F03",
+      "file": "src/app/common/modals/date-change-modal/task-date-slider.component.html",
+      "raw_messages": 6,
+      "distinct_elements": 6
+    },
+    {
+      "file_id": "F04",
+      "file": "src/app/dashboard/f-cross-dashboard.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F05",
+      "file": "src/app/projects/states/dashboard/directives/progress-dashboard/engagement-passport-card/engagement-detail-dialog/engagement-detail-dialog.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F06",
+      "file": "src/app/projects/states/staff-notes/staff-notes.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F07",
+      "file": "src/app/projects/states/tutor-notes/tutor-notes.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F08",
+      "file": "src/app/tasks/task-comment-composer/attachment-confirmation-dialog/attachment-confirmation-dialog.component.html",
+      "raw_messages": 1,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F09",
+      "file": "src/app/tasks/task-comment-composer/task-comment-composer.component.html",
+      "raw_messages": 1,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F10",
+      "file": "src/app/tasks/task-comments-viewer/pdf-image-comment/pdf-image-comment.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F11",
+      "file": "src/app/tasks/task-comments-viewer/task-comments-viewer.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F12",
+      "file": "src/app/units/states/edit/directives/unit-tasks-editor/task-definition-editor/task-definition-overseer/task-definition-overseer.component.html",
+      "raw_messages": 4,
+      "distinct_elements": 2
+    },
+    {
+      "file_id": "F13",
+      "file": "src/app/units/states/edit/directives/unit-tasks-editor/unit-task-editor.component.html",
+      "raw_messages": 6,
+      "distinct_elements": 4
+    },
+    {
+      "file_id": "F14",
+      "file": "src/app/units/states/tasks/inbox/directives/staff-task-list/staff-task-list.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    },
+    {
+      "file_id": "F15",
+      "file": "src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component.html",
+      "raw_messages": 2,
+      "distinct_elements": 1
+    }
+  ],
+  "limitations": [
+    "HTML-only static lint does not prove runtime accessibility or cover ignored legacy templates and inline TypeScript templates.",
+    "Zero on the review stack does not mean its changes are merged into origin/11.0.x.",
+    "Ancestor-aware mouse rule selectors can over-report ancestors and accept descendant focus handlers without proving reachability."
+  ],
+  "artifacts": {
+    "primary_report": "A01-LINT-AUDIT.md",
+    "main_messages": "main-messages.csv",
+    "main_elements": "main-elements.csv",
+    "main_file_rule_counts": "main-file-rule-counts.csv",
+    "main_rule_counts": "main-rule-counts.csv",
+    "location_crosswalk": "location-crosswalk.csv",
+    "historical_report": "A11Y-A01-historical-audit.md",
+    "historical_messages": "historical-messages.csv",
+    "config": "override-config.txt"
+  },
+  "execution": {
+    "actual_command": "node node_modules/eslint/bin/eslint.js --config ./eslint.a11ycheck.config.js 'src/**/*.html' -f json > <external-evidence-file>",
+    "output_location": "Outside the checkout; local destination sanitized.",
+    "cleanup": "Scratch configs removed and clean status verified before intentionally adding report/evidence to documentation PR #270.",
+    "application_or_permanent_config_changes": "None introduced by this audit."
+  }
+}

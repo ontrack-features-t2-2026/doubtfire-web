@@ -1,0 +1,45 @@
+{
+  "url": "/projects/1/dashboard/1.2P",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        {
+          "target": [
+            "f-unit-code"
+          ],
+          "html": "<f-unit-code _ngcontent-ng-c40233...=\"\" data-onboarding-targ...=\"unit-selector\" class=\"mat-mdc-tooltip-trig...\" _nghost-ng-c42417668...=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-describedby=\"cdk-describedby-mess...\" cdk-describedby-host=\"ng-1\">",
+          "failureSummary": "Fix all of the following:\n  Check that there is no problem if the ARIA attribute is ignored on this element: aria-expanded=\"false\""
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#mat-mdc-chip-4 > .mdc-evolution-chip__cell.mdc-evolution-chip__cell--primary > .mat-mdc-chip-action.mdc-evolution-chip__action.mdc-evolution-chip__action--presentational > .mdc-evolution-chip__text-label.mat-mdc-chip-action-label"
+          ],
+          "html": "<span class=\"mdc-evolution-chip__text-label mat-mdc-chip-action-label\">O1<span class=\"mat-mdc-chip-primary-focus-indicator mat-focus-indicator\"></span></span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#mat-mdc-chip-5 > .mdc-evolution-chip__cell.mdc-evolution-chip__cell--primary > .mat-mdc-chip-action.mdc-evolution-chip__action.mdc-evolution-chip__action--presentational > .mdc-evolution-chip__text-label.mat-mdc-chip-action-label"
+          ],
+          "html": "<span class=\"mdc-evolution-chip__text-label mat-mdc-chip-action-label\">O2<span class=\"mat-mdc-chip-primary-focus-indicator mat-focus-indicator\"></span></span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        }
+      ]
+    }
+  ],
+  "passes": 38
+}

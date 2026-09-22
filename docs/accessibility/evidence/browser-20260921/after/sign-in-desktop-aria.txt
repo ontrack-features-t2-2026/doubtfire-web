@@ -1,0 +1,12 @@
+- main:
+  - img "Homepage Logo"
+  - paragraph: OnTrack
+  - heading "Manage your learning, with feedback you'll want to receive." [level=1]
+  - heading "Welcome to OnTrack" [level=1]
+  - text: Username
+  - textbox "Username"
+  - text: Password
+  - textbox "Password"
+  - checkbox "Stay logged in" [checked]
+  - text: Stay logged in
+  - button "Sign In" [disabled]

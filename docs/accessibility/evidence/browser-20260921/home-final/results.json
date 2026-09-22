@@ -1,0 +1,229 @@
+{
+  "recordedAt": "2026-09-21T06:40:54.495Z",
+  "base": "http://127.0.0.1:4314",
+  "webBaseTree": "a82f5171ddf02206610c506224841155164d5644",
+  "webBaseRevision": "788fac88be24626178d8b994193db7cbadf98704",
+  "webSourceDiffSha256": "ef5c569eb67534bfa70246c115563996098d04787642b7b4833357c232b5d0e5",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiProvenance": "Private synthetic fixture manifest and API runtime provenance document. Database authentication. No deploy repository checkout executed.",
+  "scope": "Read-only actual Chrome with synthetic API fixtures. Normal auth and token refresh allowed; other business writes blocked. Viewport width observations, focus/Enter, landmarks, rendered axe and explicit tab states. No full reflow, native zoom, screen reader, mobile Safari or mutation-journey claims.",
+  "checks": [
+    {
+      "id": "student-home-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "student-home-settled",
+      "status": "pass",
+      "details": "Actual synthetic unit link visible; global splash and local spinners absent."
+    },
+    {
+      "id": "student-home-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "student-home-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-home-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    },
+    {
+      "id": "student-home-desktop-progress-names",
+      "status": "pass",
+      "details": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "labelledby": null,
+          "value": "22",
+          "html": "<mat-progress-bar _ngcontent-ng-c4184924004=\"\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" class=\"mat-mdc-progress-bar mdc-linear-progress mat-progress-bar-reduced-motion mat-primary mdc-linear-progress--animation-ready\" aria-label=\"Teaching period progress for Synthetic Upload and Submission Lab\" aria-valuenow=\"22\"><div aria-hidden=\"true\" class=\"mdc-linear-progress__buffer\"><div class=\"mdc-linear-progress__buffer-bar\" style=\"flex-basis: 100%;\"></div><!--container--></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__primary-bar\" style=\"transform: scaleX(0.22);\"><span class=\"mdc-linear-progress__bar-inner\"></span></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__secondary-bar\"><span class=\"mdc-linear-progress__bar-inner\"></span></div></mat-progress-bar>"
+        }
+      ]
+    },
+    {
+      "id": "student-home-320-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "student-home-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "student-home-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    },
+    {
+      "id": "student-home-320-progress-names",
+      "status": "pass",
+      "details": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "labelledby": null,
+          "value": "22",
+          "html": "<mat-progress-bar _ngcontent-ng-c4184924004=\"\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" class=\"mat-mdc-progress-bar mdc-linear-progress mat-progress-bar-reduced-motion mat-primary mdc-linear-progress--animation-ready\" aria-label=\"Teaching period progress for Synthetic Upload and Submission Lab\" aria-valuenow=\"22\"><div aria-hidden=\"true\" class=\"mdc-linear-progress__buffer\"><div class=\"mdc-linear-progress__buffer-bar\" style=\"flex-basis: 100%;\"></div><!--container--></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__primary-bar\" style=\"transform: scaleX(0.22);\"><span class=\"mdc-linear-progress__bar-inner\"></span></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__secondary-bar\"><span class=\"mdc-linear-progress__bar-inner\"></span></div></mat-progress-bar>"
+        }
+      ]
+    },
+    {
+      "id": "student-unit-enter",
+      "status": "pass",
+      "details": {
+        "before": {
+          "tag": "A",
+          "name": "Synthetic Upload and Submission Lab",
+          "focused": true,
+          "href": "/projects/1/dashboard"
+        },
+        "route": "/projects/1/dashboard"
+      }
+    },
+    {
+      "id": "tutor-home-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "tutor-home-settled",
+      "status": "pass",
+      "details": "Actual synthetic unit link visible; global splash and local spinners absent."
+    },
+    {
+      "id": "tutor-home-desktop-width",
+      "status": "pass",
+      "details": {
+        "route": "/home",
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "tutor-home-desktop-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "tutor-home-desktop-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    },
+    {
+      "id": "tutor-home-desktop-progress-names",
+      "status": "pass",
+      "details": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "labelledby": null,
+          "value": "22",
+          "html": "<mat-progress-bar _ngcontent-ng-c4184924004=\"\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" class=\"mat-mdc-progress-bar mdc-linear-progress unit-progress-slider mat-progress-bar-reduced-motion mat-primary mdc-linear-progress--animation-ready\" aria-label=\"Teaching period progress for Synthetic Upload and Submission Lab\" aria-valuenow=\"22\"><div aria-hidden=\"true\" class=\"mdc-linear-progress__buffer\"><div class=\"mdc-linear-progress__buffer-bar\" style=\"flex-basis: 100%;\"></div><!--container--></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__primary-bar\" style=\"transform: scaleX(0.22);\"><span class=\"mdc-linear-progress__bar-inner\"></span></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__secondary-bar\"><span class=\"mdc-linear-progress__bar-inner\"></span></div></mat-progress-bar>"
+        }
+      ]
+    },
+    {
+      "id": "tutor-home-320-width",
+      "status": "fail",
+      "details": {
+        "route": "/home",
+        "viewport": 320,
+        "documentWidth": 332,
+        "bodyWidth": 332
+      }
+    },
+    {
+      "id": "tutor-home-320-landmarks",
+      "status": "pass",
+      "details": {
+        "main": 1,
+        "banner": 1,
+        "expectedBanner": 1
+      }
+    },
+    {
+      "id": "tutor-home-320-axe",
+      "status": "pass",
+      "details": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    },
+    {
+      "id": "tutor-home-320-progress-names",
+      "status": "pass",
+      "details": [
+        {
+          "name": "Teaching period progress for Synthetic Upload and Submission Lab",
+          "labelledby": null,
+          "value": "22",
+          "html": "<mat-progress-bar _ngcontent-ng-c4184924004=\"\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" class=\"mat-mdc-progress-bar mdc-linear-progress unit-progress-slider mat-progress-bar-reduced-motion mat-primary mdc-linear-progress--animation-ready\" aria-label=\"Teaching period progress for Synthetic Upload and Submission Lab\" aria-valuenow=\"22\"><div aria-hidden=\"true\" class=\"mdc-linear-progress__buffer\"><div class=\"mdc-linear-progress__buffer-bar\" style=\"flex-basis: 100%;\"></div><!--container--></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__primary-bar\" style=\"transform: scaleX(0.22);\"><span class=\"mdc-linear-progress__bar-inner\"></span></div><div aria-hidden=\"true\" class=\"mdc-linear-progress__bar mdc-linear-progress__secondary-bar\"><span class=\"mdc-linear-progress__bar-inner\"></span></div></mat-progress-bar>"
+        }
+      ]
+    },
+    {
+      "id": "tutor-unit-enter",
+      "status": "pass",
+      "details": {
+        "before": {
+          "tag": "A",
+          "name": "Synthetic Upload and Submission Lab - Tutor",
+          "focused": true,
+          "href": "/units/1/tasks/inbox"
+        },
+        "route": "/units/1/tasks/inbox"
+      }
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "browser": "Chrome 153.0.8010.48"
+}

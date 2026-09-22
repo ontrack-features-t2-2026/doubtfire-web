@@ -1,0 +1,8 @@
+
+ RUN  v4.1.9 <web-worktree>
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  16:31:38
+   Duration  18.13s (transform 772ms, setup 0ms, import 17.23s, tests 54ms, environment 1ms)

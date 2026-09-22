@@ -1,0 +1,35 @@
+- banner:
+  - text: SYN101
+  - button "Inbox"
+  - button "Open account menu":
+    - img: ST
+- main:
+  - textbox "Search the inbox":
+    - /placeholder: Search Inbox
+  - button "Inbox search dropdown"
+  - button "Refresh Inbox"
+  - text: 4 Tasks
+  - 'button "Synthetic Student, 1.2P: Report and Feedback"':
+    - img: SS
+    - text: Synthetic Student 1.2P - Report and Feedback
+    - img "Resubmit"
+  - text: Resubmit. 2 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Student, 2.1P: Planning Reflection"':
+    - img: SS
+    - text: Synthetic Student 2.1P - Planning Reflection
+    - img "Working On It"
+  - text: Working On It. 2 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Student, 1.1P: Spreadsheet Investigation"':
+    - img: SS
+    - text: Synthetic Student 1.1P - Spreadsheet Investigation
+    - img "Working On It"
+  - text: Working On It. 3 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Other Stude, 1.1P: Spreadsheet Investigation"':
+    - img: SO
+    - text: Synthetic Other Stude 1.1P - Spreadsheet Investigation
+    - img "Awaiting Feedback"
+  - text: Awaiting Feedback. 96 new comments.
+  - button "task overflow"
