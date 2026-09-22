@@ -1,0 +1,1313 @@
+{
+  "mode": "compiled source SCSS overlay on served build",
+  "checks": [
+    {
+      "theme": "dark",
+      "viewportWidth": 1440,
+      "charts": [
+        {
+          "chart": "f-summary-task-status-scatter",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Not Started",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Feedback Exceede...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Redo",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Need Help",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Working On It",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Resubmit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Awaiting Feedbac...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Discuss",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Demonstrate",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Complete",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Fail",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Time Exceeded",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Assess in Portfo...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Attention Requir...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Rediscuss",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Status",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "C0.4",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "C-4.2",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "D-4.1",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "HD-7.3",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Task",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#a27ea8",
+              "rendered": "rgb(162, 126, 168)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        },
+        {
+          "chart": "f-target-grade-pie-chart",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Pass",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Credit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Distinctio...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "High Disti...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#FF0000",
+              "rendered": "rgb(255, 0, 0)"
+            },
+            {
+              "attribute": "#FF8000",
+              "rendered": "rgb(255, 128, 0)"
+            },
+            {
+              "attribute": "#0080FF",
+              "rendered": "rgb(0, 128, 255)"
+            },
+            {
+              "attribute": "#80FF00",
+              "rendered": "rgb(128, 255, 0)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        },
+        {
+          "chart": "f-task-completion-box-plot",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Unit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "1.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "1.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "2.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "2.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "3.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "3.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "4.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Number of tasks completed",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "white",
+              "rendered": "rgb(255, 255, 255)"
+            },
+            {
+              "attribute": "black",
+              "rendered": "rgb(0, 0, 0)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "viewportWidth": 390,
+      "charts": [
+        {
+          "chart": "f-summary-task-status-scatter",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Not Started",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Feedback Exceede...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Redo",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Need Help",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Working On It",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Resubmit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Awaiting Feedbac...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Discuss",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Demonstrate",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Complete",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Fail",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Time Exceeded",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Assess in Portfo...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Attention Requir...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Rediscuss",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Status",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "C0.4",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "C-4.2",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "D-4.1",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "HD-7.3",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Task",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#a27ea8",
+              "rendered": "rgb(162, 126, 168)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        },
+        {
+          "chart": "f-target-grade-pie-chart",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Pass",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Credit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Distinctio...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "High Disti...",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#FF0000",
+              "rendered": "rgb(255, 0, 0)"
+            },
+            {
+              "attribute": "#FF8000",
+              "rendered": "rgb(255, 128, 0)"
+            },
+            {
+              "attribute": "#0080FF",
+              "rendered": "rgb(0, 128, 255)"
+            },
+            {
+              "attribute": "#80FF00",
+              "rendered": "rgb(128, 255, 0)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        },
+        {
+          "chart": "f-task-completion-box-plot",
+          "background": "rgb(31, 37, 48)",
+          "labels": [
+            {
+              "text": "Unit",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "1.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "1.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "2.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "2.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "3.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "3.5",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "4.0",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            },
+            {
+              "text": "Number of tasks completed",
+              "fill": "rgb(230, 232, 236)",
+              "contrast": 12.535782734686586
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "white",
+              "rendered": "rgb(255, 255, 255)"
+            },
+            {
+              "attribute": "black",
+              "rendered": "rgb(0, 0, 0)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "viewportWidth": 1440,
+      "charts": [
+        {
+          "chart": "f-summary-task-status-scatter",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Not Started",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Feedback Exceede...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Redo",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Need Help",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Working On It",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Resubmit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Awaiting Feedbac...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Discuss",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Demonstrate",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Complete",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Fail",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Time Exceeded",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Assess in Portfo...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Attention Requir...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Rediscuss",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Status",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "C0.4",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "C-4.2",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "D-4.1",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "HD-7.3",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Task",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#a27ea8",
+              "rendered": "rgb(162, 126, 168)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        },
+        {
+          "chart": "f-target-grade-pie-chart",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Pass",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Credit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Distinctio...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "High Disti...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#FF0000",
+              "rendered": "rgb(255, 0, 0)"
+            },
+            {
+              "attribute": "#FF8000",
+              "rendered": "rgb(255, 128, 0)"
+            },
+            {
+              "attribute": "#0080FF",
+              "rendered": "rgb(0, 128, 255)"
+            },
+            {
+              "attribute": "#80FF00",
+              "rendered": "rgb(128, 255, 0)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        },
+        {
+          "chart": "f-task-completion-box-plot",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Unit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "1.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "1.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "2.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "2.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "3.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "3.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "4.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Number of tasks completed",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "white",
+              "rendered": "rgb(255, 255, 255)"
+            },
+            {
+              "attribute": "black",
+              "rendered": "rgb(0, 0, 0)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            }
+          ],
+          "width": 1182,
+          "svgWidth": 1182
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "viewportWidth": 390,
+      "charts": [
+        {
+          "chart": "f-summary-task-status-scatter",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Not Started",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Feedback Exceede...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Redo",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Need Help",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Working On It",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Resubmit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Awaiting Feedbac...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Discuss",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Demonstrate",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Complete",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Fail",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Time Exceeded",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Assess in Portfo...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Attention Requir...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Rediscuss",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Status",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "C0.4",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "C-4.2",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "D-4.1",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "HD-7.3",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Task",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#7aa3e5",
+              "rendered": "rgb(122, 163, 229)"
+            },
+            {
+              "attribute": "#a27ea8",
+              "rendered": "rgb(162, 126, 168)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            },
+            {
+              "attribute": "#aae3f5",
+              "rendered": "rgb(170, 227, 245)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        },
+        {
+          "chart": "f-target-grade-pie-chart",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Pass",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Credit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Distinctio...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "High Disti...",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "#FF0000",
+              "rendered": "rgb(255, 0, 0)"
+            },
+            {
+              "attribute": "#FF8000",
+              "rendered": "rgb(255, 128, 0)"
+            },
+            {
+              "attribute": "#0080FF",
+              "rendered": "rgb(0, 128, 255)"
+            },
+            {
+              "attribute": "#80FF00",
+              "rendered": "rgb(128, 255, 0)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        },
+        {
+          "chart": "f-task-completion-box-plot",
+          "background": "rgb(255, 255, 255)",
+          "labels": [
+            {
+              "text": "Unit",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "1.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "1.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "2.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "2.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "3.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "3.5",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "4.0",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            },
+            {
+              "text": "Number of tasks completed",
+              "fill": "rgb(0, 0, 0)",
+              "contrast": 21
+            }
+          ],
+          "marks": [
+            {
+              "attribute": "white",
+              "rendered": "rgb(255, 255, 255)"
+            },
+            {
+              "attribute": "black",
+              "rendered": "rgb(0, 0, 0)"
+            },
+            {
+              "attribute": "#a8385d",
+              "rendered": "rgb(168, 56, 93)"
+            }
+          ],
+          "width": 324,
+          "svgWidth": 324
+        }
+      ]
+    }
+  ],
+  "baselineDark": [
+    {
+      "chart": "f-summary-task-status-scatter",
+      "background": "rgb(31, 37, 48)",
+      "labels": [
+        {
+          "text": "Not Started",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Feedback Exceede...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Redo",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Need Help",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Working On It",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Resubmit",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Awaiting Feedbac...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Discuss",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Demonstrate",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Complete",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Fail",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Time Exceeded",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Assess in Portfo...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Attention Requir...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Rediscuss",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Status",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "C0.4",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "C-4.2",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "D-4.1",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "HD-7.3",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Task",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        }
+      ],
+      "marks": [
+        {
+          "attribute": "#a8385d",
+          "rendered": "rgb(168, 56, 93)"
+        },
+        {
+          "attribute": "#a8385d",
+          "rendered": "rgb(168, 56, 93)"
+        },
+        {
+          "attribute": "#7aa3e5",
+          "rendered": "rgb(122, 163, 229)"
+        },
+        {
+          "attribute": "#7aa3e5",
+          "rendered": "rgb(122, 163, 229)"
+        },
+        {
+          "attribute": "#a27ea8",
+          "rendered": "rgb(162, 126, 168)"
+        },
+        {
+          "attribute": "#aae3f5",
+          "rendered": "rgb(170, 227, 245)"
+        },
+        {
+          "attribute": "#aae3f5",
+          "rendered": "rgb(170, 227, 245)"
+        }
+      ],
+      "width": 1182,
+      "svgWidth": 1182
+    },
+    {
+      "chart": "f-target-grade-pie-chart",
+      "background": "rgb(31, 37, 48)",
+      "labels": [
+        {
+          "text": "Pass",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Credit",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Distinctio...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "High Disti...",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        }
+      ],
+      "marks": [
+        {
+          "attribute": "#FF0000",
+          "rendered": "rgb(255, 0, 0)"
+        },
+        {
+          "attribute": "#FF8000",
+          "rendered": "rgb(255, 128, 0)"
+        },
+        {
+          "attribute": "#0080FF",
+          "rendered": "rgb(0, 128, 255)"
+        },
+        {
+          "attribute": "#80FF00",
+          "rendered": "rgb(128, 255, 0)"
+        }
+      ],
+      "width": 1182,
+      "svgWidth": 1182
+    },
+    {
+      "chart": "f-task-completion-box-plot",
+      "background": "rgb(31, 37, 48)",
+      "labels": [
+        {
+          "text": "Unit",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "1.0",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "1.5",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "2.0",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "2.5",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "3.0",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "3.5",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "4.0",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        },
+        {
+          "text": "Number of tasks completed",
+          "fill": "rgb(0, 0, 0)",
+          "contrast": 1.3655684747616148
+        }
+      ],
+      "marks": [
+        {
+          "attribute": "white",
+          "rendered": "rgb(255, 255, 255)"
+        },
+        {
+          "attribute": "black",
+          "rendered": "rgb(0, 0, 0)"
+        },
+        {
+          "attribute": "#a8385d",
+          "rendered": "rgb(168, 56, 93)"
+        }
+      ],
+      "width": 1182,
+      "svgWidth": 1182
+    }
+  ],
+  "status": "passed",
+  "browser": "153.0.8010.48"
+}
