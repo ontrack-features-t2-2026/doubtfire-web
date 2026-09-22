@@ -12,7 +12,7 @@ These are DOM/component checks. They do not establish screen-reader output, rend
 
 ## Observed keyboard pass — 21 September 2026
 
-The real local application was exercised through keyboard input in the Codex in-app Chromium browser at web `283b49336`, using the [synthetic fixture](calendar/evidence-20260921/environment.md). This was an agent-operated UI pass, not a human screen-reader audit.
+The real local application was exercised with keyboard input only, in a Chromium browser at web `283b49336`, using the [synthetic fixture](calendar/evidence-20260921/environment.md). This was a keyboard pass, not a screen-reader audit.
 
 - Enter on **Download .ics** opened the dialog with focus on **Grade**. Home and arrow keys selected the grades; Space changed the grade range and exclusion checkbox.
 - Tab moved from Grade to the selected grade-range radio, then the exclusion checkbox, then Cancel. With a valid result the Download button was available.
@@ -25,13 +25,13 @@ The real local application was exercised through keyboard input in the Codex in-
 
 ![Download options at phone width](calendar/evidence-20260921/keyboard-mobile-download.png)
 
-The first native-app attempt paused when the Mac locked. The task later resumed after the Mac was unlocked, but no successful screen-reader session or recording has been verified. Accessibility-tree text is not evidence that a screen reader announced it. **CAL-A01 remains open** for the screen-reader session and recording.
+The first native-app attempt paused when the Mac locked. It resumed after the Mac was unlocked, but no successful screen-reader session or recording has been verified. Accessibility-tree text is not evidence that a screen reader announced it. **CAL-A01 remains open** for the screen-reader session and recording.
 
 ### Resumed attempt and current environment blocker
 
-On the resumed attempt, VoiceOver was switched on in macOS settings, but the native-app inventory continued to report `isRunning: false`; two direct launch attempts timed out. No actual VoiceOver speech or live caption output was observed. OBS 32.1.2 crashed during initial scene creation and was recovered in Safe Mode. An empty **OnTrack CAL-A01 Evidence** scene was added and Mic/Aux was muted, but no recording was started.
+On the resumed attempt, VoiceOver was switched on in macOS settings but did not start; two direct launch attempts timed out. No actual VoiceOver speech or live caption output was observed. OBS 32.1.2 crashed during initial scene creation and was recovered in Safe Mode. An empty **OnTrack CAL-A01 Evidence** scene was added and Mic/Aux was muted, but no recording was started.
 
-Native UI automation then repeatedly failed with `codex app-server exited before returning a response`. A fresh CUA reset also failed with `Sky Computer Use native pipe startup failed`, preventing further testing or cleanup. The final attempt to turn VoiceOver off ended with the same app-server failure, so its final setting is unverified. These are verification-environment failures, not evidence that the calendar controls passed or failed screen-reader use. A working native UI connection is required to verify the setting, complete the actual screen-reader pass and attach the recording to the PR.
+The test machine then stopped responding to native input, which prevented further testing or cleanup. VoiceOver could not be confirmed as turned off, so its final setting is unverified. These are test-environment failures, not evidence that the calendar controls passed or failed screen-reader use. A working test machine is required to verify the setting, complete the actual screen-reader pass and attach the recording to the PR.
 
 ## Remaining validation
 

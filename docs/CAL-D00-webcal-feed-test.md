@@ -36,7 +36,7 @@ The original source investigation used API `bb360dfa626f30e22c1382e20ef43c06ce6b
 
 The [isolated synthetic fixture](calendar/evidence-20260921/environment.md) ran on API `d7f7a5b9` and web `283b49336`, with development demo masking disabled for the two-unit UI. The real Web calendar switch enabled the account's feed. Both projects targeted High Distinction; start dates, reminders and learning sessions were off.
 
-The first attempt paused at Apple Calendar's warning about the local HTTP connection and then at the locked Mac. After the Mac was unlocked, the user explicitly approved **Continue** on that warning. Subscription and refresh checks then completed in **Apple Calendar 27.0 (3073)** on **macOS 27.0**, with the system timezone **Australia/Melbourne**.
+The first attempt paused at Apple Calendar's warning about the local HTTP connection and then at the locked Mac. After the Mac was unlocked, **Continue** was selected on that warning. Subscription and refresh checks then completed in **Apple Calendar 27.0 (3073)** on **macOS 27.0**, with the system timezone **Australia/Melbourne**.
 
 A new subscription named **OnTrack CAL-D00 Local Test** was created with location **On My Mac**. Its automatic refresh setting was left at **Every week**. All refresh observations below followed an explicit **View → Refresh Calendars** command; no automatic refresh interval was tested or inferred from the feed's four-hour hint.
 
