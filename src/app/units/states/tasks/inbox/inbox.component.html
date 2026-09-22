@@ -211,10 +211,14 @@
         class="z-10 block shrink-0"
         role="region"
         [attr.aria-label]="
-          'Assessment actions for ' +
-          taskData?.selectedTask?.definition.abbreviation +
-          ', ' +
-          taskData?.selectedTask?.project.student.displayName
+          taskData?.selectedTask
+            ? 'Assessment actions for ' +
+              taskData.selectedTask.definition.abbreviation +
+              ', ' +
+              (taskData.selectedTask.project.student.displayName ||
+                taskData.selectedTask.project.student.name ||
+                'selected student')
+            : 'Assessment actions'
         "
         [viewType]="viewType"
       ></f-footer>

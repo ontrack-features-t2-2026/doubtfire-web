@@ -266,7 +266,7 @@
                   type="button"
                   [attr.aria-describedby]="'task-summary-' + task.taskKeyToIdString()"
                   [attr.aria-label]="
-                    task.project.student.displayName +
+                    (task.project.student.displayName || task.project.student.name) +
                     ', ' +
                     task.definition.abbreviation +
                     ': ' +
@@ -287,7 +287,7 @@
                   <user-icon class="self-center" [size]="30" [user]="task.project.student">
                   </user-icon>
                   <div class="task-list-data flex-1 truncate" [hidden]="isNarrow">
-                    <h4 class="student-name flex min-w-0 items-center gap-0.5">
+                    <div class="student-name flex min-w-0 items-center gap-0.5">
                       @if (task.moderationType === 'escalation') {
                         <mat-icon
                           class="shrink-0 text-amber-500"
@@ -315,8 +315,10 @@
                         </mat-icon>
                       }
 
-                      <span class="truncate">{{ task.project.student.displayName }}</span>
-                    </h4>
+                      <span class="truncate">{{
+                        task.project.student.displayName || task.project.student.name
+                      }}</span>
+                    </div>
                     <div class="task-details truncate">
                       {{ task.definition.abbreviation }} -
                       {{ task.definition.name }}

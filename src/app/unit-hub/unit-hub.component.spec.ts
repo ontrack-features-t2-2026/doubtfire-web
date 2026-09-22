@@ -72,6 +72,14 @@ describe('Unit Hub route, forms and rendered content', () => {
     expect(element.textContent).not.toContain('Manage updates');
   });
 
+  it('keeps the named hub section inside the app-owned main landmark', async () => {
+    const {element} = await open();
+    expect(element.querySelector('main, [role="main"]')).toBeNull();
+    const section = element.querySelector('section.unit-hub');
+    expect(section.getAttribute('aria-labelledby')).toBe('unit-hub-title');
+    expect(section.querySelector('#unit-hub-title').textContent).toBe('Unit Hub');
+  });
+
   it('unknown unit deep links reveal no other unit content and show a useful message', async () => {
     const {component, element} = await open('/unit-hub?unit=102');
     expect(component.sessions).toEqual([]);

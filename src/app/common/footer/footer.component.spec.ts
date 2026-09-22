@@ -3,6 +3,7 @@ import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
+import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {BehaviorSubject} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {ProjectService} from 'src/app/api/services/project.service';
@@ -13,6 +14,7 @@ import {FileDownloaderService} from '../file-downloader/file-downloader.service'
 import {ConfirmationModalService} from '../modals/confirmation-modal/confirmation-modal.service';
 import {DiscussedInClassReasonModalService} from '../modals/discussed-in-class-reason-modal/discussed-in-class-reason-modal.service';
 import {TaskAssessmentModalService} from '../modals/task-assessment-modal/task-assessment-modal.service';
+import {ProjectProgressBarComponent} from '../project-progress-bar/project-progress-bar.component';
 import {AlertService} from '../services/alert.service';
 import {FooterComponent} from './footer.component';
 
@@ -34,8 +36,8 @@ describe('FooterComponent', () => {
       hasReadyForFeedbackDependents: vi.fn().mockResolvedValue(false),
     } as unknown as Task);
     await TestBed.configureTestingModule({
-      declarations: [FooterComponent],
-      imports: [CommonModule, MatMenuModule],
+      declarations: [FooterComponent, ProjectProgressBarComponent],
+      imports: [CommonModule, MatMenuModule, MatProgressBarModule],
       providers: [
         {provide: SelectedTaskService, useValue: {selectedTask$: selectedTask}},
         {
@@ -107,6 +109,26 @@ describe('FooterComponent', () => {
       expect(button).not.toBeNull();
       expect(button.disabled).toBe(true);
     }
+    expect(fixture.nativeElement.querySelector('f-user-badge')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mat-chip-listbox')).toBeNull();
+  });
+
+  it('shows the selected project target as text rather than a selection control', () => {
+    selectedTask.next({
+      ...selectedTask.value,
+      project: {
+        targetGradeWord: 'Pass',
+        targetGradeAcronym: 'P',
+        taskStats: [{value: 0}, {value: 0}, {value: 0}, {value: 0}, {value: 42}],
+      },
+    } as Task);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Target grade: Pass');
+    expect(fixture.nativeElement.querySelector('mat-chip-option, [role="listbox"]')).toBeNull();
+    const progress = fixture.nativeElement.querySelector('[role="progressbar"]');
+    expect(progress.getAttribute('aria-label')).toBe('Project progress towards target grade');
+    expect(progress.getAttribute('aria-valuenow')).toBe('42');
   });
 
   it('names the moderation action menu', () => {
