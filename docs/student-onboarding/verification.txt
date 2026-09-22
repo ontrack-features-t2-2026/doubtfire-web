@@ -84,7 +84,9 @@ Combined tutorial/migration compatibility validation:
   a9e7af46f3eb17c4fefbac168a46688c73496286. Never pushed or merged on GitHub.
 - Node 22.23.2, npm 11.19.0; full test:ci suite passed 1,158 tests in 151 files,
   31.38 seconds test execution after 24.54 seconds test compilation.
-- Production build passed in 51.672 seconds on 2026-09-21 Australia/Melbourne.
+- Default development application build (`npm run build` / `ng build`) passed in
+  51.672 seconds on 2026-09-21 Australia/Melbourne. The earlier description as a
+  production build was corrected after inspecting the command log and artifact.
 - Root integration review checked 39 pairwise combinations against the published
   branch heads and relevant pending PRs; all merge-tree checks were conflict-free.
   This records those checked heads, not a promise about future upstream changes.
@@ -111,3 +113,19 @@ Final synthetic browser matrix (production code unchanged at 0ff843477):
 - Desktop 1280x900, narrow 390x844 and 320x568, light/dark themes and reduced-motion
   preference were exercised. The 200% scenario is CSS zoom, not native browser zoom.
 - Human assistive-technology/pilot/review and full-app acceptance remain pending.
+
+Full-application follow-up — 21 September 2026:
+- Pinned full application default/development build a9e7af46f (not a component fixture),
+  paired with merged API d7f7a5b9 and a separate synthetic database on loopback.
+- Fresh native Chrome login completed the actual welcome/profile form and then
+  received the automatic tutorial on /home. Native Chrome zoom UI reported200%.
+  Welcome controls/link remained readable; a page-only PNG was saved.
+- Mac locked before native zoom reset/further keyboard steps; no restore action is claimed.
+- Clean headless Chrome153.0.8010.48, Edge153.0.4234.32 and Firefox155.0 passed the
+  actual enrolled-student unit selector/dashboard, four steps, completion/replay
+  and account-menu focus-return checks. No pageerror events in those contexts.
+- A 29.08-second VP8/WebM1280x800 silent annotated recording is included; version1,
+  date, synthetic data and exact source identifiers are visible. No credentials
+  are filmed. A second human review is pending.
+- Recording/static-helper syntax checks and git diff --check passed. Existing
+  full suites were not repeated because this follow-up changes only QA/docs assets.
