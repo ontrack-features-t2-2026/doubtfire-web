@@ -60,6 +60,10 @@ npm run test:ci
 npm run deploy
 ```
 
+`npm run test:ci` runs the unit suite with Vitest through Angular's test builder.
+The test target is configured in `angular.json`; shared setup lives in `src/vitest-setup.ts`.
+`npm run test:coverage` writes reports to `coverage/`; Test CI publishes the `web-coverage` artifact.
+
 ## Production build and handover
 
 The production application deliberately uses the browser origin for both API

@@ -17,7 +17,9 @@ import {AttachmentPolicy} from '../models/task-comment/attachment-policy';
 import {DiscussionComment} from '../models/task-comment/discussion-comment';
 import {ExtensionComment} from '../models/task-comment/extension-comment';
 import {ScormExtensionComment} from '../models/task-comment/scorm-extension-comment';
+import {AuthenticationService} from './authentication.service';
 import {MappingFunctions} from './mapping-fn';
+import {NotificationService} from './notification.service';
 
 @Injectable()
 export class TaskCommentService extends CachedEntityService<TaskComment> {
@@ -48,6 +50,8 @@ export class TaskCommentService extends CachedEntityService<TaskComment> {
     private userService: UserService,
     private downloader: FileDownloaderService,
     private testAttemptService: TestAttemptService,
+    private authService: AuthenticationService,
+    private notificationService: NotificationService,
   ) {
     super(apiHttpClient, API_URL);
 
@@ -169,6 +173,11 @@ export class TaskCommentService extends CachedEntityService<TaskComment> {
         // Access the task and set the number of new comments to 0 - they are now read on the server
         const task = other as Task;
         task.numNewComments = 0;
+        if (this.authService.isAuthenticated()) {
+          // Comment reads also mark their notifications read on the server.
+          // A failed badge refresh must not prevent the comments from loading.
+          this.notificationService.refreshUnreadCount().subscribe({error: () => undefined});
+        }
       }),
     );
   }
