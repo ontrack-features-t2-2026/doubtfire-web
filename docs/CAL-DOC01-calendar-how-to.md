@@ -6,13 +6,17 @@ OnTrack offers a few ways to get your task due dates into your own calendar. The
 
 On a task's page, the task card shows an **Add to Google Calendar** button. It opens Google Calendar in a new tab with the event details for that one task's due date already filled in, ready for you to save. This adds one event only, and it does not update if the due date later changes. For a whole unit or for live updates, use the options below.
 
+![Add to Google Calendar in the task description card](calendar/evidence-20260921/ontrack-task-action-row.png)
+
+Actual application screenshot, captured on 21 September 2026 with a synthetic CAL101 task.
+
 ## Download a unit's due dates as a file
 
 On a unit's **Progress Dashboard**, the **Plan Your Tasks** card has a **Download .ics** button. It opens a **Download options** dialog, and confirming there downloads an `.ics` calendar file containing the due dates for that unit's tasks, which you can import into Google Calendar, Apple Calendar, Outlook, or any calendar app.
 
-![Calendar control locations and download options, shown with synthetic data](calendar/calendar-controls.svg)
+![Download .ics in the Plan Your Tasks card on the Progress Dashboard](calendar/evidence-20260921/ontrack-dashboard.png)
 
-This illustration shows placement and labels; it is not a live application screenshot.
+Actual application screenshot with synthetic CAL101 data. The header calendar icon is also visible at the top right.
 
 The dialog has three choices:
 
@@ -21,6 +25,10 @@ The dialog has three choices:
 - **Exclude submitted and completed tasks.** On by default. Tasks awaiting feedback, discussion or demonstration, and final-state tasks, are left out. Tasks marked Redo or Fix and resubmit stay in the download because they require another submission. Untick it to include all matching dated tasks.
 
 For HD-only tasks, choose **High Distinction** and **This grade and above**. Choosing **Up to this grade** with High Distinction includes Pass, Credit and Distinction tasks too.
+
+![High Distinction and This grade and above select the single HD task](calendar/evidence-20260921/filter-hd-only.png)
+
+The synthetic unit has one task at each grade. With submitted-task exclusion off, the HD-only selection above downloads one task. The actual downloads for all grades and the exclusion option are retained in the [export evidence](calendar/evidence-20260921/exports/README.md).
 
 The dialog announces how many tasks with valid due dates match your choices. Tasks without a resolvable due date cannot become calendar events. If nothing matches your choices, the dialog says so and its download button stays disabled. Your choices are not saved to your profile and do not change your target grade.
 
@@ -58,4 +66,4 @@ If you want the current state of your subscription as a one-off file rather than
 
 Open Download .ics with Enter or Space; focus moves to Grade. Use Tab to reach the remaining options, Download and Cancel. Escape dismisses the dialog and returns focus to the opener. The result count is a status message. See [accessibility verification](CAL-A01-accessibility-verification.md) for completed component checks and the manual checks still to record.
 
-See [compatibility evidence](CAL-C01-calendar-compatibility.md) for a synthetic import fixture and the three-client verification matrix. Calendar imports, subscription refreshes and screen-reader output have not been manually verified by this change.
+See [compatibility evidence](CAL-C01-calendar-compatibility.md) for the four-event fixture and the completed Apple, Google and Outlook import checks. All three showed the intended single all-day dates; the report records how each client displays long Unicode titles and embedded newlines. The separate [live-feed check](CAL-D00-webcal-feed-test.md) verified Apple Calendar subscription updates after manual refresh.

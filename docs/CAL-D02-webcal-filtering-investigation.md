@@ -12,7 +12,7 @@ The premise that a student must "subscribe to everything or nothing" is not accu
 .where.not(units: { id: WebcalUnitExclusion.where(webcal_id: id).select(:unit_id) })
 ```
 
-This is already editable from the front end. The current UI is illustrated in the [placement mockup](calendar/calendar-controls.svg). The Web calendar modal shows the student's units as removable chips (`calendar-modal.component`), and toggling a chip adds or removes a `WebcalUnitExclusion`.
+This is already editable from the front end. The Web calendar modal shows the student's units as removable chips (`calendar-modal.component`), and toggling a chip adds or removes a `WebcalUnitExclusion`. The real application screenshots below supplement the [labelled placement mockup](calendar/calendar-controls.svg).
 
 **Grade.** The same query only includes task definitions at or below the student's target grade:
 
@@ -24,7 +24,7 @@ So the feed is already limited to the tasks the student needs for their saved ta
 
 ## What the feed cannot filter today
 
-- **A grade different from the saved target grade.** The grade filter uses `projects.target_grade`, the student's saved target for each unit. There is no way to subscribe to, say, "only my HD tasks" without changing the saved target grade for the unit.
+- **An independent grade override or HD-only subscription.** The grade filter uses `projects.target_grade`, the student's saved target for each unit, and includes all grades at or below it. Choosing a saved target of High Distinction still includes lower-grade tasks; it cannot produce an HD-only feed.
 - **Per-request filtering via the URL.** The public endpoint (`doubtfire-api/app/api/webcal_public_api.rb`) is `GET /webcal/:guid` and takes only the guid. It looks the webcal up and serves `webcal.to_ical.to_ical` with no query parameters, so a calendar client cannot ask for a filtered variant of the feed.
 - **Excluding completed or submitted tasks.** The feed iterates every applicable task definition regardless of the student's submission state, so completed tasks stay in the feed.
 
@@ -33,6 +33,16 @@ So the feed is already limited to the tasks the student needs for their saved ta
 - **Grade selection independent of target grade.** The grade filter is a single clause in `Webcal#task_definitions`, so parameterising it is the small part. The larger part is deciding where the selected grade lives: either a new query parameter threaded from `webcal_public_api.rb` into `to_ical`/`task_definitions`, or a stored per-webcal grade override on the `Webcal` model, plus a control in the modal to set it. A stored setting is more consistent with how unit exclusions already work.
 - **Exclude completed tasks.** This needs the feed to consider each task's submission state, which means loading the student's `Task` records (the feed already loads them for date resolution in `to_ical`) and skipping the submitted/final states selected by the product policy. The unit download now treats Redo and Fix and resubmit as outstanding, while submitted states awaiting assessment or discussion are excluded. Reuse that definition if extending the feed so the controls agree. This is a change inside `to_ical`, plus a per-webcal toggle if it should be optional.
 - **Per-request variants.** Supporting URL parameters on the public endpoint would let a client hold several filtered subscriptions from one webcal, but it widens the public surface and is not needed for the two cases above. A stored per-webcal setting is the lower-risk route.
+
+## Actual settings screenshots — 21 September 2026
+
+These captures use the [synthetic fixture](calendar/evidence-20260921/environment.md), with development demo masking disabled. They show the current implementation, not a historical before-state. The capture area excludes the subscription URL.
+
+![Included units in the real Web calendar settings](calendar/evidence-20260921/webcal-included-unit.png)
+
+![CAL101 excluded using its removal button](calendar/evidence-20260921/webcal-excluded-unit.png)
+
+CAL101 was restored using **Add unit** after the capture. This supplies the screenshot requested by the duplicate CAL-D02 tracker entry. The separate calendar-client refresh check remains under [CAL-D00](CAL-D00-webcal-feed-test.md).
 
 ## Assessment
 
