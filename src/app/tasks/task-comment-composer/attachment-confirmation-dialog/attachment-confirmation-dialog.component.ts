@@ -1,4 +1,14 @@
-import {ChangeDetectionStrategy, Component, Inject, OnDestroy, OnInit} from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  ViewChild,
+} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 
 export interface AttachmentConfirmationDialogData {
@@ -12,13 +22,17 @@ export interface AttachmentConfirmationDialogData {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class AttachmentConfirmationDialogComponent implements OnInit, OnDestroy {
+export class AttachmentConfirmationDialogComponent implements OnInit, OnDestroy, AfterViewInit {
   public file: File;
   public previewUrl: string | null = null;
+
+  @ViewChild('dialogRoot', {static: true}) private dialogRoot: ElementRef<HTMLElement>;
+  private removeEnterGuard: (() => void) | null = null;
 
   constructor(
     public dialogRef: MatDialogRef<AttachmentConfirmationDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: AttachmentConfirmationDialogData,
+    private renderer: Renderer2,
   ) {}
 
   ngOnInit() {
@@ -28,7 +42,22 @@ export class AttachmentConfirmationDialogComponent implements OnInit, OnDestroy 
     }
   }
 
+  ngAfterViewInit() {
+    // Keep the dialog's Enter contained so it cannot reach outer keyboard
+    // shortcuts, without blocking native activation of the dialog's controls.
+    this.removeEnterGuard = this.renderer.listen(
+      this.dialogRoot.nativeElement,
+      'keydown',
+      (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          event.stopPropagation();
+        }
+      },
+    );
+  }
+
   ngOnDestroy() {
+    this.removeEnterGuard?.();
     if (this.previewUrl) {
       URL.revokeObjectURL(this.previewUrl);
     }
