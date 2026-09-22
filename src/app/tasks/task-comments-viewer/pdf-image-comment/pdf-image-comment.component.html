@@ -1,5 +1,5 @@
 <button
-  class="block w-full text-left"
+  class="max-w-full cursor-pointer rounded border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current focus-visible:outline-solid"
   type="button"
   [attr.aria-label]="
     comment.commentType === 'pdf' ? 'View PDF attachment' : 'View image attachment'
@@ -10,8 +10,8 @@
     <img alt="Image attachment preview" height="100%" width="100%" [src]="resourceUrl | safe" />
   }
   @if (comment.commentType === 'pdf') {
-    <div class="flex cursor-pointer items-center gap-1 text-formatif-blue hover:text-blue-800">
-      <mat-icon class="">picture_as_pdf</mat-icon> view pdf
-    </div>
+    <span class="flex items-center gap-1">
+      <mat-icon aria-hidden="true">picture_as_pdf</mat-icon> view pdf
+    </span>
   }
 </button>

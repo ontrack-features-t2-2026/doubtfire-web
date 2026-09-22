@@ -1,6 +1,13 @@
 :host {
+  display: block;
   height: auto;
+  min-width: 0;
   overflow-y: auto;
+}
+
+.main,
+mat-form-field {
+  min-width: 0;
 }
 
 h1 {
@@ -40,6 +47,14 @@ section {
 }
 
 .push-opt-in {
+  button {
+    max-width: 100%;
+    height: auto;
+    min-height: 36px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   // The rule above sizes the profile avatar icon at 50px. Left alone it would
   // apply to the icon inside this button too and blow the button apart.
   .mat-icon {
@@ -57,7 +72,7 @@ section {
 }
 
 .peer-progress-preference {
-  border-block: 1px solid #e4e4e7;
+  border-block: 1px solid var(--ot-color-border);
   gap: 6px;
   margin-block: 8px;
   padding-block: 16px;
@@ -67,7 +82,7 @@ section {
   }
 
   small {
-    color: #52525b;
+    color: var(--ot-color-text-muted);
     max-width: 42rem;
   }
 }

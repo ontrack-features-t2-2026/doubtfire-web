@@ -146,7 +146,9 @@
         'w-full md:w-[92px]': isTaskListCollapsed,
       }"
     >
-      <div class="overflow-hidden rounded-2xl bg-white md:flex md:h-[calc(100vh-2rem)] md:flex-col">
+      <div
+        class="task-list-surface overflow-hidden rounded-2xl md:flex md:h-[calc(100vh-2rem)] md:flex-col"
+      >
         <div
           class="text-left text-[15px]"
           [ngClass]="{
@@ -200,13 +202,13 @@
             ) {
               <mat-list-item class="clearfix h-[60px] p-0" [disableRipple]="true">
                 <div
-                  class="flex h-[60px] w-full cursor-pointer items-center rounded-[6px] hover:bg-gray-50"
+                  class="task-list-row flex h-[60px] w-full cursor-pointer items-center rounded-[6px]"
                   matTooltipPosition="above"
                   [matTooltip]="taskDefinition.name"
                   [matTooltipDisabled]="!isTaskListCollapsed"
                   [matTooltipShowDelay]="250"
                   [ngClass]="{
-                    'bg-[#e7e7ff]': isSelectedTaskDefinition(taskDefinition),
+                    'task-list-row-selected': isSelectedTaskDefinition(taskDefinition),
                   }"
                 >
                   <div class="flex w-full items-center px-[6px]">
@@ -278,7 +280,7 @@
           [unit]="unit"
         ></f-task-definition-editor>
       } @else {
-        <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-gray-600">
+        <div class="empty-task-state rounded-xl border border-dashed p-5">
           <h4>Select a task definition</h4>
           <p>Pick a task from the left list to edit its details.</p>
         </div>

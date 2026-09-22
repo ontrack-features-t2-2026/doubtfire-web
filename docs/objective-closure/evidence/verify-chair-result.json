@@ -1,0 +1,23 @@
+{
+  "stage": "verify-chair",
+  "recordedAt": "2026-09-21T05:18:35.157Z",
+  "browser": "Chrome 153.0.8010.48",
+  "scope": "Real local Angular application and synthetic backend; automated browser/AX/keyboard check, not human usability or screen-reader observation.",
+  "checks": [
+    {
+      "id": "chair-accessible-names-and-native-keyboard-category",
+      "status": "passed",
+      "categoryRestored": "Spreadsheet (CSV, XLS, XLSX)",
+      "historyRestored": true,
+      "definitionWrites": 0
+    },
+    {
+      "id": "chair-fixture-remains-unchanged-after-reload",
+      "status": "passed"
+    }
+  ],
+  "status": "passed",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "webBaseline": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+  "webWorkingTree": "objectives-closure-web-20260921 with accessibility fixes"
+}

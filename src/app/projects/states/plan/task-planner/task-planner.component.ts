@@ -272,9 +272,9 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       classes.push('flash');
     }
     if (item.highlighted) {
-      classes.push('[--bar-bg:#03c6fc]');
+      classes.push('[--bar-bg:#03c6fc]', 'text-black');
     } else if (this.isAboveTargetGrade(item)) {
-      classes.push('[--bar-bg:#9ca3af]', 'text-white');
+      classes.push('[--bar-bg:#9ca3af]', 'text-black');
     } else if (this.isPastFeedbackDeadline(item)) {
       classes.push('[--bar-bg:#cd3704]', 'text-white');
     } else if (this.isBlockedByPrerequisite(item)) {
@@ -418,6 +418,8 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     try {
+      // Scope the ink-safe palette to this export; keep the account preference intact.
+      ganttEl.classList.add('ot-gantt-export');
       await this.renderAllGanttBars(ganttEl);
       this.resetGanttScroll(scrollElements);
       window.scrollTo(windowScrollPosition.left, windowScrollPosition.top);
@@ -439,6 +441,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.classList.remove('ot-gantt-export');
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

@@ -46,6 +46,14 @@
   }
 }
 
+// Image exports use the same ink-safe palette as printing without changing the
+// live application root or persisted theme preference.
+ngx-gantt.ot-gantt-export {
+  @include light.theme-tokens;
+  color: var(--ot-color-text);
+  color-scheme: light;
+}
+
 // @worktile/gantt public CSS variables. Keep task bars/status colours owned by CAL.
 ngx-gantt {
   --gantt-color-primary: var(--ot-color-primary);

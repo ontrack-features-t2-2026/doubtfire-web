@@ -1,0 +1,50 @@
+{
+  "scope": "Synthetic test fixtures only; excluded.exe and spoofed.xlsx are inert rejection fixtures, not executables or workbooks.",
+  "files": [
+    {
+      "file": "empty.csv",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "excluded.exe",
+      "bytes": 21,
+      "sha256": "5c3f07db3e470ed03d0ebbf1c5bc4b8804856d2f3eddf76c1af9dec25ffe2e98"
+    },
+    {
+      "file": "handout.pdf",
+      "bytes": 608,
+      "sha256": "865aba0c1f4abf09eb41c53e3d0f1c9a77fc3c57e217c9a558d7aceae04fb640"
+    },
+    {
+      "file": "notes.docx",
+      "bytes": 855,
+      "sha256": "b92a36460a87a7554bbb13da457ff71851209694e055aeed7ff2dc245f0e4533"
+    },
+    {
+      "file": "scores.csv",
+      "bytes": 29,
+      "sha256": "af11fec7728d58f0319545434c30a7c9f44c7e67a03278be1507977e71bb617b"
+    },
+    {
+      "file": "scores.xlsx",
+      "bytes": 1452,
+      "sha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c"
+    },
+    {
+      "file": "screenshot.png",
+      "bytes": 299,
+      "sha256": "3af349b12f9cb8c9e43e59bff39300060e823b2f468a119da96d9a62e7dbd448"
+    },
+    {
+      "file": "spoofed.xlsx",
+      "bytes": 31,
+      "sha256": "a30a522d7f5ec2034cb82adf4b932c395606aa99b128badd57d7ef5b79d749b4"
+    },
+    {
+      "file": "tone.wav",
+      "bytes": 16044,
+      "sha256": "f9cf3664896a9b9658e3d49b16545ed6ee64787fa27e1502efb6c6a819fdad1f"
+    }
+  ]
+}

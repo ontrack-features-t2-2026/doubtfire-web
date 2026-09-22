@@ -1,0 +1,41 @@
+{
+  "scope": "Disposable synthetic closure_test unit 1 only",
+  "field": "allow_flexible_dates",
+  "original": false,
+  "temporary": true,
+  "recordedAt": "2026-09-21T06:07:15.297472+00:00",
+  "reason": "Authorized real Gantt Download Chart validation",
+  "status": "restored to original false after final integrated Gantt capture",
+  "requirementsChanged": false,
+  "apiRestarted": false,
+  "restored": true,
+  "restoredAt": "2026-09-21T06:26:01.016165+00:00",
+  "verification": {
+    "unitId": 1,
+    "allowFlexibleDates": false,
+    "source": "SELECT id, allow_flexible_dates FROM closure_test.units WHERE id=1"
+  },
+  "restoredValue": false,
+  "adjustments": [
+    {
+      "recordedAt": "2026-09-21T06:21:13.301130+00:00",
+      "original": false,
+      "temporary": true,
+      "reason": "Authorized final Gantt foreground correction and PNG/PDF retake after PR251 integration",
+      "verification": {
+        "unitId": 1,
+        "allowFlexibleDates": true
+      },
+      "restored": true,
+      "restoredValue": false,
+      "restoredAt": "2026-09-21T06:26:01.016165+00:00",
+      "restorationVerification": {
+        "unitId": 1,
+        "allowFlexibleDates": false,
+        "source": "SELECT id, allow_flexible_dates FROM closure_test.units WHERE id=1"
+      },
+      "captureSource": "64d6acd65",
+      "captureReportedResult": "Final PNG/PDF capture passed; preference unchanged"
+    }
+  ]
+}

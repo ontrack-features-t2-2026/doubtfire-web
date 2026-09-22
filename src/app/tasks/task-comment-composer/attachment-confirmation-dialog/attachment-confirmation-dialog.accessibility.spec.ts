@@ -45,12 +45,13 @@ describe('attachment confirmation keyboard controls', () => {
     button.focus();
     expect(document.activeElement).toBe(button);
 
-    const reachedDialog = vi.fn();
-    fixture.nativeElement.addEventListener('keydown', reachedDialog);
+    const reachedOutsideDialog = vi.fn();
+    fixture.nativeElement.addEventListener('keydown', reachedOutsideDialog);
     const enter = new KeyboardEvent('keydown', {key: 'Enter', bubbles: true, cancelable: true});
     button.dispatchEvent(enter);
     expect(enter.defaultPrevented).toBe(false);
-    expect(reachedDialog).toHaveBeenCalledTimes(1);
+    // Keep native activation while containing the dialog's Enter from outer shortcuts.
+    expect(reachedOutsideDialog).not.toHaveBeenCalled();
     expect(dialog.close).not.toHaveBeenCalled();
     // jsdom does not synthesize the native button activation from Enter.
     button.click();
