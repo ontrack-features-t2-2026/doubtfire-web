@@ -172,6 +172,10 @@
         <mat-icon aria-label="Edit calendar" matListItemIcon>calendar_month</mat-icon>
         Calendar
       </button>
+      <button mat-menu-item routerLink="/coursemap">
+        <mat-icon aria-hidden="true" matListItemIcon>directions</mat-icon>
+        Course Flow
+      </button>
       <button mat-menu-item (click)="openInstallHelp(accountMenuButton)">
         <mat-icon aria-hidden="true" matListItemIcon>install_desktop</mat-icon>
         {{ pwaInstall.isInstalled() ? 'App installation' : 'Install OnTrack' }}
