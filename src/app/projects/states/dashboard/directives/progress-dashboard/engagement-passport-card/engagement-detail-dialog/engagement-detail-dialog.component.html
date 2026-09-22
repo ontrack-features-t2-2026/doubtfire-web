@@ -115,8 +115,10 @@
             <div
               class="flex items-center justify-between rounded-t-md border border-[color:var(--ot-color-divider)] p-1 text-sm select-none"
             >
-              <div
-                class="flex items-center"
+              <button
+                class="flex items-center text-left"
+                type="button"
+                [disabled]="!comment.replyTo"
                 [ngClass]="comment.replyTo && 'cursor-pointer hover:text-blue-500 hover:underline'"
                 (click)="scrollToComment(comment.replyTo)"
               >
@@ -136,7 +138,7 @@
                     >
                   }
                 </div>
-              </div>
+              </button>
             </div>
           }
 
@@ -147,32 +149,35 @@
           >
             <div class="action absolute right-3 bottom-3 z-10 flex items-center">
               @if (comment.currentUserCanEdit) {
-                <mat-icon
+                <button
                   aria-label="Edit comment"
+                  mat-icon-button
                   matTooltip="Edit"
                   type="button"
                   (click)="editComment(comment)"
                 >
-                  edit
-                </mat-icon>
+                  <mat-icon aria-hidden="true">edit</mat-icon>
+                </button>
               }
-              <mat-icon
+              <button
                 aria-label="Reply to comment"
+                mat-icon-button
                 matTooltip="Reply"
                 type="button"
                 (click)="replyToComment(comment)"
               >
-                reply
-              </mat-icon>
+                <mat-icon aria-hidden="true">reply</mat-icon>
+              </button>
               @if (comment.currentUserCanDelete) {
-                <mat-icon
+                <button
                   aria-label="Delete comment"
+                  mat-icon-button
                   matTooltip="Delete"
                   type="button"
                   (click)="deleteComment(comment)"
                 >
-                  delete
-                </mat-icon>
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
               }
             </div>
 

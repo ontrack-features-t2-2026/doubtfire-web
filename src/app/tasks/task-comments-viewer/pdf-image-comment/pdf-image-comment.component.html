@@ -1,4 +1,11 @@
-<a (click)="openCommentsModal()">
+<button
+  class="block w-full text-left"
+  type="button"
+  [attr.aria-label]="
+    comment.commentType === 'pdf' ? 'View PDF attachment' : 'View image attachment'
+  "
+  (click)="openCommentsModal()"
+>
   @if (comment.commentType === 'image' && resourceUrl) {
     <img alt="Image attachment preview" height="100%" width="100%" [src]="resourceUrl | safe" />
   }
@@ -7,4 +14,4 @@
       <mat-icon class="">picture_as_pdf</mat-icon> view pdf
     </div>
   }
-</a>
+</button>

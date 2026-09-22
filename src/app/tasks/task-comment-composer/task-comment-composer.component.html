@@ -56,7 +56,7 @@
   [hidden]="!emojiSearchMode || !(emojiSearchResults?.length > 0)"
 >
   @for (emoji of emojiSearchResults; track emoji) {
-    <mat-list-item (click)="emojiSelected(emoji.native)">
+    <button mat-list-item type="button" (click)="emojiSelected(emoji.native)">
       <div class="flex flex-row items-center justify-start">
         <ngx-emoji set="apple" style="align-items: center" [emoji]="emoji" [size]="20"></ngx-emoji>
         <div class="emoji-details flex flex-col items-start justify-center">
@@ -64,7 +64,7 @@
           <div style="font-size: 10px">{{ emoji.colons }}</div>
         </div>
       </div>
-    </mat-list-item>
+    </button>
   }
 </mat-action-list>
 
@@ -167,11 +167,16 @@
     >
       <div
         #commentInput
+        aria-label="Task comment"
+        aria-multiline="true"
         enterkeyhint="send"
         id="textField"
         name="commentComposer"
         placeholder="Aa"
+        role="textbox"
+        [attr.aria-disabled]="!contentEditableValue() || recording"
         [attr.contenteditable]="contentEditableValue() && !recording"
+        [attr.tabindex]="contentEditableValue() && !recording ? 0 : -1"
         [class.active]="($userIsTyping | async) === false"
         [hidden]="recording"
         (beforeinput)="handleBeforeInput($event)"
@@ -190,37 +195,39 @@
       }
       <div id="innerButtons" [hidden]="recording">
         @if (isEditing) {
-          <mat-icon
+          <button
             aria-label="Save edited comment"
-            id="emojiButton"
-            matTooltip="Save edited comment"
-            matTooltipShowDelay="400"
+            class="composer-inline-action"
+            mat-icon-button
+            type="button"
             (click)="saveEditedComment()"
           >
-            check</mat-icon
-          >
+            <mat-icon aria-hidden="true">check</mat-icon>
+          </button>
         }
-        <mat-icon
-          aria-label="Emoji picker button"
-          id="emojiButton"
-          matTooltip="Choose an emoji"
-          matTooltipShowDelay="400"
+        <button
+          aria-label="Choose an emoji"
+          class="composer-inline-action"
+          mat-icon-button
+          type="button"
+          [attr.aria-expanded]="showEmojiPicker"
           (click)="this.showEmojiPicker = !this.showEmojiPicker"
         >
-          emoji_emotions</mat-icon
-        >
+          <mat-icon aria-hidden="true">emoji_emotions</mat-icon>
+        </button>
       </div>
       <div id="innerButtons" [hidden]="recording || !isStaff">
         @if (!isEditing) {
-          <mat-icon
-            aria-label="Feedback template button"
-            id="feedbackTemplateButton"
-            matTooltip="Choose feedback templates"
-            matTooltipShowDelay="400"
+          <button
+            aria-label="Choose feedback templates"
+            class="composer-inline-action"
+            mat-icon-button
+            type="button"
+            [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
           >
-            task</mat-icon
-          >
+            <mat-icon aria-hidden="true">task</mat-icon>
+          </button>
         }
       </div>
     </div>
