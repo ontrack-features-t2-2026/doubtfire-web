@@ -1,10 +1,10 @@
 <mat-card appearance="outlined" class="p-[16px]">
-  <mat-card-header class="mb-2.5 flex justify-between">
+  <mat-card-header class="mb-2.5 flex flex-wrap justify-between gap-2">
     <mat-card-title>
       <h2>Tutor Times Session Summary</h2>
     </mat-card-title>
 
-    <div class="flex gap-1">
+    <div class="flex flex-wrap gap-1">
       @if (role === 'Convenor') {
         <button
           mat-button
@@ -37,8 +37,8 @@
       <button mat-raised-button (click)="goTodayWeek()">Today</button>
       <button class="w-24" color="primary" mat-raised-button (click)="goNextWeek()">Next</button>
     </div>
-    <div class="mb-3 flex flex-row gap-1">
-      <mat-form-field appearance="outline">
+    <div class="mb-3 flex w-full flex-wrap justify-center gap-2">
+      <mat-form-field appearance="outline" class="max-w-full min-w-0 flex-1 basis-48">
         <mat-label>Choose a date</mat-label>
         <input
           matInput
@@ -51,7 +51,7 @@
         <mat-datepicker #startdatepicker></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="max-w-full min-w-0 flex-1 basis-48">
         <mat-label>Choose a date</mat-label>
         <input
           matInput

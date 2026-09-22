@@ -70,7 +70,12 @@
               <div class="flex items-center gap-3">
                 <mat-icon>{{ upload.display.icon }}</mat-icon>
                 {{ upload.model[0].name }}
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -92,7 +97,12 @@
 
               @if (upload.model?.length > 0) {
                 <em>{{ upload.model[0].name }}</em>
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               } @else {
@@ -131,6 +141,7 @@
           </div>
 
           <mat-progress-bar
+            aria-label="File upload progress"
             mode="determinate"
             [value]="$safeNavigationMigration(uploadingInfo?.progress)"
           >

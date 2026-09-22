@@ -1,0 +1,28 @@
+{
+  "recordedAt": "2026-09-21T06:43:26.796Z",
+  "base": "http://127.0.0.1:4314",
+  "webBaseTree": "a82f5171ddf02206610c506224841155164d5644",
+  "webBaseRevision": "788fac88be24626178d8b994193db7cbadf98704",
+  "webSourceDiffSha256": "ef5c569eb67534bfa70246c115563996098d04787642b7b4833357c232b5d0e5",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiProvenance": "Private synthetic fixture manifest and API runtime provenance document. Database authentication. No deploy repository checkout executed.",
+  "scope": "Read-only actual Chrome with synthetic API fixtures. Normal auth and token refresh allowed; other business writes blocked. Viewport width observations, focus/Enter, landmarks, rendered axe and explicit tab states. No full reflow, native zoom, screen reader, mobile Safari or mutation-journey claims.",
+  "checks": [
+    {
+      "id": "tutor-home-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "geometry",
+      "status": "observed",
+      "details": {
+        "width": 320,
+        "overflowCount": 5
+      }
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "browser": "Chrome 153.0.8010.48"
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "message": "Open the account menu and choose Tutorial and Help to replay at any time.",
+    "secondsSinceAutomationStart": 7.8
+  },
+  {
+    "message": "Welcome: start the optional guide, skip for now, or close it.",
+    "secondsSinceAutomationStart": 10.3
+  },
+  {
+    "message": "1 of 4: choose your unit yourself. The tutorial never selects a unit for you.",
+    "secondsSinceAutomationStart": 14.5
+  },
+  {
+    "message": "2 of 4: find task navigation on your unit dashboard.",
+    "secondsSinceAutomationStart": 19
+  },
+  {
+    "message": "3 of 4: locate Select Target Grade. Reading the guide does not change your grade.",
+    "secondsSinceAutomationStart": 21.4
+  },
+  {
+    "message": "4 of 4: find Calendar options. The tutorial creates no subscription.",
+    "secondsSinceAutomationStart": 24.1
+  },
+  {
+    "message": "Finish closes the guide. The written tutorial remains available from every panel.",
+    "secondsSinceAutomationStart": 26.4
+  },
+  {
+    "message": "Replay is always available for eligible students while the institution switch is on.",
+    "secondsSinceAutomationStart": 28.9
+  },
+  {
+    "message": "Synthetic data only. This recording is a draft pending a second human review.",
+    "secondsSinceAutomationStart": 31
+  }
+]

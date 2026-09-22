@@ -5,6 +5,7 @@
 .DS_Store
 build/
 dist/
+coverage/
 bin/
 node_modules/
 vendor/

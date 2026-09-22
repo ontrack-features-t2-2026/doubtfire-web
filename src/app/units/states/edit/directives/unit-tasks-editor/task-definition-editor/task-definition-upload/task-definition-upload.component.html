@@ -1,10 +1,21 @@
-<table #upreqTable class="table-fixed" mat-table [dataSource]="taskDefinition.uploadRequirements">
+<table
+  #upreqTable
+  aria-label="Task upload requirements"
+  class="table-fixed"
+  mat-table
+  [dataSource]="taskDefinition.uploadRequirements"
+>
   <!-- File name Column -->
   <ng-container matColumnDef="file-name" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 30%">Filename</th>
-    <td *matCellDef="let upreq" mat-cell style="width: 30%">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 30%">
       <mat-form-field appearance="outline">
-        <input matInput required [(ngModel)]="upreq.name" />
+        <input
+          matInput
+          required
+          [attr.aria-label]="'Filename for upload requirement ' + (rowIndex + 1)"
+          [(ngModel)]="upreq.name"
+        />
       </mat-form-field>
     </td>
   </ng-container>
@@ -12,8 +23,12 @@
   <!-- File Type Column -->
   <ng-container matColumnDef="file-type" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 20%">Type</th>
-    <td *matCellDef="let upreq" mat-cell style="width: 20%">
-      <mat-select placeholder="File Type" [(ngModel)]="upreq.type">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 20%">
+      <mat-select
+        placeholder="File Type"
+        [aria-label]="'File type for ' + (upreq.name || 'upload requirement ' + (rowIndex + 1))"
+        [(ngModel)]="upreq.type"
+      >
         <mat-option value="code">Code</mat-option>
         <mat-option value="document">PDF</mat-option>
         <mat-option value="csv">Spreadsheet (CSV, XLS, XLSX)</mat-option>
@@ -28,9 +43,14 @@
 
   <ng-container matColumnDef="submission-history" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 15%">Submission History</th>
-    <td *matCellDef="let upreq" mat-cell style="width: 15%">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 15%">
       <mat-checkbox
         matTooltip="Retain this file in the task's submission history"
+        [aria-label]="
+          'Retain ' +
+          (upreq.name || 'upload requirement ' + (rowIndex + 1)) +
+          ' in submission history'
+        "
         [(ngModel)]="upreq.submissionHistory"
       ></mat-checkbox>
     </td>
@@ -39,12 +59,25 @@
   <!-- TurnItIn Check Column -->
   <ng-container matColumnDef="tii-check" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 20%">Check Similarity</th>
-    <td *matCellDef="let upreq" mat-cell style="width: 20%">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 20%">
       @if (upreq.type === 'document' && tiiEnabled()) {
-        <mat-checkbox [(ngModel)]="upreq.tiiCheck">TurnItIn</mat-checkbox>
+        <mat-checkbox
+          [aria-label]="
+            'TurnItIn similarity check for ' +
+            (upreq.name || 'upload requirement ' + (rowIndex + 1))
+          "
+          [(ngModel)]="upreq.tiiCheck"
+          >TurnItIn</mat-checkbox
+        >
       }
       @if (upreq.type === 'code') {
-        <mat-checkbox [(ngModel)]="upreq.tiiCheck">Jplag</mat-checkbox>
+        <mat-checkbox
+          [aria-label]="
+            'Jplag similarity check for ' + (upreq.name || 'upload requirement ' + (rowIndex + 1))
+          "
+          [(ngModel)]="upreq.tiiCheck"
+          >Jplag</mat-checkbox
+        >
       }
     </td>
   </ng-container>
@@ -52,10 +85,18 @@
   <!-- Flag Pct -->
   <ng-container matColumnDef="flag-pct" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 20%">Flag At</th>
-    <td *matCellDef="let upreq" mat-cell style="width: 20%">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 20%">
       @if (upreq.type === 'document' && upreq.tiiCheck && tiiEnabled()) {
         <mat-form-field appearance="outline" style="width: 7em">
-          <input matInput type="number" [(ngModel)]="upreq.tiiPct" />
+          <input
+            matInput
+            type="number"
+            [attr.aria-label]="
+              'Flag at similarity percentage for ' +
+              (upreq.name || 'upload requirement ' + (rowIndex + 1))
+            "
+            [(ngModel)]="upreq.tiiPct"
+          />
           <span matTextSuffix>&nbsp;%</span>
         </mat-form-field>
       }
@@ -65,11 +106,11 @@
   <!-- Actions -->
   <ng-container matColumnDef="row-actions" sticky>
     <th *matHeaderCellDef mat-header-cell style="width: 10%"></th>
-    <td *matCellDef="let upreq" mat-cell style="width: 10%">
+    <td *matCellDef="let upreq; let rowIndex = index" mat-cell style="width: 10%">
       <button
-        aria-label="delete upload requirement"
         color="warn"
         mat-icon-button
+        [attr.aria-label]="'Delete upload requirement ' + (upreq.name || rowIndex + 1)"
         (click)="removeUpReq(upreq)"
       >
         <mat-icon>delete</mat-icon>
@@ -83,7 +124,12 @@
       <mat-toolbar>
         <mat-toolbar-row>
           <span class="flex flex-grow"></span>
-          <button color="primary" mat-flat-button (click)="addUpReq()">
+          <button
+            aria-label="Add upload requirement"
+            color="primary"
+            mat-flat-button
+            (click)="addUpReq()"
+          >
             <mat-icon>add</mat-icon> Add
           </button>
         </mat-toolbar-row>

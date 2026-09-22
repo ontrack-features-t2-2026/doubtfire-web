@@ -135,3 +135,64 @@ describe('special surface palette', () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe('task dashboard enabled-tab contrast', () => {
+  const css = compile(
+    'src/app/projects/states/dashboard/directives/task-dashboard/task-dashboard.component.scss',
+    {loadPaths: ['node_modules'], logger: {warn: () => {}}},
+  ).css;
+  const header = css.match(/\.task-dashboard-tabs \.mat-mdc-tab-header\s*\{([^}]+)\}/)?.[1] ?? '';
+  const tabTokens = Object.fromEntries(
+    [...header.matchAll(/(--mat-tab-[\w-]+):\s*var\((--ot-[\w-]+)\)/g)].map(
+      ([, token, paletteToken]) => [token, paletteToken],
+    ),
+  );
+  const labelTokens = [
+    '--mat-tab-active-label-text-color',
+    '--mat-tab-active-focus-label-text-color',
+    '--mat-tab-active-hover-label-text-color',
+    '--mat-tab-inactive-label-text-color',
+    '--mat-tab-inactive-focus-label-text-color',
+    '--mat-tab-inactive-hover-label-text-color',
+  ];
+
+  it('compiles component-scoped active/inactive colors without overriding disabled opacity', () => {
+    for (const label of labelTokens) {
+      expect(tabTokens[label], label).toBeDefined();
+    }
+    expect(css).not.toMatch(/opacity\s*:/);
+  });
+
+  it.each(['light', 'dark'])(
+    '%s enabled labels and selection indicators meet contrast targets',
+    (mode) => {
+      const palette = tokens(mode);
+      for (const surface of [
+        '--ot-color-page',
+        '--ot-color-surface',
+        '--ot-color-surface-raised',
+      ]) {
+        for (const label of labelTokens) {
+          const foreground = palette[tabTokens[label]];
+          expect(foreground, label).toBeDefined();
+          expect(
+            contrast(foreground, palette[surface]),
+            `${mode} ${label}/${surface}`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
+        for (const state of ['active', 'active-focus', 'active-hover']) {
+          const indicator = palette[tabTokens[`--mat-tab-${state}-indicator-color`]];
+          expect(indicator, state).toBeDefined();
+          expect(
+            contrast(indicator, palette[surface]),
+            `${mode} ${state}/${surface}`,
+          ).toBeGreaterThanOrEqual(3);
+        }
+      }
+    },
+  );
+
+  it('detects the original dark active-label contrast failure', () => {
+    expect(contrast('#5457e5', '#171b21')).toBeLessThan(4.5);
+  });
+});

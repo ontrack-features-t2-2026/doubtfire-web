@@ -23,7 +23,15 @@
 }
 
 .removeStyle {
+  display: block;
+  color: inherit;
   text-decoration: none;
+
+  &:focus-visible {
+    outline: 3px solid var(--ot-color-primary, #006b80);
+    outline-offset: 3px;
+    border-radius: 15px;
+  }
 }
 
 .mat-mdc-card-header {
@@ -82,6 +90,20 @@
 
   .mat-mdc-card-actions {
     margin-bottom: 0px;
+  }
+}
+
+@media (max-width: 599.98px) {
+  .unit-card-slot {
+    width: 300px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .unit-card {
+    width: 100%;
+    max-width: 300px;
+    margin-right: 0;
   }
 }
 

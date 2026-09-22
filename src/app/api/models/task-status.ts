@@ -309,23 +309,23 @@ export class TaskStatus {
     ['attention_required', 'sms_failed'],
   ]);
 
-  // Please make sure this matches task-status-colors.less
+  // Please make sure this matches task-status-colors.scss
   public static readonly STATUS_COLORS: Map<TaskStatusEnum, string> = new Map([
-    ['ready_for_feedback', '#0079D8'],
+    ['ready_for_feedback', '#0064b4'],
     ['not_started', '#CCCCCC'],
-    ['working_on_it', '#EB8F06'],
-    ['need_help', '#a48fce'],
+    ['working_on_it', '#8a5400'],
+    ['need_help', '#5b4a86'],
     ['fix_and_resubmit', '#f2d85c'],
-    ['feedback_exceeded', '#d46b54'],
+    ['feedback_exceeded', '#9c3d29'],
     ['redo', '#804000'],
-    ['discuss', '#31b0d5'],
+    ['discuss', '#146a86'],
     ['rediscuss', '#126352'],
-    ['demonstrate', '#428bca'],
-    ['complete', '#5BB75B'],
+    ['demonstrate', '#2b5f8f'],
+    ['complete', '#2f7a2f'],
     ['fail', '#d93713'],
     ['time_exceeded', '#d93713'],
     ['assess_in_portfolio', '#f2d85c'],
-    ['attention_required', '#f1814d'],
+    ['attention_required', '#a8431a'],
   ]);
 
   public static readonly STATUS_SEQ: Map<TaskStatusEnum, number> = new Map([

@@ -1,9 +1,12 @@
 <div class="flex flex-row">
-  <div class="mr-6 w-4 shrink-0" [style.background-color]="task.color"></div>
-  <div class="flex min-w-0 shrink grow flex-col py-4">
+  <div class="mr-3 w-2 shrink-0 sm:mr-6 sm:w-4" [style.background-color]="task.color"></div>
+  <div
+    class="flex min-w-0 shrink grow flex-col"
+    style="padding-block: var(--dashboard-row-spacing, 1rem)"
+  >
     <h4 class="mb-1 min-w-0 grow">
       <a
-        class="block truncate rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        class="block rounded break-words focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
         [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation]"
       >
         {{ task.title }}
@@ -27,23 +30,33 @@
           <span>{{ warning.label }}</span>
         </span>
       }
-      @if (task.hasFeedback) {
-        <span
-          class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-green-800"
+      @if (task.hasFeedback === true) {
+        <a
+          class="inline-flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+          [attr.aria-label]="'Open staff feedback for ' + task.title"
+          [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation, 'feedback']"
         >
           <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
             feedback
           </mat-icon>
           <span>Staff feedback</span>
-        </span>
+        </a>
+      } @else if (task.hasFeedback === null) {
+        <span class="text-xs">Feedback unavailable</span>
       }
     </div>
     <p class="mt-1 mb-0 text-sm font-medium">Status: {{ task.statusLabel }}</p>
   </div>
-  <div class="mr-6 ml-2 flex flex-row items-center justify-end gap-4">
+  <div class="mx-2 flex shrink-0 flex-row items-center justify-end gap-1 sm:mr-4 sm:gap-2">
     @if (!isExpanded && task.comments > 0) {
-      <div class="flex size-8 rounded-full bg-red-500">
-        <span class="m-auto text-xl font-medium text-white">{{ task.comments }}</span>
+      <div
+        class="flex min-h-8 min-w-8 rounded-full bg-formatif-blue px-1"
+        role="status"
+        [attr.aria-label]="task.comments + ' unread comments on ' + task.title"
+      >
+        <span aria-hidden="true" class="m-auto text-xl font-medium text-white">{{
+          task.comments
+        }}</span>
       </div>
     }
     <button

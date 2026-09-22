@@ -1,6 +1,7 @@
 @if (showHeader) {
   <mat-toolbar
     class="flex items-center justify-start"
+    role="banner"
     style="min-height: 85px"
     [ngClass]="{inbox: globalState.isInboxState}"
   >
@@ -11,9 +12,9 @@
         </a>
       }
 
-      <a class="pt-2.5" routerLink="/home">
+      <a aria-label="Home" class="pt-2.5" routerLink="/home">
         <mat-icon
-          aria-label="Formatif logo"
+          aria-hidden="true"
           class="formatif-icon"
           style="margin-right: 20px; margin-left: 20px"
           svgIcon="formatif-logo"

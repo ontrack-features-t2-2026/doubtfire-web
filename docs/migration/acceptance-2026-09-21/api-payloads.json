@@ -1,0 +1,169 @@
+{
+  "student_target_grade": [
+    {
+      "tutorial_id": 13,
+      "tutorial_stream_id": null,
+      "grade": 0,
+      "num": 2
+    },
+    {
+      "tutorial_id": 13,
+      "tutorial_stream_id": null,
+      "grade": 2,
+      "num": 2
+    },
+    {
+      "tutorial_id": 14,
+      "tutorial_stream_id": null,
+      "grade": 1,
+      "num": 2
+    },
+    {
+      "tutorial_id": 14,
+      "tutorial_stream_id": null,
+      "grade": 3,
+      "num": 2
+    }
+  ],
+  "task_completion_stats": {
+    "unit": {
+      "median": 2.5,
+      "lower": 2,
+      "upper": 4,
+      "min": 1,
+      "max": 4
+    },
+    "tutorial": {
+      "13": {
+        "median": 2,
+        "lower": 1,
+        "upper": 3,
+        "min": 1,
+        "max": 3
+      },
+      "14": {
+        "median": 3,
+        "lower": 2,
+        "upper": 4,
+        "min": 2,
+        "max": 4
+      }
+    },
+    "grade": {
+      "0": {
+        "median": 1,
+        "lower": 1,
+        "upper": 1,
+        "min": 1,
+        "max": 1
+      },
+      "1": {
+        "median": 2,
+        "lower": 2,
+        "upper": 2,
+        "min": 2,
+        "max": 2
+      },
+      "2": {
+        "median": 3,
+        "lower": 3,
+        "upper": 3,
+        "min": 3,
+        "max": 3
+      },
+      "3": {
+        "median": 4,
+        "lower": 4,
+        "upper": 4,
+        "min": 4,
+        "max": 4
+      }
+    }
+  },
+  "task_status_pct": {
+    "55": {
+      "13": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 4
+        }
+      ],
+      "14": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 4
+        }
+      ]
+    },
+    "56": {
+      "13": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 2
+        },
+        {
+          "tutorial_stream_id": null,
+          "status": "working_on_it",
+          "num": 2
+        }
+      ],
+      "14": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 4
+        }
+      ]
+    },
+    "57": {
+      "13": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 2
+        },
+        {
+          "tutorial_stream_id": null,
+          "status": "working_on_it",
+          "num": 2
+        }
+      ],
+      "14": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 2
+        },
+        {
+          "tutorial_stream_id": null,
+          "status": "working_on_it",
+          "num": 2
+        }
+      ]
+    },
+    "58": {
+      "13": [
+        {
+          "tutorial_stream_id": null,
+          "status": "working_on_it",
+          "num": 4
+        }
+      ],
+      "14": [
+        {
+          "tutorial_stream_id": null,
+          "status": "complete",
+          "num": 2
+        },
+        {
+          "tutorial_stream_id": null,
+          "status": "working_on_it",
+          "num": 2
+        }
+      ]
+    }
+  }
+}

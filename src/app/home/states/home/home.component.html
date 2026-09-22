@@ -20,10 +20,11 @@
     </div>
     <div class="flex flex-row flex-wrap items-center" [hidden]="loadingUnitRoles">
       @for (unitRole of unitRoles | isActiveUnitRole; track unitRole) {
-        <div>
+        <div class="unit-card-slot">
           @if (!unitRole.unit.teachingPeriod || unitRole.unit.teachingPeriod?.active) {
-            <div
+            <a
               class="removeStyle"
+              [attr.aria-label]="unitRole.unit?.name + ' - ' + unitRole.role"
               [routerLink]="[
                 '/units',
                 $safeNavigationMigration(unitRole.unit?.id),
@@ -55,11 +56,12 @@
                   <mat-progress-bar
                     class="unit-progress-slider"
                     mode="determinate"
+                    [attr.aria-label]="'Teaching period progress for ' + unitRole.unit.name"
                     [value]="unitRole.unit.teachingPeriodProgress"
                   ></mat-progress-bar>
                 </mat-card-footer>
               </mat-card>
-            </div>
+            </a>
           }
         </div>
       }
@@ -73,21 +75,20 @@
         </mat-card-content></mat-card
       >
 
-      <a routerLink="/view-all-units">
-        <button
-          aria-label="view all units"
-          color="primary"
-          extended
-          mat-fab
-          matTooltip="View previous units"
-          matTooltipPosition="above"
-        >
-          <mat-icon
-            class="items-center"
-            style="color: var(--ot-color-on-primary, #fff); padding-right: 1px"
-            >history</mat-icon
-          >View all
-        </button>
+      <a
+        aria-label="view all units"
+        color="primary"
+        extended
+        mat-fab
+        matTooltip="View previous units"
+        matTooltipPosition="above"
+        routerLink="/view-all-units"
+      >
+        <mat-icon
+          class="items-center"
+          style="color: var(--ot-color-on-primary, #fff); padding-right: 1px"
+          >history</mat-icon
+        >View all
       </a>
     </div>
   </div>
@@ -103,9 +104,13 @@
 
       <div class="flex flex-row flex-wrap items-center" [hidden]="loadingProjects">
         @for (project of projects; track project) {
-          <div>
+          <div class="unit-card-slot">
             @if (project.unit.isActive) {
-              <div class="removeStyle" [routerLink]="['/projects', project.id, 'dashboard']">
+              <a
+                class="removeStyle"
+                [attr.aria-label]="project.unit.name"
+                [routerLink]="['/projects', project.id, 'dashboard']"
+              >
                 <mat-card class="unit-card">
                   <mat-card-header>
                     <mat-card-title class="f-card-title">{{ project.unit.name }}</mat-card-title>
@@ -126,39 +131,38 @@
                   >
                     <mat-progress-bar
                       mode="determinate"
+                      [attr.aria-label]="'Teaching period progress for ' + project.unit.name"
                       [value]="project.unit.teachingPeriodProgress"
                     ></mat-progress-bar>
                   </mat-card-footer>
                 </mat-card>
-              </div>
+              </a>
             }
           </div>
         }
         <!-- Cross-unit dashboard feature -->
         <div class="flex h-60 flex-col items-start justify-around">
-          <a routerLink="/dashboard">
-            <button
-              aria-label="view cross-unit dashboard"
-              color="primary"
-              extended
-              mat-fab
-              matTooltip="View current units"
-              matTooltipPosition="above"
-            >
-              <mat-icon style="color: white">dashboard</mat-icon> View all
-            </button>
+          <a
+            aria-label="view cross-unit dashboard"
+            color="primary"
+            extended
+            mat-fab
+            matTooltip="View current units"
+            matTooltipPosition="above"
+            routerLink="/dashboard"
+          >
+            <mat-icon style="color: white">dashboard</mat-icon> View all
           </a>
-          <a routerLink="/view-all-projects">
-            <button
-              aria-label="view previous projects"
-              color="primary"
-              extended
-              mat-fab
-              matTooltip="View previous units"
-              matTooltipPosition="above"
-            >
-              <mat-icon style="color: white">history</mat-icon> View previous
-            </button>
+          <a
+            aria-label="view previous projects"
+            color="primary"
+            extended
+            mat-fab
+            matTooltip="View previous units"
+            matTooltipPosition="above"
+            routerLink="/view-all-projects"
+          >
+            <mat-icon style="color: white">history</mat-icon> View previous
           </a>
         </div>
       </div>

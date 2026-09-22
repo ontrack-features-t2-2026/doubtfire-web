@@ -14,8 +14,9 @@
     "testDurationSeconds": 31.38,
     "testBuildSeconds": 24.54
   },
-  "productionBuild": {
+  "applicationBuild": {
     "result": "passed",
-    "durationSeconds": 51.672
+    "durationSeconds": 51.672,
+    "configuration": "default development (npm run build / ng build)"
   }
 }

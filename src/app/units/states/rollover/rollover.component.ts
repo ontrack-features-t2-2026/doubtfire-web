@@ -55,11 +55,20 @@ export class RolloverComponent implements OnInit {
 
   initUnit() {
     this.teachingPeriodService.cache.values.subscribe((periods) => {
-      this.teachingPeriods = periods;
-      this.teachingPeriods = periods.filter((p) => p.endDate.getTime() > Date.now());
-      if (this.teachingPeriods.length) {
-        this.teachingPeriod = this.teachingPeriods[this.teachingPeriods.length - 1];
-      }
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      this.teachingPeriods = periods
+        .filter((period) => period.endDate.getTime() > now.getTime())
+        .sort(
+          (left, right) =>
+            left.startDate.getTime() - right.startDate.getTime() || left.id - right.id,
+        );
+
+      // Prefer the next local calendar start, including today. If every eligible period
+      // has already started, use the most recently started one.
+      this.teachingPeriod =
+        this.teachingPeriods.find((period) => period.startDate.getTime() >= today) ??
+        this.teachingPeriods.at(-1);
     });
   }
 

@@ -148,24 +148,33 @@
             >tune</mat-icon
           >
         </button>
-        <mat-menu #taskListFiltersMenu="matMenu" class="task-list-filters-menu" xPosition="after">
-          <div class="px-3 py-2" (click)="$event.stopPropagation()">
+        <mat-menu
+          #taskListFiltersMenu="matMenu"
+          aria-label="Task list filters"
+          class="task-list-filters-menu"
+          xPosition="after"
+        >
+          <div class="px-3 py-2" role="none">
             <div
+              aria-hidden="true"
               class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
             >
               Sort tasks
             </div>
-            <div class="mb-2">
+            <div aria-label="Sort tasks" class="mb-2" role="group">
               @for (option of sortOptions; track option.value) {
                 <button
                   class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-[var(--ot-color-hover)]"
+                  mat-menu-item
+                  role="menuitemradio"
                   type="button"
+                  [attr.aria-checked]="viewPreferences.sortBy === option.value"
                   [ngClass]="{
                     'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-selected-text)]':
                       viewPreferences.sortBy === option.value,
                     'text-[color:var(--ot-color-text)]': viewPreferences.sortBy !== option.value,
                   }"
-                  (click)="setSortBy(option.value)"
+                  (click)="$event.stopPropagation(); setSortBy(option.value)"
                 >
                   <mat-icon class="task-list-menu-icon shrink-0">{{ option.icon }}</mat-icon>
                   <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
@@ -182,37 +191,54 @@
             </div>
 
             <div
+              aria-hidden="true"
               class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
             >
               Filters
             </div>
-            <div class="flex flex-col gap-1">
-              <mat-checkbox
-                color="primary"
-                [ngModel]="viewPreferences.hideCompleted"
-                (ngModelChange)="toggleHideCompleted($event)"
+            <div aria-label="Filters" class="flex flex-col gap-1" role="group">
+              <button
+                mat-menu-item
+                role="menuitemcheckbox"
+                type="button"
+                [attr.aria-checked]="viewPreferences.hideCompleted"
+                (click)="
+                  $event.stopPropagation(); toggleHideCompleted(!viewPreferences.hideCompleted)
+                "
               >
+                <mat-icon aria-hidden="true">{{
+                  viewPreferences.hideCompleted ? 'check_box' : 'check_box_outline_blank'
+                }}</mat-icon>
                 Hide completed tasks
-              </mat-checkbox>
-              <mat-checkbox
-                color="primary"
+              </button>
+              <button
+                mat-menu-item
+                role="menuitemcheckbox"
+                type="button"
+                [attr.aria-checked]="viewPreferences.showAboveTargetGrade"
                 [disabled]="!project"
-                [ngModel]="viewPreferences.showAboveTargetGrade"
-                (ngModelChange)="toggleShowAboveTargetGrade($event)"
+                (click)="
+                  $event.stopPropagation();
+                  toggleShowAboveTargetGrade(!viewPreferences.showAboveTargetGrade)
+                "
               >
+                <mat-icon aria-hidden="true">{{
+                  viewPreferences.showAboveTargetGrade ? 'check_box' : 'check_box_outline_blank'
+                }}</mat-icon>
                 Show tasks beyond target grade
-              </mat-checkbox>
+              </button>
             </div>
 
             <div
               class="mt-2 flex items-center justify-end gap-2 text-xs text-[color:var(--ot-color-text-muted)]"
+              role="none"
             >
               <button
                 class="shrink-0 text-[color:var(--ot-color-link)] disabled:text-[color:var(--ot-color-text-muted)]"
-                mat-button
+                mat-menu-item
                 type="button"
                 [disabled]="!hasNonDefaultViewPreferences"
-                (click)="resetViewPreferences()"
+                (click)="$event.stopPropagation(); resetViewPreferences()"
               >
                 Reset
               </button>
@@ -226,8 +252,11 @@
   <div class="scrollable min-h-0 flex-1 overflow-x-hidden" itemSize="60">
     <mat-nav-list #taskDefinitions>
       @for (taskDef of filteredTaskDefinitions; track taskDef) {
-        <mat-list-item
-          class="flex w-full cursor-pointer items-center border-b border-[color:var(--ot-color-divider)] p-1"
+        <button
+          class="flex w-full cursor-pointer items-center border-b border-[color:var(--ot-color-divider)] p-1 text-left focus-visible:outline-2! focus-visible:-outline-offset-2! focus-visible:outline-[color:var(--ot-color-focus)]!"
+          mat-list-item
+          type="button"
+          [attr.aria-pressed]="isSelectedTaskDefinition(taskDef)"
           [disableRipple]="true"
           [ngClass]="{
             'bg-[var(--ot-color-selected)] hover:bg-[var(--ot-color-selected)]':
@@ -249,6 +278,7 @@
                   class="min-w-0 flex-1 truncate text-center text-sm leading-none font-bold text-[color:var(--ot-color-text)]"
                 >
                   {{ taskDef.abbreviation }}
+                  <span class="sr-only">{{ taskDef.name }}</span>
                 </span>
                 @if (taskListItem(taskDef); as task) {
                   <ng-container
@@ -335,7 +365,7 @@
               </div>
             }
           }
-        </mat-list-item>
+        </button>
       } @empty {
         <div class="text-muted text-center">No tasks to display</div>
       }
@@ -356,6 +386,7 @@
                 matTooltip="Create Portfolio"
               >
                 <mat-icon class="m-0 place-self-center">history_edu</mat-icon>
+                <span class="sr-only">Create portfolio</span>
               </span>
               <div class="relative flex shrink-0 items-center justify-center">
                 <status-icon

@@ -1,0 +1,25 @@
+- table "Task upload requirements":
+  - rowgroup:
+    - row "Filename Type Submission History Check Similarity Flag At":
+      - columnheader "Filename"
+      - columnheader "Type"
+      - columnheader "Submission History"
+      - columnheader "Check Similarity"
+      - columnheader "Flag At"
+      - columnheader
+  - rowgroup:
+    - row "Analysis Spreadsheet Retain Analysis Spreadsheet in submission history Delete upload requirement Analysis Spreadsheet":
+      - cell "Analysis Spreadsheet":
+        - textbox "Filename for upload requirement 1": Analysis Spreadsheet
+      - cell:
+        - combobox "File type for Analysis Spreadsheet": Spreadsheet (CSV, XLS, XLSX)
+      - cell "Retain Analysis Spreadsheet in submission history":
+        - checkbox "Retain Analysis Spreadsheet in submission history" [checked]
+      - cell
+      - cell
+      - cell "Delete upload requirement Analysis Spreadsheet":
+        - button "Delete upload requirement Analysis Spreadsheet"
+  - rowgroup:
+    - row "Add upload requirement":
+      - cell "Add upload requirement":
+        - button "Add upload requirement": Add

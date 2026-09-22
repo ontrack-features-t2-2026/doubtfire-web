@@ -28,7 +28,7 @@
       } @else {
         <div>
           <button
-            aria-label=""
+            aria-label="Mark as Redo"
             class="button status-chip redo"
             mat-icon-button
             matTooltip="Mark as Redo"
@@ -52,7 +52,7 @@
         </button> -->
         </div>
         <button
-          aria-label=""
+          aria-label="Mark as Resubmit"
           class="button status-chip fix-and-resubmit"
           mat-icon-button
           matTooltip="Mark as Resubmit"
@@ -66,13 +66,16 @@
 
         @if (selectedTask && selectedTask.suggestedTaskStatus) {
           <button
-            aria-label=""
             class="button extra-large-button status-chip suggested-task-status"
             mat-icon-button
             matTooltip="Recommended: Mark as {{
               taskService.statusData(selectedTask.suggestedTaskStatus).label
             }}"
             matTooltipPosition="above"
+            [attr.aria-label]="
+              'Recommended: Mark as ' +
+              taskService.statusData(selectedTask.suggestedTaskStatus).label
+            "
             [disabled]="
               !actionButtonEnabled ||
               (selectedTask?.suggestedTaskStatus === 'complete' && !selectedTask?.canMarkComplete)
@@ -123,10 +126,14 @@
     </span>
   </ng-template>
 
-  <div class="flex w-full">
-    <f-user-badge class="flex-1" [selectedTask]="selectedTask"></f-user-badge>
+  <div class="footer-content flex w-full">
+    <div class="footer-student flex-1">
+      @if (selectedTask) {
+        <f-user-badge [selectedTask]="selectedTask"></f-user-badge>
+      }
+    </div>
     <div
-      class="flex items-center"
+      class="footer-assessment flex items-center"
       [ngClass]="hideMainActionButtonsForModeration ? 'w-full justify-center' : 'justify-between'"
     >
       @if (viewType !== 'moderation' && !hideMainActionButtonsForModeration) {
@@ -144,11 +151,14 @@
                 <ng-container [ngTemplateOutlet]="statusActionButtons"></ng-container>
                 <mat-divider class="mx-2.5" [vertical]="true"></mat-divider>
               } @else {
-                <f-moderation class="ml-[100px] pl-[125px]" [task]="selectedTask"></f-moderation>
+                <f-moderation
+                  class="footer-moderation ml-[100px] pl-[125px]"
+                  [task]="selectedTask"
+                ></f-moderation>
               }
 
               <button
-                aria-label=""
+                aria-label="Action options"
                 class="button small-button"
                 mat-icon-button
                 matTooltip="Action options"
@@ -180,7 +190,7 @@
       }
     </div>
 
-    <div class="flex flex-1 flex-row items-center justify-end">
+    <div class="footer-utilities flex flex-1 flex-row items-center justify-end">
       <!-- @if (selectedTask?.similaritiesDetected) {
         <div class="relative inline-block">
           <div
@@ -254,7 +264,7 @@
       }
 
       <button
-        aria-label=""
+        aria-label="Submission Options"
         class="button small-button"
         mat-icon-button
         matTooltip="Submission Options"
@@ -332,7 +342,7 @@
         </button>
       </mat-menu>
       <button
-        aria-label=""
+        aria-label="Download submitted files"
         class="button small-button"
         mat-icon-button
         matTooltip="Download submitted files"
@@ -343,7 +353,7 @@
         <mat-icon class="small-icon">sim_card_download</mat-icon>
       </button>
       <button
-        aria-label=""
+        aria-label="Download Submission"
         class="button small-button"
         mat-icon-button
         matTooltip="Download Submission"
@@ -353,22 +363,25 @@
       >
         <mat-icon class="small-icon">file_download</mat-icon>
       </button>
-      <f-project-progress-bar
-        [matTooltip]="
-          selectedTask?.project?.taskStats?.length > 4
-            ? selectedTask.project.taskStats[4].value +
-              '% progress towards ' +
-              selectedTask.project.targetGradeWord
-            : 'Progress unavailable'
-        "
-        [matTooltipDisabled]="!selectedTask"
-        [progress]="selectedTask?.project?.taskStats ?? []"
-      ></f-project-progress-bar>
-      <mat-chip-listbox aria-label="Target Grade Symbol" class="pointer-events-none">
-        <mat-chip-option style="min-width: 33px">{{
-          selectedTask?.project?.targetGradeAcronym
-        }}</mat-chip-option>
-      </mat-chip-listbox>
+      @if (selectedTask?.project) {
+        <f-project-progress-bar
+          [matTooltip]="
+            selectedTask?.project?.taskStats?.length > 4
+              ? selectedTask.project.taskStats[4].value +
+                '% progress towards ' +
+                selectedTask.project.targetGradeWord
+              : 'Progress unavailable'
+          "
+          [matTooltipDisabled]="!selectedTask"
+          [progress]="selectedTask?.project?.taskStats ?? []"
+        ></f-project-progress-bar>
+        <span
+          class="inline-flex min-w-[33px] items-center justify-center rounded-full bg-[var(--ot-color-surface)] px-2 py-1"
+        >
+          <span class="sr-only">Target grade: {{ selectedTask.project.targetGradeWord }}</span>
+          <span aria-hidden="true">{{ selectedTask.project.targetGradeAcronym }}</span>
+        </span>
+      }
     </div>
   </div>
 </mat-toolbar>

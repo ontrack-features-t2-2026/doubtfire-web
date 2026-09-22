@@ -8,5 +8,4 @@ CHANGELOG.md
 JPlag-Report-Viewer/
 .github/
 polyfills.ts
-test.ts
 main.ts

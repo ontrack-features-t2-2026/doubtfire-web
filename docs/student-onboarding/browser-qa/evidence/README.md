@@ -50,5 +50,5 @@ Those remaining activities are tracked in [validation.md](../../validation.md).
 
 [combined-validation.json](combined-validation.json) records the exact tutorial
 and migration heads for a temporary local compatibility tree: all 1,158 tests in
-151 files and its production build passed. That tree was never pushed or merged
+151 files and its default development build passed. That tree was never pushed or merged
 on GitHub; reviewers still control merge decisions.
