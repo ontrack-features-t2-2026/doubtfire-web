@@ -60,7 +60,10 @@ function marker(): string | null {
 }
 
 describe('ThemeService', () => {
+  let originalMatchMedia: PropertyDescriptor | undefined;
+
   beforeEach(() => {
+    originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
     installLocalStorage();
     document.documentElement.removeAttribute('data-ot-theme');
     document.documentElement.style.colorScheme = '';
@@ -69,6 +72,11 @@ describe('ThemeService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    if (originalMatchMedia) {
+      Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+    } else {
+      delete (window as unknown as {matchMedia?: unknown}).matchMedia;
+    }
   });
 
   it('updates browser chrome on initial paint and live System changes', () => {
