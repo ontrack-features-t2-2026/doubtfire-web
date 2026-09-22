@@ -10,6 +10,7 @@ import {of} from 'rxjs';
 import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-model';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
@@ -53,6 +54,15 @@ describe('Shared task comment controls', () => {
   });
 
   afterEach(() => vi.unstubAllGlobals());
+
+  it('passes automated accessibility checks for student and staff feedback controls', async () => {
+    await fixture.whenStable();
+    await expectAccessible(fixture.nativeElement);
+    fixture.componentRef.setInput('task', {id: 456, unit: {currentUserIsStaff: true}});
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await expectAccessible(fixture.nativeElement);
+  });
 
   it('exposes a named multiline textbox and removes it from focus while recording', () => {
     const editor = fixture.nativeElement.querySelector('[role="textbox"]') as HTMLElement;

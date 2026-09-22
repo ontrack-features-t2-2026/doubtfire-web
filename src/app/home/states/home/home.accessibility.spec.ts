@@ -7,6 +7,7 @@ import {of} from 'rxjs';
 import {UserService} from 'src/app/api/models/doubtfire-model';
 import {IsActiveUnitRole} from 'src/app/common/pipes/is-active-unit-role.pipe';
 import {DateService} from 'src/app/common/services/date.service';
+import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {HomeComponent} from './home.component';
@@ -75,6 +76,11 @@ describe('Home unit navigation accessibility', () => {
     fixture.componentInstance.projects = [];
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a.removeStyle')).toBeNull();
+  });
+
+  it('passes automated accessibility checks for the student and staff entry points', async () => {
+    await fixture.whenStable();
+    await expectAccessible(fixture.nativeElement);
   });
 
   it('uses one control for each view-all destination', () => {

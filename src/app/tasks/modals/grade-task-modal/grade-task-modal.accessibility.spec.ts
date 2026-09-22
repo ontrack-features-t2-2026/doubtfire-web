@@ -8,6 +8,7 @@ import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import {MatSliderModule} from '@angular/material/slider';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {GradeService} from 'src/app/common/services/grade.service';
+import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {GradeTaskModalComponent} from './grade-task-modal.component';
 
 describe('GradeTaskModalComponent rendered accessibility', () => {
@@ -53,6 +54,7 @@ describe('GradeTaskModalComponent rendered accessibility', () => {
     await Promise.resolve();
     TestBed.tick();
     const dialog = document.querySelector('mat-dialog-container')!;
+    await expectAccessible(dialog as HTMLElement);
     const titleId = dialog.getAttribute('aria-labelledby')!;
     expect(document.getElementById(titleId)?.textContent).toContain('Assess Task Quality');
     expect(dialog.querySelector('[role="radiogroup"]')?.getAttribute('aria-label')).toBe(

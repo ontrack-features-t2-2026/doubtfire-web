@@ -25,6 +25,7 @@
     "prepare": "husky install",
     "test": "ng test",
     "test:ci": "ng test --no-watch --no-progress",
+    "test:a11y": "ng test --no-watch --no-progress --include=\"**/*.accessibility.spec.ts\" --include=\"**/testing/accessibility.spec.ts\"",
     "typecheck": "ngc -p src/tsconfig.app.json --noEmit",
     "serve": "export NG_FORCE_TTY=false && export NODE_OPTIONS=--max_old_space_size=4096 && ng serve --poll=2000 --configuration $NODE_ENV --proxy-config proxy.conf.json"
   },
@@ -96,6 +97,7 @@
     "@typescript-eslint/parser": "^8.62.1",
     "angular-eslint": "^22.0.0",
     "autoprefixer": "^10.5.2",
+    "axe-core": "^4.13.0",
     "concurrently": "^10.0.5",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
