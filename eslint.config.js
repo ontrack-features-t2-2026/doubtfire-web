@@ -127,10 +127,9 @@ module.exports = tseslint.config(
       ],
       '@angular-eslint/template/prefer-control-flow': 'error',
       '@angular-eslint/template/mouse-events-have-key-events': 'error',
-      // TODO: enable interactive-supports-focus in the focus enforcement PR.
       '@angular-eslint/template/label-has-associated-control': 'error',
       '@angular-eslint/template/click-events-have-key-events': 'error',
-      '@angular-eslint/template/interactive-supports-focus': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'error',
     },
   },
 );
