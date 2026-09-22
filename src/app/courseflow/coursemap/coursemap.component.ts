@@ -1,39 +1,34 @@
+import {CdkDragDrop, DragDropModule} from '@angular/cdk/drag-drop';
+import {HttpErrorResponse} from '@angular/common/http';
 import {
-  CdkDragDrop,
-  DragDropModule,
-  moveItemInArray,
-  transferArrayItem,
-} from '@angular/cdk/drag-drop';
-import {ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject} from '@angular/core';
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  HostListener,
+  OnInit,
+  inject,
+} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
-import {FormsModule} from '@angular/forms';
-import {MatButtonModule} from '@angular/material/button';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatIconModule} from '@angular/material/icon';
-import {MatInputModule} from '@angular/material/input';
-import {MatMenuModule} from '@angular/material/menu';
-import {ActivatedRoute} from '@angular/router';
-import {catchError, forkJoin, of, switchMap} from 'rxjs';
-import {Unit, UnitDefinition} from 'src/app/api/models/doubtfire-model';
-import {CourseMapUnit} from 'src/app/api/models/doubtfire-model';
-import {CourseMapUnitService} from 'src/app/api/services/course-map-unit.service';
-import {UnitDefinitionService} from 'src/app/api/services/unit-definition.service';
-import {UnitService} from 'src/app/api/services/unit.service';
+import {FormsModule, NgModel} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {BehaviorSubject, catchError, combineLatest, forkJoin, of, switchMap} from 'rxjs';
+import {
+  CourseFlowCourse,
+  CourseFlowDraft,
+  CourseFlowIssue,
+  CourseFlowMap,
+  CourseFlowPeriod,
+  CourseFlowSlot,
+  CourseFlowUnit,
+} from 'src/app/api/models/course-flow';
+import {CourseFlowService} from 'src/app/api/services/course-flow.service';
+import {checkCourseFlowPlan} from './course-flow-checks';
 
-type CourseUnit = Unit | UnitDefinition;
-
-interface SlotContext {
-  yearIndex: number;
-  trimesterKey: 'trimester1' | 'trimester2' | 'trimester3';
-  slotIndex: number;
-}
-
-interface DraggedUnitData {
-  unit: CourseUnit;
-  sourceContainerId: 'requiredUnits' | 'electiveUnits' | 'slot';
-  sourceYearIndex?: number;
-  sourceTrimesterKey?: 'trimester1' | 'trimester2' | 'trimester3';
-  sourceSlotIndex?: number;
+interface DropTarget {
+  kind: 'catalog' | 'slot';
+  year?: number;
+  trimester?: number;
+  position?: number;
 }
 
 @Component({
@@ -42,66 +37,68 @@ interface DraggedUnitData {
   templateUrl: './coursemap.component.html',
   styleUrls: ['./coursemap.component.scss'],
   standalone: true,
-  imports: [
-    DragDropModule,
-    MatIconModule,
-    FormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatMenuModule,
-  ],
+  imports: [DragDropModule, FormsModule],
 })
 export class CoursemapComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
-  constructor(
-    private route: ActivatedRoute,
-    private unitService: UnitService,
-    private unitDefinitionService: UnitDefinitionService,
-    private courseMapUnitService: CourseMapUnitService,
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly service = inject(CourseFlowService);
+  private readonly refresh = new BehaviorSubject(0);
+  private savedSnapshot: string | null = null;
 
-  unitCode = '';
-  errorMessage: string | null = null;
-  loadError: string | null = null;
+  courses: CourseFlowCourse[] = [];
+  maps: CourseFlowMap[] = [];
+  selectedCourse: CourseFlowCourse | null = null;
+  currentMap: CourseFlowMap | null = null;
+  name = '';
+  periods: CourseFlowPeriod[] = [];
+  slots: CourseFlowSlot[] = [];
   loading = true;
-  units: Unit[] = [];
-  requiredUnits: UnitDefinition[] = [];
-  private definitions: UnitDefinition[] = [];
-  private requiredCodes: Set<string> = new Set();
+  saving = false;
+  deleting = false;
+  loadError = '';
+  actionError = '';
+  conflict = false;
+  status = '';
+  unitSelection = '';
+  destinationSelection = '';
+  periodYear = new Date().getFullYear();
+  periodTrimester = 1;
+  readonly positions = [1, 2, 3, 4];
+  readonly catalogTarget: DropTarget = {kind: 'catalog'};
 
-  readonly trimesterKeys: ('trimester1' | 'trimester2' | 'trimester3')[] = [
-    'trimester1',
-    'trimester2',
-    'trimester3',
-  ];
+  slotTarget(period: CourseFlowPeriod, position: number): DropTarget {
+    return {kind: 'slot', ...period, position};
+  }
 
   ngOnInit(): void {
-    this.route.paramMap
+    combineLatest([this.route.paramMap, this.refresh])
       .pipe(
-        switchMap((params) => {
+        switchMap(([params]) => {
           this.loading = true;
-          this.loadError = null;
-          this.errorMessage = null;
-          this.requiredUnits = [];
-          this.electiveUnits = [];
-          this.years = [];
-          this.addYear();
-          const id = params.get('courseMapId');
-          if (id !== null && !/^[1-9]\d*$/.test(id)) {
+          this.loadError = '';
+          const routeId = params.get('courseMapId');
+          if (
+            routeId !== null &&
+            (!/^[1-9]\d*$/.test(routeId) || !Number.isSafeInteger(Number(routeId)))
+          ) {
+            this.loadError =
+              'Invalid course plan ID. Start a new plan or choose one of your saved plans.';
             this.loading = false;
-            this.loadError = 'Invalid course map ID.';
             return of(null);
           }
-          // A new draft does not read another user's map or create demo database records.
           return forkJoin({
-            units: this.unitService.getUnits(),
-            definitions: this.unitDefinitionService.getDefinitions(),
-            slots: id ? this.courseMapUnitService.getCourseMapUnitsById(Number(id)) : of([]),
+            courses: this.service.getCourses(),
+            maps: this.service.getMaps(),
+            map: routeId ? this.service.getMap(Number(routeId)) : of(null),
           }).pipe(
-            catchError(() => {
+            catchError((error: HttpErrorResponse) => {
+              this.loadError =
+                error.status === 404
+                  ? 'This course plan is unavailable or does not belong to you.'
+                  : 'Course plans could not be loaded. Check your connection and try again.';
               this.loading = false;
-              this.loadError = 'Course data could not be loaded. Please try again later.';
               return of(null);
             }),
           );
@@ -112,387 +109,421 @@ export class CoursemapComponent implements OnInit {
         if (!data) {
           return;
         }
-        const {units, definitions, slots} = data;
-        this.units = units;
-        this.definitions = definitions;
-        this.requiredUnits = [...definitions];
-        this.requiredCodes = new Set(definitions.map((unit) => unit.code));
-        this.populateYearsArray(slots);
+        this.courses = data.courses;
+        this.maps = data.maps;
+        this.clearDraft();
+        if (data.map) {
+          const course = this.courses.find((item) => item.id === data.map.course_id);
+          if (!course) {
+            this.loadError =
+              'The catalog for this saved plan is unavailable. Please contact your administrator.';
+          } else {
+            this.applyMap(data.map, course);
+          }
+        }
         this.loading = false;
       });
   }
 
-  populateYearsArray(courseMapUnits: CourseMapUnit[]): void {
-    if (!courseMapUnits.length) {
-      return;
-    }
-    const years = [];
-    const placed: Set<string> = new Set();
-    for (const slot of courseMapUnits) {
-      const definition = this.definitions.find((item) => item.id === slot.unitId);
-      const teachingUnit = this.units.find((item) => item.id === slot.unitId);
-      if (definition && teachingUnit && definition.code !== teachingUnit.code) {
-        this.errorMessage = 'Some saved course-map entries have ambiguous unit IDs.';
-        continue;
-      }
-      const unit = definition ?? teachingUnit;
-      if (
-        !unit ||
-        !Number.isInteger(slot.yearSlot) ||
-        slot.yearSlot < 1 ||
-        !Number.isInteger(slot.teachingPeriodSlot) ||
-        slot.teachingPeriodSlot < 1 ||
-        slot.teachingPeriodSlot > 3 ||
-        !Number.isInteger(slot.unitSlot) ||
-        slot.unitSlot < 1 ||
-        slot.unitSlot > 4 ||
-        placed.has(unit.code)
-      ) {
-        this.errorMessage = 'Some saved course-map entries could not be displayed.';
-        continue;
-      }
-      let year = years.find((item) => item.year === slot.yearSlot);
-      if (!year) {
-        year = {
-          year: slot.yearSlot,
-          trimester1: Array(4).fill(null),
-          trimester2: Array(4).fill(null),
-          trimester3: Array(4).fill(null),
-        };
-        years.push(year);
-      }
-      const trimester = year[this.trimesterKeys[slot.teachingPeriodSlot - 1]];
-      if (trimester[slot.unitSlot - 1]) {
-        this.errorMessage = 'Some saved course-map entries occupy the same slot.';
-        continue;
-      }
-      trimester[slot.unitSlot - 1] = unit;
-      placed.add(unit.code);
-    }
-    if (years.length) {
-      this.years = years.sort((a, b) => a.year - b.year);
-    }
-    this.requiredUnits = this.requiredUnits.filter((unit) => !placed.has(unit.code));
+  get busy(): boolean {
+    return this.loading || this.saving || this.deleting;
   }
 
-  years = [
-    {
-      year: new Date().getFullYear(),
-      trimester1: [null, null, null, null],
-      trimester2: [null, null, null, null],
-      trimester3: [null, null, null, null],
-    },
-  ];
-
-  maxElectiveUnits = 5;
-  electiveUnits: CourseUnit[] = [];
-
-  getTrimesterNumber(key: string): number {
-    return parseInt(key.replace('trimester', ''), 10);
+  get dirty(): boolean {
+    return this.selectedCourse !== null && this.snapshot() !== this.savedSnapshot;
   }
 
-  getTrimesterIndex(key: string): number {
-    return this.trimesterKeys.indexOf(key as 'trimester1' | 'trimester2' | 'trimester3');
+  get issues(): CourseFlowIssue[] {
+    return this.selectedCourse ? checkCourseFlowPlan(this.selectedCourse, this.slots) : [];
   }
 
-  get remainingSlots(): number {
-    const totalElectivesUsed = this.electiveUnits.length + this.countElectivesInSlots();
-    const remaining = this.maxElectiveUnits - totalElectivesUsed;
-    return Math.max(0, remaining);
+  get years(): number[] {
+    return [...new Set(this.periods.map((period) => period.year))].sort((a, b) => a - b);
   }
 
-  private countElectivesInSlots(): number {
-    let count = 0;
-    this.years.forEach((year) => {
-      ['trimester1', 'trimester2', 'trimester3'].forEach((key) => {
-        const trimesterKey = key as 'trimester1' | 'trimester2' | 'trimester3';
-        if (year[trimesterKey]) {
-          year[trimesterKey].forEach((unit: CourseUnit | null) => {
-            if (unit) {
-              // Check if the unit's ID is NOT in the requiredUnits list
-              const isRequired = this.requiredCodes.has(unit.code);
-              if (!isRequired) {
-                // If it's not required, it's considered an elective for counting purposes
-                count++;
-              }
-            }
-          });
-        }
-      });
-    });
-    return count;
-  }
-
-  addYear() {
-    const nextYear =
-      this.years.length > 0 ? this.years[this.years.length - 1].year + 1 : new Date().getFullYear();
-    const newYear = {
-      year: nextYear,
-      trimester1: Array(4).fill(null),
-      trimester2: Array(4).fill(null),
-      trimester3: Array(4).fill(null),
-    };
-    this.years.push(newYear);
-  }
-
-  private returnUnit(unit: CourseUnit): void {
-    if (this.requiredCodes.has(unit.code)) {
-      if (!this.requiredUnits.some((item) => item.code === unit.code)) {
-        this.requiredUnits.push(unit as UnitDefinition);
-      }
-    } else if (!this.electiveUnits.some((item) => item.code === unit.code)) {
-      this.electiveUnits.push(unit);
-    }
-  }
-
-  deleteYear(index: number): void {
-    const year = this.years[index];
-    if (!year) {
-      return;
-    }
-    this.trimesterKeys.forEach((key) =>
-      year[key]?.forEach((unit) => unit && this.returnUnit(unit)),
+  get plannedRequired(): number {
+    return (
+      this.selectedCourse?.units.filter((unit) => unit.required && this.isPlanned(unit.code))
+        .length ?? 0
     );
-    this.years.splice(index, 1);
   }
 
-  deleteTrimester(yearIndex: number, trimesterIndex: number): void {
-    const year = this.years[yearIndex];
-    const key = this.trimesterKeys[trimesterIndex];
-    if (!year || !key) {
-      return;
-    }
-    year[key]?.forEach((unit) => unit && this.returnUnit(unit));
-    year[key] = null;
+  get requiredCount(): number {
+    return this.selectedCourse?.units.filter((unit) => unit.required).length ?? 0;
   }
 
-  addTrimester(yearIndex: number) {
-    const year = this.years[yearIndex];
-    if (!year) {
-      return;
-    }
-
-    if (!year.trimester1) {
-      year.trimester1 = [null, null, null, null];
-    } else if (!year.trimester2) {
-      year.trimester2 = [null, null, null, null];
-    } else if (!year.trimester3) {
-      year.trimester3 = [null, null, null, null];
-    } else {
-      console.log('All three trimesters already exist.');
-    }
+  get plannedElectives(): number {
+    return (
+      this.selectedCourse?.units.filter((unit) => !unit.required && this.isPlanned(unit.code))
+        .length ?? 0
+    );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  countTrimesters(year: any): number {
-    let trimesterCount = 0;
-    if (year.trimester1) {
-      trimesterCount++;
-    }
-    if (year.trimester2) {
-      trimesterCount++;
-    }
-    if (year.trimester3) {
-      trimesterCount++;
-    }
-    return trimesterCount;
+  get availableRequired(): CourseFlowUnit[] {
+    return (
+      this.selectedCourse?.units.filter((unit) => unit.required && !this.isPlanned(unit.code)) ?? []
+    );
   }
 
-  drop(
-    event: CdkDragDrop<SlotContext | CourseUnit[], SlotContext | CourseUnit[], DraggedUnitData>,
-  ) {
-    const previousContainer = event.previousContainer;
-    const currentContainer = event.container;
-    const previousIndex = event.previousIndex;
-    const currentIndex = event.currentIndex;
+  get availableElectives(): CourseFlowUnit[] {
+    return (
+      this.selectedCourse?.units.filter((unit) => !unit.required && !this.isPlanned(unit.code)) ??
+      []
+    );
+  }
 
-    // Data of the item being dragged (from [cdkDragData])
-    const draggedData = event.item.data;
-    if (!draggedData?.unit) {
-      return;
+  get destinations(): {value: string; label: string}[] {
+    return this.periods.flatMap((period) =>
+      this.positions.map((position) => {
+        const occupant = this.slotAt(period, position);
+        return {
+          value: `${period.year}-${period.trimester}-${position}`,
+          label: `${period.year}, trimester ${period.trimester}, slot ${position}${occupant ? ` (${occupant.unit_code})` : ' (empty)'}`,
+        };
+      }),
+    );
+  }
+
+  periodsInYear(year: number): CourseFlowPeriod[] {
+    return this.periods.filter((period) => period.year === year);
+  }
+
+  isPlanned(code: string): boolean {
+    return this.slots.some((slot) => slot.unit_code === code);
+  }
+
+  unitByCode(code: string): CourseFlowUnit | undefined {
+    return this.selectedCourse?.units.find((unit) => unit.code === code);
+  }
+
+  slotAt(period: CourseFlowPeriod, position: number): CourseFlowSlot | undefined {
+    return this.slots.find(
+      (slot) =>
+        slot.year === period.year &&
+        slot.trimester === period.trimester &&
+        slot.position === position,
+    );
+  }
+
+  canLeave(): boolean {
+    if (this.saving || this.deleting) {
+      return false;
     }
-    const unitToMove = draggedData.unit;
-    const source =
-      draggedData.sourceContainerId === 'slot'
-        ? this.years[draggedData.sourceYearIndex]?.[draggedData.sourceTrimesterKey]
-        : previousContainer.data;
-    const sourceIndex =
-      draggedData.sourceContainerId === 'slot' ? draggedData.sourceSlotIndex : previousIndex;
-    if (!Array.isArray(source) || source[sourceIndex] !== unitToMove) {
-      return;
-    }
+    return !this.dirty || window.confirm('Discard unsaved changes to this course plan?');
+  }
 
-    // Data of the target container (from [cdkDropListData])
-    const targetContainerData = currentContainer.data;
-
-    if (previousContainer.id === currentContainer.id) {
-      // Moving within the same list (requiredUnits or electiveUnits)
-      // This check prevents reordering within a slot itself
-      if (draggedData.sourceContainerId !== 'slot') {
-        moveItemInArray(currentContainer.data as CourseUnit[], previousIndex, currentIndex);
-      }
-    } else {
-      const targetIsSlot =
-        typeof targetContainerData === 'object' &&
-        targetContainerData !== null &&
-        'slotIndex' in targetContainerData;
-      const sourceIsSlot = draggedData.sourceContainerId === 'slot';
-
-      if (targetIsSlot) {
-        // Dropping onto a slot
-        const targetContext = targetContainerData as SlotContext;
-        const {yearIndex, trimesterKey, slotIndex} = targetContext;
-        const targetTrimesterArray = this.years[yearIndex]?.[trimesterKey];
-        if (!targetTrimesterArray || slotIndex < 0 || slotIndex >= 4) {
-          return;
-        }
-        const existingUnitInSlot = targetTrimesterArray[slotIndex];
-
-        if (!existingUnitInSlot) {
-          // Target slot is empty
-          targetTrimesterArray[slotIndex] = unitToMove; // Place item in target
-
-          if (sourceIsSlot) {
-            // Moving from another slot - empty the source slot
-            this.years[draggedData.sourceYearIndex!][draggedData.sourceTrimesterKey!][
-              draggedData.sourceSlotIndex!
-            ] = null;
-          } else {
-            // Moving from a list (required or elective) - remove from source list
-            const sourceList = previousContainer.data as unknown as CourseUnit[];
-            sourceList.splice(previousIndex, 1);
-          }
-        } else {
-          // Target slot is occupied
-          if (sourceIsSlot) {
-            // Moving from another slot - SWAP
-            targetTrimesterArray[slotIndex] = unitToMove; // Place dragged item in target
-            // Place target's original item in source slot
-            this.years[draggedData.sourceYearIndex!][draggedData.sourceTrimesterKey!][
-              draggedData.sourceSlotIndex!
-            ] = existingUnitInSlot;
-          } else {
-            // Moving from a list to an occupied slot - Prevent drop
-            console.log('Cannot drop from list onto an occupied slot.');
-            // Optionally, implement swap: add existingUnitInSlot back to sourceList, remove unitToMove from sourceList
-            return;
-          }
-        }
-      } else {
-        // Dropping onto a list (requiredUnits or electiveUnits)
-        const targetList = targetContainerData as CourseUnit[];
-        if (
-          (targetList === this.requiredUnits) !== this.requiredCodes.has(unitToMove.code) ||
-          targetList.some((unit) => unit.code === unitToMove.code)
-        ) {
-          return;
-        }
-
-        if (sourceIsSlot) {
-          // Moving from a slot to a list
-          targetList.splice(currentIndex, 0, unitToMove); // Add item to target list at dropped position
-          // Empty the source slot
-          this.years[draggedData.sourceYearIndex!][draggedData.sourceTrimesterKey!][
-            draggedData.sourceSlotIndex!
-          ] = null;
-        } else {
-          // Moving between lists
-          transferArrayItem(
-            previousContainer.data as unknown as CourseUnit[],
-            targetList,
-            previousIndex,
-            currentIndex,
-          );
-        }
-      }
+  @HostListener('window:beforeunload', ['$event'])
+  beforeUnload(event: BeforeUnloadEvent): void {
+    if (this.dirty || this.saving || this.deleting) {
+      event.preventDefault();
+      event.returnValue = '';
     }
   }
 
-  fetchUnitByCode(): void {
-    if (!this.unitCode.trim()) {
-      this.errorMessage = 'Please enter a unit code';
+  selectCourse(id: number | null): void {
+    if (this.busy || this.currentMap || this.selectedCourse?.id === id || !this.canLeave()) {
       return;
     }
-    const trimmedCode = this.unitCode.trim().toUpperCase();
-
-    const alreadyInList = this.electiveUnits.some((unit) => unit.code === trimmedCode);
-    if (alreadyInList) {
-      this.errorMessage = `Unit ${trimmedCode} already in the elective list`;
-      return;
+    this.clearDraft();
+    this.selectedCourse = this.courses.find((course) => course.id === id) ?? null;
+    if (this.selectedCourse) {
+      this.name = `${this.selectedCourse.code} study plan`;
+      this.periods = [{year: this.periodYear, trimester: 1}];
+      this.status = 'New plan. Save to keep your changes.';
     }
+  }
 
-    let electiveAlreadyInSlots = false;
-    this.years.forEach((year) => {
-      ['trimester1', 'trimester2', 'trimester3'].forEach((key) => {
-        const trimesterKey = key as 'trimester1' | 'trimester2' | 'trimester3';
-        if (year[trimesterKey]) {
-          year[trimesterKey].forEach((unit: CourseUnit | null) => {
-            if (unit?.code === trimmedCode) {
-              const isRequired = this.requiredCodes.has(unit.code);
-              if (!isRequired) {
-                electiveAlreadyInSlots = true;
-              }
-            }
-          });
-        }
-      });
+  selectCourseFromInput(value: string, control: NgModel): void {
+    this.selectCourse(value ? Number(value) : null);
+    control.control.setValue(this.selectedCourse ? String(this.selectedCourse.id) : '', {
+      emitEvent: false,
+      emitViewToModelChange: false,
     });
+  }
 
-    if (electiveAlreadyInSlots) {
-      this.errorMessage = `Elective unit ${trimmedCode} already placed in the course map`;
+  startNewPlan(): void {
+    if (this.busy || !this.canLeave()) {
       return;
     }
+    this.clearDraft();
+    if (this.route.snapshot.paramMap.has('courseMapId')) {
+      void this.router.navigate(['/coursemap']);
+    }
+  }
 
-    const currentElectiveCount = this.electiveUnits.length + this.countElectivesInSlots();
-    if (currentElectiveCount >= this.maxElectiveUnits) {
-      this.errorMessage = `Cannot add more than ${this.maxElectiveUnits} elective units.`;
+  openMap(id: number): void {
+    if (this.busy) {
       return;
     }
-
-    const foundUnit = this.units.find((unit) => unit.code === trimmedCode);
-
-    if (foundUnit) {
-      const isRequired = this.requiredCodes.has(foundUnit.code);
-      if (isRequired) {
-        this.errorMessage = `Unit ${trimmedCode} is a required unit, not an elective.`;
-        return;
-      }
-
-      this.electiveUnits.push(foundUnit);
-      this.unitCode = '';
-      this.errorMessage = null;
+    if (this.currentMap?.id === id) {
+      this.reloadSaved();
     } else {
-      this.errorMessage = `Unit code ${trimmedCode} not found in available units`;
+      void this.router.navigate(['/coursemap', id]);
     }
   }
-  removeUnitFromSlot(
-    yearIndex: number,
-    trimesterKey: 'trimester1' | 'trimester2' | 'trimester3',
-    slotIndex: number,
-  ): void {
-    const year = this.years[yearIndex];
-    if (!year || !year[trimesterKey]) {
-      console.error('Cannot remove unit: Invalid year or trimester');
+
+  retryLoad(): void {
+    if (!this.busy && this.canLeave()) {
+      this.refresh.next(this.refresh.value + 1);
+    }
+  }
+
+  reloadSaved(): void {
+    if (!this.busy && this.canLeave()) {
+      this.refresh.next(this.refresh.value + 1);
+    }
+  }
+
+  nameChanged(): void {
+    this.status = 'Unsaved changes.';
+    if (!this.conflict) {
+      this.actionError = '';
+    }
+  }
+
+  addPeriod(): void {
+    if (this.busy || !this.selectedCourse) {
       return;
     }
+    if (
+      !Number.isInteger(this.periodYear) ||
+      this.periodYear < 2000 ||
+      this.periodYear > 2200 ||
+      ![1, 2, 3].includes(this.periodTrimester)
+    ) {
+      this.actionError = 'Choose a year from 2000 to 2200 and a trimester from 1 to 3.';
+      return;
+    }
+    if (this.periods.length >= 60) {
+      this.actionError = 'A plan can contain at most 60 study periods.';
+      return;
+    }
+    if (
+      this.periods.some(
+        (period) => period.year === this.periodYear && period.trimester === this.periodTrimester,
+      )
+    ) {
+      this.actionError = 'This study period is already in the plan.';
+      return;
+    }
+    this.periods = [...this.periods, {year: this.periodYear, trimester: this.periodTrimester}].sort(
+      (a, b) => a.year - b.year || a.trimester - b.trimester,
+    );
+    this.edited(`Added ${this.periodYear}, trimester ${this.periodTrimester}.`);
+  }
 
-    const unitToRemove = year[trimesterKey][slotIndex];
+  removePeriod(period: CourseFlowPeriod): void {
+    if (this.busy || this.periods.length <= 1) {
+      return;
+    }
+    this.periods = this.periods.filter(
+      (item) => item.year !== period.year || item.trimester !== period.trimester,
+    );
+    this.slots = this.slots.filter(
+      (slot) => slot.year !== period.year || slot.trimester !== period.trimester,
+    );
+    this.destinationSelection = '';
+    this.edited(
+      `Removed ${period.year}, trimester ${period.trimester}. Its units are available in the catalog again.`,
+    );
+  }
 
-    if (unitToRemove) {
-      year[trimesterKey][slotIndex] = null;
-      console.log(
-        `Removed unit ${unitToRemove.code} from slot ${yearIndex}-${trimesterKey}-${slotIndex}`,
+  placeSelectedUnit(): void {
+    const [year, trimester, position] = this.destinationSelection.split('-').map(Number);
+    this.placeUnit(this.unitSelection, {year, trimester}, position);
+  }
+
+  placeUnit(code: string, period: CourseFlowPeriod, position: number): void {
+    if (this.busy || !this.unitByCode(code)) {
+      return;
+    }
+    if (
+      !this.positions.includes(position) ||
+      !this.periods.some((item) => item.year === period.year && item.trimester === period.trimester)
+    ) {
+      this.actionError = 'Choose a unit and a valid destination slot.';
+      return;
+    }
+    const source = this.slots.find((slot) => slot.unit_code === code);
+    const target = this.slotAt(period, position);
+    if (target?.unit_code === code) {
+      return;
+    }
+    if (target && !source) {
+      this.actionError =
+        'Choose an empty slot for an unplanned unit. Two planned units can swap slots.';
+      return;
+    }
+    this.slots = this.slots.filter((slot) => slot !== source && slot !== target);
+    this.slots.push({unit_code: code, year: period.year, trimester: period.trimester, position});
+    if (source && target) {
+      this.slots.push({...source, unit_code: target.unit_code});
+    }
+    this.edited(
+      target
+        ? `Swapped ${code} and ${target.unit_code}.`
+        : `Placed ${code} in ${period.year}, trimester ${period.trimester}, slot ${position}.`,
+    );
+  }
+
+  removeUnit(code: string): void {
+    if (this.busy || !this.isPlanned(code)) {
+      return;
+    }
+    this.slots = this.slots.filter((slot) => slot.unit_code !== code);
+    this.edited(`${code} returned to the catalog.`);
+  }
+
+  drop(event: CdkDragDrop<DropTarget, DropTarget, string>): void {
+    const target = event.container.data;
+    if (target.kind === 'catalog') {
+      this.removeUnit(event.item.data);
+    } else {
+      this.placeUnit(
+        event.item.data,
+        {year: target.year, trimester: target.trimester},
+        target.position,
       );
-
-      this.returnUnit(unitToRemove);
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  trackByYear(index: number, year: any): number {
-    return year.year;
+
+  save(asCopy = false): void {
+    if (this.busy || !this.selectedCourse) {
+      return;
+    }
+    if (!this.name.trim() || this.name.trim().length > 200) {
+      this.actionError = 'Enter a plan name from 1 to 200 characters.';
+      return;
+    }
+    const draft = this.draft();
+    if (asCopy) {
+      draft.name = `${draft.name.slice(0, 193)} (copy)`;
+    }
+    this.saving = true;
+    this.actionError = '';
+    this.status = 'Saving course plan…';
+    const request =
+      this.currentMap && !asCopy
+        ? this.service.updateMap(this.currentMap.id, draft, this.currentMap.lock_version)
+        : this.service.createMap(draft);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (map) => {
+        this.saving = false;
+        this.applyMap(map, this.selectedCourse);
+        this.maps = [map, ...this.maps.filter((item) => item.id !== map.id)];
+        if (this.route.snapshot.paramMap.get('courseMapId') !== String(map.id)) {
+          void this.router.navigate(['/coursemap', map.id], {replaceUrl: true});
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.saving = false;
+        this.status = '';
+        this.writeFailed(error, 'save');
+      },
+    });
   }
 
-  trackBySlotIndex(index: number): number {
-    return index;
+  deletePlan(): void {
+    if (
+      this.busy ||
+      !this.currentMap ||
+      !window.confirm(
+        `Delete saved plan “${this.currentMap.name}”? This also discards any unsaved changes and cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    const map = this.currentMap;
+    this.deleting = true;
+    this.actionError = '';
+    this.status = 'Deleting course plan…';
+    this.service
+      .deleteMap(map.id, map.lock_version)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deleting = false;
+          this.maps = this.maps.filter((item) => item.id !== map.id);
+          this.clearDraft();
+          this.status = 'Course plan deleted.';
+          void this.router.navigate(['/coursemap']);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.deleting = false;
+          this.status = '';
+          this.writeFailed(error, 'delete');
+        },
+      });
+  }
+
+  private writeFailed(error: HttpErrorResponse, action: 'save' | 'delete'): void {
+    this.conflict = error.status === 409;
+    if (this.conflict) {
+      this.actionError =
+        'This plan changed in another session. Your edits are still here. Reload the saved plan to discard these edits, or save a copy to keep them.';
+    } else if (error.status === 404) {
+      this.actionError =
+        'The saved plan is no longer available. Your edits are still here; save a copy to keep them.';
+      this.conflict = true;
+    } else if (error.status === 422) {
+      this.actionError =
+        'The server could not accept this plan. Check the name, course and study periods, then try saving again. Your edits are still here.';
+    } else {
+      this.actionError = `Could not ${action} the course plan. Your edits are still here. Check your connection and try again.`;
+    }
+  }
+
+  private applyMap(map: CourseFlowMap, course: CourseFlowCourse): void {
+    this.currentMap = map;
+    this.selectedCourse = course;
+    this.name = map.name;
+    this.periods = map.periods
+      .map((period) => ({...period}))
+      .sort((a, b) => a.year - b.year || a.trimester - b.trimester);
+    this.slots = map.slots.map((slot) => ({...slot}));
+    this.savedSnapshot = this.snapshot();
+    this.actionError = '';
+    this.conflict = false;
+    this.status = 'Course plan saved. Changes are stored in your account.';
+  }
+
+  private clearDraft(): void {
+    this.selectedCourse = null;
+    this.currentMap = null;
+    this.name = '';
+    this.periods = [];
+    this.slots = [];
+    this.savedSnapshot = null;
+    this.actionError = '';
+    this.conflict = false;
+    this.status = '';
+    this.unitSelection = '';
+    this.destinationSelection = '';
+    this.periodYear = new Date().getFullYear();
+    this.periodTrimester = 1;
+  }
+
+  private edited(message: string): void {
+    if (!this.conflict) {
+      this.actionError = '';
+    }
+    this.status = `${message} Save to keep your changes.`;
+  }
+
+  private draft(): CourseFlowDraft {
+    return {
+      course_id: this.selectedCourse.id,
+      name: this.name.trim(),
+      periods: this.periods.map((period) => ({...period})),
+      slots: this.slots.map((slot) => ({...slot})),
+    };
+  }
+
+  private snapshot(): string {
+    return JSON.stringify({
+      ...this.draft(),
+      name: this.name,
+      slots: [...this.slots].sort((a, b) => a.unit_code.localeCompare(b.unit_code)),
+    });
   }
 }

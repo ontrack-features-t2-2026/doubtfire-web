@@ -41,11 +41,7 @@ export * from './task-comment/scorm-extension-comment';
 export * from './feedback-template';
 export * from './communication';
 export * from './engagement';
-export * from './course';
-export * from './course-map';
-export * from './course-map-unit';
-export * from './unit-definition';
-export * from './requirement-set';
+export * from './course-flow';
 
 // Users -- are students or staff
 export * from './user/user';
