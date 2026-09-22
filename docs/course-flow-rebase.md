@@ -82,8 +82,8 @@ The [HTTP integration check](course-flow/http-check.mjs) uses actual authenticat
 and persistence against a disposable local API with the sample catalog imported.
 It exercises ordinary-student access, owner isolation, atomic invalid-save
 rejection, empty-period roundtrips, planning issues and optimistic concurrency.
-It must not run against production data. Additional browser evidence and exact
-validation revisions are recorded with the PR.
+It must not run against production data. The [validation record](course-flow/validation.md)
+includes browser evidence and the exact source revisions.
 
 ## Original rebase history
 

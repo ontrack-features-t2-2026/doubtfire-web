@@ -1,0 +1,16 @@
+{
+  "result": "passed",
+  "base": "http://127.0.0.1:4321",
+  "checks": [
+    "actual CDK pointer drag places a unit and removal returns it to the catalog",
+    "signed-in student chooses a catalog and builds a valid plan using keyboard controls",
+    "keyboard swap, move and remove preserve the units",
+    "real save and full reload restore unit positions and empty periods",
+    "canceling dirty navigation preserves the current draft",
+    "competing session save produces a conflict and preserves local edits through Save a copy",
+    "planner fits a 390px viewport",
+    "another student sees an ownership error with no private plan content",
+    "owner deletes saved plans without uncaught browser errors"
+  ],
+  "runtimeErrors": []
+}

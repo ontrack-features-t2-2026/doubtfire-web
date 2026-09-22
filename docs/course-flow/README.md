@@ -1,5 +1,7 @@
 # Course Flow integration checks
 
+See the [recorded validation](validation.md) for results and screenshots.
+
 These scripts use the real application and API. They require a **disposable,
 local** environment with separate test/development databases, the companion
 API migration, and its explicitly fictional `DEMO-CF / QA-2026` catalog.
