@@ -99,6 +99,7 @@ export class GlobalStateService implements OnDestroy {
    * protect views from attempting to access details before they are loaded.
    */
   public isLoadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  public projectLoadErrorSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public showHideHeader: Subject<boolean> = new Subject<boolean>();
 
@@ -235,6 +236,7 @@ export class GlobalStateService implements OnDestroy {
 
   public ngOnDestroy(): void {
     this.isLoadingSubject.complete();
+    this.projectLoadErrorSubject.complete();
     this.showHideHeader.complete();
     this.currentViewAndEntitySubject$.complete();
   }
@@ -307,6 +309,7 @@ export class GlobalStateService implements OnDestroy {
    * Query the API for the units taught and studied by the current user.
    */
   private loadUnitsAndProjects() {
+    this.projectLoadErrorSubject.next(false);
     this.unitRoleService.query().subscribe({
       next: (_unitRoles: UnitRole[]) => {
         // unit roles are now in the cache
@@ -326,6 +329,10 @@ export class GlobalStateService implements OnDestroy {
               }, 800);
             },
             error: (_response) => {
+              // Let views render a recoverable project error instead of leaving
+              // the application's loading gate closed indefinitely.
+              this.projectLoadErrorSubject.next(true);
+              this.isLoadingSubject.next(false);
               this.alerts.error('Unable to access the units you study.', 6000);
             },
           });
@@ -356,6 +363,7 @@ export class GlobalStateService implements OnDestroy {
    * Clear all of the project and unit role data on sign out
    */
   public clearUnitsAndProjects(): void {
+    this.projectLoadErrorSubject.next(false);
     this.loadedUnits.clear();
     this.loadedUnitRoles.clear();
     this.userService.cache.clear();

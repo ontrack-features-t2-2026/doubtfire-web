@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {ActivatedRoute, Router} from '@angular/router';
-import {catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
+import {Subject, catchError, debounceTime, filter, map, merge, of, switchMap, tap} from 'rxjs';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {Grade} from '../api/models/grade';
 import {Project} from '../api/models/project';
@@ -23,6 +23,7 @@ import {TaskService} from '../api/services/task.service';
 import {DashboardTask, getDueDateWarning} from './list-item/dashboard-list-item.component';
 
 type UnitScope = 'active' | 'previous' | 'all';
+type FeedbackFilter = 'all' | 'available' | 'none' | 'unavailable';
 
 enum Filter {
   HideCompleted = 'Hide Completed',
@@ -62,6 +63,7 @@ type DashboardUnit = {
   gradeSummaries: GradeCompletionSummary[];
   mobileSummary: MobileUnitSummary;
   isPrevious: boolean;
+  progressLabel: string;
 };
 
 type GradeCompletionSummary = {
@@ -88,6 +90,12 @@ export class CrossDashboardComponent implements OnInit {
   globalSearchTerm = '';
   selectedStatuses: TaskStatusEnum[] = [];
   selectedGrades: number[] = [];
+  feedbackFilter: FeedbackFilter = 'all';
+  density: 'comfortable' | 'compact' = 'comfortable';
+  loadingActiveUnits = true;
+  activeUnitsLoadError = false;
+  loadingRecommendations = false;
+  recommendationsLoadError = false;
 
   readonly statusOptions = TaskStatus.STATUS_KEYS.flatMap((value) => {
     const label = TaskStatus.STATUS_LABELS.get(value);
@@ -116,6 +124,8 @@ export class CrossDashboardComponent implements OnInit {
   private sorting: Map<number, SortMode> = new Map();
   private searchTerms: Map<number, string> = new Map();
   private recommendationScores: Map<string, number> = new Map();
+  private readonly recommendationRefresh: Subject<void> = new Subject();
+  private refreshedActiveProjectIds: Set<number> | null = null;
 
   constructor(
     private globalStateService: GlobalStateService,
@@ -130,6 +140,8 @@ export class CrossDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.globalStateService.onLoad(() => {
+      this.loadingActiveUnits = false;
+      this.activeUnitsLoadError = this.globalStateService.projectLoadErrorSubject.value;
       this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
         const requested = params.get('scope');
         const scope: UnitScope =
@@ -152,20 +164,38 @@ export class CrossDashboardComponent implements OnInit {
         map(() => undefined),
       );
 
-      merge(projectChanges, activeTaskStatusChanges)
+      merge(projectChanges, activeTaskStatusChanges, this.recommendationRefresh)
         .pipe(
-          switchMap(() => this.taskRecommendationService.getAll().pipe(catchError(() => of([])))),
+          tap(() => {
+            this.loadingRecommendations = true;
+            this.recommendationsLoadError = false;
+          }),
+          switchMap(() =>
+            this.taskRecommendationService.getAll().pipe(
+              catchError(() => {
+                this.recommendationsLoadError = true;
+                return of(null);
+              }),
+            ),
+          ),
           takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((recommendations) => {
-          this.setRecommendationScores(recommendations);
+          this.loadingRecommendations = false;
+          if (recommendations !== null) {
+            this.setRecommendationScores(recommendations);
+          }
           this.processTasks();
         });
     });
   }
 
   private refreshActiveUnits(projects: readonly Project[]): void {
-    const activeProjects = projects.filter((project) => project.unit.isActive);
+    const activeProjects = projects.filter(
+      (project) =>
+        project.unit.isActive &&
+        (this.refreshedActiveProjectIds === null || this.refreshedActiveProjectIds.has(project.id)),
+    );
     this.activeUnits = this.mapProjects(activeProjects);
     this.processTasks();
   }
@@ -182,6 +212,51 @@ export class CrossDashboardComponent implements OnInit {
     return this.unitsProcessed;
   }
 
+  get resultCountLabel(): string {
+    const count = this.displayedUnits.reduce((total, unit) => total + unit.tasks.length, 0);
+    return `${count} ${count === 1 ? 'task' : 'tasks'} in ${this.displayedUnits.length} ${
+      this.displayedUnits.length === 1 ? 'unit' : 'units'
+    }`;
+  }
+
+  setFeedbackFilter(value: FeedbackFilter): void {
+    this.feedbackFilter = value;
+    this.processTasks();
+  }
+
+  retryRecommendations(): void {
+    if (!this.loadingRecommendations) {
+      this.recommendationRefresh.next();
+    }
+  }
+
+  retryActiveUnits(): void {
+    if (this.loadingActiveUnits) {
+      return;
+    }
+    this.loadingActiveUnits = true;
+    this.activeUnitsLoadError = false;
+    this.projectService
+      .fetchAll(undefined, {
+        cache: this.globalStateService.currentUserProjects,
+        params: {include_inactive: false, include_task_definitions: true},
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (projects: Project[]) => {
+          this.loadingActiveUnits = false;
+          this.refreshedActiveProjectIds = new Set(projects.map((project) => project.id));
+          this.globalStateService.projectLoadErrorSubject.next(false);
+          this.refreshActiveUnits(projects);
+        },
+        error: () => {
+          this.loadingActiveUnits = false;
+          this.activeUnitsLoadError = true;
+          this.changeDetectorRef.markForCheck();
+        },
+      });
+  }
+
   get isDateRangeInvalid(): boolean {
     return !!this.startDate && !!this.endDate && this.startDate > this.endDate;
   }
@@ -194,7 +269,8 @@ export class CrossDashboardComponent implements OnInit {
     return (
       this.normaliseSearchText(this.globalSearchTerm).length > 0 ||
       this.selectedStatuses.length > 0 ||
-      this.selectedGrades.length > 0
+      this.selectedGrades.length > 0 ||
+      this.feedbackFilter !== 'all'
     );
   }
 
@@ -204,6 +280,7 @@ export class CrossDashboardComponent implements OnInit {
       this.globalSearchTerm.length > 0 ||
       this.selectedStatuses.length > 0 ||
       this.selectedGrades.length > 0 ||
+      this.feedbackFilter !== 'all' ||
       !!this.startDate ||
       !!this.endDate
     );
@@ -213,6 +290,7 @@ export class CrossDashboardComponent implements OnInit {
     return (
       this.selectedStatuses.length +
       this.selectedGrades.length +
+      Number(this.feedbackFilter !== 'all') +
       Number(!!this.startDate) +
       Number(!!this.endDate)
     );
@@ -272,6 +350,7 @@ export class CrossDashboardComponent implements OnInit {
     this.globalSearchTerm = '';
     this.selectedStatuses = [];
     this.selectedGrades = [];
+    this.feedbackFilter = 'all';
     this.startDate = '';
     this.endDate = '';
 
@@ -304,6 +383,10 @@ export class CrossDashboardComponent implements OnInit {
     this.processTasks();
   }
 
+  getSort(project: number): SortMode {
+    return this.sorting.get(project) ?? SortMode.Recommended;
+  }
+
   toggleFilter(project: number, filter: Filter): void {
     let filters = this.filters.get(project) ?? [];
     if (filters.includes(filter)) {
@@ -334,24 +417,29 @@ export class CrossDashboardComponent implements OnInit {
 
   hasActiveTaskCriteria(project: number): boolean {
     return (
+      this.hasGlobalTaskCriteria ||
       this.isDateFilterActive ||
       this.hasSearchTerm(project) ||
       (this.filters.get(project)?.length ?? 0) > 0
     );
   }
 
-  private loadPreviousUnits(): void {
+  loadPreviousUnits(): void {
+    if (this.loadingPreviousUnits) {
+      return;
+    }
     this.loadingPreviousUnits = true;
     this.previousUnitsLoadError = false;
 
     this.projectService
-      .query(undefined, {
+      .fetchAll(undefined, {
         cache: this.previousProjectsCache,
         params: {
           include_inactive: true,
           include_task_definitions: true,
         },
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (projects: Project[]) => {
           const previousProjects = projects.filter((project) => !project.unit.isActive);
@@ -478,7 +566,15 @@ export class CrossDashboardComponent implements OnInit {
     const matchesGrade =
       this.selectedGrades.length === 0 || this.selectedGrades.includes(task.targetGrade);
 
-    return matchesStatus && matchesGrade && this.taskMatchesGlobalSearch(task, unit);
+    const matchesFeedback =
+      this.feedbackFilter === 'all' ||
+      (this.feedbackFilter === 'available' && task.hasFeedback === true) ||
+      (this.feedbackFilter === 'none' && task.hasFeedback === false) ||
+      (this.feedbackFilter === 'unavailable' && task.hasFeedback == null);
+
+    return (
+      matchesStatus && matchesGrade && matchesFeedback && this.taskMatchesGlobalSearch(task, unit)
+    );
   }
 
   private buildGradeSummaries(tasks: readonly DashboardTask[]): GradeCompletionSummary[] {
@@ -629,10 +725,24 @@ export class CrossDashboardComponent implements OnInit {
     }
 
     const searchableText = this.normaliseSearchText(
-      [...searchableValues, this.formatDateForSearch(task.dueDate)].join(' '),
+      [
+        ...searchableValues,
+        this.feedbackSearchText(task),
+        this.formatDateForSearch(task.dueDate),
+      ].join(' '),
     );
 
     return remainingSearchTerm.split(' ').every((term) => searchableText.includes(term));
+  }
+
+  private feedbackSearchText(task: DashboardTask): string {
+    const feedback =
+      task.hasFeedback === true
+        ? 'staff feedback available'
+        : task.hasFeedback === false
+          ? 'no staff feedback'
+          : 'feedback unavailable';
+    return task.comments > 0 ? `${feedback} unread comments` : feedback;
   }
 
   private extractNumericDateSearches(value: string): {
@@ -727,6 +837,7 @@ export class CrossDashboardComponent implements OnInit {
           hasDeadlineWarning: false,
         },
         isPrevious: !unit.isActive,
+        progressLabel: `${project.tasks.filter((task) => task.status === 'complete').length} of ${project.tasks.length} tasks complete`,
       };
     });
   }
@@ -743,7 +854,7 @@ export class CrossDashboardComponent implements OnInit {
         abbreviation: def.abbreviation,
         color: TaskStatus.STATUS_COLORS.get(task.status),
         comments: task.numNewComments ?? 0,
-        hasFeedback: task.hasFeedback ?? false,
+        hasFeedback: typeof task.hasFeedback === 'boolean' ? task.hasFeedback : null,
         status: task.status,
         targetGrade: def.targetGrade,
         targetGradeLabel: def.targetGradeText,

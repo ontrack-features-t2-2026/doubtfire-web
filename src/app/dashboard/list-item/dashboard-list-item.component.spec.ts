@@ -3,6 +3,7 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {RouterLink, provideRouter} from '@angular/router';
 import {TaskDefinition} from '../../api/models/task-definition';
 import {
   DashboardListItemComponent,
@@ -83,7 +84,8 @@ describe('DashboardListItemComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [DashboardListItemComponent],
-      imports: [MatButtonModule, MatIconModule],
+      imports: [MatButtonModule, MatIconModule, RouterLink],
+      providers: [provideRouter([])],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -135,6 +137,7 @@ describe('DashboardListItemComponent', () => {
     expect(titleLink).not.toBeNull();
     expect(titleLink.textContent.trim()).toBe('Security Review');
     expect(titleLink.classList).toContain('focus-visible:outline-2');
+    expect(titleLink.getAttribute('href')).toBe('/projects/1/dashboard/1.1P');
   });
 
   it('shows the staff feedback indicator only when feedback is present', () => {
@@ -191,5 +194,34 @@ describe('DashboardListItemComponent', () => {
     expect(icon.classList).toContain('!leading-none');
     expect(statusStrip.style.backgroundColor).toBe('rgb(18, 52, 86)');
     expect(fixture.nativeElement.textContent).toContain('Status: Not Started');
+  });
+
+  it('opens the feedback destination even when there are no unread comments', () => {
+    fixture.componentRef.setInput('task', {...component.task, hasFeedback: true, comments: 0});
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector(
+      'a[aria-label="Open staff feedback for Security Review"]',
+    );
+    expect(link.getAttribute('href')).toBe('/projects/1/dashboard/1.1P/feedback');
+  });
+
+  it('shows missing feedback metadata without claiming there is no feedback', () => {
+    fixture.componentRef.setInput('task', {...component.task, hasFeedback: null});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Feedback unavailable');
+    expect(fixture.nativeElement.querySelector('a[aria-label^="Open staff feedback"]')).toBeNull();
+  });
+
+  it('names the unread count and uses the accessible shared badge colour', () => {
+    fixture.componentRef.setInput('task', {...component.task, comments: 3, hasFeedback: true});
+    fixture.detectChanges();
+    const badge = fixture.nativeElement.querySelector('[role="status"]');
+    expect(badge.getAttribute('aria-label')).toBe('3 unread comments on Security Review');
+    expect(badge.classList.contains('bg-formatif-blue')).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('New feedback');
+  });
+
+  it('does not announce an unread badge for a zero count', () => {
+    expect(fixture.nativeElement.querySelector('[aria-label*="unread comments"]')).toBeNull();
   });
 });
