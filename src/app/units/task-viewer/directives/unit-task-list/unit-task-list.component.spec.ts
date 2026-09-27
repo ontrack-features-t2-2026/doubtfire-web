@@ -785,6 +785,30 @@ describe('FUnitTaskListComponent task status badges', () => {
     expect(badges()).toEqual([]);
   });
 
+  it('filters by status with a themed picker, not the browser select', () => {
+    render(makeTask());
+    const component = fixture.componentInstance;
+    const setStatusFilter = vi.spyOn(component, 'setStatusFilter').mockImplementation(() => {});
+
+    expect(fixture.nativeElement.querySelector('select')).toBeNull();
+    const picker: HTMLElement = fixture.nativeElement.querySelector(
+      'mat-select[aria-label="Filter tasks by status"]',
+    );
+    expect(picker).not.toBeNull();
+
+    const options: HTMLElement[] = Array.from(picker.querySelectorAll('mat-option'));
+    expect(options[0].textContent.trim()).toContain('All statuses');
+    expect(options).toHaveLength(component.statusOptions.length + 1);
+    options.slice(1).forEach((option, index) => {
+      expect(option.textContent).toContain(component.statusOptions[index].label);
+      const icon = option.querySelector('status-icon') as HTMLElement & {status?: string};
+      expect(icon?.status).toBe(component.statusOptions[index].status);
+    });
+
+    picker.dispatchEvent(Object.assign(new Event('selectionChange'), {value: 'complete'}));
+    expect(setStatusFilter).toHaveBeenCalledWith('complete');
+  });
+
   it('drops the deadline badges once the task is in a final state', () => {
     render(
       makeTask({

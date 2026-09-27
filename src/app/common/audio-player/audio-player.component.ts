@@ -61,6 +61,8 @@ export class AudioPlayerComponent implements OnDestroy {
   ) {
     this.unregisterMedia = this.appLifecycle.registerMedia(this.audio);
     this.lifecycleSubscription = this.appLifecycle.mediaPauseSubject.subscribe(() => {
+      // A play queued behind a slow download must not start after the pause.
+      this.pendingActions = [];
       this.updatePlaying(false);
       this.playbackCoordinator.release(this.audio);
     });

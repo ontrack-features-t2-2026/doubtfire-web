@@ -1,4 +1,4 @@
-import {CdkDragEnd, CdkDragMove, CdkDragStart} from '@angular/cdk/drag-drop';
+import {environment} from 'src/environments/environment';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
@@ -9,9 +9,10 @@ import {
   OnInit,
   Output,
   ViewChild,
+  isDevMode,
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
+import {BehaviorSubject, Observable, Subject, filter, map, takeUntil} from 'rxjs';
 import {
   Project,
   TaskDefinition,
@@ -23,6 +24,8 @@ import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {MilestoneCelebrationService} from 'src/app/common/celebrate/milestone-celebration.service';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 import {ConversationLandingService} from 'src/app/tasks/task-comments-viewer/conversation-landing.service';
 import {FUnitTaskListComponent} from 'src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
@@ -36,6 +39,7 @@ import {GlobalStateService, ViewType} from '../../index/global-state.service';
 })
 export class ProjectDashboardComponent implements OnInit, OnDestroy {
   @ViewChild('leftPanel') private leftPanel?: FUnitTaskListComponent;
+  @ViewChild('taskListPanel') private taskListPanel?: PanelComponent;
 
   @Input() public project$: Observable<Project>;
   @Input() public defaultTaskListCollapsed = false;
@@ -56,7 +60,6 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public selectedTaskDefinition$: BehaviorSubject<TaskDefinition> =
     new BehaviorSubject<TaskDefinition>(null);
 
-  subs$: Observable<unknown> = of(true);
   readonly skeletonRows = Array.from({length: 10}, (_, index) => index);
   private readonly projectSubject: BehaviorSubject<Project> = new BehaviorSubject(null);
 
@@ -71,6 +74,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
 
   projectTasks = [];
 
+  private milestoneCheckedProjectId: number | null = null;
+  private destroyed = false;
+
   constructor(
     private currentUser: UserService,
     private projectService: ProjectService,
@@ -82,31 +88,33 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private angularRouter: Router,
     private notificationFeedbackIntents?: NotificationFeedbackRouteIntentService,
     private conversationLanding?: ConversationLandingService,
+    private milestones?: MilestoneCelebrationService,
   ) {}
 
+  /**
+   * The narrowest each desktop panel goes. The task column needs room for its tab bar,
+   * a four-date timeline and a row of action buttons; below these the layout rails the
+   * list, then comments, instead of squeezing.
+   */
+  public readonly panelMinWidths = {list: 280, task: 420, comments: 320} as const;
   public readonly taskListCollapsedWidth = 75;
   public readonly taskListExpandedWidth = 400;
   public readonly taskListCollapseThreshold = 125;
   private _leftWidth = this.taskListExpandedWidth;
-  public lastX;
-  public startWidth = 0;
-
-  public startLeftX = 0;
-  public isCommentsNarrow = false;
-  public commentsCollapsed = false;
-  // Desktop only: the chat covers the task list and task pane so a long
-  // conversation has room. Esc or the same button puts it back.
-  public commentsFullscreen = false;
+  // Desktop only: the panel shown full screen (the chat, so a long conversation has
+  // room), and the one shown when the panels stack. Esc or the same button puts it back.
+  public fullscreenPanel: string | null = null;
+  public activePanel: string | null = 'list';
   public isPhoneLayout = false;
   public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
   public activeTaskStatusFilter: TaskStatusEnum | null = null;
   private taskFilterNavigationActive = false;
 
-  private readonly commentsBreakpoint = '(max-width: 999.98px)';
   private readonly phoneBreakpoint = '(max-width: 639.98px)';
 
-  public get commentsPanelCollapsed(): boolean {
-    return this.isCommentsNarrow && this.commentsCollapsed;
+  /** The staff portfolio view embeds this page, and remembers its panels apart. */
+  public get panelPage(): string {
+    return this.taskSelectionUrlBase ? 'portfolio-progress' : 'project-dashboard';
   }
 
   public get taskListCollapsed(): boolean {
@@ -140,45 +148,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     return project.unit.taskDefinitions;
   }
 
-  startedDragging(event: CdkDragStart, boundary: HTMLElement) {
-    document.body.classList.add('split-pane-resizing');
-    event.source.element.nativeElement.classList.add('hovering');
-    const rect = boundary.getBoundingClientRect();
-    // x relative to the container
-    this.startLeftX = (event.event as MouseEvent).clientX - rect.left;
-    this.startWidth = this.leftWidth;
-  }
-
-  dragging(event: CdkDragMove, boundary: HTMLElement) {
-    const rect = boundary.getBoundingClientRect();
-    const x = (event.event as MouseEvent).clientX - rect.left;
-
-    const delta = x - this.startLeftX;
-    const newWidth = this.startWidth + delta;
-
-    this.leftWidth = Math.max(this.taskListCollapsedWidth, Math.min(500, newWidth));
-
-    // keep the handle visually glued to the divider
-    event.source.reset();
-  }
-
-  stoppedDragging(event: CdkDragEnd, _div: HTMLDivElement) {
-    document.body.classList.remove('split-pane-resizing');
-    event.source.element.nativeElement.classList.remove('hovering');
-  }
-
   ngOnInit(): void {
-    this.breakpointObserver
-      .observe(this.commentsBreakpoint)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(({matches}) => {
-        this.isCommentsNarrow = matches;
-        // Narrowing the window must not tuck away a chat the student has made
-        // full screen; that would hide its exit button along with it.
-        this.commentsCollapsed = matches && !this.commentsFullscreen;
-        window.dispatchEvent(new Event('resize'));
-      });
-
     this.breakpointObserver
       .observe(this.phoneBreakpoint)
       .pipe(takeUntil(this.destroy$))
@@ -186,7 +156,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         this.isPhoneLayout = matches;
         if (matches) {
           // The phone layout has its own feedback pane and no full-screen mode.
-          this.commentsFullscreen = false;
+          this.fullscreenPanel = null;
         }
         if (matches && this.selectedTaskDefinition$.value) {
           this.mobilePane = this.shouldOpenFeedback(this.selectedTaskDefinition$.value)
@@ -199,9 +169,12 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDefinition) => {
       if (!taskDefinition) {
         this.mobilePane = 'task';
-        this.commentsFullscreen = false;
+        this.activePanel = 'list';
+        this.fullscreenPanel = null;
         return;
       }
+
+      this.activePanel = 'task';
 
       if (this.isPhoneLayout) {
         // A task opened from a notification/deep link should expose its feedback immediately.
@@ -247,16 +220,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         // than leaving the phone on the overview or stale task pane.
         this.selectedTaskDefinition$.next(null);
         this.mobilePane = 'task';
+        this.revealTaskList();
       } else if (wasTaskFilterNavigation) {
         // The companion view marker lets browser Back restore the Overview pane,
         // while a user-cleared status retains taskView=tasks and stays in Tasks.
         this.mobilePane = 'overview';
       }
     });
-
-    if (this.defaultTaskListCollapsed) {
-      this.leftWidth = this.taskListCollapsedWidth;
-    }
 
     this.taskService.taskSubmissionCompleted$.pipe(takeUntil(this.destroy$)).subscribe((task) => {
       const activeProject = this.projectSubject.value;
@@ -291,22 +261,21 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
+  /**
+   * A status card filters the task list, so open that list if it is collapsed or
+   * railed for space. Deferred a tick so it also works on first load, before the
+   * panel exists.
+   */
+  private revealTaskList(): void {
+    setTimeout(() => this.taskListPanel?.expandFromRail());
+  }
+
   ngOnDestroy(): void {
-    document.body.classList.remove('split-pane-resizing');
+    this.destroyed = true;
     this.projectLoadCancel$.next();
     this.projectLoadCancel$.complete();
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  public toggleCommentsPanel(): void {
-    this.commentsCollapsed = !this.commentsCollapsed;
-    window.dispatchEvent(new Event('resize'));
-  }
-
-  public toggleCommentsFullscreen(): void {
-    this.commentsFullscreen = !this.commentsFullscreen;
-    window.dispatchEvent(new Event('resize'));
   }
 
   public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {
@@ -508,5 +477,46 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.projectReady = true;
     this.globalStateService.setView(ViewType.PROJECT, project);
     this.projectSubject.next(project);
+    this.checkMilestones(project);
+  }
+
+  /**
+   * Once per opened project, shows the signed off dialog when tasks became complete
+   * since the student last looked. The staff portfolio view embeds this page and
+   * never checks. The service itself also refuses anyone who is not the student.
+   */
+  private checkMilestones(project: Project): void {
+    if (
+      !this.milestones ||
+      this.taskSelectionUrlBase ||
+      this.milestoneCheckedProjectId === project.id
+    ) {
+      return;
+    }
+    this.milestoneCheckedProjectId = project.id;
+
+    void this.milestones
+      .checkProject(project, {preview: this.milestonePreviewRequested()})
+      .then((result) => {
+        if (result !== 'view' || this.destroyed || this.activeProjectId !== project.id) {
+          return;
+        }
+
+        void this.angularRouter.navigate([], {
+          relativeTo: this.route,
+          queryParams: {taskStatus: 'complete', taskView: 'tasks'},
+          queryParamsHandling: 'merge',
+        });
+      })
+      .catch(() => undefined);
+  }
+
+  /** `?celebrate=preview` replays the dialog locally. A production build ignores it. */
+  private milestonePreviewRequested(): boolean {
+    return (
+      isDevMode() &&
+      environment.production === false &&
+      this.route.snapshot?.queryParamMap?.get('celebrate') === 'preview'
+    );
   }
 }

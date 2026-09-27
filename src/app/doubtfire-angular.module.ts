@@ -24,6 +24,7 @@ import {environment} from 'src/environments/environment';
 import {ClipboardModule} from '@angular/cdk/clipboard';
 import {DragDropModule} from '@angular/cdk/drag-drop';
 import {ScrollingModule} from '@angular/cdk/scrolling';
+import {TextFieldModule} from '@angular/cdk/text-field';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {APP_INITIALIZER, ErrorHandler, Injector, NgModule} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -163,6 +164,8 @@ import {ArchiveViewerComponent} from './common/archive-viewer/archive-viewer.com
 import {AudioPlayerComponent} from './common/audio-player/audio-player.component';
 import {AudioCommentRecorderComponent} from './common/audio-recorder/audio/audio-comment-recorder/audio-comment-recorder';
 import {MicrophoneTesterComponent} from './common/audio-recorder/audio/microphone-tester/microphone-tester.component';
+import {AnimatedCheckComponent} from './common/celebrate/animated-check.component';
+import {CelebrationParticlesComponent} from './common/celebrate/celebration-particles.component';
 import {ChartBaseComponent} from './common/chart-base/chart-base-component/chart-base-component.component';
 import {DragDropDirective} from './common/directives/drag-drop.directive';
 import {EditProfileFormComponent} from './common/edit-profile-form/edit-profile-form.component';
@@ -213,6 +216,10 @@ import {NotificationSettingsComponent} from './common/notification-settings/noti
 import {NotificationsPageComponent} from './common/notifications-page/notifications-page.component';
 import {ObjectSelectComponent} from './common/obect-select/object-select.component';
 import {PageContainerComponent} from './common/page-container/page-container.component';
+import {PanelCollapseButtonComponent} from './common/panel-layout/panel-collapse-button.component';
+import {PanelFullscreenButtonComponent} from './common/panel-layout/panel-fullscreen-button.component';
+import {PanelLayoutComponent} from './common/panel-layout/panel-layout.component';
+import {PanelComponent} from './common/panel-layout/panel.component';
 import {PdfViewerPanelComponent} from './common/pdf-viewer-panel/pdf-viewer-panel.component';
 import {fPdfViewerComponent} from './common/pdf-viewer/pdf-viewer.component';
 import {HumanizedDatePipe} from './common/pipes/humanized-date.pipe';
@@ -829,7 +836,13 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
   ],
   imports: [
     PreviousSubmissionsComponent,
+    PanelLayoutComponent,
+    PanelComponent,
+    PanelCollapseButtonComponent,
+    PanelFullscreenButtonComponent,
     ThemeToggleComponent,
+    AnimatedCheckComponent,
+    CelebrationParticlesComponent,
     BrowserModule,
     BrowserAnimationsModule,
     DemoToolsModule,
@@ -842,6 +855,11 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     DragDropModule,
     ScrollingModule,
     StudentOnboardingComponent,
+    // Seven templates ask a textarea to grow with its content, and set a minimum
+    // of three rows while they are at it. Without this the directive is an inert
+    // attribute, so every one of them rendered at the browser default of two rows
+    // and never grew.
+    TextFieldModule,
     MatToolbarModule,
     MatSidenavModule,
     MatFormFieldModule,

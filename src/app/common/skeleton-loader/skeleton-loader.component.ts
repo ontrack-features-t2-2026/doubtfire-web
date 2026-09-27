@@ -32,7 +32,7 @@ export class SkeletonLoaderComponent {
     return {
       height: this.shape === 'card' ? '120px' : this.shape === 'line' ? '16px' : '48px',
       width: '100%',
-      'border-radius': '8px',
+      'border-radius': 'var(--ot-radius-sm)',
       margin: '0',
       ...this.theme,
     };

@@ -32,6 +32,18 @@ describe('EmptyStateComponent', () => {
     expect(root.textContent).toContain('New items will show up in this list.');
   });
 
+  it('renders the message and hint when there is no heading', () => {
+    component.icon = 'inbox';
+    component.message = 'Nothing here yet';
+    component.hint = 'New items will show up in this list.';
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('mat-icon').textContent.trim()).toBe('inbox');
+    expect(root.textContent).toContain('Nothing here yet');
+    expect(root.textContent).toContain('New items will show up in this list.');
+  });
+
   it('renders no action when no action label is given', () => {
     component.icon = 'inbox';
     component.heading = 'Nothing here yet';
