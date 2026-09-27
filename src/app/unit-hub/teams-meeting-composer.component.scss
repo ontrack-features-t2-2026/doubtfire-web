@@ -5,10 +5,10 @@
 
 .teams-composer {
   padding: 1rem;
-  border: 1px solid #b9c9df;
+  border: 1px solid var(--ot-color-divider);
   border-radius: 0.75rem;
-  background: #f5f8fd;
-  color: #20344d;
+  background: color-mix(in srgb, var(--ot-color-link) 6%, var(--ot-color-surface));
+  color: var(--ot-color-text);
   overflow-wrap: anywhere;
 }
 
@@ -37,10 +37,11 @@ textarea {
   width: 100%;
   min-width: 0;
   padding: 0.65rem;
-  border: 1px solid #8498b2;
+  // Muted text, not the border token: that is 1.6:1 in dark, too faint for a field edge.
+  border: 1px solid var(--ot-color-text-muted);
   border-radius: 0.35rem;
-  background: white;
-  color: #172b43;
+  background: var(--ot-color-surface-raised);
+  color: var(--ot-color-text);
   font: inherit;
   font-weight: 400;
 }
@@ -58,12 +59,14 @@ small,
   font-weight: 600;
 }
 .draft-error {
-  color: #9b241a;
+  // Pulled a fifth of the way to the text colour, which keeps it above 4.5:1 on the
+  // tinted box in both themes (the plain error token is 4.2:1 there in light).
+  color: color-mix(in srgb, var(--ot-color-error) 80%, var(--ot-color-text));
 }
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 3px solid #215da6;
+  outline: 3px solid var(--ot-color-focus);
   outline-offset: 2px;
 }
 
