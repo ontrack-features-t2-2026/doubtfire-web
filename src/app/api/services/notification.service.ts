@@ -62,6 +62,14 @@ export class NotificationService extends CachedEntityService<Notification> {
       'event',
       'message',
       'link',
+      'unitId',
+      'projectId',
+      'studentId',
+      'taskDefinitionId',
+      'taskDefinitionAbbr',
+      'taskId',
+      'commentId',
+      'groupId',
       {
         // Not MappingFunctions.mapDate. read_at is null on every unread
         // notification and new Date(null) is the epoch, not null, so mapDate

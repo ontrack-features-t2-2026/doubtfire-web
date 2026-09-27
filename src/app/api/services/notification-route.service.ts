@@ -17,6 +17,8 @@ const FORBIDDEN_ROUTE_TEXT = /[\s\\?#%]/;
 const PROJECT_ROOT_ROUTE = /^\/projects\/[1-9]\d*\/(?:dashboard|groups)$/;
 const PROJECT_TASK_ROUTE =
   /^\/projects\/[1-9]\d*\/dashboard\/[A-Za-z0-9][A-Za-z0-9._-]{0,31}(?:\/feedback)?$/;
+// The one destination allowed a query string, and only as two numeric ids.
+const UNIT_HUB_ROUTE = /^\/unit-hub\?unit=[1-9]\d{0,9}&(?:announcement|session)=[1-9]\d{0,9}$/;
 const PROJECT_FEEDBACK_ROUTE =
   /^\/projects\/([1-9]\d*)\/dashboard\/([A-Za-z0-9][A-Za-z0-9._-]{0,31})\/feedback$/;
 
@@ -49,6 +51,9 @@ export class NotificationRouteService {
     if (!link.startsWith('/') || link.startsWith('//')) {
       return NOTIFICATION_ROUTE_FALLBACK;
     }
+    if (UNIT_HUB_ROUTE.test(link)) {
+      return link;
+    }
     if (hasControlCharacters(link) || FORBIDDEN_ROUTE_TEXT.test(link)) {
       return NOTIFICATION_ROUTE_FALLBACK;
     }
@@ -65,7 +70,18 @@ export class NotificationRouteService {
   }
 
   public navigate(link: unknown): Promise<boolean> {
-    const target = this.resolve(link);
+    return this.navigateToTarget(this.resolve(link));
+  }
+
+  /**
+   * Go to an in-app url that was built here from ids, not taken from a link.
+   *
+   * NotificationTargetService builds these with the router from numeric ids and
+   * a task abbreviation the router encodes, so there is no raw text to screen
+   * and the allow-list above, which only knows the api's link shapes, would
+   * turn away the staff pages it needs.
+   */
+  public navigateToTarget(target: string): Promise<boolean> {
     const feedbackIntent = this.createFeedbackIntent(target);
 
     // A service-worker click can reach an already-open anonymous client after
