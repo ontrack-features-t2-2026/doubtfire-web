@@ -101,6 +101,7 @@
                     >
                       <a
                         class="block truncate rounded-ot-xs text-(--ot-unit-on) no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
+                        [attr.aria-label]="card.code + ', ' + card.name + ' - ' + card.role"
                         [routerLink]="['/units', card.unitId, 'tasks', 'inbox']"
                       >
                         {{ card.code }}
@@ -129,7 +130,7 @@
                       aria-valuemin="0"
                       class="mt-2 h-2 overflow-hidden rounded-ot-pill bg-(--ot-meter-track)"
                       role="progressbar"
-                      [attr.aria-label]="'Teaching period for ' + card.code"
+                      [attr.aria-label]="'Teaching period progress for ' + card.name"
                       [attr.aria-valuenow]="card.progress"
                       [attr.aria-valuetext]="card.progressValueText"
                     >
@@ -238,6 +239,7 @@
                     >
                       <a
                         class="block truncate rounded-ot-xs text-(--ot-unit-on) no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
+                        [attr.aria-label]="card.code + ', ' + card.name"
                         [routerLink]="['/projects', card.projectId, 'dashboard']"
                       >
                         {{ card.code }}
@@ -268,7 +270,7 @@
                       aria-valuemin="0"
                       class="mt-2 h-2 overflow-hidden rounded-ot-pill bg-(--ot-meter-track)"
                       role="progressbar"
-                      [attr.aria-label]="'Teaching period for ' + card.code"
+                      [attr.aria-label]="'Teaching period progress for ' + card.name"
                       [attr.aria-valuenow]="card.progress"
                       [attr.aria-valuetext]="card.progressValueText"
                     >

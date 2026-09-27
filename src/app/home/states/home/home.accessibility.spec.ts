@@ -83,6 +83,11 @@ describe('Home unit navigation accessibility', () => {
       '/projects/12/dashboard',
     ]);
     expect(links.map((link) => link.textContent?.trim())).toEqual(['TEACH', 'DEMO']);
+    // the name starts with the visible code, then says which unit and role
+    expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+      'TEACH, Teaching demonstration unit - Tutor',
+      'DEMO, Demonstration unit',
+    ]);
     for (const link of links) {
       expect(link.tabIndex).toBe(0);
       link.focus();
@@ -119,8 +124,8 @@ describe('Home unit navigation accessibility', () => {
     const element = fixture.nativeElement as HTMLElement;
     const bars = [...element.querySelectorAll<HTMLElement>('[role="progressbar"]')];
     expect(bars.map((bar) => bar.getAttribute('aria-label'))).toEqual([
-      'Teaching period for TEACH',
-      'Teaching period for DEMO',
+      'Teaching period progress for Teaching demonstration unit',
+      'Teaching period progress for Demonstration unit',
     ]);
     expect(bars.map((bar) => bar.getAttribute('aria-valuenow'))).toEqual(['50', '50']);
     await expectAccessible(element);
