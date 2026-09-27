@@ -14,7 +14,7 @@
         [checked]="webcal?.enabled"
         [disabled]="working || !webcal"
         [matTooltip]="webcal?.enabled ? 'Disable the web calendar' : 'Enable the web calendar'"
-        (click)="onWebcalToggle()"
+        (toggleChange)="onWebcalToggle()"
       >
       </mat-slide-toggle>
     </div>

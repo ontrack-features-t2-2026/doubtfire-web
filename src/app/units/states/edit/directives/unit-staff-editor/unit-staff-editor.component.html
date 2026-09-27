@@ -138,6 +138,7 @@
         <td *matCellDef="let unitRole" mat-cell>
           <mat-form-field appearance="outline" class="w-48 py-2" subscriptSizing="dynamic">
             <mat-select
+              canSelectNullableOptions
               [aria-label]="'Mentor for ' + unitRole.user?.displayName"
               [ngModel]="unitRole.mentorId ?? null"
               (selectionChange)="selectMentor(unitRole, $event)"

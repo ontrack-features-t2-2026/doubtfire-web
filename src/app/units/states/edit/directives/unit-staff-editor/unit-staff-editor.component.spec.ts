@@ -6,10 +6,11 @@ import {MatAutocompleteModule} from '@angular/material/autocomplete';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
-import {MatSelectModule} from '@angular/material/select';
+import {MatSelect, MatSelectModule} from '@angular/material/select';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatTableModule} from '@angular/material/table';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {By} from '@angular/platform-browser';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {of} from 'rxjs';
 import {UnitService} from 'src/app/api/models/doubtfire-model';
@@ -124,6 +125,12 @@ describe('UnitStaffEditorComponent', () => {
     // Every icon-only button says what it does.
     fixture.nativeElement.querySelectorAll('button[mat-icon-button]').forEach((button) => {
       expect(button.getAttribute('aria-label')).toBeTruthy();
+    });
+    // no mentor is a null option, so the select has to let you pick it
+    const mentorSelects = fixture.debugElement.queryAll(By.directive(MatSelect));
+    expect(mentorSelects.length).toBe(2);
+    mentorSelects.forEach((select) => {
+      expect(select.componentInstance.canSelectNullableOptions).toBe(true);
     });
   });
 
