@@ -1,9 +1,16 @@
+@use './hub-card' as hub;
+
+@include hub.card-theme;
+
 :host {
   display: flex;
   flex-direction: column;
   min-height: 0;
   max-height: 90dvh;
   color: var(--ot-color-text);
+  // every Unit Hub button: the app's filled or outlined style, at a 44px touch height
+  --mat-button-filled-container-height: 44px;
+  --mat-button-outlined-container-height: 44px;
 }
 .details-header {
   display: flex;
@@ -21,22 +28,30 @@
 }
 .detail-unit {
   margin: 0 0 8px;
-  color: var(--ot-color-text-muted);
-  font-size: 0.82rem;
+  color: var(--ot-color-link);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 h2[mat-dialog-title] {
   margin: 0;
   padding: 0;
   color: inherit;
-  font-size: 1.4rem;
-  line-height: 1.4;
+  font-size: 1.35rem;
+  font-weight: 650;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 h2[mat-dialog-title]::before {
   display: none;
 }
+// grouping comes from cards and one vertical rhythm, not rules between sections
 .details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   min-height: 0;
   flex: 1;
   max-height: none;
@@ -44,18 +59,23 @@ h2[mat-dialog-title]::before {
   color: inherit;
   overflow-wrap: anywhere;
 }
+.details-content > * {
+  margin: 0;
+}
+// the dialog is a raised surface, so every card here takes the surface token
 .detail-facts {
+  @include hub.card(raised);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin: 16px 0 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px 24px;
+  margin-top: 10px;
+  padding: 16px;
 }
 .detail-facts > div {
   min-width: 0;
 }
 dt {
-  color: var(--ot-color-text-muted);
-  font-size: 0.78rem;
+  @include hub.label;
   margin-bottom: 4px;
 }
 dd {
@@ -69,82 +89,86 @@ small {
   font-size: 0.76rem;
   margin-top: 3px;
 }
+// the body gets its own quiet card on the same inset as the facts card
 .full-content {
+  @include hub.card(raised);
+  padding: 16px;
   line-height: 1.7;
-  border-top: 1px solid var(--ot-color-divider);
-  padding-top: 16px;
 }
-.full-content p {
-  white-space: pre-wrap;
-  margin: 0;
+.content-label {
+  @include hub.label;
+  margin-bottom: 8px;
 }
-.detail-notice,
+// markdown body: a comfortable measure and rhythm for long announcements
+.markdown-body {
+  @include hub.markdown;
+}
+.markdown-body.is-clamped {
+  max-height: 40vh;
+  overflow: hidden;
+  // fades the last lines out so it reads as continuing; a mask, so no colour is involved
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent);
+  mask-image: linear-gradient(to bottom, black 70%, transparent);
+}
+.body-toggle {
+  margin-top: 12px;
+}
+.detail-notice {
+  @include hub.callout(raised);
+  p {
+    margin: 0;
+  }
+}
+// a cancelled session: struck title in the header, the banner under it
+.details-header.is-cancelled {
+  h2[mat-dialog-title] {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+}
+.cancelled-banner {
+  @include hub.cancelled-banner;
+  margin-top: 10px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .calendar-guidance {
-  background: var(--ot-color-surface-raised);
-  padding: 14px;
-  border-radius: 10px;
-  margin: 6px 0 18px;
+  @include hub.card(raised);
+  padding: 16px;
   font-size: 0.84rem;
   line-height: 1.6;
 }
-.detail-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.detail-notice mat-icon {
-  flex-shrink: 0;
-}
-.detail-notice p {
-  margin: 0;
-}
-.calendar-guidance {
-  margin: 24px 0 0;
-}
 .calendar-guidance h3 {
-  font-size: 0.95rem;
-  margin: 0 0 7px;
+  @include hub.icon-heading;
+  margin-bottom: 8px;
 }
 .calendar-guidance p {
-  margin: 0 0 8px;
-}
-.cancelled-notice {
-  color: var(--ot-color-error);
-  border: 1px solid currentColor;
-  padding: 12px;
-  border-radius: 8px;
+  margin: 0 0 12px;
 }
 .detail-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 22px;
-  color: var(--ot-color-link);
-  text-underline-offset: 3px;
-}
-.detail-source mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  align-self: flex-start;
+  text-decoration: none;
 }
 .details-actions {
-  display: flex;
-  flex-wrap: wrap;
+  @include hub.action-row;
   flex-shrink: 0;
   justify-content: flex-end;
-  gap: 8px;
-  border-top: 1px solid var(--ot-color-divider);
   padding: 14px 24px;
-}
-.details-actions a {
-  text-decoration: none;
 }
 .detail-status:empty {
   display: none;
 }
 .detail-status {
   font-size: 0.84rem;
-  margin-top: 14px;
 }
 a:focus-visible,
 button:focus-visible {
@@ -162,14 +186,13 @@ button:focus-visible {
     padding: 12px 18px;
   }
   .detail-facts {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
   h2[mat-dialog-title] {
     font-size: 1.22rem;
   }
-  .details-actions a,
-  .details-actions button {
-    min-height: 44px;
+  .detail-source {
+    align-self: stretch;
   }
 }

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
 import {MatIconModule} from '@angular/material/icon';
 import {STUDY_ESSENTIALS_PROFILE, studyEssentialsFor} from './study-essentials.config';
 
@@ -12,4 +12,6 @@ import {STUDY_ESSENTIALS_PROFILE, studyEssentialsFor} from './study-essentials.c
 })
 export class StudyEssentialsComponent {
   readonly links = studyEssentialsFor(inject(STUDY_ESSENTIALS_PROFILE));
+  // one scrollable row of links, for pages where the tiles would push content down
+  readonly compact = input(false);
 }
