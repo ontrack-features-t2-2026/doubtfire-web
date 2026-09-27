@@ -57,6 +57,8 @@ describe('TaskStatusCardComponent', () => {
       blockedByPrerequisiteTasks: vi.fn().mockReturnValue(false),
       canApplyForExtension: () => false,
       inSubmittedState: () => false,
+      hasSubmissionHistory: () => false,
+      requiresFileUpload: () => true,
       triggerTransition: vi.fn(),
     } as unknown as Task;
     component.triggers = [

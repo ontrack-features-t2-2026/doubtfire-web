@@ -55,7 +55,7 @@ export class TaskStatusCardComponent implements OnChanges, OnDestroy {
   // Derived so the card's status-colour wrap (--tsc bindings) tracks live status
   // transitions, which mutate the existing task rather than replacing the input.
   get taskStatusColor(): string {
-    return this.task?.statusClass();
+    return this.task?.statusClass?.();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
