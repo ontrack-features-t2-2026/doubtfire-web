@@ -27,6 +27,8 @@ export interface FeedbackDraftSnapshot {
   text: string;
   replyToId: number | null;
   clientRequestId: string | null;
+  // The reply target and text the request id was issued for.
+  clientRequestFingerprint: string | null;
   updatedAt: number;
 }
 
@@ -57,6 +59,7 @@ export class FeedbackDraftStore {
       text: '',
       replyToId: null,
       clientRequestId: null,
+      clientRequestFingerprint: null,
       updatedAt: 0,
     };
     try {
@@ -69,6 +72,10 @@ export class FeedbackDraftStore {
         text: typeof parsed.text === 'string' ? parsed.text : '',
         replyToId: typeof parsed.replyToId === 'number' ? parsed.replyToId : null,
         clientRequestId: typeof parsed.clientRequestId === 'string' ? parsed.clientRequestId : null,
+        clientRequestFingerprint:
+          typeof parsed.clientRequestFingerprint === 'string'
+            ? parsed.clientRequestFingerprint
+            : null,
         updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : 0,
       };
     } catch {
@@ -81,6 +88,7 @@ export class FeedbackDraftStore {
     text: string,
     replyToId: number | null,
     clientRequestId: string | null = null,
+    clientRequestFingerprint: string | null = null,
   ): void {
     const key = this.key(context);
     try {
@@ -97,6 +105,10 @@ export class FeedbackDraftStore {
         text,
         replyToId,
         clientRequestId: clientRequestId ?? prior.clientRequestId,
+        // Keep the id and its fingerprint together, whichever one is kept.
+        clientRequestFingerprint: clientRequestId
+          ? clientRequestFingerprint
+          : prior.clientRequestFingerprint,
         updatedAt: Date.now(),
       };
       sessionStorage.setItem(key, JSON.stringify(snapshot));

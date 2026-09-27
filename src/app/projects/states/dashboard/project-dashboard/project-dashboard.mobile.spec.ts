@@ -19,7 +19,6 @@ describe('ProjectDashboardComponent phone task workspace', () => {
   let fixture: ComponentFixture<ProjectDashboardComponent>;
   let component: ProjectDashboardComponent;
   let phoneState$: BehaviorSubject<BreakpointState>;
-  let commentsState$: BehaviorSubject<BreakpointState>;
   let observeBreakpoint: ReturnType<typeof vi.fn>;
   let routeTaskAbbreviation: string | null;
   let routeMobilePane: string | null;
@@ -65,14 +64,7 @@ describe('ProjectDashboardComponent phone task workspace', () => {
       matches: true,
       breakpoints: {},
     });
-    commentsState$ = new BehaviorSubject<BreakpointState>({
-      matches: true,
-      breakpoints: {},
-    });
-    observeBreakpoint = vi.fn((value: string | readonly string[]) => {
-      const queryText = Array.isArray(value) ? value.join(',') : value;
-      return queryText.includes('999.98px') ? commentsState$ : phoneState$;
-    });
+    observeBreakpoint = vi.fn(() => phoneState$);
 
     await TestBed.configureTestingModule({
       imports: [CommonModule],
@@ -147,13 +139,10 @@ describe('ProjectDashboardComponent phone task workspace', () => {
     expect(query('.project-task-list-panel')?.classList).toContain(
       'project-task-list-panel--phone-hidden',
     );
-    expect(query('.project-task-resizer')?.classList).toContain(
-      'project-task-resizer--phone-hidden',
-    );
     expect(query('.mobile-task-view')).not.toBeNull();
     expect(query('.mobile-task-pane task-comments-viewer')).not.toBeNull();
     expect(query('.mobile-task-pane f-task-dashboard')).toBeNull();
-    expect(query('.comments-sidebar')).toBeNull();
+    expect(query('app-panel-layout')).toBeNull();
   });
 
   it('converts a validated notification route intent into the Batch 02 landing hook', () => {
@@ -388,15 +377,14 @@ describe('ProjectDashboardComponent phone task workspace', () => {
 
   it('preserves the three-pane desktop layout above the phone breakpoint', () => {
     phoneState$.next({matches: false, breakpoints: {}});
-    commentsState$.next({matches: false, breakpoints: {}});
     createComponent();
     renderSelectedTask();
 
     expect(component.isPhoneLayout).toBe(false);
     expect(query('.mobile-task-view')).toBeNull();
-    expect(query('.desktop-task-dashboard f-task-dashboard')).not.toBeNull();
-    expect(query('.comments-sidebar task-comments-viewer')).not.toBeNull();
-    expect(query<HTMLElement>('.project-task-list-panel')?.style.width).toBe('400px');
+    expect(query('app-panel-layout f-task-dashboard.desktop-task-dashboard')).not.toBeNull();
+    expect(query('app-panel.project-comments task-comments-viewer')).not.toBeNull();
+    expect(component.leftWidth).toBe(400);
 
     const styles = (
       ProjectDashboardComponent as unknown as {

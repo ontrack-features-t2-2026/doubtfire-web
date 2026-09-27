@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   Optional,
+  isDevMode,
 } from '@angular/core';
 import {NgForm} from '@angular/forms';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
@@ -19,6 +20,9 @@ import {PushBlocker, PushNotificationService} from 'src/app/api/services/push-no
 import {UserService} from 'src/app/api/services/user.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+
+/** How long the save confirmation stays before the bar leaves with it. */
+const SAVED_CONFIRMATION_MS = 2600;
 
 @Component({
   selector: 'f-edit-profile-form',
@@ -58,6 +62,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   public formPronouns = {pronouns: ''};
   public saving = false;
   public saveMessage = '';
+  /** Keeps the confirmation on screen for a moment after the bar would otherwise go. */
+  public justSaved = false;
   public saveError = '';
   public get customPronouns(): boolean {
     return this.formPronouns.pronouns === '__customPronouns';
@@ -90,6 +96,16 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       this.user.displayPeerProgress = true;
     }
 
+    // The values Discard puts back. Retaken after every successful save.
+    this.takeSnapshot();
+
+    // The same for Unit Hub updates, which are on in the bell and off everywhere
+    // else until the user opts in.
+    this.user.receiveUnitHubNotifications ??= true;
+    this.user.receiveUnitHubEmailNotifications ??= false;
+    this.user.receiveUnitHubPushNotifications ??= false;
+    this.user.receiveUnitHubSessionReminders ??= false;
+
     if (!this.user.hasRunFirstTimeSetup) {
       this.user.optInToResearch = false;
       this.user.receiveFeedbackNotifications = true;
@@ -101,6 +117,19 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pushSubscription?.unsubscribe();
+
+    // Clearing the timer here is not enough on its own. The save response can
+    // land after the view has gone, and the handler confirms the save, which
+    // arms a fresh timer against a component nothing will destroy again. The
+    // handlers check this flag instead of the request being cancelled here:
+    // unsubscribing would abort the PUT, so closing the dialog straight after
+    // pressing Save would silently lose the save.
+    this.destroyed = true;
+
+    if (this.justSavedTimer) {
+      clearTimeout(this.justSavedTimer);
+      this.justSavedTimer = null;
+    }
   }
 
   /**
@@ -179,6 +208,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     this.authService.signOut();
   }
 
+  /** The name shown in the profile header: preferred or first name, then last name. */
+  public get displayName(): string {
+    const first = this.user?.nickname?.trim() || this.user?.firstName?.trim() || '';
+    const name = [first, this.user?.lastName?.trim()].filter(Boolean).join(' ');
+    return name || this.user?.username || '';
+  }
+
   public get newUser(): boolean {
     return this.mode === 'new';
   }
@@ -193,11 +229,55 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   }
 
   public get canEditEmail(): boolean {
-    return this.newUser || this.user.emailEditable === true;
+    return this.newUser || (this.user.emailEditable === true && !this.identityManaged);
+  }
+
+  /**
+   * First and last name are asserted by the institution on every deployment
+   * that is not local database auth, so the API rejects a change to either.
+   * `institutionalIdentityManaged` is the server's own answer to that question,
+   * carried on the user we already fetched, so the page needs no extra request.
+   */
+  public get canEditName(): boolean {
+    return this.newUser || !this.identityManaged;
+  }
+
+  /**
+   * The server decides this, and a local database-auth demo always answers no. A dev
+   * build accepts ?identityManaged=1 so the institution-managed page can be seen
+   * without an SSO deployment. It changes nothing that is saved.
+   */
+  public get identityManagedView(): boolean {
+    return this.identityManaged;
+  }
+
+  private get identityManaged(): boolean {
+    if (this.user?.institutionalIdentityManaged) {
+      return true;
+    }
+    return (
+      isDevMode() && new URLSearchParams(window.location.search).get('identityManaged') === '1'
+    );
+  }
+
+  /**
+   * Identity the deployment manages. These are rendered as facts rather than
+   * inputs, so they are left out of the update as well. Sending a value the
+   * user was never able to change is at best noise and at worst a 422.
+   */
+  private get readOnlyIdentityKeys(): string[] {
+    const keys: string[] = [];
+    if (!this.canEditName) {
+      keys.push('firstName', 'lastName');
+    }
+    if (!this.canEditEmail) {
+      keys.push('email');
+    }
+    return keys;
   }
 
   public get canEditStudentId(): boolean {
-    return this.newUser || (!this.user.institutionalIdentityManaged && !this.managingOwnProfile);
+    return this.newUser || (!this.identityManaged && !this.managingOwnProfile);
   }
 
   public get canEditSystemRole(): boolean {
@@ -215,6 +295,87 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     return this.constants.IsTiiEnabled.value;
   }
 
+  /** The fields this form edits, for taking a snapshot to discard back to. */
+  private static readonly EDITED_FIELDS = [
+    'firstName',
+    'lastName',
+    'nickname',
+    'email',
+    'studentId',
+    'pronouns',
+    'username',
+    'systemRole',
+    'optInToResearch',
+    'displayPeerProgress',
+    'acceptedTiiEula',
+  ] as const;
+
+  private savedSnapshot: Record<string, unknown> = {};
+  /** The pronouns select sits outside the user object, so it is snapshotted too. */
+  private savedFormPronouns = '';
+  private justSavedTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Set once the view has gone, so a late save response cannot touch it. */
+  private destroyed = false;
+
+  /** The user as it was when the form was last clean. */
+  private takeSnapshot(): void {
+    const snapshot: Record<string, unknown> = {};
+    EditProfileFormComponent.EDITED_FIELDS.forEach((field) => {
+      snapshot[field] = (this.user as unknown as Record<string, unknown>)[field];
+    });
+    this.savedSnapshot = snapshot;
+    this.savedFormPronouns = this.formPronouns.pronouns;
+  }
+
+  /**
+   * In edit mode the bar earns its place only when it has something to say: an
+   * edit to save, a save in flight, a problem, or a confirmation that has not
+   * faded yet. The other modes always need their main action on screen.
+   *
+   * Dirtiness comes from the template's own form reference, so this does not
+   * depend on how the form directive happens to be resolved.
+   */
+  public showActions(dirty: boolean): boolean {
+    if (this.mode !== 'edit') {
+      return true;
+    }
+    return dirty || this.saving || this.justSaved || !!this.saveError;
+  }
+
+  /** Puts every edited field back to how it was when the form was last clean. */
+  public discard(form?: NgForm): void {
+    if (this.saving) {
+      return;
+    }
+
+    const target = this.user as unknown as Record<string, unknown>;
+    Object.entries(this.savedSnapshot).forEach(([field, value]) => {
+      target[field] = value;
+    });
+
+    this.formPronouns.pronouns = this.savedFormPronouns;
+    this.saveMessage = '';
+    this.saveError = '';
+    form?.form.markAsPristine();
+    form?.form.markAsUntouched();
+  }
+
+  private confirmSaved(message: string, form?: NgForm): void {
+    this.saveMessage = message;
+    form?.form.markAsPristine();
+    this.takeSnapshot();
+
+    // The bar leaves on its own once the confirmation has been seen.
+    this.justSaved = true;
+    if (this.justSavedTimer) {
+      clearTimeout(this.justSavedTimer);
+    }
+    this.justSavedTimer = setTimeout(() => {
+      this.justSaved = false;
+      this.justSavedTimer = null;
+    }, SAVED_CONFIRMATION_MS);
+  }
+
   public submit(form?: NgForm): void {
     if (this.saving || form?.invalid) {
       return;
@@ -229,11 +390,13 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     if (this.newUser) {
       this.userService.create(this.user).subscribe({
         next: (updatedUser) => {
+          if (this.destroyed) {
+            return;
+          }
           this.saving = false;
           this.user = updatedUser;
           this.initialFirstName = this.user.firstName;
-          form?.form.markAsPristine();
-          this.saveMessage = 'User created.';
+          this.confirmSaved('User created.', form);
 
           this._snackBar.open('User created', 'dismiss', {
             duration: 1500,
@@ -244,16 +407,23 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
         error: (error: unknown) => this.handleSaveError(error),
       });
     } else {
-      this.userService.update(this.user).subscribe({
+      const ignoreKeys = this.readOnlyIdentityKeys;
+      const request = ignoreKeys.length
+        ? this.userService.update(this.user, {entity: this.user, ignoreKeys})
+        : this.userService.update(this.user);
+
+      request.subscribe({
         next: (updatedUser) => {
+          if (this.destroyed) {
+            return;
+          }
           this.saving = false;
           if (this.mode === 'create') {
             this.router.navigateByUrl('/home');
           } else {
             this.user = updatedUser;
             this.initialFirstName = this.user.firstName;
-            form?.form.markAsPristine();
-            this.saveMessage = 'Profile saved.';
+            this.confirmSaved('Profile saved.', form);
 
             // TODO: refactor into new alertService
             // this is a new snackbar alert test
@@ -270,13 +440,20 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
   }
 
   private handleSaveError(error: unknown): void {
-    this.saving = false;
     const serverMessage = error instanceof HttpErrorResponse ? error.error?.error : null;
     const message = typeof error === 'string' ? error : serverMessage;
-    this.saveError =
+    const text =
       typeof message === 'string' && message.trim()
         ? message
         : 'Profile could not be saved. Check your connection and try again.';
-    this.alerts.error(this.saveError, 6000);
+
+    // The alert still goes up after the view has gone: a save that failed is
+    // worth saying wherever the user ended up, and the message says which one.
+    // Only the in-form state is skipped, because there is no form left to show it.
+    if (!this.destroyed) {
+      this.saving = false;
+      this.saveError = text;
+    }
+    this.alerts.error(text, 6000);
   }
 }

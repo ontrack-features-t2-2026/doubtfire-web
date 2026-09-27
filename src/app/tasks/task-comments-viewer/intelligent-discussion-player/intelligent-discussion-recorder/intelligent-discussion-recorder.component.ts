@@ -74,6 +74,25 @@ export class IntelligentDiscussionRecorderComponent
     }
   }
 
+  /** Ends the take without producing a recording, so nothing is posted. */
+  cancelRecording(): void {
+    this.isPlaying = false;
+    if (this.isRecording || this.isRequestingPermission) {
+      this.mediaRecorder.cancelRecording();
+      this.isRecording = false;
+      this.isRequestingPermission = false;
+      this.stopVisualisation();
+      this.clearWaveform();
+    }
+  }
+
+  // A stop posts the take as the student's reply, and the API marks the
+  // discussion complete. A backgrounded take is only part of an answer, so it
+  // is dropped instead and the dialog asks the student to start again.
+  protected onLifecyclePause(): void {
+    this.cancelRecording();
+  }
+
   sendRecording() {
     if (this.blob && this.blob.size > 0) {
       this.isSending = true;

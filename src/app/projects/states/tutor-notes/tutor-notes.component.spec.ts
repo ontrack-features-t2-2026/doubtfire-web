@@ -225,9 +225,13 @@ describe('TutorNotesComponent states', () => {
     render([]);
     const submit = Array.from<HTMLButtonElement>(
       fixture.nativeElement.querySelectorAll('button'),
-    ).find((button) => button.textContent.trim() === 'Submit');
+    ).find(
+      (button) =>
+        (button.querySelector('.mdc-button__label') ?? button).textContent.trim() === 'Submit',
+    );
 
     expect(submit.closest('mat-form-field')).toBeNull();
+    expect(submit.querySelector('mat-icon')?.textContent.trim()).toBe('save');
     expect(submit.hasAttribute('disabled')).toBe(false);
     expect(submit.getAttribute('aria-disabled')).toBe('true');
 

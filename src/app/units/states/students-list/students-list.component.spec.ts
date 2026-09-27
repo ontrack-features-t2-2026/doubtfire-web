@@ -19,7 +19,6 @@ import {Tutorial} from 'src/app/api/models/tutorial/tutorial';
 import {Unit} from 'src/app/api/models/unit';
 import {CampusService} from 'src/app/api/services/campus.service';
 import {ProjectService} from 'src/app/api/services/project.service';
-import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {AlertService} from 'src/app/common/services/alert.service';
@@ -300,10 +299,6 @@ describe('StudentsListComponent empty state', () => {
         {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
         {provide: Router, useValue: {}},
         {provide: UserService, useValue: {currentUser: {id: 1}}},
-        {
-          provide: TaskService,
-          useValue: {statusColors: new Map(), statusLabels: new Map()},
-        },
         {provide: ProjectService, useValue: {loadStudents: () => of([])}},
         {provide: CampusService, useValue: {query: () => of([])}},
         {provide: AlertService, useValue: {success: () => {}, error: () => {}}},
@@ -359,7 +354,10 @@ describe('StudentsListComponent empty state', () => {
     expect(errorState.textContent).toContain('Students could not be loaded');
     expect(fixture.nativeElement.textContent).not.toContain('No students enrolled yet');
 
-    (errorState.querySelector('button') as HTMLButtonElement).click();
+    const retry = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent.includes('Try again'));
+    retry.click();
     fixture.detectChanges();
 
     expect(loadStudents).toHaveBeenCalledTimes(2);

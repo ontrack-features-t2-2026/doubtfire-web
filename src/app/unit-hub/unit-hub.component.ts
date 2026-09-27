@@ -1,14 +1,30 @@
 import {CommonModule} from '@angular/common';
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
-import {ActivatedRoute, NavigationStart, Router, RouterLink} from '@angular/router';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {ActivatedRoute, NavigationStart, ParamMap, Router, RouterLink} from '@angular/router';
 import {Subscription, combineLatest, forkJoin} from 'rxjs';
 import {CalendarModalService} from 'src/app/common/modals/calendar-modal/calendar-modal.service';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {StudyEssentialsComponent} from '../study-essentials/study-essentials.component';
+import {AnnouncementReadStore} from './announcement-read.store';
+import {HubMarkdownPipe, HubPlainTextPipe} from './hub-markdown';
+import {SessionTiming, sessionTiming, upNextSession} from './session-timing';
+import {buildStatusGuide} from './status-guide';
 import {TeamsMeetingComposerComponent} from './teams-meeting-composer.component';
 import {TeamsMeetingDraft} from './teams-meeting-draft';
 import {
@@ -38,9 +54,14 @@ import {UnitHubService} from './unit-hub.service';
     MatButtonModule,
     MatDialogModule,
     MatIconModule,
+    MatMenuModule,
+    MatFormFieldModule,
+    MatSelectModule,
     RouterLink,
     StudyEssentialsComponent,
     TeamsMeetingComposerComponent,
+    HubMarkdownPipe,
+    HubPlainTextPipe,
   ],
   templateUrl: './unit-hub.component.html',
   styleUrl: './unit-hub.component.scss',
@@ -56,6 +77,11 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   selectedUnitId = 0;
   unavailableUnit = false;
   tab: 'all' | 'announcements' | 'sessions' = 'all';
+  // long feeds show a first page so the rest of the hub stays in reach
+  readonly announcementPage = 6;
+  readonly sessionDayPage = 4;
+  showAllAnnouncements = false;
+  showAllSessionDays = false;
   managing = false;
   managedUnitId = 0;
   staffLoading = false;
@@ -65,6 +91,9 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   editor: 'announcement' | 'session' | null = null;
   editingId?: number;
   editingPublishedAt: string | null = null;
+  // Write / Preview for the markdown fields in the staff editor
+  announcementPreview = false;
+  sessionPreview = false;
   saving = false;
   formError = '';
   status = '';
@@ -74,6 +103,15 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   private staffRequest?: Subscription;
   private mutationRequest?: Subscription;
   private detailsRef?: MatDialogRef<UnitHubDetailsComponent>;
+  /** Refreshed every minute, so the time highlights and countdowns stay current. */
+  now = Date.now();
+  private clock?: ReturnType<typeof setInterval>;
+  private readonly zone = inject(NgZone);
+  private readonly changes = inject(ChangeDetectorRef);
+  private readonly snackBar = inject(MatSnackBar);
+  /** An announcement or session named in the URL, opened once the feed has loaded. */
+  private pendingLink: {announcement: number; session: number} | null = null;
+  private feedKey: string | null = null;
 
   readonly announcementForm;
   readonly sessionForm;
@@ -86,6 +124,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     private router: Router,
     formBuilder: FormBuilder,
     private dialogs: MatDialog,
+    private readStatus: AnnouncementReadStore,
   ) {
     this.announcementForm = formBuilder.nonNullable.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -121,17 +160,36 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       }),
     );
     this.subscriptions.add(
-      combineLatest([this.demo.enabled$, this.route.queryParamMap]).subscribe(([, params]) => {
-        this.mutationRequest?.unsubscribe();
-        this.saving = false;
-        this.managing = false;
-        this.selectedUnitId = Number(params.get('unit')) || 0;
-        this.reload();
-      }),
+      combineLatest([this.demo.enabled$, this.route.queryParamMap]).subscribe(
+        ([enabled, params]) => {
+          const announcement = Number(params.get('announcement')) || 0;
+          const session = Number(params.get('session')) || 0;
+          if (announcement || session) {
+            this.pendingLink = {announcement, session};
+          }
+          // Clearing a deep link from the URL must not reload the feed or close its dialog.
+          const key = this.feedParamsKey(enabled, params);
+          if (key === this.feedKey && !this.loading && !this.loadError) {
+            this.openPendingLink();
+            return;
+          }
+          this.feedKey = key;
+          this.mutationRequest?.unsubscribe();
+          this.saving = false;
+          this.managing = false;
+          this.selectedUnitId = Number(params.get('unit')) || 0;
+          this.reload();
+        },
+      ),
     );
+    // outside Angular, so a pending timer never holds the zone open; it re-enters to update
+    this.zone.runOutsideAngular(() => {
+      this.clock = setInterval(() => this.zone.run(() => (this.now = Date.now())), 60_000);
+    });
   }
 
   ngOnDestroy(): void {
+    clearInterval(this.clock);
     this.closeDetails();
     this.subscriptions.unsubscribe();
     this.feedRequest?.unsubscribe();
@@ -144,6 +202,14 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   }
   get manageableUnits(): HubUnit[] {
     return this.demo.enabled ? [] : this.units.filter((unit) => unit.can_manage);
+  }
+  get visibleAnnouncements(): UnitAnnouncement[] {
+    const rows = this.announcements;
+    return this.showAllAnnouncements ? rows : rows.slice(0, this.announcementPage);
+  }
+  get visibleSessionGroups() {
+    const groups = this.sessionGroups;
+    return this.showAllSessionDays ? groups : groups.slice(0, this.sessionDayPage);
   }
   get announcements(): UnitAnnouncement[] {
     return this.feed.announcements.filter(
@@ -161,6 +227,25 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   get managedTeamsConfigured(): boolean {
     return this.units.find((unit) => unit.id === this.managedUnitId)?.teams_sync === 'configured';
   }
+  /** Read status is a student feed concern; staff managing content do not see it. */
+  isUnread(row: UnitAnnouncement): boolean {
+    return this.readStatus.isUnread(row);
+  }
+  get unreadCount(): number {
+    return this.announcements.filter((row) => this.readStatus.isUnread(row)).length;
+  }
+  markRead(row: UnitAnnouncement): void {
+    if (this.announcements.includes(row)) {
+      this.readStatus.markRead([row]);
+      // the read state lives outside Angular's inputs, so ask for a redraw now rather
+      // than on the next unrelated change
+      this.changes.markForCheck();
+    }
+  }
+  markAllRead(): void {
+    this.readStatus.markRead(this.announcements.filter((row) => this.readStatus.isUnread(row)));
+    this.changes.markForCheck();
+  }
   isManagedExternally(row: UnitAnnouncement): boolean {
     return row.managed_externally === true || row.source_provider === 'microsoft_teams';
   }
@@ -173,11 +258,64 @@ export class UnitHubComponent implements OnInit, OnDestroy {
   kindIcon(kind: string): string {
     return this.sessionKinds.find((item) => item.value === kind)?.icon ?? 'event';
   }
-  sessionLive(session: LearningSession): boolean {
-    const now = Date.now();
-    return (
-      !session.cancelled && Date.parse(session.start_at) <= now && Date.parse(session.end_at) > now
-    );
+  kindTone(kind: string): string {
+    return kind === 'helphub' || kind === 'lecture' ? kind : 'class';
+  }
+  get showFeed(): boolean {
+    return !this.loading && !this.loadError && !this.managing && this.units.length > 0;
+  }
+
+  /** What each task status means, read from the same source the task pages use. */
+  public readonly statusGuide = buildStatusGuide();
+  public statusGuideOpen = false;
+
+  public toggleStatusGuide(): void {
+    this.statusGuideOpen = !this.statusGuideOpen;
+  }
+  /** Upcoming sessions grouped by the local calendar day they start on. */
+  get sessionGroups(): {key: string; label: string; date: string; sessions: LearningSession[]}[] {
+    const dayKey = (value: Date) =>
+      `${value.getFullYear()}-${value.getMonth() + 1}-${value.getDate()}`;
+    const today = new Date();
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const groups: {key: string; label: string; date: string; sessions: LearningSession[]}[] = [];
+    for (const session of this.sessions) {
+      const key = dayKey(new Date(session.start_at));
+      let group = groups.find((item) => item.key === key);
+      if (!group) {
+        const label = key === dayKey(today) ? 'Today' : key === dayKey(tomorrow) ? 'Tomorrow' : '';
+        group = {key, label, date: session.start_at, sessions: []};
+        groups.push(group);
+      }
+      group.sessions.push(session);
+    }
+    // cancelled sessions follow the active ones on the same day; the sort is stable
+    for (const group of groups) {
+      group.sessions.sort((a, b) => Number(a.cancelled) - Number(b.cancelled));
+    }
+    return groups;
+  }
+  startAnnouncement(): void {
+    this.openEditor('announcement');
+  }
+  startSession(): void {
+    this.openEditor('session');
+  }
+  private openEditor(kind: 'announcement' | 'session'): void {
+    if (!this.managing) {
+      this.toggleManage();
+    }
+    if (kind === 'announcement') {
+      this.editAnnouncement();
+    } else {
+      this.editSession();
+    }
+  }
+  timing(session: LearningSession): SessionTiming {
+    return sessionTiming(session, this.now);
+  }
+  get upNext(): LearningSession | null {
+    return upNextSession(this.sessions, this.now);
   }
 
   reload(): void {
@@ -194,14 +332,17 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     this.feedRequest = this.service.feed().subscribe({
       next: (feed) => {
         this.feed = feed;
+        this.readStatus.sync(feed.announcements, !this.demo.enabled);
         this.unavailableUnit =
           !!this.selectedUnitId && !feed.units.some((unit) => unit.id === this.selectedUnitId);
         this.loading = false;
         if (this.managing) {
           this.loadStaff(this.managedUnitId);
         }
+        this.openPendingLink();
       },
       error: () => {
+        this.pendingLink = null;
         this.loadError =
           'We could not load your unit updates. Please try again. If this continues, contact your teaching team.';
         this.loading = false;
@@ -214,6 +355,61 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {unit: Number(value) || null},
       queryParamsHandling: 'merge',
+    });
+  }
+
+  private feedParamsKey(enabled: boolean, params: ParamMap): string {
+    const kept = params.keys
+      .filter((name) => name !== 'announcement' && name !== 'session')
+      .sort()
+      .map((name) => [name, params.getAll(name)]);
+    return JSON.stringify([enabled, kept]);
+  }
+
+  /**
+   * Opens the announcement or session named by ?announcement= or ?session= once, then removes
+   * those parameters with replaceUrl so a refresh does not open it again.
+   */
+  private openPendingLink(): void {
+    const link = this.pendingLink;
+    if (!link || this.loading || this.loadError) {
+      return;
+    }
+    this.pendingLink = null;
+    // after the current navigation settles; the URL change runs first because a router
+    // navigation closes any open details
+    setTimeout(() => {
+      void this.router
+        .navigate([], {
+          relativeTo: this.route,
+          queryParams: {announcement: null, session: null},
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        })
+        .finally(() => {
+          const announcement = link.announcement
+            ? this.announcements.find((row) => row.id === link.announcement)
+            : undefined;
+          const session =
+            !announcement && link.session
+              ? // a weekly session repeats with the same id, so open its next occurrence
+                (this.sessions.find(
+                  (row) =>
+                    row.id === link.session &&
+                    !row.cancelled &&
+                    Date.parse(row.end_at) >= Date.now(),
+                ) ??
+                this.sessions.find((row) => row.id === link.session && !row.cancelled) ??
+                this.sessions.find((row) => row.id === link.session))
+              : undefined;
+          if (announcement) {
+            this.openAnnouncement(announcement);
+          } else if (session) {
+            this.openSession(session);
+          } else {
+            this.snackBar.open('That update is no longer available', 'Dismiss', {duration: 6000});
+          }
+        });
     });
   }
 
@@ -235,6 +431,8 @@ export class UnitHubComponent implements OnInit, OnDestroy {
     if (!unit || !this.announcements.includes(announcement)) {
       return;
     }
+    this.readStatus.markRead([announcement]);
+    this.changes.markForCheck();
     this.showDetails({
       unitCode: unit.code,
       unitName: unit.name,
@@ -414,6 +612,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       return;
     }
     this.editor = 'announcement';
+    this.announcementPreview = false;
     this.editingId = row?.id;
     this.editingPublishedAt = row?.published_at ?? null;
     this.formError = '';
@@ -432,6 +631,7 @@ export class UnitHubComponent implements OnInit, OnDestroy {
       return;
     }
     this.editor = 'session';
+    this.sessionPreview = false;
     this.editingId = row?.id;
     this.formError = '';
     const timezone = row?.timezone ?? 'Australia/Melbourne';

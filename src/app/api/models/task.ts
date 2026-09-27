@@ -4,6 +4,8 @@ import {HttpClient} from '@angular/common/http';
 import {LOCALE_ID} from '@angular/core';
 import {Observable, finalize, firstValueFrom, map} from 'rxjs';
 import {AppInjector} from 'src/app/app-injector';
+import {SubmissionCelebrationService} from 'src/app/common/celebrate/submission-celebration.service';
+import type {SubmissionCelebration} from 'src/app/common/celebrate/submission-timing';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {GradeTaskModalService} from 'src/app/tasks/modals/grade-task-modal/grade-task-modal.service';
@@ -141,6 +143,9 @@ export class Task extends Entity {
   public readonly testAttemptCache: EntityCache<TestAttempt> = new EntityCache<TestAttempt>();
 
   suggestedTaskStatus;
+
+  /** Status held before the student's current submission began. Cleared once it settles. */
+  private statusBeforeSubmission?: TaskStatusEnum;
 
   private _unit: Unit;
 
@@ -755,13 +760,22 @@ export class Task extends Entity {
   }
 
   /**
-   * Submission actions must follow evidence history, not only the task's current
-   * status. A tutor can return a submitted task to Redo/Resubmit, and the
-   * submission timestamp/artifacts remain authoritative in that state.
+   * Whether the Your Submission tab and card have anything to show. A tutor can
+   * return a submitted task to Redo/Resubmit, and the submission timestamp and
+   * artifacts remain authoritative in that state. A task that takes no uploads
+   * never has files to show, whatever its status.
+   *
+   * This is not the rule for which upload action to offer. The status card
+   * follows inSubmittedState() for that, so a returned task goes back through
+   * the full Ready for Feedback flow.
    */
   public hasSubmissionHistory(): boolean {
+    if (!this.requiresFileUpload()) {
+      return false;
+    }
+
     return !!(
-      this.submissionDate ||
+      this.hasValidSubmissionDate() ||
       this.hasPdf ||
       this.processingPdf ||
       this.submissionPdfReady ||
@@ -770,6 +784,11 @@ export class Task extends Entity {
       this.inSubmittedState() ||
       TaskStatus.MARKED_STATUSES.includes(this.status)
     );
+  }
+
+  // An Invalid Date is still a truthy object, so check the time value itself.
+  private hasValidSubmissionDate(): boolean {
+    return !!this.submissionDate && !Number.isNaN(new Date(this.submissionDate).getTime());
   }
 
   public inAwaitingFeedbackState(): boolean {
@@ -855,7 +874,12 @@ export class Task extends Entity {
     this.submissionProcessingAttempts = response.processing_attempts ?? 0;
     this.submissionRetryable = response.retryable === true;
     this.submissionPollAfterSeconds = response.poll_after_seconds ?? null;
-    this.submissionDate = MappingFunctions.mapDate(response, 'submission_date', this);
+    // The API sends submission_date: null for a task that was never submitted,
+    // and leaves the key out when the task takes no uploads. mapDate would turn
+    // those into the 1970 epoch and an Invalid Date, both truthy.
+    if ('submission_date' in response) {
+      this.submissionDate = this.parseApiDate(response.submission_date) ?? undefined;
+    }
 
     if (response.task_status && TaskStatus.STATUS_KEYS.includes(response.task_status)) {
       this.status = response.task_status;
@@ -996,6 +1020,9 @@ export class Task extends Entity {
     isTestSubmission: boolean = false,
   ) {
     const oldStatus = this.status;
+    // A new submission remembers where it came from, so a resubmission reads as one.
+    // New evidence and test submissions are not status changes and are not celebrated.
+    this.statusBeforeSubmission = !reuploadEvidence && !isTestSubmission ? oldStatus : undefined;
 
     if (!isTestSubmission) {
       this.status = status;
@@ -1005,6 +1032,7 @@ export class Task extends Entity {
     const modal = uploadModal.show(this, reuploadEvidence, isTestSubmission);
     // Modal failed to present
     if (!modal) {
+      this.statusBeforeSubmission = undefined;
       if (!isTestSubmission) {
         this.status = oldStatus;
       }
@@ -1018,6 +1046,7 @@ export class Task extends Entity {
       },
       // Grade was not selected (modal was dismissed)
       (_dismissed) => {
+        this.statusBeforeSubmission = undefined;
         if (!isTestSubmission) {
           this.status = oldStatus;
         }
@@ -1027,11 +1056,18 @@ export class Task extends Entity {
     );
   }
 
+  /**
+   * Set `claimCelebration` when the caller has a surface of its own to show the
+   * confirmation in, such as the submission dialog it was started from. The
+   * celebration is returned instead of being raised over the page, and the
+   * snackbar stays suppressed either way.
+   */
   public processTaskStatusChange(
     expectedStatus: TaskStatusEnum,
     alerts: AlertService,
     submissionCompleted: boolean = false,
-  ) {
+    claimCelebration: boolean = false,
+  ): SubmissionCelebration | null {
     if (this.inTimeExceeded() && !this.isPastDeadline()) {
       alerts.message(
         'You have submitted after the deadline for feedback. Your task will not be reviewed by a tutor. It is now your responsibility to ensure this task meets the required standard.',
@@ -1039,14 +1075,52 @@ export class Task extends Entity {
       );
     }
 
+    const previousStatus = this.statusBeforeSubmission;
+    this.statusBeforeSubmission = undefined;
+    const eligible =
+      submissionCompleted &&
+      expectedStatus === 'ready_for_feedback' &&
+      previousStatus !== undefined;
+
+    let claimed: SubmissionCelebration | null = null;
+    let celebrated = false;
+    if (eligible) {
+      if (claimCelebration) {
+        claimed = this.describeSubmissionCelebration(previousStatus);
+        celebrated = claimed !== null;
+      } else {
+        celebrated = this.celebrateSubmission(previousStatus);
+      }
+    }
+
     if (this.status !== expectedStatus) {
       alerts.message(`Status changed to ${this.statusLabel()}.`, 4000);
-    } else {
+    } else if (!celebrated) {
+      // The submission confirmation already says this, so it replaces the snackbar.
       alerts.success(`Status changed to ${this.statusLabel()}.`);
     }
     this.getSubmissionDetails().subscribe();
     const taskService: TaskService = AppInjector.get(TaskService);
     taskService.notifyTransitionComplete(this, submissionCompleted);
+    return claimed;
+  }
+
+  private celebrateSubmission(previousStatus: TaskStatusEnum): boolean {
+    try {
+      return AppInjector.get(SubmissionCelebrationService).celebrate(this, previousStatus);
+    } catch {
+      return false;
+    }
+  }
+
+  private describeSubmissionCelebration(
+    previousStatus: TaskStatusEnum,
+  ): SubmissionCelebration | null {
+    try {
+      return AppInjector.get(SubmissionCelebrationService).describe(this, previousStatus);
+    } catch {
+      return null;
+    }
   }
 
   public async markAsDiscussed(reasonText?: string) {
@@ -1170,6 +1244,7 @@ export class Task extends Entity {
               this.project.taskCache.delete(this.definition.abbreviation);
               this.project.taskCache.add(this);
             }
+            this.statusBeforeSubmission = submissionCompleted ? oldStatus : undefined;
             this.processTaskStatusChange(status, alerts, submissionCompleted);
             taskService.notifyStatusChange(this);
           },

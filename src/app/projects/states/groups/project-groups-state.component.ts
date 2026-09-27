@@ -39,6 +39,7 @@ export class ProjectGroupsStateComponent implements OnInit, OnDestroy {
         ? groupSets.find((groupSet) => groupSet.id === this.selectedGroupSet.id)
         : (groupSets.find((groupSet) => groupSet.id === projectGroupSetId) ??
           groupSets.find((groupSet) => groupSet.groups.length > 0) ??
+          groupSets.find((groupSet) => groupSet.allowStudentsToCreateGroups && !groupSet.locked) ??
           groupSets[0]);
     });
   }

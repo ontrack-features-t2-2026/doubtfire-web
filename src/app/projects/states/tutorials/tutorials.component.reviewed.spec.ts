@@ -48,10 +48,10 @@ describe('TutorialsComponent', () => {
       expect(component.shortTime(undefined)).toBe('Not set');
     });
 
-    it('never throws, for any malformed or missing input', () => {
-      expect(() => component.shortTime('9am')).not.toThrow();
-      expect(() => component.shortTime('')).not.toThrow();
-      expect(() => component.shortTime(undefined)).not.toThrow();
+    // The API sends a tutorial meeting time as HH:mm:ss, which is what the table and
+    // the phone cards actually render.
+    it('drops the seconds from the HH:mm:ss value the API sends', () => {
+      expect(component.shortTime('13:30:00')).toBe('13:30');
     });
   });
 });

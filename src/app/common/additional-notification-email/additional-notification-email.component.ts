@@ -77,6 +77,18 @@ export class AdditionalNotificationEmailComponent implements OnInit {
     });
   }
 
+  /**
+   * This block sits inside the profile form, so Enter in the email field would
+   * otherwise submit the whole profile and request nothing. Treat Enter as the
+   * verification button instead, and do nothing when that button is disabled.
+   */
+  public requestVerificationOnEnter(event: Event, invalid: boolean): void {
+    event.preventDefault();
+    if (!invalid) {
+      this.requestVerification();
+    }
+  }
+
   public resend(): void {
     if (this.busy || this.state.status !== 'pending') {
       return;
