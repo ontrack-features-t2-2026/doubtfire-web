@@ -8,6 +8,7 @@ import {MatOptionSelectionChange} from '@angular/material/core';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatPaginator, MatPaginatorModule} from '@angular/material/paginator';
+import {MatSelectModule} from '@angular/material/select';
 import {MatSortModule} from '@angular/material/sort';
 import {MatTableModule} from '@angular/material/table';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
@@ -20,8 +21,8 @@ import {CampusService} from 'src/app/api/services/campus.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
-import {AlertService} from 'src/app/common/services/alert.service';
 import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
+import {AlertService} from 'src/app/common/services/alert.service';
 import {UnitStudentEnrolmentModalService} from '../../modals/unit-student-enrolment-modal/unit-student-enrolment-modal.service';
 import {UnitRootStateComponent} from '../../unit-root-state.component';
 import {StudentsListComponent} from './students-list.component';
@@ -289,6 +290,7 @@ describe('StudentsListComponent empty state', () => {
         MatFormFieldModule,
         MatInputModule,
         MatPaginatorModule,
+        MatSelectModule,
         MatSortModule,
         MatTableModule,
         NoopAnimationsModule,

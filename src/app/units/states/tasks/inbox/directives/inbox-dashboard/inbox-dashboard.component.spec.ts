@@ -10,6 +10,7 @@ import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
 import {User} from 'src/app/api/models/user/user';
 import {UserService} from 'src/app/api/services/user.service';
+import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {InboxDashboardComponent} from './inbox-dashboard.component';
 
@@ -188,6 +189,7 @@ describe('InboxDashboardComponent empty-state colour tokens (THM-M03)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [InboxDashboardComponent],
+      imports: [EmptyStateComponent],
       providers: [
         {provide: FileDownloaderService, useValue: {}},
         {provide: UserService, useValue: {}},
@@ -202,14 +204,16 @@ describe('InboxDashboardComponent empty-state colour tokens (THM-M03)', () => {
   });
 
   it('carries the theme token (not a bare hex) on the empty-state icon and message', () => {
-    const icon: HTMLElement = fixture.nativeElement.querySelector('mat-icon');
-    const message: HTMLElement = fixture.nativeElement.querySelector('p');
+    // The shared empty state sets the muted text token once, and the icon and
+    // message inherit it.
+    const state: HTMLElement = fixture.nativeElement.querySelector('f-empty-state > div');
 
-    expect(icon.className).toContain('var(--ot-color-text-muted,#c5c5c5)');
-    expect(message.className).toContain('var(--ot-color-text-muted,#c5c5c5)');
+    expect(state.className).toContain('text-ot-muted');
+    expect(state.querySelector('mat-icon')).not.toBeNull();
+    expect(state.querySelector('p')).not.toBeNull();
     // Regression guard: a plain arbitrary hex class with no token reference
     // would mean the THM-M03 migration was reverted.
-    expect(icon.className).not.toMatch(/text-\[#c5c5c5\]/);
+    expect(fixture.nativeElement.innerHTML).not.toMatch(/#c5c5c5/i);
   });
 
   it('shows the expected empty-state copy', () => {

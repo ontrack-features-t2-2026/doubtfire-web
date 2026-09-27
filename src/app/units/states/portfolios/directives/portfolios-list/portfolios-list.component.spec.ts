@@ -397,7 +397,7 @@ describe('PortfoliosListComponent empty state', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [PortfoliosListComponent],
-      imports: [MatTableModule, EmptyStateComponent],
+      imports: [MatMenuModule, MatTableModule, EmptyStateComponent],
       providers: [
         {
           provide: TaskService,

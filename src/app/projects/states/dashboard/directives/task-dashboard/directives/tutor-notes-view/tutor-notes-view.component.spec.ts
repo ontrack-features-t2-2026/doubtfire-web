@@ -8,7 +8,7 @@ const tutor = {user: {name: 'Tia Tutor'}} as UnitRole;
 const task = {
   tutor,
   definition: {abbreviation: 'T1', name: 'First task'},
-  project: {student: {name: 'Ada Lovelace'}},
+  project: {student: {name: 'Ada Lovelace', displayName: 'Ada Lovelace'}},
 };
 
 describe('TutorNotesViewComponent', () => {

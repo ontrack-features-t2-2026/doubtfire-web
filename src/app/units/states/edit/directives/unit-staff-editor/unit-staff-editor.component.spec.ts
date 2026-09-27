@@ -29,7 +29,7 @@ function role(id: number, name: string, extra: Partial<UnitRole> = {}): UnitRole
   return Object.assign(new UnitRole(), {
     id,
     role: 'Tutor',
-    user: {id: id * 10, name, email: `${name.toLowerCase()}@uni.edu`},
+    user: {id: id * 10, name, displayName: name, email: `${name.toLowerCase()}@uni.edu`},
     ...extra,
   });
 }
