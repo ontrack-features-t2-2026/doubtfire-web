@@ -1,6 +1,7 @@
 // For more information: https://material.angular.io/guide/theming
 @use '@angular/material' as mat;
 @use '@worktile/gantt/styles/index';
+@use 'styles/gantt-theme';
 @use 'theme' as *;
 @use 'styles/common/typeface';
 @use 'styles/common/accessibility';
@@ -169,32 +170,164 @@ body.split-pane-resizing pdf-viewer {
   color: var(--ot-color-text);
 }
 
-// Make stroked/outlined buttons read clearly as buttons in both themes. A plain
-// surface fill matched the card body and disappeared, so give them a control fill
-// that is a distinct step lighter than any surface (mixing in the text colour),
-// a clearly visible border, and a small shadow for affordance. Material's own
-// state layer keeps the hover/focus feedback on top.
+// Outlined buttons, in both themes: a thin token outline over a faint primary wash,
+// the theme's text colour for the label and primary for the icon, a consistent
+// radius and no shadow. The old grey fill with a drop shadow read as a legacy
+// raised box in light mode. Material's own state layer handles hover and focus.
 .mat-mdc-outlined-button:not(:disabled) {
-  --mdc-outlined-button-outline-color: color-mix(in srgb, var(--ot-color-text) 26%, transparent);
-  --mdc-outlined-button-label-text-color: var(--ot-color-text);
-  background-color: color-mix(in srgb, var(--ot-color-text) 12%, var(--ot-color-surface-raised));
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --mat-button-outlined-container-shape: var(--ot-radius-md);
+  box-shadow: none;
 }
 
-.mat-mdc-outlined-button:not(:disabled):hover {
-  background-color: color-mix(in srgb, var(--ot-color-text) 20%, var(--ot-color-surface-raised));
+// The outline is a control edge, so it is mixed from the control tokens rather
+// than the decorative ones. --ot-color-border and --ot-color-primary are both
+// dark in the dark theme, and the old mix of the two landed on #385A8D: 1.60:1
+// against a dialog or card, where WCAG 1.4.11 asks for 3:1. --ot-color-link and
+// --ot-color-control-border are the lighter pair the dark theme already defines
+// for exactly this, and give 3.66:1. Light is unchanged to the byte, because
+// there link equals primary and control-border equals border.
+.mat-mdc-outlined-button:not(:disabled):not(.mat-warn) {
+  --mat-button-outlined-outline-color: color-mix(
+    in srgb,
+    var(--ot-color-link) 35%,
+    var(--ot-color-control-border)
+  );
+  --mat-button-outlined-label-text-color: var(--ot-color-text);
+  // The wash stays on primary: it is a background, and it is meant to be faint.
+  // The glyph drawn over it is meaningful non-text and needs 3:1, which dark
+  // primary only reaches on the bare page (2.21:1 on a card). Link is the same
+  // accent one step lighter, and the same colour as primary in light.
+  background-color: color-mix(in srgb, var(--ot-color-primary) 5%, transparent);
+
+  .mat-icon {
+    color: var(--ot-color-link);
+  }
+}
+
+.mat-mdc-outlined-button:not(:disabled):not(.mat-warn):hover {
+  background-color: color-mix(in srgb, var(--ot-color-primary) 11%, transparent);
+}
+
+// color="warn" is the app's way of saying "this one destroys something", and the
+// treatment above painted it in primary anyway: a blue trash icon on Delete
+// portfolio. Give warn the same shape of treatment in its own colour. The filled
+// rule below already excludes .mat-warn; this is the outlined half of that.
+.mat-mdc-outlined-button:not(:disabled).mat-warn {
+  // Mixed against the control edge for the same reason as above: over the
+  // decorative border this lands at 2.36:1 in dark, and at 3.57:1 here.
+  --mat-button-outlined-outline-color: color-mix(
+    in srgb,
+    var(--ot-color-error) 45%,
+    var(--ot-color-control-border)
+  );
+  // The outline and the icon carry the warning. The label stays in the text
+  // colour: error over an error-tinted fill tops out around 4.3:1, under the
+  // 4.5:1 text needs, and no mix of error and text clears it in both themes
+  // without going pink. Non-text only has to reach 3:1, which the icon does at
+  // 3.92:1 in the worst case.
+  --mat-button-outlined-label-text-color: var(--ot-color-text);
+  background-color: color-mix(in srgb, var(--ot-color-error) 5%, transparent);
+
+  .mat-icon {
+    color: var(--ot-color-error);
+  }
+}
+
+.mat-mdc-outlined-button:not(:disabled).mat-warn:hover {
+  background-color: color-mix(in srgb, var(--ot-color-error) 11%, transparent);
+}
+
+// Filled buttons. Without a color input Material fills them with a neutral grey,
+// which in dark mode reads as a disabled box rather than the main action. Give
+// every filled button the primary fill and the same shape as outlined ones, so
+// the app has two clear button styles: filled for the main action, outlined for
+// the rest. Buttons that set color="warn" keep their own fill.
+.mat-mdc-unelevated-button:not(:disabled):not(.mat-warn) {
+  --mat-button-filled-container-color: var(--ot-color-primary);
+  --mat-button-filled-label-text-color: var(--ot-color-on-primary);
+  --mat-button-filled-container-shape: var(--ot-radius-md);
+  box-shadow: none;
+
+  .mat-icon {
+    color: inherit;
+  }
+}
+
+.mat-mdc-unelevated-button:disabled {
+  --mat-button-filled-container-shape: var(--ot-radius-md);
+}
+
+.mat-mdc-unelevated-button:not(:disabled),
+.mat-mdc-outlined-button:not(:disabled) {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 // ngx-skeleton-loader sets a fixed light grey and a white shimmer on its own
 // element, in its encapsulated styles, so every loading placeholder stayed light
 // in dark mode. Restate them there with the divider token the hand-built
 // skeletons use. The :root prefix outweighs the library's attribute selector.
-:root ngx-skeleton-loader .skeleton-loader {
-  --ngx-skeleton-loader-base-color: var(--ot-color-divider);
+//
+// The library's shimmer is a 200px pseudo-element that travels 100vw inside each
+// placeholder's own clip box, on ease-in-out. A narrow placeholder therefore
+// shows the sheen for a sliver of the cycle and a wide one for much longer, so a
+// page of skeletons flickered out of step. Sizing the sheen to the placeholder
+// and moving it by a percentage of itself is what fixes that: every placeholder
+// now plays one full sweep per cycle whatever its width.
+//
+// This used to drive that from a single registered custom property animated on
+// :root behind a :has(). The property inherits, so its computed value changed on
+// every element in the document sixty times a second for as long as any skeleton
+// was on screen, and only the handful of pseudo-elements below ever read it.
+//
+// What the shared clock bought was a common phase, and a common phase is not
+// something anyone can see here: a percentage transform ties speed to width, so
+// a 600px bar's sheen crosses at about 750px/s and a 30px circle's at about
+// 37px/s. They were in phase and never in step. Within one loading state the
+// placeholders mount together and so start together anyway. Two regions loading
+// on separate flags can now drift apart, which is the one thing given up.
+@keyframes ot-skeleton-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
-:root[data-ot-theme='dark'] ngx-skeleton-loader .skeleton-loader {
-  --ngx-skeleton-loader-light-mode-color: rgba(255, 255, 255, 0.08);
+:root ngx-skeleton-loader .skeleton-loader {
+  --ngx-skeleton-loader-base-color: var(--ot-color-divider);
+  --ot-skeleton-sheen-color: color-mix(in srgb, var(--ot-color-divider), #fff 14%);
+}
+
+@supports (color: oklch(from red l c h)) {
+  :root ngx-skeleton-loader .skeleton-loader {
+    --ot-skeleton-sheen-color: oklch(from var(--ot-color-divider) calc(l + 0.06) c h);
+  }
+}
+
+:root ngx-skeleton-loader .skeleton-loader.progress::before {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+    105deg,
+    transparent 25%,
+    var(--ot-skeleton-sheen-color) 50%,
+    transparent 75%
+  );
+  background-size: 100% 100%;
+  animation: ot-skeleton-sheen 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root ngx-skeleton-loader .skeleton-loader.progress::before {
+    display: none;
+  }
 }
 
 // Gantt (ngx-gantt) dark theme. The library paints from var(--gantt-color-*,
@@ -259,6 +392,29 @@ ngx-gantt-root {
 ):focus-visible {
   outline: 2px solid var(--ot-color-focus);
   outline-offset: 2px;
+}
+
+// Accessibility (1.4.11): the resting outline of a text field is how a user finds
+// it, and Material's default is 38% black, which is 2.7:1 on a white card.
+//
+// Only the text field. An earlier version of this pointed the checkbox and radio
+// tokens here too, on the assumption they shared that 38% default. They do not:
+// both default to on-surface-variant, which is already better than this token on
+// every surface, so overriding them LOWERED contrast rather than raising it. The
+// radio line was dead as well, because Material sets that token on the element
+// itself once a colour is applied and a :root rule can never win.
+//
+// The dark selector matches the dark Material theme include in theme.scss.
+//
+// Only the resting half was pinned, so a focused field fell back to M2's primary and drew
+// DIMMER than at rest in dark: 2.40:1 on a raised card against the 3.08:1 resting edge.
+// The focus token is the one the global ring above already uses, so a keyboard user sees
+// one colour everywhere: 3.32:1 dark and 6.56:1 light at worst, and Material keeps drawing
+// focus at 2px against the resting 1px, so focus reads stronger on width as well as tone.
+:root,
+:root[data-ot-theme='dark'] {
+  --mat-form-field-outlined-outline-color: var(--ot-color-control-border);
+  --mat-form-field-outlined-focus-outline-color: var(--ot-color-focus);
 }
 
 // Keep focus outlines inside menu panels so their edges do not clip them.
