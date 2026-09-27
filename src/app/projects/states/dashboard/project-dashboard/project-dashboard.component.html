@@ -249,7 +249,10 @@
           }
           <div
             #commentspanel
+            aria-label="Task comments"
             class="comments-sidebar flex-none bg-ot-surface p-1"
+            role="region"
+            tabindex="-1"
             [class.comments-sidebar--fullscreen]="commentsFullscreen"
             [class.comments-sidebar--narrow]="isCommentsNarrow"
             [class.hidden]="commentsPanelCollapsed"

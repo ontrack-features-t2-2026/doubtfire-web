@@ -207,7 +207,8 @@
                   type="button"
                   [attr.aria-checked]="viewPreferences.sortBy === option.value"
                   [ngClass]="{
-                    'bg-ot-selected text-(--ot-color-selected-text)': viewPreferences.sortBy === option.value,
+                    'bg-ot-selected text-(--ot-color-selected-text)':
+                      viewPreferences.sortBy === option.value,
                     'text-ot-text': viewPreferences.sortBy !== option.value,
                   }"
                   (click)="$event.stopPropagation(); setSortBy(option.value)"
