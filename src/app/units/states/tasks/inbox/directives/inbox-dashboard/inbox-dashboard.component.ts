@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DoCheck,
   EventEmitter,
   Input,
   OnChanges,
@@ -30,13 +31,17 @@ enum InboxDashboardTab {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class InboxDashboardComponent implements OnChanges {
+export class InboxDashboardComponent implements OnChanges, DoCheck {
   @Input() task: Task;
-  @Output() visiblePdfUrlChange: EventEmitter<string> = new EventEmitter();
+  // Async, because the URL is announced during change detection and the parent shows
+  // it in a button it has already checked by then.
+  @Output() visiblePdfUrlChange: EventEmitter<string> = new EventEmitter(true);
 
   public readonly InboxDashboardTab = InboxDashboardTab;
   public currentTab: InboxDashboardTab = InboxDashboardTab.submission;
   public currentIndex = InboxDashboardTab.submission;
+
+  private lastVisiblePdfUrl: string | null | undefined = undefined;
 
   constructor(
     private fileDownloader: FileDownloaderService,
@@ -45,8 +50,18 @@ export class InboxDashboardComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.task) {
+      // Always announce for a new task. The parent also hears about the selection from
+      // the selected task service, which does not check there is a PDF to show.
+      this.lastVisiblePdfUrl = undefined;
       this.selectDefaultTab();
     }
+  }
+
+  // The submission details, and with them whether there is a PDF, arrive after the
+  // task is selected. Announcing the URL only when the tab changed left the phone
+  // layout's download button off for a submission that had since loaded.
+  ngDoCheck(): void {
+    this.announceVisiblePdfUrl();
   }
 
   onTabChange(event: MatTabChangeEvent): void {
@@ -74,19 +89,23 @@ export class InboxDashboardComponent implements OnChanges {
   }
 
   private selectDefaultTab(): void {
-    if (this.task) {
-      this.setSelectedTab(InboxDashboardTab.submission);
-    } else {
-      this.currentTab = InboxDashboardTab.submission;
-      this.currentIndex = InboxDashboardTab.submission;
-      this.visiblePdfUrlChange.emit(null);
-    }
+    this.setSelectedTab(InboxDashboardTab.submission);
   }
 
   private setSelectedTab(tab: InboxDashboardTab): void {
     this.currentTab = tab;
     this.currentIndex = tab;
-    this.visiblePdfUrlChange.emit(this.pdfUrlForTab(tab));
+    this.announceVisiblePdfUrl();
+  }
+
+  private announceVisiblePdfUrl(): void {
+    const url = this.pdfUrlForTab(this.currentTab);
+    if (url === this.lastVisiblePdfUrl) {
+      return;
+    }
+
+    this.lastVisiblePdfUrl = url;
+    this.visiblePdfUrlChange.emit(url);
   }
 
   private pdfUrlForTab(tab: InboxDashboardTab): string {
@@ -106,11 +125,15 @@ export class InboxDashboardComponent implements OnChanges {
 
   public get currentUnitRole(): UnitRole | undefined {
     const currentUser = this.userService.currentUser;
-    return this.task.unit.staff.find((ur) => ur.user.id === currentUser.id);
+    if (!currentUser) {
+      return undefined;
+    }
+
+    return this.task?.unit?.staff?.find((ur) => ur.user?.id === currentUser.id);
   }
 
   public get canAccessTutorNotes(): boolean {
-    const tutor = this.task.tutor;
+    const tutor = this.task?.tutor;
     if (!tutor) {
       return false;
     }
