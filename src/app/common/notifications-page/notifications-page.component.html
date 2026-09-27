@@ -16,22 +16,29 @@
       in markAllRead prevents another request.
     -->
     @if (!loading && !loadFailed && notifications.length) {
-      <!--
-        The label is hidden below sm and the icon carries it there, so the
-        aria-label is not a duplicate of visible text, it is the only wording
-        left at that size.
-      -->
-      <button
-        aria-label="Mark all read"
-        class="notification-mark-all"
-        mat-stroked-button
-        [disabled]="!hasUnread || markAllReadPending"
-        [disabledInteractive]="true"
-        (click)="markAllRead()"
-      >
-        <mat-icon>done_all</mat-icon>
-        <span class="notification-mark-all-label">Mark all read</span>
-      </button>
+      <div aria-label="Notification actions" class="notification-actions">
+        <button
+          class="notification-mark-all"
+          mat-stroked-button
+          [disabled]="!hasUnread || markAllReadPending || deleteAllPending"
+          [disabledInteractive]="true"
+          (click)="markAllRead()"
+        >
+          <mat-icon>done_all</mat-icon>
+          <span>Mark all read</span>
+        </button>
+        <button
+          class="notification-delete-all"
+          color="warn"
+          mat-stroked-button
+          [disabled]="deleteAllPending"
+          [disabledInteractive]="true"
+          (click)="confirmDeleteAll()"
+        >
+          <mat-icon>delete_sweep</mat-icon>
+          <span>Delete all</span>
+        </button>
+      </div>
     }
   </div>
 
@@ -46,16 +53,22 @@
       not find out" look the same and mean opposite things, and only one of them
       has a way out.
     -->
-    <div class="notifications-placeholder py-6">
+    <div class="notifications-placeholder py-6" tabindex="-1">
       <p>We could not load your notifications.</p>
       <button class="notifications-retry" mat-stroked-button (click)="load()">Try again</button>
     </div>
   } @else if (!notifications.length) {
-    <f-empty-state
-      heading="You have no notifications yet."
-      icon="notifications_none"
-      message="Comments on your tasks, feedback and reminders will show up here."
-    ></f-empty-state>
+    <!--
+      Wrapped so that deleting the last notification can move focus here
+      (focusAfterDelete) instead of dropping it to the document body.
+    -->
+    <div class="notifications-placeholder" tabindex="-1">
+      <f-empty-state
+        hint="Comments on your tasks, feedback and reminders will show up here."
+        icon="notifications_none"
+        message="You have no notifications yet."
+      ></f-empty-state>
+    </div>
   } @else {
     <!--
       Plain buttons rather than mat-list-item. Material lays a list row out with
@@ -85,7 +98,7 @@
           >
             <span class="notification-line">
               <!--
-                Same five categories and the same colours as the dropdown in the
+                The same event-specific presentation as the dropdown in the
                 header, so a notification looks like itself wherever it is read.
               -->
               <span class="notification-glyph" [class]="'tone-' + toneFor(notification)">
@@ -96,7 +109,11 @@
                 <span class="notification-message" [class.unread]="!notification.isRead">{{
                   notification.message
                 }}</span>
-                <span class="notification-time">{{ timeAgo(notification) }}</span>
+                <span class="notification-meta">
+                  <span class="notification-kind">{{ labelFor(notification) }}</span>
+                  <span aria-hidden="true">·</span>
+                  <span class="notification-time">{{ timeAgo(notification) }}</span>
+                </span>
               </span>
 
               <span

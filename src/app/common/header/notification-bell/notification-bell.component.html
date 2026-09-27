@@ -3,7 +3,7 @@
   mat-icon-button
   matTooltip="Notifications"
   [attr.aria-label]="bellLabel"
-  [matBadge]="unreadCount"
+  [matBadge]="badgeText"
   [matBadgeHidden]="unreadCount === 0"
   [matMenuTriggerFor]="notificationMenu"
   (menuOpened)="onMenuOpened()"
@@ -59,10 +59,7 @@
             content differently and the two would never line up.
           -->
           <span class="notification-line">
-            <!--
-              The category, as a colour and a glyph. notificationType is all the
-              api sends, so this is five categories and not one icon per event.
-            -->
+            <!-- The stable event hook distinguishes due dates, feedback and status changes. -->
             <span class="notification-glyph" [class]="'tone-' + toneFor(notification)">
               <mat-icon>{{ iconFor(notification) }}</mat-icon>
             </span>
@@ -71,7 +68,11 @@
               <span class="notification-message" [class.unread]="!notification.isRead">{{
                 notification.message
               }}</span>
-              <span class="notification-time">{{ timeAgo(notification) }}</span>
+              <span class="notification-meta">
+                <span class="notification-kind">{{ labelFor(notification) }}</span>
+                <span aria-hidden="true">·</span>
+                <span class="notification-time">{{ timeAgo(notification) }}</span>
+              </span>
             </span>
 
             <!--

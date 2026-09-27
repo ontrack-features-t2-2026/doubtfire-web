@@ -9,6 +9,7 @@ import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {
   PERMISSION_DENIED_INSTRUCTIONS,
   PushNotificationService,
+  QUIET_UNSUBSCRIBE_LIMIT_MS,
   detectBrowser,
 } from '../push-notification.service';
 
@@ -41,6 +42,14 @@ function fakeSubscription(
       keys: {p256dh, auth},
     }),
   } as unknown as PushSubscription;
+}
+
+/** Stand in for navigator.serviceWorker, which jsdom does not have. */
+function setServiceWorker(container: {
+  controller: object | null;
+  getRegistration?: () => Promise<unknown>;
+}): void {
+  Object.defineProperty(navigator, 'serviceWorker', {configurable: true, value: container});
 }
 
 describe('PushNotificationService', () => {
@@ -83,6 +92,10 @@ describe('PushNotificationService', () => {
     vi.stubGlobal('Notification', {permission: 'default'});
     (window as unknown as {PushManager: unknown}).PushManager = class {};
 
+    // jsdom has no service worker either. Most tests run as a page the worker
+    // controls, which is when the service goes through SwPush.
+    setServiceWorker({controller: {}});
+
     TestBed.configureTestingModule({
       providers: [
         PushNotificationService,
@@ -100,6 +113,8 @@ describe('PushNotificationService', () => {
   afterEach(() => {
     httpMock.verify();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
+    delete (navigator as unknown as {serviceWorker?: unknown}).serviceWorker;
   });
 
   it('posts the browser registration to the api when subscribing', () => {
@@ -317,6 +332,85 @@ describe('PushNotificationService', () => {
     request.error(new ProgressEvent('network error'));
 
     expect(swPush.unsubscribe).toHaveBeenCalled();
+  });
+
+  // The worker is enabled but controls no page: the dev server has no worker
+  // file, it registers six seconds after bootstrap, and a hard reload bypasses
+  // it. SwPush then never answers, and sign out used to wait on it for ever.
+  it('finishes at once when no service worker controls the page', async () => {
+    swPush.subscription = NEVER;
+    setServiceWorker({controller: null, getRegistration: () => Promise.resolve(undefined)});
+    let completed = false;
+
+    service.unsubscribe().subscribe({complete: () => (completed = true)});
+
+    await flushMicrotasks();
+    expect(completed).toBe(true);
+    expect(swPush.unsubscribe).not.toHaveBeenCalled();
+    httpMock.expectNone(`${API_URL}/push_subscriptions`);
+  });
+
+  it('removes a subscription through the browser when no service worker controls the page', async () => {
+    swPush.subscription = NEVER;
+    const subscription = fakeSubscription() as PushSubscription & {unsubscribe: () => unknown};
+    const browserUnsubscribe = vi.fn().mockResolvedValue(true);
+    subscription.unsubscribe = browserUnsubscribe;
+    setServiceWorker({
+      controller: null,
+      getRegistration: () =>
+        Promise.resolve({pushManager: {getSubscription: () => Promise.resolve(subscription)}}),
+    });
+    let completed = false;
+
+    service.unsubscribe().subscribe({complete: () => (completed = true)});
+    await flushMicrotasks();
+
+    const request = httpMock.expectOne(
+      (r) => r.url === `${API_URL}/push_subscriptions` && r.method === 'DELETE',
+    );
+    expect(request.request.params.get('endpoint')).toBe(ENDPOINT);
+    expect(browserUnsubscribe).not.toHaveBeenCalled();
+
+    request.flush(null);
+    await flushMicrotasks();
+
+    expect(browserUnsubscribe).toHaveBeenCalledOnce();
+    expect(swPush.unsubscribe).not.toHaveBeenCalled();
+    expect(completed).toBe(true);
+  });
+
+  it('unsubscribeQuietly stops waiting after the time limit', () => {
+    vi.useFakeTimers();
+    swPush.subscription = NEVER;
+    let completed = false;
+
+    service.unsubscribeQuietly().subscribe({complete: () => (completed = true)});
+
+    vi.advanceTimersByTime(QUIET_UNSUBSCRIBE_LIMIT_MS - 1);
+    expect(completed).toBe(false);
+
+    vi.advanceTimersByTime(1);
+    expect(completed).toBe(true);
+  });
+
+  // A stalled api delete must not stop the browser unsubscribing, or the next
+  // person to sign in on this machine could get this user's notifications.
+  it('unsubscribeQuietly still unsubscribes the browser when the api delete stalls', () => {
+    vi.useFakeTimers();
+    subscriptionSubject.next(fakeSubscription());
+    let completed = false;
+
+    service.unsubscribeQuietly().subscribe({complete: () => (completed = true)});
+
+    httpMock.expectOne((r) => r.url === `${API_URL}/push_subscriptions` && r.method === 'DELETE');
+    expect(swPush.unsubscribe).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(QUIET_UNSUBSCRIBE_LIMIT_MS);
+    expect(swPush.unsubscribe).toHaveBeenCalledOnce();
+
+    return vi.advanceTimersByTimeAsync(0).then(() => {
+      expect(completed).toBe(true);
+    });
   });
 
   // Sign out calls this and cannot do anything useful with a failure, so it

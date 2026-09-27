@@ -3,6 +3,7 @@ import {NavigationEnd, Router} from '@angular/router';
 import {Subscription, filter} from 'rxjs';
 import {PushNotificationClickService} from 'src/app/api/services/push-notification-click.service';
 import {PushNotificationService} from 'src/app/api/services/push-notification.service';
+import {AppLifecycleService} from 'src/app/common/services/app-lifecycle.service';
 import {ThemeService} from './common/theme/theme.service';
 
 @Component({
@@ -19,13 +20,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private pushNotificationClicks: PushNotificationClickService,
     private pushNotifications: PushNotificationService,
-    // Injected only so the root always constructs it: its constructor stamps the
-    // resolved theme onto <html>. Without this the marker is only applied when the
-    // header toggle renders, so it never runs on xs where the toggle is hidden.
+    // Construct the theme service at startup so every screen, including phones,
+    // receives the resolved theme before a theme toggle is rendered.
     private theme: ThemeService,
+    private appLifecycle: AppLifecycleService,
   ) {}
 
   ngOnInit(): void {
+    this.appLifecycle.start();
     this.pushNotificationClicks.start();
     this.pushNotifications.start();
     this.setBodyBackground(this.router.url);
@@ -35,6 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.appLifecycle.stop();
     this.pushNotificationClicks.stop();
     this.pushNotifications.stop();
     this.routerSub?.unsubscribe();
