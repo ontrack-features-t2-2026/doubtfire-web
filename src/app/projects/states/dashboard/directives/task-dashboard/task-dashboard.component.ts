@@ -159,6 +159,26 @@ export class TaskDashboardComponent implements OnInit, OnChanges {
     );
   }
 
+  public get canViewPeerProgress(): boolean {
+    const currentUser = this.userService.currentUser;
+    const currentUserId = this.validUserId(currentUser?.id);
+    const hydratedStudentId = this.validUserId(this.task?.project?.student?.id);
+    const rawStudentId = this.validUserId(this.task?.project?.originalJson?.['user_id']);
+    const projectStudentId = hydratedStudentId ?? rawStudentId;
+
+    return (
+      currentUserId !== undefined &&
+      currentUserId === projectStudentId &&
+      currentUser.displayPeerProgress !== false
+    );
+  }
+
+  private validUserId(value: unknown): number | undefined {
+    return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+      ? value
+      : undefined;
+  }
+
   downloadSubmission() {
     this.fileDownloader.downloadFile(this.urls.taskSubmissionPdfAttachmentUrl, 'submission.pdf');
   }

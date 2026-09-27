@@ -1,0 +1,77 @@
+<div class="flex flex-row">
+  <div class="mr-3 w-2 shrink-0 sm:mr-6 sm:w-4" [style.background-color]="task.color"></div>
+  <div
+    class="flex min-w-0 shrink grow flex-col"
+    style="padding-block: var(--dashboard-row-spacing, 1rem)"
+  >
+    <h4 class="mb-1 min-w-0 grow">
+      <a
+        class="block rounded break-words focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation]"
+      >
+        {{ task.title }}
+      </a>
+    </h4>
+    <div class="flex flex-wrap items-center gap-2">
+      <p class="mb-0">{{ task.subtitle }}</p>
+      @if (dueDateWarning; as warning) {
+        <span
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+          [ngClass]="{
+            'bg-red-100 text-red-800': warning.state === 'overdue',
+            'bg-orange-100 text-orange-800': warning.state === 'within24Hours',
+            'bg-yellow-100 text-yellow-900': warning.state === 'within3Days',
+            'bg-blue-100 text-blue-800': warning.state === 'within7Days',
+          }"
+        >
+          <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
+            {{ warning.icon }}
+          </mat-icon>
+          <span>{{ warning.label }}</span>
+        </span>
+      }
+      @if (task.hasFeedback === true) {
+        <a
+          class="inline-flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+          [attr.aria-label]="'Open staff feedback for ' + task.title"
+          [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation, 'feedback']"
+        >
+          <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
+            feedback
+          </mat-icon>
+          <span>Staff feedback</span>
+        </a>
+      } @else if (task.hasFeedback === null) {
+        <span class="text-xs">Feedback unavailable</span>
+      }
+    </div>
+    <p class="mt-1 mb-0 text-sm font-medium">Status: {{ task.statusLabel }}</p>
+  </div>
+  <div class="mx-2 flex shrink-0 flex-row items-center justify-end gap-1 sm:mr-4 sm:gap-2">
+    @if (!isExpanded && task.comments > 0) {
+      <div
+        class="flex min-h-8 min-w-8 rounded-full bg-formatif-blue px-1"
+        role="status"
+        [attr.aria-label]="task.comments + ' unread comments on ' + task.title"
+      >
+        <span aria-hidden="true" class="m-auto text-xl font-medium text-white">{{
+          task.comments
+        }}</span>
+      </div>
+    }
+    <button
+      mat-icon-button
+      type="button"
+      [attr.aria-expanded]="isExpanded"
+      [attr.aria-label]="(isExpanded ? 'Collapse ' : 'Expand ') + task.title + ' details'"
+      (click)="isExpanded = !isExpanded"
+    >
+      <mat-icon>{{ isExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+    </button>
+  </div>
+</div>
+<div class="flex flex-row">
+  @if (isExpanded) {
+    <f-expanded-list-item [task]="task"></f-expanded-list-item>
+  }
+</div>
