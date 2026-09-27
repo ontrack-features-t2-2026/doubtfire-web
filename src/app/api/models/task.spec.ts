@@ -1,9 +1,8 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {beforeEach, describe, expect, it} from 'vitest';
 import {HttpClient} from '@angular/common/http';
-import {Injector} from '@angular/core';
 import {of} from 'rxjs';
-import {AppInjector, setAppInjector} from 'src/app/app-injector';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+import {provideAppInjectorForTests} from 'src/app/testing/app-injector-stub';
 import {Project} from './project';
 import {SubmissionProcessingResponse, Task} from './task';
 import {TaskDefinition} from './task-definition';
@@ -74,22 +73,10 @@ describe('Task submission details', () => {
   let response: SubmissionProcessingResponse;
 
   beforeEach(() => {
-    if (!AppInjector) {
-      setAppInjector({get: () => undefined} as unknown as Injector);
-    }
-    vi.spyOn(AppInjector, 'get').mockImplementation((token: unknown) => {
-      if (token === HttpClient) {
-        return {get: () => of(response)};
-      }
-      if (token === DoubtfireConstants) {
-        return {API_URL: 'http://localhost:3000/api'};
-      }
-      throw new Error(`unexpected AppInjector token: ${String(token)}`);
-    });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    provideAppInjectorForTests([
+      [HttpClient, {get: () => of(response)}],
+      [DoubtfireConstants, {API_URL: 'http://localhost:3000/api'}],
+    ]);
   });
 
   function loadDetails(task: Task): Task {
