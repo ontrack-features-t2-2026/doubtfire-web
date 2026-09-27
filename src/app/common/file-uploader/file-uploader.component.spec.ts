@@ -42,7 +42,7 @@ describe('FileUploaderComponent responsive selected-file state', () => {
     fixture.detectChanges();
   });
 
-  it('wraps a long selected filename and exposes a named remove control', () => {
+  it('keeps a long selected filename readable and exposes a named remove control', () => {
     const file = new File(
       ['portfolio'],
       'A very long learning summary report filename that must remain readable on a phone.pdf',
@@ -59,6 +59,7 @@ describe('FileUploaderComponent responsive selected-file state', () => {
       '.selected-upload button',
     ) as HTMLButtonElement;
     expect(name.textContent).toContain(file.name);
+    expect(name.getAttribute('title')).toBe(file.name);
     expect(remove.getAttribute('aria-label')).toBe(`Remove ${file.name}`);
     expect(component.readyToUpload()).toBe(true);
   });

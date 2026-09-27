@@ -75,6 +75,7 @@
         [files]="learningSummaryReportFileUploadData.type"
         [onSuccess]="addNewFile.bind(this)"
         [payload]="learningSummaryReportFileUploadData.payload"
+        [uploadingLabel]="'Uploading your work'"
         [url]="project.portfolioUrl()"
       ></f-file-uploader>
     </div>

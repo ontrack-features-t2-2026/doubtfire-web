@@ -4,10 +4,12 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   OnInit,
   Output,
   SimpleChanges,
 } from '@angular/core';
+import {Subscription} from 'rxjs';
 import {UserService} from 'src/app/api/services/user.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {ACCEPTED_TYPES} from './file-upload-types';
@@ -50,7 +52,7 @@ interface UploadingInfo {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class FileUploaderComponent implements OnInit, OnChanges {
+export class FileUploaderComponent implements OnInit, OnChanges, OnDestroy {
   @Input() files: FileUploadSpec;
   @Input() url: string;
   @Input() method = 'POST';
@@ -69,8 +71,26 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   @Input() showName: boolean = true;
   @Input() asButton: boolean = false;
   @Input() singleDropZone: boolean = false;
+  /**
+   * Set false when the host shows its own confirmation after a successful upload,
+   * so the two do not play one after the other. A failure still reports here,
+   * because only this component knows how to retry it.
+   */
+  @Input() showSuccessState: boolean = true;
+  /**
+   * Set false when the host draws the in-flight state itself, so one panel can
+   * carry the upload all the way into its own confirmation instead of handing
+   * over to a second one. A failure still reports here.
+   */
+  @Input() showProgressState: boolean = true;
   @Input() showUploadButton: boolean = true;
   @Input() resetAfterUpload: boolean = true;
+  /**
+   * What the in-flight panel calls what is being sent. This component is shared
+   * with the CSV importers and the group-set editor, where "your work" is a
+   * tutor's enrolment file and belongs to nobody.
+   */
+  @Input() uploadingLabel: string = 'Uploading';
 
   @Input() initiateUpload?: () => void;
 
@@ -89,6 +109,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   public shownUploadZones: UploadZone[] = [];
   public uploadZones: UploadZone[] = [];
   public dropSupported: boolean = true;
+  /** The zone a file is being dragged over, for the drag-over style only. */
+  public dragOverZone: UploadZone | null = null;
 
   constructor(
     private userService: UserService,
@@ -96,6 +118,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
   ) {}
 
   private externalName: string = 'OnTrack';
+  private externalNameSub: Subscription | null = null;
+  private completionTimer: ReturnType<typeof setTimeout> | null = null;
   private activeRequest?: XMLHttpRequest;
   private uploadWasCancelled = false;
 
@@ -111,9 +135,26 @@ export class FileUploaderComponent implements OnInit, OnChanges {
 
     this.resetUploader();
 
-    this.constants.ExternalName.subscribe((name) => {
+    this.externalNameSub = this.constants.ExternalName.subscribe((name) => {
       this.externalName = name;
     });
+  }
+
+  ngOnDestroy(): void {
+    // ExternalName is a BehaviorSubject on a root service, so it never
+    // completes. Left subscribed, every dialog that has ever held an uploader
+    // stays in memory for the session.
+    this.externalNameSub?.unsubscribe();
+    this.externalNameSub = null;
+
+    // The completion callback runs on a delay, and the host it calls back into
+    // may be gone by then: closing the dialog in that window had a destroyed
+    // component apply the submission and claim its confirmation, so the student
+    // was told nothing at all.
+    if (this.completionTimer) {
+      clearTimeout(this.completionTimer);
+      this.completionTimer = null;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -128,19 +169,22 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     this.uploadingInfo = null;
   }
 
-  public onDragOver(event: DragEvent) {
+  public onDragOver(event: DragEvent, upload?: UploadZone) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = upload ?? null;
   }
 
   public onDragLeave(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = null;
   }
 
   public onFileDropped(event: DragEvent, upload: UploadZone) {
     event.preventDefault();
     event.stopPropagation();
+    this.dragOverZone = null;
 
     const file = event.dataTransfer?.files?.[0];
     if (file) {
@@ -187,6 +231,88 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     upload.model = null;
     this.refreshShownUploadZones();
     this.updateReadyState(this.readyToUpload());
+  }
+
+  /**
+   * The summary column beside the drop zone is a second copy of the same state.
+   * It earns its place only when there is more than one file to keep track of;
+   * with one, the zone becomes the selected file in place instead.
+   */
+  public get showSummaryColumn(): boolean {
+    return this.singleDropZone && this.uploadZones.length > 1;
+  }
+
+  /**
+   * With the summary column the left side narrows to the next zone still waiting
+   * for a file. Without it, every zone stays on screen and each one turns into
+   * its own selected file, so nothing disappears when a file is chosen.
+   */
+  public get renderedUploadZones(): UploadZone[] {
+    return this.showSummaryColumn ? this.shownUploadZones : this.uploadZones;
+  }
+
+  /**
+   * The request has landed but the host has not taken over yet. Completion fires
+   * `onComplete` on a short delay, and unmounting this panel the moment the bytes
+   * arrive left the dialog empty for that whole window.
+   */
+  public get uploadSettling(): boolean {
+    return (
+      !this.showSuccessState &&
+      this.uploadingInfo?.complete === true &&
+      this.uploadingInfo?.success === true
+    );
+  }
+
+  /** A success this component is showing itself, rather than handing over. */
+  public get uploadComplete(): boolean {
+    return this.showSuccessState && this.uploadLanded;
+  }
+
+  public get showProgressPanel(): boolean {
+    if (!this.showProgressState) {
+      return false;
+    }
+    return !this.uploadingInfo?.complete || this.uploadSettling || this.uploadComplete;
+  }
+
+  public get uploadTitle(): string {
+    if (this.uploadComplete || this.uploadSettling) {
+      return 'Uploaded';
+    }
+    return this.uploadingLabel;
+  }
+
+  /** Percent sent so far, for a host drawing the in-flight state itself. */
+  public get uploadProgress(): number {
+    return this.uploadingInfo?.progress ?? 0;
+  }
+
+  /** True once the bytes are away, whether or not the host has taken over. */
+  public get uploadLanded(): boolean {
+    return this.uploadingInfo?.complete === true && this.uploadingInfo?.success === true;
+  }
+
+  /**
+   * Bytes actually on the wire. `isUploading` stays true after the request
+   * settles, because the panels that report the outcome are rendered under it,
+   * so a host asking "is there something here I would interrupt?" has to ask
+   * this instead.
+   */
+  public get uploadInFlight(): boolean {
+    return this.isUploading && this.uploadingInfo?.complete !== true;
+  }
+
+  /** The file being sent, or a count once there is more than one. */
+  public get uploadingFileLabel(): string {
+    const named = this.uploadZones
+      .map((zone) => zone.model?.[0]?.name)
+      .filter((name): name is string => !!name);
+
+    if (named.length === 0) {
+      return '';
+    }
+    return named.length === 1 ? named[0] : `${named.length} files`;
   }
 
   readyToUpload(): boolean {
@@ -287,7 +413,8 @@ export class FileUploaderComponent implements OnInit, OnChanges {
           if (xhr.status >= 200 && xhr.status < 300) {
             this.onSuccess?.(response);
             this.uploadingInfo.success = true;
-            setTimeout(() => {
+            this.completionTimer = setTimeout(() => {
+              this.completionTimer = null;
               this.onComplete?.();
               if (this.resetAfterUpload) {
                 this.resetUploader();
@@ -321,6 +448,45 @@ export class FileUploaderComponent implements OnInit, OnChanges {
     this.uploadingInfo = null;
     this.isUploading = false;
     this.onCancelUpload?.();
+  }
+
+  /** What the drop zone asks for, e.g. "PDF" or "code file". */
+  public dropNoun(upload: UploadZone): string {
+    const type = upload.display.type;
+    if (type === 'PDF' || type === 'image') {
+      return type;
+    }
+    return `${type === 'zip' ? 'ZIP' : type} file`;
+  }
+
+  /** The accepted formats in words, e.g. "PDF or PS", shortened when the list is long. */
+  public acceptedFormatsLabel(upload: UploadZone): string {
+    const formats = upload.accepts.map((ext) => ext.toUpperCase());
+    const previewLimit = 4;
+    if (formats.length > previewLimit) {
+      const rest = formats.length - previewLimit;
+      return `${formats.slice(0, previewLimit).join(', ')} and ${rest} more`;
+    }
+    if (formats.length <= 1) {
+      return formats.join('');
+    }
+    return `${formats.slice(0, -1).join(', ')} or ${formats[formats.length - 1]}`;
+  }
+
+  /** A file size in words, e.g. "1.2 MB". */
+  public formatSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes)) {
+      return '';
+    }
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    const kb = bytes / 1024;
+    if (kb < 1024) {
+      return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
+    }
+    const mb = kb / 1024;
+    return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
   }
 
   // onClickFailureCancelInternal() {
