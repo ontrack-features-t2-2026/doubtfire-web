@@ -2,16 +2,36 @@
 <html lang="en">
   <head>
     <base href="/" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VJWZRWYE2C"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
+    <meta content="no-referrer" name="referrer" />
 
-      gtag('config', 'G-VJWZRWYE2C');
+    <meta content="#fafafa" name="theme-color" />
+    <!-- CSP: this inline pre-boot theme script depends on unsafe-inline in nginx.conf.
+         Before removing it, allow this exact script's SHA-256 in script-src or
+         serve a per-response nonce. Otherwise dark first paint stops working. -->
+    <!-- THM-F04 pre-boot theme marker. Runs synchronously before any stylesheet
+         so the resolved theme is painted before Angular boots and there is no
+         incorrect-theme flash. Mirrors ThemeService.applyResolved and reads the
+         same storage key ('ontrack.theme.preference' / THEME_STORAGE_KEY). -->
+    <script>
+      // Only the storage read can throw (private mode, quota). Guard it alone so a
+      // throw still falls through to the system value, exactly like
+      // ThemeService.readThemePreference, instead of skipping the paint entirely.
+      let stored = null;
+      try {
+        stored = localStorage.getItem('ontrack.theme.preference');
+      } catch {
+        /* storage blocked; treat as unset and resolve against the OS */
+      }
+      const prefersDark =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const resolved =
+        stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-ot-theme', resolved);
+      document.documentElement.style.colorScheme = resolved;
+      document
+        .querySelector('meta[name="theme-color"]')
+        .setAttribute('content', resolved === 'dark' ? '#0f1216' : '#fafafa');
     </script>
 
     <link
@@ -31,7 +51,6 @@
     <link href="/assets/icons/apple-touch-icon.png" rel="apple-touch-icon" />
     <!-- 180×180 -->
     <link href="/manifest.webmanifest" rel="manifest" />
-    <meta content="#3939ff" name="theme-color" />
 
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta charset="utf-8" />

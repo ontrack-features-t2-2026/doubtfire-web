@@ -3,17 +3,37 @@
 @use '@worktile/gantt/styles/index';
 @use 'theme' as *;
 @use 'styles/common/typeface';
+@use 'styles/common/accessibility';
+// Theme foundation (THM-F01): the --ot-* token layer. These two partials are the
+// only place a colour value is declared. Light is the bare :root default so the
+// app stays correct even if the pre-hydration marker script (THM-F04) never runs.
+@use 'styles/tokens/light';
+@use 'styles/tokens/dark';
+@use 'styles/theme-special-surfaces';
 @use 'tailwindcss';
 @config '../tailwind.config.js';
 
 @include mat.elevation-classes();
 @include mat.app-background();
 
-@import '../node_modules/angular-calendar/css/angular-calendar.css';
+// angular-calendar layout and palette are loaded by theme-special-surfaces.
 
 // Keep Angular's [hidden] bindings stronger than display utilities such as Tailwind's .flex.
 [hidden] {
   display: none !important;
+}
+
+// Apply the user's motion preference to existing and future CSS animations.
+// Canvas effects also need a guard at their source (see ConfettiService).
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 $main-view-top-padding: 30px;
@@ -63,7 +83,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
   &.selectable {
     .mat-mdc-row:hover .mat-mdc-cell {
-      background-color: rgb(243, 243, 243);
+      background-color: var(--ot-color-hover);
     }
     .mat-mdc-row .mat-mdc-cell {
       cursor: pointer;
@@ -73,7 +93,7 @@ $main-view-max-height: calc((var(--vh, 1vh) * (100)) - 85px);
 
 .table-selectable {
   .mat-mdc-row:hover .mat-mdc-cell {
-    background-color: rgb(243, 243, 243);
+    background-color: var(--ot-color-hover);
   }
   .mat-mdc-row .mat-mdc-cell {
     cursor: pointer;
@@ -100,4 +120,23 @@ body.split-pane-resizing pdf-viewer {
 
 .mat-badge-accent .mat-badge-content {
   color: white;
+}
+
+// SPIKE (THM-M01): page frame follows the resolved theme in dark. The Material
+// dark theme (theme.scss) handles component chrome; this covers the raw body.
+:root[data-ot-theme='dark'] body {
+  background-color: var(--ot-color-page);
+  color: var(--ot-color-text);
+}
+
+// Print the application chrome in Light as well as switching semantic tokens.
+// Keep this in the global stylesheet: components import theme.scss for palette
+// variables and must not each emit a duplicate print theme. Use the same
+// specificity as the on-screen Dark block without changing the
+// root marker or the user's saved preference.
+@media print {
+  :root,
+  :root[data-ot-theme='dark'] {
+    @include mat.all-component-colors($theme);
+  }
 }
