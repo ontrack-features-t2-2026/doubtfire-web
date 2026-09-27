@@ -13,7 +13,9 @@
 .requirement {
   padding: 0.5em 0.75em;
   margin-bottom: 0.5em;
-  border: 1px solid #ddd;
+  // A text mix, not the divider: the dialog is the raised surface, which the dark
+  // divider matches exactly. In light this lands on the old #ddd.
+  border: 1px solid color-mix(in srgb, var(--ot-color-text) 15%, transparent);
   border-radius: 4px;
   word-break: break-word;
 }

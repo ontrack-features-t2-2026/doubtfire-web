@@ -1,0 +1,421 @@
+{
+  "mainCount": 1,
+  "bannerCount": 1,
+  "logo": [],
+  "tabs": [
+    {
+      "id": "mat-tab-group-2-label-0",
+      "text": "Task Details",
+      "ariaDisabled": "false",
+      "ariaSelected": "true",
+      "disabled": false,
+      "tabindex": "0",
+      "class": "mdc-tab mat-mdc-tab mat-focus-indicator mdc-tab--active ng-star-inserted mdc-tab-indicator--active",
+      "color": "rgb(129, 140, 248)",
+      "opacity": "1",
+      "tabColor": "rgb(230, 232, 236)",
+      "tabOpacity": "1",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "mdc-tab mat-mdc-tab mat-focus-indicator mdc-tab--active ng-star-inserted mdc-tab-indicator--active",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-labels",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-list",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-label-container _mat-animation-noopable",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-HEADER",
+          "class": "mat-mdc-tab-header mat-mdc-tab-header-pagination-controls-enabled",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-GROUP",
+          "class": "mat-mdc-tab-group task-dashboard-tabs min-w-0 flex-1 mat-primary mat-mdc-tab-group-dynamic-height mat-mdc-tab-group-stretch-tabs",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "z-10 flex w-full shrink-0 items-center gap-1",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex size-full flex-col overflow-hidden",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-TASK-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mobile-task-pane",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "SECTION",
+          "class": "mobile-task-view min-w-0 flex-1 bg-[var(--ot-color-surface)] ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-layout flex h-full min-h-0 flex-row",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-shell w-full overflow-hidden ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-ROOT-STATE",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAIN",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "APP-ROOT",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "BODY",
+          "class": "mat-typography",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "HTML",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgb(15, 18, 22)"
+        }
+      ],
+      "html": "<div role=\"tab\" mattablabelwrapper=\"\" cdkmonitorelementfocus=\"\" class=\"mdc-tab mat-mdc-tab mat-focus-indicator mdc-tab--active ng-star-inserted mdc-tab-indicator--active\" id=\"mat-tab-group-2-label-0\" tabindex=\"0\" aria-posinset=\"1\" aria-setsize=\"3\" aria-controls=\"mat-tab-group-2-content-0\" aria-selected=\"true\" aria-disabled=\"false\"><span class=\"mdc-tab__ripple\"></span><div mat-ripple=\"\" class=\"mat-ripple mat-mdc-tab-ripple\"></div><span class=\"mdc-tab__content\"><span class=\"mdc-tab__text-label\"><!--container-->Task Details<!--container--></span></span><span class=\"mdc-tab-indicator\"><span class=\"mdc-tab-indicator__content mdc-tab-indicator__content--underline\"></span></span></div>"
+    },
+    {
+      "id": "mat-tab-group-2-label-1",
+      "text": "Task Sheet",
+      "ariaDisabled": "false",
+      "ariaSelected": "false",
+      "disabled": false,
+      "tabindex": "-1",
+      "class": "mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted",
+      "color": "rgb(153, 162, 176)",
+      "opacity": "1",
+      "tabColor": "rgb(230, 232, 236)",
+      "tabOpacity": "1",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-labels",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-list",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-label-container _mat-animation-noopable",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-HEADER",
+          "class": "mat-mdc-tab-header mat-mdc-tab-header-pagination-controls-enabled",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-GROUP",
+          "class": "mat-mdc-tab-group task-dashboard-tabs min-w-0 flex-1 mat-primary mat-mdc-tab-group-dynamic-height mat-mdc-tab-group-stretch-tabs",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "z-10 flex w-full shrink-0 items-center gap-1",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex size-full flex-col overflow-hidden",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-TASK-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mobile-task-pane",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "SECTION",
+          "class": "mobile-task-view min-w-0 flex-1 bg-[var(--ot-color-surface)] ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-layout flex h-full min-h-0 flex-row",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-shell w-full overflow-hidden ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-ROOT-STATE",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAIN",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "APP-ROOT",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "BODY",
+          "class": "mat-typography",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "HTML",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgb(15, 18, 22)"
+        }
+      ],
+      "html": "<div role=\"tab\" mattablabelwrapper=\"\" cdkmonitorelementfocus=\"\" class=\"mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted\" id=\"mat-tab-group-2-label-1\" tabindex=\"-1\" aria-posinset=\"2\" aria-setsize=\"3\" aria-controls=\"mat-tab-group-2-content-1\" aria-selected=\"false\" aria-disabled=\"false\"><span class=\"mdc-tab__ripple\"></span><div mat-ripple=\"\" class=\"mat-ripple mat-mdc-tab-ripple\"></div><span class=\"mdc-tab__content\"><span class=\"mdc-tab__text-label\"><!--container-->Task Sheet<!--container--></span></span><span class=\"mdc-tab-indicator\"><span class=\"mdc-tab-indicator__content mdc-tab-indicator__content--underline\"></span></span></div>"
+    },
+    {
+      "id": "mat-tab-group-2-label-2",
+      "text": "Your Submission",
+      "ariaDisabled": "false",
+      "ariaSelected": "false",
+      "disabled": false,
+      "tabindex": "-1",
+      "class": "mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted",
+      "color": "rgb(153, 162, 176)",
+      "opacity": "1",
+      "tabColor": "rgb(230, 232, 236)",
+      "tabOpacity": "1",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-labels",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-list",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mat-mdc-tab-label-container _mat-animation-noopable",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-HEADER",
+          "class": "mat-mdc-tab-header mat-mdc-tab-header-pagination-controls-enabled",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAT-TAB-GROUP",
+          "class": "mat-mdc-tab-group task-dashboard-tabs min-w-0 flex-1 mat-primary mat-mdc-tab-group-dynamic-height mat-mdc-tab-group-stretch-tabs",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "z-10 flex w-full shrink-0 items-center gap-1",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex size-full flex-col overflow-hidden",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-TASK-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "mobile-task-pane",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "SECTION",
+          "class": "mobile-task-view min-w-0 flex-1 bg-[var(--ot-color-surface)] ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-layout flex h-full min-h-0 flex-row",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "class": "project-dashboard-shell w-full overflow-hidden ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-DASHBOARD",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "F-PROJECT-ROOT-STATE",
+          "class": "ng-star-inserted",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "MAIN",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "APP-ROOT",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "BODY",
+          "class": "mat-typography",
+          "opacity": "1",
+          "backgroundColor": "rgb(23, 27, 33)"
+        },
+        {
+          "tag": "HTML",
+          "class": "",
+          "opacity": "1",
+          "backgroundColor": "rgb(15, 18, 22)"
+        }
+      ],
+      "html": "<div role=\"tab\" mattablabelwrapper=\"\" cdkmonitorelementfocus=\"\" class=\"mdc-tab mat-mdc-tab mat-focus-indicator ng-star-inserted\" id=\"mat-tab-group-2-label-2\" tabindex=\"-1\" aria-posinset=\"3\" aria-setsize=\"3\" aria-controls=\"mat-tab-group-2-content-2\" aria-selected=\"false\" aria-disabled=\"false\"><span class=\"mdc-tab__ripple\"></span><div mat-ripple=\"\" class=\"mat-ripple mat-mdc-tab-ripple\"></div><span class=\"mdc-tab__content\"><span class=\"mdc-tab__text-label\"><span _ngcontent-ng-c3639081411=\"\" class=\"flex items-center gap-1 ng-star-inserted\"> Your Submission <!--container--></span><!--container--><!--container--><!--container--></span></span><span class=\"mdc-tab-indicator\"><span class=\"mdc-tab-indicator__content mdc-tab-indicator__content--underline\"></span></span></div>"
+    }
+  ],
+  "iloChips": [
+    {
+      "tag": "MAT-CHIP",
+      "role": "listitem",
+      "label": null,
+      "text": "O1",
+      "html": "<mat-chip role=\"listitem\" class=\"mat-mdc-chip mat-mdc-tooltip-trigger m-0.5 mat-primary mdc-evolution-chip mat-mdc-standard-chip _mat-animation-noopable ng-star-inserted\" mat-ripple-loader-uninitialized=\"\" mat-ripple-loader-class-name=\"mat-mdc-chip-ripple\" mat-ripple-loader-disabled=\"\" id=\"mat-mdc-chip-4\" aria-describedby=\"cdk-describedby-message-ng-1-13\" cdk-describedby-host=\"ng-1\"><span class=\"mat-mdc-chip-focus-overlay\"></span><span class=\"mdc-evolution-chip__cell mdc-evolution-chip__cell--primary\"><span matchipcontent=\"\" class=\"mat-mdc-chip-action mdc-evolution-chip__action mdc-evolution-chip__action--presentational mdc-evolution-chip__action--primary\" aria-disabled=\"false\"><!--container--><span class=\"mdc-evolution-chip__text-label mat-mdc-chip-action-label\">O1<span class=\"mat-mdc-chip-primary-focus-indicator mat-focus-indicator\"></span></span></span></span><!--container--></mat-chip>"
+    },
+    {
+      "tag": "MAT-CHIP",
+      "role": "listitem",
+      "label": null,
+      "text": "O2",
+      "html": "<mat-chip role=\"listitem\" class=\"mat-mdc-chip mat-mdc-tooltip-trigger m-0.5 mat-primary mdc-evolution-chip mat-mdc-standard-chip _mat-animation-noopable ng-star-inserted\" mat-ripple-loader-uninitialized=\"\" mat-ripple-loader-class-name=\"mat-mdc-chip-ripple\" mat-ripple-loader-disabled=\"\" id=\"mat-mdc-chip-5\" aria-describedby=\"cdk-describedby-message-ng-1-14\" cdk-describedby-host=\"ng-1\"><span class=\"mat-mdc-chip-focus-overlay\"></span><span class=\"mdc-evolution-chip__cell mdc-evolution-chip__cell--primary\"><span matchipcontent=\"\" class=\"mat-mdc-chip-action mdc-evolution-chip__action mdc-evolution-chip__action--presentational mdc-evolution-chip__action--primary\" aria-disabled=\"false\"><!--container--><span class=\"mdc-evolution-chip__text-label mat-mdc-chip-action-label\">O2<span class=\"mat-mdc-chip-primary-focus-indicator mat-focus-indicator\"></span></span></span></span><!--container--></mat-chip>"
+    }
+  ],
+  "studentRows": [],
+  "footer": null
+}

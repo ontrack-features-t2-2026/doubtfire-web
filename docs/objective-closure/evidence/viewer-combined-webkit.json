@@ -1,0 +1,43 @@
+{
+  "browser": "webkit",
+  "checks": [
+    {
+      "id": "post-and-view-handout-pdf",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "keyboardFocus": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(255, 255, 255)",
+        "textColor": "rgb(255, 255, 255)"
+      },
+      "viewerBytes": 608,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-screenshot-png",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "keyboardFocus": {
+        "width": "2px",
+        "style": "solid",
+        "color": "rgb(255, 255, 255)",
+        "textColor": "rgb(255, 255, 255)"
+      },
+      "viewerBytes": 639,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    }
+  ],
+  "selectedChecks": ["post-and-view-handout-pdf", "post-and-view-screenshot-png"],
+  "errors": [],
+  "testedWeb": "f11d555abd88796346754e846cdd71d9e99b30ee + task-planner.component.{html,ts,spec.ts} Gantt export foreground patch",
+  "testedApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "version": "26.6",
+  "status": "passed",
+  "recordedAt": "2026-09-21T06:23:26.122Z",
+  "committedEquivalentWeb": "64d6acd65fe264b1519f1b77610c17433af72f7b",
+  "commitEquivalenceReason": "The final commit contains exactly the three recorded working-tree source files with matching SHA-256. These browser runs began from the prior HEAD plus that patch; committing it did not alter the tested application source. Original caller metadata is preserved.",
+  "devServerScope": "These contexts passed without Vite overlay or page errors. A separate theme context later observed an intermediate-merge HMR error overlay; frontend restart was requested. This does not claim global dev-server cache stability."
+}

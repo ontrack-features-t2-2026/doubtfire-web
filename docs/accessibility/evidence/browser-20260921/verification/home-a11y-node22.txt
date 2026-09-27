@@ -1,0 +1,14 @@
+
+> doubtfire@11.0.0-45 test:a11y
+> ng test --no-watch --no-progress --include="**/*.accessibility.spec.ts" --include="**/testing/accessibility.spec.ts"
+
+Application bundle generation complete. [21.712 seconds] - 2026-09-21T06:44:33.211Z
+
+
+ RUN  v4.1.9 <web-worktree>
+
+
+ Test Files  13 passed (13)
+      Tests  41 passed (41)
+   Start at  16:44:33
+   Duration  20.06s (transform 9.64s, setup 25.45s, import 46.27s, tests 43.85s, environment 55.37s)

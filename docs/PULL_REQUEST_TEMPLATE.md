@@ -29,6 +29,16 @@ If there is no known impact, write: `No known security or privacy impact.`
 
 Add any screenshots, test output, diagrams, or other evidence that will help the reviewer.
 
+## Accessibility
+
+- [ ] New or changed controls are reachable and operable by keyboard.
+- [ ] Icon-only controls have a meaningful, non-empty accessible name.
+- [ ] Keyboard focus stays visible on interactive elements.
+- [ ] Status, errors and other meaning do not depend on colour alone.
+- [ ] UI changes have accessibility regression coverage and recorded manual checks, or a reason they do not apply.
+
+[Accessibility authoring and testing guide](accessibility/AUTHORING.md)
+
 ## Checklist
 
 - [ ] I selected the correct base branch.

@@ -1,6 +1,7 @@
 import {enAU} from 'date-fns/locale';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
+import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ReactiveFormsModule} from '@angular/forms';
@@ -110,6 +111,7 @@ describe('CrossDashboardComponent', () => {
     nextTaskDefinitionId = 100;
 
     const globalStateServiceStub = {
+      projectLoadErrorSubject: new BehaviorSubject(false),
       onLoad: (callback: () => void): void => callback(),
       currentUserProjects: {
         values: projectsSubject.asObservable(),
@@ -120,12 +122,16 @@ describe('CrossDashboardComponent', () => {
     };
 
     const projectServiceStub = {
-      query: projectServiceQuery,
+      query: vi.fn(() => {
+        throw new Error('Explicit refresh must bypass the query cache');
+      }),
+      fetchAll: projectServiceQuery,
     };
 
     await TestBed.configureTestingModule({
       declarations: [CrossDashboardComponent],
       imports: [
+        CommonModule,
         MatButtonModule,
         MatDatepickerModule,
         MatFormFieldModule,
@@ -236,7 +242,7 @@ describe('CrossDashboardComponent', () => {
     expect(component.activeUnits[0].tasks[1].showDueWarning).toBe(false);
   });
 
-  it('maps feedback metadata and safely defaults missing metadata to false', () => {
+  it('maps feedback metadata and preserves missing metadata as unavailable', () => {
     const noMetadataTask = makeTask('No feedback metadata', '1.1P', 'working_on_it', makeDate(10));
     const feedbackTask = makeTask('Task with feedback', '1.2P', 'fix_and_resubmit', makeDate(11));
 
@@ -246,7 +252,7 @@ describe('CrossDashboardComponent', () => {
 
     const mappedTasks = component.activeUnits[0].tasks;
 
-    expect(mappedTasks.find((task) => task.abbreviation === '1.1P')?.hasFeedback).toBe(false);
+    expect(mappedTasks.find((task) => task.abbreviation === '1.1P')?.hasFeedback).toBeNull();
     expect(mappedTasks.find((task) => task.abbreviation === '1.2P')?.hasFeedback).toBe(true);
   });
 
@@ -1549,6 +1555,156 @@ describe('CrossDashboardComponent', () => {
     expect(Array.from(card.classList)).toEqual(
       expect.arrayContaining(['h-auto', 'w-full', 'min-w-0', 'sm:h-full', 'sm:flex-[1_0_26rem]']),
     );
+  });
+
+  it('combines feedback with status, grade, date, unit and task searches', () => {
+    const match = makeTask('Review report', 'D1', 'redo', makeDate(10), 0, 2);
+    match.hasFeedback = true;
+    const noFeedback = makeTask('Review report', 'D2', 'redo', makeDate(10), 1, 2);
+    noFeedback.hasFeedback = false;
+    const wrongGrade = makeTask('Review report', 'P1', 'redo', makeDate(10), 2, 0);
+    wrongGrade.hasFeedback = true;
+    projectsSubject.next([makeProject(1, 'SIT764', true, [match, noFeedback, wrongGrade])]);
+    component.setFeedbackFilter('available');
+    component.setStatuses(['redo']);
+    component.setGrades([2]);
+    component.setGlobalSearch('SIT764 staff feedback');
+    component.setSearch(1, 'review');
+    component.setStartDate('2026-08-10');
+    component.setEndDate('2026-08-10');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['D1']);
+    component.clearGlobalFilters();
+    expect(component.feedbackFilter).toBe('all');
+    expect(component.displayedUnits[0].tasks).toHaveLength(3);
+  });
+
+  it('distinguishes no feedback from unavailable data and searchable unread comments', () => {
+    const missing = makeTask('Unknown', 'U1', 'working_on_it', makeDate(10));
+    const none = makeTask('None', 'N1', 'working_on_it', makeDate(10));
+    none.hasFeedback = false;
+    const present = makeTask('Feedback', 'F1', 'redo', makeDate(10));
+    present.hasFeedback = true;
+    present.numNewComments = 2;
+    projectsSubject.next([makeProject(1, 'SIT764', true, [missing, none, present])]);
+    component.setFeedbackFilter('unavailable');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['U1']);
+    component.setFeedbackFilter('none');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['N1']);
+    component.setFeedbackFilter('available');
+    component.setGlobalSearch('unread comments');
+    expect(component.displayedUnits[0].tasks.map((task) => task.abbreviation)).toEqual(['F1']);
+  });
+
+  it('preserves the active refresh button and stale tasks across failure and recovery', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    const refresh: Subject<Project[]> = new Subject();
+    projectServiceQuery.mockReturnValue(refresh);
+    const button = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((item) => item.textContent.includes('Refresh active units'));
+    button.focus();
+    button.click();
+    button.click();
+    await syncView();
+    expect(projectServiceQuery).toHaveBeenCalledTimes(1);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    refresh.error(new Error('private response body'));
+    await syncView();
+    expect(component.activeUnitsLoadError).toBe(true);
+    expect(component.displayedUnits[0].code).toBe('SIT764');
+    expect(fixture.nativeElement.textContent).toContain('Showing previously loaded tasks');
+    expect(fixture.nativeElement.textContent).not.toContain('private response body');
+    expect(document.activeElement).toBe(button);
+    projectServiceQuery.mockReturnValue(of([makeProject(2, 'SIT777', true)]));
+    button.click();
+    await syncView();
+    expect(component.activeUnitsLoadError).toBe(false);
+    expect(component.displayedUnits[0].code).toBe('SIT777');
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('retries previous units once, retaining the last successful data on failure', async () => {
+    projectServiceQuery.mockReturnValue(of([makeProject(1, 'OLD101', false)]));
+    component.setUnitScope('previous');
+    const refresh: Subject<Project[]> = new Subject();
+    projectServiceQuery.mockReturnValue(refresh);
+    component.loadPreviousUnits();
+    component.loadPreviousUnits();
+    expect(projectServiceQuery).toHaveBeenCalledTimes(2);
+    refresh.error(new Error('offline'));
+    await syncView();
+    expect(component.displayedUnits[0].code).toBe('OLD101');
+    expect(fixture.nativeElement.textContent).toContain('Showing previously loaded tasks');
+    projectServiceQuery.mockReturnValue(of([]));
+    component.loadPreviousUnits();
+    await syncView();
+    expect(component.previousUnitsLoadError).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('No previous units are available.');
+  });
+
+  it('keeps tasks usable when recommendation loading fails and allows recovery', async () => {
+    projectsSubject.next([makeProject(1, 'SIT764', true)]);
+    recommendationServiceGetAll.mockReturnValue(throwError(() => new Error('offline')));
+    component.retryRecommendations();
+    await syncView();
+    expect(component.recommendationsLoadError).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Tasks remain available');
+    recommendationServiceGetAll.mockReturnValue(of([]));
+    component.retryRecommendations();
+    await syncView();
+    expect(component.recommendationsLoadError).toBe(false);
+  });
+
+  it('announces results and keeps project progress and primary links in compact density', async () => {
+    projectsSubject.next([
+      makeProject(
+        1,
+        'LONG101',
+        true,
+        [makeTask('A long task', 'L1', 'complete', makeDate(10))],
+        'A very long synthetic project name with no clipped required information',
+      ),
+    ]);
+    component.density = 'compact';
+    await syncView();
+    expect(fixture.nativeElement.querySelector('.dashboard-compact')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p[aria-live="polite"]').textContent).toContain(
+      '1 task in 1 unit',
+    );
+    expect(fixture.nativeElement.textContent).toContain('1 of 1 tasks complete');
+    expect(fixture.nativeElement.textContent).toContain('Open LONG101 dashboard');
+  });
+
+  it('allows recovery when global project loading failed before the dashboard opened', async () => {
+    const global = TestBed.inject(GlobalStateService);
+    global.projectLoadErrorSubject.next(true);
+    fixture.destroy();
+    fixture = TestBed.createComponent(CrossDashboardComponent);
+    component = fixture.componentInstance;
+    await syncView();
+    expect(component.activeUnitsLoadError).toBe(true);
+    expect(component.loadingActiveUnits).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Active units could not be loaded');
+    projectServiceQuery.mockReturnValue(of([makeProject(1, 'SIT764', true)]));
+    component.retryActiveUnits();
+    await syncView();
+    expect(component.activeUnitsLoadError).toBe(false);
+    expect(global.projectLoadErrorSubject.value).toBe(false);
+    expect(component.displayedUnits[0].code).toBe('SIT764');
+  });
+
+  it('does not resurrect projects absent from a successful refresh when the entity cache emits', async () => {
+    const remaining = makeProject(1, 'CURRENT', true, [
+      makeTask('Current', 'P1', 'redo', makeDate(10)),
+    ]);
+    const removed = makeProject(2, 'REMOVED', true);
+    projectsSubject.next([remaining, removed]);
+    projectServiceQuery.mockReturnValue(of([remaining]));
+    component.retryActiveUnits();
+    projectsSubject.next([remaining, removed]);
+    taskStatusSubject.next(remaining.tasks[0]);
+    await syncView();
+    expect(component.displayedUnits.map((unit) => unit.code)).toEqual(['CURRENT']);
   });
 
   it('summarises each unit by status for the header progress bar', async () => {

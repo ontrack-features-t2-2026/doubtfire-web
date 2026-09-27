@@ -68,7 +68,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   private dragMoveAudited$;
   private readonly destroy$: Subject<void> = new Subject();
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
-  /** ng-flex-layout's `xs` breakpoint. */
+  /** The legacy `xs` breakpoint retained for the mobile inbox. */
   private readonly mobileBreakpoint = '(max-width: 599.98px)';
 
   // protected filters;

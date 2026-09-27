@@ -1,0 +1,24 @@
+{
+  "stage": "submit-spreadsheet",
+  "recordedAt": "2026-09-21T05:17:00.853Z",
+  "browser": "Chrome 153.0.8010.48",
+  "scope": "Real local Angular application and synthetic backend; automated browser/AX/keyboard check, not human usability or screen-reader observation.",
+  "checks": [
+    {
+      "id": "incompatible-task-file-rejected-before-upload",
+      "status": "passed",
+      "requests": 0
+    },
+    {
+      "id": "real-ui-spreadsheet-submission-queued",
+      "status": "passed",
+      "httpStatus": 201,
+      "fixture": "scores.xlsx",
+      "taskAlias": "uploadStudent/1.1P"
+    }
+  ],
+  "status": "passed",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "webBaseline": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+  "webWorkingTree": "objectives-closure-web-20260921 with accessibility fixes"
+}

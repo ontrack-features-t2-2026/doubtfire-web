@@ -454,8 +454,12 @@ export class TaskCommentsViewerComponent implements AfterViewInit, OnChanges, On
     return this.task.scormEnabled;
   }
 
-  uploadFiles(event) {
-    this.commentComposer?.uploadFiles(event);
+  uploadFiles(files: ArrayLike<File>) {
+    this.commentComposer?.uploadFiles(files);
+  }
+
+  downloadAttachment(comment: TaskComment): void {
+    this.taskCommentService.downloadAttachment(comment);
   }
 
   scrollToComment(commentID?: number) {

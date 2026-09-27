@@ -1,8 +1,10 @@
 <!-- relative: the visually hidden labels below are absolutely positioned, and
      without a containing block here they escape the sideways-scrolling unit strip
      and stretch the whole page. -->
+<!-- The cross-unit dashboard's compact density sets --dashboard-row-spacing. -->
 <div
-  class="relative flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-ot-hover motion-reduce:transition-none sm:px-5"
+  class="relative flex items-center gap-3 px-4 transition-colors duration-150 hover:bg-ot-hover motion-reduce:transition-none sm:px-5"
+  style="padding-block: var(--dashboard-row-spacing, 0.75rem)"
   [class.bg-ot-hover]="isExpanded"
 >
   <!-- The same status circle as the unit task list, so a status looks the same everywhere. -->
@@ -11,7 +13,7 @@
   <div class="min-w-0 grow">
     <h4 class="m-0 min-w-0 text-[0.9375rem] leading-snug font-semibold">
       <a
-        class="block truncate rounded-ot-xs no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+        class="block rounded-ot-xs break-words no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
         [class.text-ot-muted]="isFinal"
         [class.text-ot-text]="!isFinal"
         [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation]"
@@ -28,7 +30,7 @@
     </div>
     <!-- The deadline and the staff-feedback marker share their own line, so every
          flagged row has the same rhythm instead of chips wrapping only when the code is long. -->
-    @if (dueDateWarning || task.hasFeedback) {
+    @if (dueDateWarning || task.hasFeedback !== false) {
       <div class="mt-1.5 flex flex-wrap gap-1.5">
         @if (dueDateWarning; as warning) {
           <span
@@ -50,15 +52,19 @@
             <span>{{ warning.label }}</span>
           </span>
         }
-        @if (task.hasFeedback) {
-          <span
-            class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-green-800 dark:bg-green-500/20 dark:text-green-300"
+        @if (task.hasFeedback === true) {
+          <a
+            class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium whitespace-nowrap text-green-800 underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current dark:bg-green-500/20 dark:text-green-300"
+            [attr.aria-label]="'Open staff feedback for ' + task.title"
+            [routerLink]="['/projects', task.projectId, 'dashboard', task.abbreviation, 'feedback']"
           >
             <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">
               feedback
             </mat-icon>
             <span>Staff feedback</span>
-          </span>
+          </a>
+        } @else if (task.hasFeedback === null) {
+          <span class="text-xs text-ot-muted">Feedback unavailable</span>
         }
       </div>
     }
@@ -68,10 +74,11 @@
     @if (!isExpanded && task.comments > 0) {
       <span
         class="inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-ot-pill bg-ot-primary px-2 text-xs font-semibold text-ot-on-primary tabular-nums"
+        role="status"
+        [attr.aria-label]="task.comments + ' unread comments on ' + task.title"
       >
         <mat-icon aria-hidden="true" class="!size-3.5 !text-sm !leading-none">chat_bubble</mat-icon>
-        {{ task.comments }}
-        <span class="sr-only">new {{ task.comments === 1 ? 'comment' : 'comments' }}</span>
+        <span aria-hidden="true">{{ task.comments }}</span>
       </span>
     }
     <button

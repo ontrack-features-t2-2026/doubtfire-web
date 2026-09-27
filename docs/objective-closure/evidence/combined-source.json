@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-09-21T06:22:20.249698+00:00",
+  "webHead": "f11d555abd88796346754e846cdd71d9e99b30ee",
+  "apiHead": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "workingTreeChanges": [
+    {
+      "path": "src/app/projects/states/plan/task-planner/task-planner.component.html",
+      "sha256": "3b6103ebcff667338f4048f950545ed38407d7dcf2bbb003801da86db2da1769"
+    },
+    {
+      "path": "src/app/projects/states/plan/task-planner/task-planner.component.spec.ts",
+      "sha256": "f2434c5f9803d93d9eea1078a0d4389d8d306e0d0327d3d5945f70d71333b4ae"
+    },
+    {
+      "path": "src/app/projects/states/plan/task-planner/task-planner.component.ts",
+      "sha256": "f1d10b138e14e6956f0fd64e11d483df5715d502d95b7d8f2496e98ca2c2c665"
+    }
+  ],
+  "scope": "Real local Angular application/API; synthetic uploadStudent. Chrome full chat pack followed sequentially by Firefox/WebKit focused PDF/image keyboard/viewer checks. No theme preferences, requirement definitions, or production data changed by these runs.",
+  "committedEquivalentWeb": "64d6acd65fe264b1519f1b77610c17433af72f7b",
+  "commitEquivalenceVerified": true,
+  "commitEquivalenceReason": "The final commit contains exactly the three recorded working-tree source files with matching SHA-256. These browser runs began from the prior HEAD plus that patch; committing it did not alter the tested application source. Original caller metadata is preserved."
+}

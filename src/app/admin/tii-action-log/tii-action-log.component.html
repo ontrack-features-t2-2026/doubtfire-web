@@ -84,7 +84,7 @@
     <tr
       *matRowDef="let row; columns: columns"
       mat-row
-      [style.background]="selectedTaskDefinition === row ? 'lightblue' : ''"
+      [style.background]="selectedTaskDefinition === row ? 'var(--ot-color-selected)' : ''"
     ></tr>
     <tr *matNoDataRow class="mat-row">
       <td class="mat-cell !border-b-0" [attr.colspan]="columns.length">

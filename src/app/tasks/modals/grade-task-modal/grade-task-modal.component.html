@@ -14,10 +14,10 @@
 
   @if (task.definition.isGraded) {
     <section class="flex flex-col gap-2">
-      <h3 class="m-0 text-sm font-semibold text-ot-text" id="grade-task-grade-label">Grade</h3>
+      <h3 class="m-0 text-sm font-semibold text-ot-text">Grade</h3>
       <mat-button-toggle-group
         #group="matButtonToggleGroup"
-        aria-labelledby="grade-task-grade-label"
+        aria-label="Task grade"
         class="self-start"
         hideSingleSelectionIndicator="true"
         [value]="selectedGrade"
@@ -41,17 +41,22 @@
   @if (task.definition.maxQualityPts > 0) {
     <section class="flex flex-col gap-1">
       <div class="flex items-baseline justify-between gap-3">
-        <h3 class="m-0 text-sm font-semibold text-ot-text" id="grade-task-quality-label">
-          Quality rating
-        </h3>
+        <h3 class="m-0 text-sm font-semibold text-ot-text">Quality rating</h3>
         <span aria-hidden="true" class="text-sm text-ot-muted tabular-nums">
           {{ rating }} / {{ totalRating }}
         </span>
       </div>
       <!-- The top margin leaves room for the value bubble over the thumb. -->
-      <mat-slider class="mt-4 w-full" [discrete]="true" [max]="totalRating" [min]="0" [step]="1">
+      <mat-slider
+        class="mt-4 w-full"
+        [discrete]="true"
+        [displayWith]="formatQualityRating"
+        [max]="totalRating"
+        [min]="0"
+        [step]="1"
+      >
         <input
-          aria-labelledby="grade-task-quality-label"
+          aria-label="Task quality rating"
           matSliderThumb
           [ngModel]="rating"
           (ngModelChange)="updateRating($event)"

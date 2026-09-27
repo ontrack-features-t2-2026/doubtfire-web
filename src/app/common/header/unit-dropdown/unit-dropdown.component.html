@@ -2,6 +2,7 @@
   @if (unit) {
     <f-unit-code
       #menuState="matMenuTrigger"
+      data-onboarding-target="unit-selector"
       matTooltip="{{ unit?.name }}"
       [isDropdown]="true"
       [matMenuTriggerFor]="menu"
@@ -13,7 +14,12 @@
     </f-unit-code>
   }
   @if (!unit) {
-    <button #menuState="matMenuTrigger" mat-button [matMenuTriggerFor]="menu">
+    <button
+      #menuState="matMenuTrigger"
+      data-onboarding-target="unit-selector"
+      mat-button
+      [matMenuTriggerFor]="menu"
+    >
       <span class="flex items-center">
         <span>Select Unit</span>
         <mat-icon>{{ menuState.menuOpen ? 'arrow_drop_up' : 'arrow_drop_down' }} </mat-icon>

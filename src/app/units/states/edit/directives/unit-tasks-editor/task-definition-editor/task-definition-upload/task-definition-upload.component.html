@@ -2,6 +2,7 @@
 <div class="relative overflow-x-auto rounded-ot-md border border-ot-divider">
   <table
     #upreqTable
+    aria-label="Task upload requirements"
     class="w-full min-w-[46rem]"
     mat-table
     [dataSource]="taskDefinition.uploadRequirements"
@@ -24,12 +25,16 @@
     <ng-container matColumnDef="file-type">
       <th *matHeaderCellDef mat-header-cell>Type</th>
       <td *matCellDef="let upreq; let i = index" class="py-2" mat-cell>
-        <mat-form-field appearance="outline" class="w-36" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="w-48" subscriptSizing="dynamic">
           <mat-select [aria-label]="'Type of file ' + (i + 1)" [(ngModel)]="upreq.type">
             <mat-option value="code">Code</mat-option>
-            <mat-option value="document">Document</mat-option>
+            <mat-option value="document">PDF</mat-option>
+            <mat-option value="csv">Spreadsheet (CSV, XLS, XLSX)</mat-option>
             <mat-option value="image">Image</mat-option>
-            <mat-option value="zip">ZIP</mat-option>
+            <mat-option value="zip">Archive (ZIP, TAR, TAR.GZ, TGZ)</mat-option>
+            @if (upreq.type === 'archive') {
+              <mat-option value="archive">Archive (legacy)</mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </td>
@@ -48,11 +53,19 @@
 
     <ng-container matColumnDef="tii-check">
       <th *matHeaderCellDef mat-header-cell>Similarity check</th>
-      <td *matCellDef="let upreq" mat-cell>
+      <td *matCellDef="let upreq; let i = index" mat-cell>
         @if (upreq.type === 'document' && tiiEnabled()) {
-          <mat-checkbox [(ngModel)]="upreq.tiiCheck">Turnitin</mat-checkbox>
+          <mat-checkbox
+            [aria-label]="'Turnitin similarity check for file ' + (i + 1)"
+            [(ngModel)]="upreq.tiiCheck"
+            >Turnitin</mat-checkbox
+          >
         } @else if (upreq.type === 'code') {
-          <mat-checkbox [(ngModel)]="upreq.tiiCheck">JPlag</mat-checkbox>
+          <mat-checkbox
+            [aria-label]="'JPlag similarity check for file ' + (i + 1)"
+            [(ngModel)]="upreq.tiiCheck"
+            >JPlag</mat-checkbox
+          >
         } @else {
           <span class="text-sm text-ot-muted">Not for this type</span>
         }

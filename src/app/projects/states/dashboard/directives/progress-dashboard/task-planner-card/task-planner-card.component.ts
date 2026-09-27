@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, Inject, Input} from '@angular/core';
 import {MatDialog} from '@angular/material/dialog';
 import {Project} from 'src/app/api/models/project';
 import {Task} from 'src/app/api/models/task';
+import {buildCalendarEvent} from 'src/app/api/services/calendar-event-builder';
 import {buildIcsCalendar} from 'src/app/api/services/ics-calendar-builder';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {GradeService} from 'src/app/common/services/grade.service';
@@ -111,8 +112,11 @@ export class TaskPlannerCardComponent {
     direction: DownloadDirection = this.downloadDirection,
     excludeCompleted: boolean = this.excludeCompleted,
   ): Task[] {
-    const tasks = this.tasksForSelectedGrade(grade, direction);
-    return excludeCompleted ? tasks.filter((task) => !task.inFinalState()) : tasks;
+    return this.tasksForSelectedGrade(grade, direction).filter(
+      (task) =>
+        (!excludeCompleted || (!task.inSubmittedState() && !task.inFinalState())) &&
+        buildCalendarEvent(task) !== null,
+    );
   }
 
   public openDownloadDialog(): void {
@@ -137,7 +141,7 @@ export class TaskPlannerCardComponent {
       },
       width: 'calc(100vw - 32px)',
       maxWidth: '480px',
-      autoFocus: false,
+      autoFocus: 'first-tabbable',
     });
 
     dialogRef.afterClosed().subscribe((selection?: DownloadFilterSelection) => {

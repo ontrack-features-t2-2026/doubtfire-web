@@ -1,0 +1,93 @@
+{
+  "browser": "chrome",
+  "checks": [
+    {
+      "id": "composer-accessible-name-and-emoji-keyboard",
+      "status": "passed"
+    },
+    {
+      "id": "cancel-preserves-draft-and-dialog-keyboard",
+      "status": "passed",
+      "nativeEnter": "passed",
+      "tabOrder": "passed"
+    },
+    {
+      "id": "post-and-download-scores-csv",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 29
+    },
+    {
+      "id": "post-and-download-notes-docx",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 855
+    },
+    {
+      "id": "post-and-download-scores-xlsx",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 1452
+    },
+    {
+      "id": "post-and-view-handout-pdf",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 608,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-tone-wav",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 32078,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-screenshot-png",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 639,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "reject-empty-csv-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "reject-excluded-exe-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "reject-exact-30mb-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "api-rejection-preserves-draft-and-valid-retry",
+      "status": "passed",
+      "rejectionStatus": 403,
+      "retryStatus": 201
+    },
+    {
+      "id": "drop-shares-one-confirmation-and-cancel",
+      "status": "passed"
+    },
+    {
+      "id": "paste-shares-one-confirmation-and-cancel",
+      "status": "passed"
+    },
+    {
+      "id": "narrow-dialog-controls-visible",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "testedWeb": "63069182fd176c54865f5c2f21ad46013e3dd3a7",
+  "testedApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "version": "153.0.8010.48",
+  "status": "passed",
+  "recordedAt": "2026-09-21T05:30:48.022Z"
+}

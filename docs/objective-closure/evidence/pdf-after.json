@@ -1,0 +1,60 @@
+{
+  "stage": "after",
+  "recordedAt": "2026-09-21T05:42:57.150Z",
+  "browser": "Chrome 153.0.8010.48",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "scope": "Actual local Angular application with synthetic fixtures. Automated browser and keyboard checks; no human screen-reader observation.",
+  "checks": [
+    {
+      "id": "outgoing-pdf-appearance-and-semantics",
+      "theme": "light",
+      "tag": "BUTTON",
+      "href": null,
+      "tabIndex": 0,
+      "name": "View PDF attachment",
+      "foreground": "rgb(255, 255, 255)",
+      "background": "rgb(57, 57, 255)",
+      "contrast": 6.5558982231839975,
+      "outlineStyle": "none",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(255, 255, 255)",
+      "text": "picture_as_pdf\nview pdf"
+    },
+    {
+      "id": "native-tab-navigation-and-visible-focus",
+      "status": "passed",
+      "theme": "light",
+      "tag": "BUTTON",
+      "href": null,
+      "tabIndex": 0,
+      "name": "View PDF attachment",
+      "foreground": "rgb(255, 255, 255)",
+      "background": "rgb(57, 57, 255)",
+      "contrast": 6.5558982231839975,
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(255, 255, 255)",
+      "text": "picture_as_pdf\nview pdf"
+    },
+    {
+      "id": "pdf-enter-opens-real-viewer-and-fetches-existing-attachment",
+      "status": "passed",
+      "statusCode": 200,
+      "bytes": 608,
+      "signature": "%PDF-"
+    },
+    {
+      "id": "image-preview-enter-opens-and-fetches-existing-attachment",
+      "status": "passed",
+      "statusCode": 200,
+      "bytes": 639,
+      "dimensions": {
+        "width": 160,
+        "height": 90
+      },
+      "signature": "JPEG"
+    }
+  ],
+  "status": "passed",
+  "webSourceNote": "Initial viewer fix before lint/focus-utility normalization; final c3c1aa02e cross-engine focus/Enter results are in viewer-final-*.json."
+}

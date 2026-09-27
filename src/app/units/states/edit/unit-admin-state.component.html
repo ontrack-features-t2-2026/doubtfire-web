@@ -55,13 +55,16 @@
   @if (loadingUnit) {
     <f-page-container>
       <div aria-busy="true" aria-label="Loading unit details" class="flex flex-col gap-4">
-        <ngx-skeleton-loader
-          [theme]="{width: '220px', height: '20px', 'border-radius': '999px', margin: '0'}"
-        ></ngx-skeleton-loader>
-        <ngx-skeleton-loader
-          animation="pulse"
-          [theme]="{width: '100%', height: '240px', 'border-radius': '12px', margin: '0'}"
-        ></ngx-skeleton-loader>
+        <f-skeleton-loader
+          shape="line"
+          [count]="1"
+          [theme]="{width: 'min(100%, 220px)', height: '20px', 'border-radius': '999px'}"
+        ></f-skeleton-loader>
+        <f-skeleton-loader
+          shape="card"
+          [count]="1"
+          [theme]="{height: '240px', 'border-radius': '12px'}"
+        ></f-skeleton-loader>
       </div>
     </f-page-container>
   } @else if (!unit) {

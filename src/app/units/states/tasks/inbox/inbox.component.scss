@@ -91,6 +91,7 @@
 // On a phone the comments slide over the task from the right, no wider than the screen.
 .comments-sidebar--mobile {
   position: fixed;
+  box-sizing: border-box;
   top: 56px;
   right: 0;
   bottom: 0;

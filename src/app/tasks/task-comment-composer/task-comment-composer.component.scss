@@ -49,6 +49,12 @@
     background-color: var(--ot-color-surface-raised);
   }
 
+  // The field has no outline of its own, so the ring goes on the pill around it.
+  #textFieldContainer:has(#textField:focus-visible) {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 2px;
+  }
+
   #textFieldContainer.recording {
     background-color: var(--ot-color-primary);
     padding: 0 8px;
@@ -146,6 +152,15 @@
   }
 }
 
+.composer-attachment-guidance {
+  margin: 0;
+  padding: 4px max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  color: var(--ot-color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .discard-draft-row {
   display: flex;
   justify-content: flex-end;
@@ -159,7 +174,7 @@
 @keyframes draftFadeIn {
   from {
     opacity: 0.5;
-    background-color: rgba(0, 0, 255, 0.05);
+    background-color: color-mix(in srgb, var(--ot-color-primary) 8%, transparent);
   }
   to {
     opacity: 1;
@@ -174,12 +189,12 @@
 
 @keyframes blueGlowFade {
   0% {
-    background-color: rgba(66, 133, 244, 0.2);
-    box-shadow: 0 0 8px 2px rgba(66, 133, 244, 0.6);
+    background-color: color-mix(in srgb, var(--ot-color-info) 20%, transparent);
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--ot-color-info) 55%, transparent);
   }
   70% {
-    background-color: rgba(66, 133, 244, 0.1);
-    box-shadow: 0 0 6px 1px rgba(66, 133, 244, 0.3);
+    background-color: color-mix(in srgb, var(--ot-color-info) 12%, transparent);
+    box-shadow: 0 0 6px 1px color-mix(in srgb, var(--ot-color-info) 30%, transparent);
   }
   100% {
     background-color: transparent;

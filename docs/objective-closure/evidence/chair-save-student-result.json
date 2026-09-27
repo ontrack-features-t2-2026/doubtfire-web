@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-09-21T06:18:10.246Z",
+  "browser": "Chrome 153.0.8010.48",
+  "webRevision": "c2e3d2d1cc95ad7aa5e6c334ad4f7b47956bef32",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "scope": "Actual local browser UI and real API with a new isolated synthetic task; no existing task requirements changed.",
+  "fixture": {
+    "unit": 1,
+    "project": 2,
+    "definition": 4,
+    "abbreviation": "9.9P"
+  },
+  "checks": [
+    {
+      "id": "chair-persists-spreadsheet-requirement-through-ui",
+      "status": "passed",
+      "method": "PUT",
+      "httpStatus": 200,
+      "storedCategory": "csv",
+      "requirementName": "Chair Saved Evidence"
+    },
+    {
+      "id": "chair-reload-confirms-persisted-category",
+      "status": "passed"
+    },
+    {
+      "id": "student-sees-persisted-spreadsheet-guidance-before-selection",
+      "status": "passed",
+      "guidance": "Files required: 1\n\nRequired file type: Spreadsheet\n\nChair Saved Evidence\n\nAccepted formats: CSV, XLS, XLSX\n\nMaximum size: Not provided by the server. Upload limits still apply.",
+      "selectedFiles": 0
+    },
+    {
+      "id": "temporary-requirement-restored-through-ui",
+      "status": "passed",
+      "httpStatus": 200,
+      "storedCategory": "code"
+    }
+  ],
+  "setupNote": "Initial student route timed out while unit dates were being temporarily varied by a parallel theme check; chair PUT and reload passed. Student step retried after unit date restoration with a longer wait; no existing task requirement modified.",
+  "fixtureCleanup": {
+    "deletedDefinition": 4,
+    "deletedAbbreviation": "9.9P",
+    "temporaryCategoryRestoredBeforeRemoval": true,
+    "existingRequirementsUnchanged": true,
+    "associatedTemporaryTaskIds": [],
+    "remainingDefinitionIds": [1, 2, 3],
+    "unitFlexibleDates": false
+  },
+  "sourceScope": "The metadata records the repository HEAD used for the application; no upload requirement implementation changes were made during this scenario. Separate theme export work may have been present in the live development server."
+}

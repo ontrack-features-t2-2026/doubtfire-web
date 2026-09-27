@@ -6,14 +6,18 @@
 :root[data-ot-theme='dark'] {
   // --- 7. Semantic ---
   // Soft slate ground (a lifted GitHub-dark), easier on the eye than a near-black:
-  // Softened whites (never #fff), elevation by lightness, subtle borders that sit
-  // just above the surface. Vivid, saturated status fills carry the colour.
+  // Softened whites (never #fff), elevation by lightness. Vivid, saturated status
+  // fills carry the colour.
   --ot-color-page: #21262d;
   --ot-color-surface: #2b313b;
   --ot-color-surface-raised: #353c47;
   --ot-color-text: #dbe3ea;
   --ot-color-text-muted: #a4afbd;
-  --ot-color-border: #464f5b;
+  // Borders and the focus ring mark component edges, so they clear 3:1 (WCAG
+  // 1.4.11) on page, surface and raised. #464f5b sat at 1.34:1 on raised, so it
+  // is lifted to #798698 (3.01:1 on raised, 4.11:1 on page). Focus #388bfd is
+  // 3.32:1 on raised. Purely decorative rules can use the divider token.
+  --ot-color-border: #798698;
   --ot-color-divider: #353c47;
   --ot-color-focus: #388bfd;
   --ot-color-link: #6cb2ff;

@@ -1,0 +1,93 @@
+{
+  "origin": "http://127.0.0.1:50393",
+  "browser": "153.0.8010.48",
+  "syntheticApi": true,
+  "osInstallTested": false,
+  "checks": [
+    "Production sign-in install entry, dialog, Escape and focus return",
+    "Chrome manifest and installability report no errors; real Angular service worker controls page",
+    "Companion deployed PWA verifier passes against served production output",
+    "Offline event shows connection warning",
+    "Production Angular app shell reloads from cache while offline",
+    "Reconnect removes warning without forcing navigation",
+    "API callback navigation receives network JSON, never cached app HTML",
+    "390px mobile install help remains within viewport"
+  ],
+  "manifest": {
+    "url": "http://127.0.0.1:50393/manifest.webmanifest",
+    "errors": [],
+    "data": "{\n  \"id\": \"/index.html\",\n  \"name\": \"OnTrack learning and feedback\",\n  \"short_name\": \"OnTrack\",\n  \"icons\": [\n    {\n      \"src\": \"/assets/icons/android-chrome-192x192.png\",\n      \"sizes\": \"192x192\",\n      \"type\": \"image/png\"\n    },\n    {\n      \"src\": \"/assets/icons/android-chrome-512x512.png\",\n      \"sizes\": \"512x512\",\n      \"type\": \"image/png\"\n    },\n    {\n      \"src\": \"/assets/icons/android-chrome-maskable-512x512.png\",\n      \"sizes\": \"512x512\",\n      \"type\": \"image/png\",\n      \"purpose\": \"maskable\"\n    }\n  ],\n  \"theme_color\": \"#3939ff\",\n  \"background_color\": \"#3939ff\",\n  \"display\": \"standalone\",\n  \"scope\": \"/\",\n  \"start_url\": \"/index.html\",\n  \"description\": \"Access your units, tasks, feedback and notifications in the OnTrack app.\",\n  \"categories\": [\"education\", \"productivity\"],\n  \"prefer_related_applications\": false,\n  \"shortcuts\": [\n    {\n      \"name\": \"Home\",\n      \"short_name\": \"Home\",\n      \"description\": \"Open your OnTrack units and projects\",\n      \"url\": \"/home\"\n    },\n    {\n      \"name\": \"Notifications\",\n      \"short_name\": \"Notifications\",\n      \"description\": \"Read your OnTrack notifications\",\n      \"url\": \"/notifications\"\n    },\n    {\n      \"name\": \"Unit Hub\",\n      \"short_name\": \"Unit Hub\",\n      \"description\": \"View announcements and classes\",\n      \"url\": \"/unit-hub\"\n    }\n  ]\n}\n",
+    "parsed": {
+      "scope": "http://127.0.0.1:50393/"
+    },
+    "manifest": {
+      "backgroundColor": "rgba(57,57,255,1)",
+      "description": "Access your units, tasks, feedback and notifications in the OnTrack app.",
+      "display": "kStandalone",
+      "icons": [
+        {
+          "url": "http://127.0.0.1:50393/assets/icons/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "url": "http://127.0.0.1:50393/assets/icons/android-chrome-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        },
+        {
+          "url": "http://127.0.0.1:50393/assets/icons/android-chrome-maskable-512x512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ],
+      "id": "http://127.0.0.1:50393/index.html",
+      "name": "OnTrack learning and feedback",
+      "orientation": "DEFAULT",
+      "preferRelatedApplications": false,
+      "scope": "http://127.0.0.1:50393/",
+      "shortcuts": [
+        {
+          "name": "Home",
+          "url": "http://127.0.0.1:50393/home"
+        },
+        {
+          "name": "Notifications",
+          "url": "http://127.0.0.1:50393/notifications"
+        },
+        {
+          "name": "Unit Hub",
+          "url": "http://127.0.0.1:50393/unit-hub"
+        }
+      ],
+      "startUrl": "http://127.0.0.1:50393/index.html",
+      "themeColor": "rgba(57,57,255,1)"
+    }
+  },
+  "installability": {
+    "installabilityErrors": []
+  },
+  "workerState": "NGSW Debug Info:\n\nDriver version: 22.0.3\nDriver state: NORMAL ((nominal))\nLatest manifest hash: 19e1613b3703d78ec872ec51bf20fcef5b21c5a8\nLast update check: 6s638u\n\n=== Version 19e1613b3703d78ec872ec51bf20fcef5b21c5a8 ===\n\nClients: 444cb498-9355-4a25-9f24-b08aebed797c, 492ca91b-3bcc-404f-a5bb-07e745036ce8\n\n=== Idle Task Queue ===\nLast update tick: 6u\nLast update run: never\nTask queue:\n * init post-load (cleanup)\n * check-updates-on-navigation\n\nDebug log:\n\n\n",
+  "cacheNames": [
+    "ngsw:/:db:control",
+    "ngsw:/:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:app:cache",
+    "ngsw:/:db:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:app:meta",
+    "ngsw:/:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:assets:cache",
+    "ngsw:/:db:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:assets:meta",
+    "ngsw:/:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:external_assets:cache",
+    "ngsw:/:db:19e1613b3703d78ec872ec51bf20fcef5b21c5a8:assets:external_assets:meta",
+    "ngsw:/:1:data:api:cache",
+    "ngsw:/:db:1:data:api:lru",
+    "ngsw:/:db:1:data:api:age",
+    "ngsw:/:1:data:google-fonts-cache:cache",
+    "ngsw:/:db:1:data:google-fonts-cache:lru",
+    "ngsw:/:db:1:data:google-fonts-cache:age"
+  ],
+  "offlineReload": {
+    "online": false,
+    "text": "You’re offline. Reconnect to sign in, load current information or submit work. Work is not queued for upload. ",
+    "body": "You’re offline. Reconnect to sign in, load current information or submit work. Work is not queued for upload.\n\nLoading...\n\nManage your learning, with feedback you'll want to receive.\nTemporarily Unavailable\nengineering\nWe apologise for the inconvenience.\nPlease check back again soon."
+  },
+  "pageErrors": [],
+  "result": "PASS"
+}

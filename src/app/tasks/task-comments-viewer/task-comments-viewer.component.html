@@ -34,7 +34,7 @@
                   [matTooltip]="comment.createdAt | localizedDateTime"
                   [ngClass]="{own: comment.authorIsMe}"
                 >
-                  {{ comment.author.preferredName }} {{ comment.author.lastName }}
+                  {{ comment.author.displayName }}
                   {{ comment.createdAt | humanizedDate }}
                 </p>
               }
@@ -51,7 +51,7 @@
                   <div class="comment-user-icon-wrapper">
                     @if (comment.shouldShowAvatar && shouldShowAuthorIcon(comment.commentType)) {
                       <user-icon
-                        matTooltip="{{ comment.author.name }}"
+                        matTooltip="{{ comment.author.displayName }}"
                         matTooltipPosition="left"
                         [ngClass]="{'hidden-xs hidden-sm': comment.authorIsMe}"
                         [size]="28"
@@ -186,9 +186,11 @@
 
                   <div class="bubble" [ngClass]="commentClasses(comment)">
                     @if (!!comment.replyToId) {
-                      <a
-                        class="original-comment"
+                      <button
+                        class="original-comment w-full text-left"
+                        type="button"
                         [class.disabled]="!comment.originalComment"
+                        [disabled]="!comment.originalComment"
                         (click)="scrollToComment(comment.originalComment?.id)"
                       >
                         <p class="reply-text">
@@ -199,9 +201,33 @@
                               : 'comment removed'
                           }}
                         </p>
-                      </a>
+                      </button>
                     }
 
+                    @if (
+                      comment.commentType === 'document' || comment.commentType === 'spreadsheet'
+                    ) {
+                      <div class="flex max-w-full flex-col gap-2 p-3 break-all">
+                        <strong>{{ comment.attachmentFileName || 'Attachment' }}</strong>
+                        <span
+                          >{{
+                            comment.commentType === 'spreadsheet' ? 'Spreadsheet' : 'Document'
+                          }}
+                          · {{ comment.attachmentByteSize }} bytes · Download only</span
+                        >
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [attr.aria-label]="
+                            'Download ' + (comment.attachmentFileName || 'attachment')
+                          "
+                          (click)="downloadAttachment(comment)"
+                        >
+                          <mat-icon aria-hidden="true">download</mat-icon>Download
+                        </button>
+                        <p>{{ comment.text }}</p>
+                      </div>
+                    }
                     @switch (comment.commentType) {
                       @case ('extension') {
                         <div class="comment-extension">

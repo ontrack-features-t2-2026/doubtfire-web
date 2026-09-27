@@ -1,0 +1,42 @@
+{
+  "violations": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "nodes": [
+        {
+          "target": [
+            ".items-center.flex[_ngcontent-ng-c4023340239=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        [
+          "f-unit-code"
+        ]
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        [
+          "svg[width=\"32\"][height=\"32\"][_ngcontent-ng-c2005649891=\"\"] > text > tspan"
+        ],
+        [
+          "#comment-3 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-5\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+        ],
+        [
+          "#comment-9 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-5\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+        ]
+      ]
+    }
+  ],
+  "passes": 22
+}

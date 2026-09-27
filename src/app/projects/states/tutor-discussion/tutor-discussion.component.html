@@ -308,7 +308,7 @@
                 class="m-0 truncate text-lg leading-snug font-semibold text-ot-text"
                 id="discussion-student-heading"
               >
-                {{ project.student?.name }}
+                {{ project.student?.displayName ?? project.student?.name }}
               </h2>
               <p class="m-0 text-sm text-ot-muted">
                 @if (project.student?.studentId) {

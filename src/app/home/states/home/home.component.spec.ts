@@ -218,4 +218,45 @@ describe('HomeComponent', () => {
     );
     expect(links).toEqual(['/projects/1/dashboard', '/projects/1/plan']);
   });
+
+  // The unit caches start out empty, so the message has to wait for the first load to
+  // finish before it can say the user has no units.
+  describe('not enrolled message', () => {
+    function notEnrolledShown(): boolean {
+      return page().textContent.includes('You are not enrolled');
+    }
+
+    it('stays hidden while units and projects are still loading', () => {
+      loading$.next(true);
+
+      expect(component.hasNoUnits).toBe(false);
+      expect(notEnrolledShown()).toBe(false);
+    });
+
+    it('shows once loading finishes with no projects and no unit roles', () => {
+      loading$.next(true);
+      loading$.next(false);
+
+      expect(component.hasNoUnits).toBe(true);
+      expect(notEnrolledShown()).toBe(true);
+    });
+
+    it('stays hidden for a student with a project', () => {
+      currentUser.role = 'Student';
+      loading$.next(true);
+      projects$.next([projectIn('Student', 1)]);
+      loading$.next(false);
+
+      expect(component.hasNoUnits).toBe(false);
+    });
+
+    it('stays hidden for staff with a unit role', () => {
+      loading$.next(true);
+      unitRoles$.next([unitRole(11, 'Tutor', {id: 1, code: 'SIT374'})]);
+      loading$.next(false);
+
+      expect(component.hasNoUnits).toBe(false);
+      expect(notEnrolledShown()).toBe(false);
+    });
+  });
 });

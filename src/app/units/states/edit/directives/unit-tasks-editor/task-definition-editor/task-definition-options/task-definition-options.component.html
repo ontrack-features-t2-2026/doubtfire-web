@@ -1,6 +1,20 @@
 <ul class="m-0 flex list-none flex-col divide-y divide-ot-divider p-0">
   <li class="grid grid-cols-1 gap-x-6 gap-y-1 py-3 first:pt-0 sm:grid-cols-[15rem_minmax(0,1fr)]">
     <mat-checkbox
+      aria-describedby="resubmission-extension-help"
+      [(ngModel)]="taskDefinition.resubmissionExtensionsEnabled"
+    >
+      Allow automatic post-feedback extensions
+    </mat-checkbox>
+    <p class="m-0 text-sm text-ot-muted sm:pt-2.5" id="resubmission-extension-help">
+      Apply the unit's resubmission extension setting when feedback requires more work near the due
+      date. Turning this off affects future feedback only; existing extensions are kept. The unit
+      must grant resubmission weeks and use fixed dates for this rule to apply.
+    </p>
+  </li>
+
+  <li class="grid grid-cols-1 gap-x-6 gap-y-1 py-3 sm:grid-cols-[15rem_minmax(0,1fr)]">
+    <mat-checkbox
       aria-describedby="task-option-restrict"
       [(ngModel)]="taskDefinition.restrictStatusUpdates"
     >

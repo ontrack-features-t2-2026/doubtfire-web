@@ -1,0 +1,185 @@
+{
+  "scope": "Extracted only runtime fault fields from macOS diagnostics; no account identifiers, process command lines, UUIDs or local paths. Native Networking process faults align with authenticated harness frame errors. This does not by itself establish the triggering request.",
+  "reports": [
+    {
+      "recordedAt": "2026-09-21 15:16:31.7416 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    },
+    {
+      "recordedAt": "2026-09-21 15:19:45.5485 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    },
+    {
+      "recordedAt": "2026-09-21 15:25:18.2338 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    },
+    {
+      "recordedAt": "2026-09-21 15:30:07.0734 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    },
+    {
+      "recordedAt": "2026-09-21 15:33:31.2866 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    },
+    {
+      "recordedAt": "2026-09-21 15:45:08.7759 +1000",
+      "process": "com.apple.WebKit.Networking.Development",
+      "os": {
+        "train": "macOS 27.0",
+        "build": "26A428",
+        "releaseType": "User"
+      },
+      "exception": {
+        "codes": "0x600000000000001f, 0x0000000000000000",
+        "reason": 0,
+        "message": "namespc 31 reason_code 0x0000000000000000",
+        "subtype": "GUARD_TYPE_USER",
+        "type": "EXC_GUARD",
+        "rawCodes": [6917529027641081887, 0],
+        "namespc": 31
+      },
+      "termination": {
+        "namespace": "WEBKIT",
+        "flags": 518,
+        "code": 0
+      },
+      "topFrames": [
+        "os_fault_with_payload",
+        "WebKit::NetworkConnectionToWebProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageName, WTF::Vector<unsigned int, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc> const&)",
+        "<deduplicated_symbol>",
+        "IPC::Connection::dispatchMessage(WTF::UniqueRef<IPC::Decoder>)",
+        "IPC::Connection::dispatchOneIncomingMessage()"
+      ]
+    }
+  ]
+}

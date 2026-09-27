@@ -11,6 +11,7 @@ import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable, Subject, throwError} from 'rxjs';
 import {catchError, filter, finalize, switchMap, take} from 'rxjs/operators';
 import {AuthenticationService, UserService} from 'src/app/api/models/doubtfire-model';
+import {PRESERVE_HTTP_ERROR_RESPONSE} from './http-error-context';
 
 @Injectable()
 export class HttpErrorInterceptor implements HttpInterceptor {
@@ -67,7 +68,7 @@ export class HttpErrorInterceptor implements HttpInterceptor {
                 if (!(err instanceof HttpErrorResponse)) {
                   return throwError(() => err);
                 }
-                return throwError(() => this.extractErrorMessage(err));
+                return throwError(() => this.errorForRequest(request, err));
               }),
               finalize(() => (this.refreshTokenInProgress = false)),
             );
@@ -77,13 +78,13 @@ export class HttpErrorInterceptor implements HttpInterceptor {
               take(1),
               switchMap(() => next.handle(this.injectToken(request))),
               catchError((err: HttpErrorResponse) => {
-                return throwError(() => this.extractErrorMessage(err));
+                return throwError(() => this.errorForRequest(request, err));
               }),
             );
           }
         }
 
-        return throwError(() => this.extractErrorMessage(error));
+        return throwError(() => this.errorForRequest(request, error));
       }),
     );
   }
@@ -106,6 +107,12 @@ export class HttpErrorInterceptor implements HttpInterceptor {
 
   private isAccessTokenRequest(request: HttpRequest<any>) {
     return request.url.endsWith('/auth/access-token');
+  }
+
+  private errorForRequest(request: HttpRequest<any>, error: HttpErrorResponse) {
+    // Keep reporting and legacy message handling while retaining structured errors for opt-in callers.
+    const message = this.extractErrorMessage(error);
+    return request.context.get(PRESERVE_HTTP_ERROR_RESPONSE) ? error : message;
   }
 
   private extractErrorMessage(error: HttpErrorResponse) {

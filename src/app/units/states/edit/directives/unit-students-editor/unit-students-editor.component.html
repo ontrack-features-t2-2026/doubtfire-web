@@ -54,16 +54,12 @@
 
   @if (loadingStudents) {
     <div aria-busy="true" aria-label="Loading students" class="overflow-hidden">
-      @for (row of [0, 1, 2, 3, 4, 5]; track row) {
-        <div class="flex h-[72px] items-center gap-6 border-b border-ot-divider px-4">
-          @for (width of ['12%', '14%', '14%', '22%', '14%', '14%']; track $index) {
-            <ngx-skeleton-loader
-              [style.width]="width"
-              [theme]="{width: '100%', height: '12px', 'border-radius': '999px', margin: '0'}"
-            ></ngx-skeleton-loader>
-          }
-        </div>
-      }
+      <f-skeleton-loader
+        rowHeight="72px"
+        shape="table-row"
+        [columns]="6"
+        [count]="6"
+      ></f-skeleton-loader>
     </div>
   } @else if (loadError) {
     <div class="flex flex-col items-center pb-8">

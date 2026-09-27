@@ -10,7 +10,7 @@
         <mat-icon aria-label="Quit cross icon">close</mat-icon>
       </button>
       Replying to:
-      <b>{{ originalComment !== null ? originalComment.author.name : '' }}</b>
+      <b>{{ originalComment !== null ? originalComment.author.displayName : '' }}</b>
     </div>
     <p>{{ originalComment !== null ? originalComment.text : '' }}</p>
   </div>
@@ -39,7 +39,7 @@
   [hidden]="!emojiSearchMode || !(emojiSearchResults?.length > 0)"
 >
   @for (emoji of emojiSearchResults; track emoji) {
-    <mat-list-item (click)="emojiSelected(emoji.native)">
+    <button mat-list-item type="button" (click)="emojiSelected(emoji.native)">
       <div class="flex flex-row items-center justify-start">
         <ngx-emoji set="apple" style="align-items: center" [emoji]="emoji" [size]="20"></ngx-emoji>
         <div class="emoji-details flex flex-col items-start justify-center">
@@ -47,7 +47,7 @@
           <div style="font-size: 10px">{{ emoji.colons }}</div>
         </div>
       </div>
-    </mat-list-item>
+    </button>
   }
 </mat-action-list>
 
@@ -77,7 +77,7 @@
       class="emoji-picker"
       emoji="thumbsup"
       title="Pick your emoji…"
-      [darkMode]="false"
+      [darkMode]="theme.isDark()"
       [hideRecent]="false"
       [isNative]="true"
       (emojiSelect)="addEmoji($event)"
@@ -100,7 +100,10 @@
           }}</mat-icon>
           <div class="staged-attachment-details">
             <strong>{{ attachment.fileName }}</strong>
-            <span>{{ attachment.byteSize | number }} bytes · {{ attachment.mimeType }}</span>
+            <span
+              >{{ attachment.byteSize | number }} bytes ·
+              {{ attachmentCategoryName(attachment) || attachment.mimeType }}</span
+            >
             @if (attachment.status === 'uploading') {
               <mat-progress-bar
                 aria-label="Attachment upload progress"
@@ -150,34 +153,49 @@
       </button>
     </div>
   }
+  <p class="composer-attachment-guidance" id="chat-attachment-guidance" role="status">
+    {{ attachmentGuidance }}
+  </p>
+  @if (attachmentsUploading > 0) {
+    <p aria-live="polite" class="composer-attachment-guidance" role="status">
+      Uploading {{ attachmentsUploading }} attachment(s)… Your draft is unchanged.
+    </p>
+  }
   <div class="composer-container">
     <div class="composer-leading-actions">
       @if (!isEditing) {
         <button
+          aria-describedby="chat-attachment-guidance"
           aria-label="Attach a file"
           class="btn-no-outline composer-touch-action"
           mat-icon-button
           matTooltip="Attach a file"
           matTooltipShowDelay="400"
           type="button"
+          [disabled]="!attachmentPolicy"
           [hidden]="recording"
           (click)="openFile()"
         >
           <mat-icon class="message-inbox-icon">attach_file</mat-icon>
           <input
             #uploader
-            accept="audio/*,image/*,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             multiple="multiple"
             style="display: none"
             type="file"
+            [accept]="attachmentAccept"
             (change)="uploadFiles($event.target.files)"
           />
         </button>
       }
       <!-- The tutor tools sit with the other controls rather than on a row of their own
-           above the message. -->
-      @if (isStaff && !isEditing && !recording) {
-        <div aria-label="Staff feedback tools" class="composer-staff-tools" role="group">
+           above the message. They stay in the page for students, only hidden. -->
+      @if (!isEditing && !recording) {
+        <div
+          aria-label="Staff feedback tools"
+          class="composer-staff-tools"
+          role="group"
+          [hidden]="!isStaff"
+        >
           <button
             aria-label="Create a Real Talk discussion"
             class="btn-no-outline composer-icon-action"
@@ -196,6 +214,7 @@
             matTooltip="Choose feedback templates"
             matTooltipShowDelay="400"
             type="button"
+            [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
           >
             <mat-icon class="message-inbox-icon">task</mat-icon>
@@ -205,20 +224,26 @@
     </div>
 
     <div id="textFieldContainer" [ngClass]="{recording: recording, 'draft-loaded': isDraftLoaded}">
-      <label class="sr-only" for="textField">Message</label>
+      <label class="sr-only" for="textField">{{
+        isEditing ? 'Edit task comment' : 'Task comment'
+      }}</label>
       <span class="sr-only" id="composer-message-hint">
         Press Enter for a new line. Use Send to post the message.
       </span>
       <textarea
         #commentInput
         aria-describedby="composer-message-hint"
-        aria-label="Message"
+        aria-multiline="true"
         enterkeyhint="enter"
         id="textField"
         inputmode="text"
         name="commentComposer"
         placeholder="Write a message..."
+        role="textbox"
         rows="1"
+        [attr.aria-disabled]="recording"
+        [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
+        [attr.tabindex]="recording ? -1 : 0"
         [hidden]="recording"
         (beforeinput)="handleBeforeInput($event)"
         (input)="onInputChange($event)"

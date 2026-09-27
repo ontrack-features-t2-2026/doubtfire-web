@@ -1,0 +1,27 @@
+- banner:
+  - link "Home":
+    - /url: /home
+  - button "Select Unit"
+  - button "Switch to light theme"
+  - button "Notifications"
+  - button "Open your calendar subscription settings"
+  - button "Open account menu":
+    - img: SS
+- main:
+  - link "Unit Hub Your unit announcements, HelpHubs and upcoming classes, together.":
+    - /url: /unit-hub
+    - strong: Unit Hub
+    - text: Your unit announcements, HelpHubs and upcoming classes, together.
+  - heading "Enrolled units" [level=2]
+  - link "Synthetic Upload and Submission Lab":
+    - /url: /projects/1/dashboard
+    - text: Synthetic Upload and Submission Lab SYN101
+    - separator
+    - text: Aug 2026
+    - progressbar "Teaching period progress for Synthetic Upload and Submission Lab"
+  - link "view cross-unit dashboard":
+    - /url: /dashboard
+    - text: View all
+  - link "view previous projects":
+    - /url: /view-all-projects
+    - text: View previous

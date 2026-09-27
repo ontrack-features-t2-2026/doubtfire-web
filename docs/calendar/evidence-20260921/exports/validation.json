@@ -1,0 +1,186 @@
+{
+  "verified_on": "2026-09-21",
+  "source": "Files downloaded through the real CAL101 application UI; copied without modification.",
+  "checks": [
+    "Expected task count and UID membership",
+    "Exact synthetic task summary",
+    "Expected civil start date",
+    "Exclusive all-day end date one day later",
+    "No duplicate UIDs",
+    "Confirmed status and matching unit/task metadata",
+    "CRLF line endings",
+    "SHA-256 unchanged after copying"
+  ],
+  "files": [
+    {
+      "file": "CAL101-tasks-P.ics",
+      "result": "PASS",
+      "event_count": 1,
+      "expected_uids": [
+        "E-1"
+      ],
+      "sha256": "65cd23c13db30a67ae4ef1b42db86c764f7b5dccb1830b546a01efb9800dde3c",
+      "bytes": 349,
+      "events": [
+        {
+          "uid": "E-1",
+          "summary": "CAL101: 1P: Pass submitted for feedback",
+          "start_date": "20260923",
+          "exclusive_end_date": "20260924",
+          "dtstamp": "20260921T045516Z"
+        }
+      ]
+    },
+    {
+      "file": "CAL101-tasks-C.ics",
+      "result": "PASS",
+      "event_count": 2,
+      "expected_uids": [
+        "E-1",
+        "E-2"
+      ],
+      "sha256": "860c502201b0e8cb6812568f07b616b5af0b45aa1f366a6a3b10a6c6465ad361",
+      "bytes": 571,
+      "events": [
+        {
+          "uid": "E-2",
+          "summary": "CAL101: 2C: Credit completed exercise",
+          "start_date": "20260924",
+          "exclusive_end_date": "20260925",
+          "dtstamp": "20260921T045531Z"
+        },
+        {
+          "uid": "E-1",
+          "summary": "CAL101: 1P: Pass submitted for feedback",
+          "start_date": "20260923",
+          "exclusive_end_date": "20260924",
+          "dtstamp": "20260921T045531Z"
+        }
+      ]
+    },
+    {
+      "file": "CAL101-tasks-D.ics",
+      "result": "PASS",
+      "event_count": 3,
+      "expected_uids": [
+        "E-1",
+        "E-2",
+        "E-3"
+      ],
+      "sha256": "16a9ba7c26ca43f144c4bf7d3bcbe19bf25565a77c0bd41e55d3f64a615f2ab5",
+      "bytes": 793,
+      "events": [
+        {
+          "uid": "E-2",
+          "summary": "CAL101: 2C: Credit completed exercise",
+          "start_date": "20260924",
+          "exclusive_end_date": "20260925",
+          "dtstamp": "20260921T045555Z"
+        },
+        {
+          "uid": "E-3",
+          "summary": "CAL101: 3D: Distinction redo exercise",
+          "start_date": "20260925",
+          "exclusive_end_date": "20260926",
+          "dtstamp": "20260921T045555Z"
+        },
+        {
+          "uid": "E-1",
+          "summary": "CAL101: 1P: Pass submitted for feedback",
+          "start_date": "20260923",
+          "exclusive_end_date": "20260924",
+          "dtstamp": "20260921T045555Z"
+        }
+      ]
+    },
+    {
+      "file": "CAL101-tasks-HD.ics",
+      "result": "PASS",
+      "event_count": 4,
+      "expected_uids": [
+        "E-1",
+        "E-2",
+        "E-3",
+        "E-4"
+      ],
+      "sha256": "28e1a595fa550bbaae8720ab0d3b6196a09de6b9a1c87e6ac043f853ac8e9b44",
+      "bytes": 1016,
+      "events": [
+        {
+          "uid": "E-2",
+          "summary": "CAL101: 2C: Credit completed exercise",
+          "start_date": "20260924",
+          "exclusive_end_date": "20260925",
+          "dtstamp": "20260921T045329Z"
+        },
+        {
+          "uid": "E-4",
+          "summary": "CAL101: 4HD: High Distinction revision",
+          "start_date": "20260928",
+          "exclusive_end_date": "20260929",
+          "dtstamp": "20260921T045329Z"
+        },
+        {
+          "uid": "E-3",
+          "summary": "CAL101: 3D: Distinction redo exercise",
+          "start_date": "20260925",
+          "exclusive_end_date": "20260926",
+          "dtstamp": "20260921T045329Z"
+        },
+        {
+          "uid": "E-1",
+          "summary": "CAL101: 1P: Pass submitted for feedback",
+          "start_date": "20260923",
+          "exclusive_end_date": "20260924",
+          "dtstamp": "20260921T045329Z"
+        }
+      ]
+    },
+    {
+      "file": "CAL101-tasks-HD-and-above.ics",
+      "result": "PASS",
+      "event_count": 1,
+      "expected_uids": [
+        "E-4"
+      ],
+      "sha256": "0d0bb66a2199a2c2a34dc0753dafcc299c0086eb1d0f65b5a3c0a605f6ec73fe",
+      "bytes": 348,
+      "events": [
+        {
+          "uid": "E-4",
+          "summary": "CAL101: 4HD: High Distinction revision",
+          "start_date": "20260928",
+          "exclusive_end_date": "20260929",
+          "dtstamp": "20260921T045617Z"
+        }
+      ]
+    },
+    {
+      "file": "CAL101-tasks-HD-outstanding.ics",
+      "result": "PASS",
+      "event_count": 2,
+      "expected_uids": [
+        "E-3",
+        "E-4"
+      ],
+      "sha256": "04e534f6b00b2626ed642c44e399d2c8fcf615d402651eb6006e560229de2da8",
+      "bytes": 570,
+      "events": [
+        {
+          "uid": "E-4",
+          "summary": "CAL101: 4HD: High Distinction revision",
+          "start_date": "20260928",
+          "exclusive_end_date": "20260929",
+          "dtstamp": "20260921T045620Z"
+        },
+        {
+          "uid": "E-3",
+          "summary": "CAL101: 3D: Distinction redo exercise",
+          "start_date": "20260925",
+          "exclusive_end_date": "20260926",
+          "dtstamp": "20260921T045620Z"
+        }
+      ]
+    }
+  ]
+}

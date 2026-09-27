@@ -1,5 +1,6 @@
 <div
   class="cross-dashboard panel-full-screen flex h-full min-w-0 flex-col overflow-y-auto sm:overflow-hidden"
+  [class.dashboard-compact]="density === 'compact'"
 >
   @let pageSummary = summary;
   <header class="shrink-0 px-4 pt-1 sm:px-16">
@@ -80,6 +81,14 @@
       </span>
     </button>
 
+    <mat-form-field appearance="outline" class="w-full sm:w-40" subscriptSizing="dynamic">
+      <mat-label>Card density</mat-label>
+      <mat-select [value]="density" (selectionChange)="density = $event.value">
+        <mat-option value="comfortable">Comfortable</mat-option>
+        <mat-option value="compact">Compact</mat-option>
+      </mat-select>
+    </mat-form-field>
+
     <div
       class="dashboard-global-advanced-filters min-w-0"
       id="dashboard-secondary-filters"
@@ -110,6 +119,20 @@
           @for (option of gradeOptions; track option.value) {
             <mat-option [value]="option.value">{{ option.label }}</mat-option>
           }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full sm:w-52" subscriptSizing="dynamic">
+        <mat-label>Staff feedback</mat-label>
+        <mat-select
+          aria-label="Staff feedback"
+          [value]="feedbackFilter"
+          (selectionChange)="setFeedbackFilter($event.value)"
+        >
+          <mat-option value="all">All feedback states</mat-option>
+          <mat-option value="available">Feedback available</mat-option>
+          <mat-option value="none">No staff feedback</mat-option>
+          <mat-option value="unavailable">Feedback unavailable</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -173,12 +196,81 @@
     </div>
   </div>
 
+  <div class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-4 pb-4 sm:px-16">
+    <p
+      aria-atomic="true"
+      aria-live="polite"
+      class="m-0 mr-auto text-sm text-ot-muted"
+      role="status"
+    >
+      {{ resultCountLabel }}
+    </p>
+    <button
+      mat-stroked-button
+      type="button"
+      [attr.aria-disabled]="loadingActiveUnits"
+      (click)="retryActiveUnits()"
+    >
+      {{ loadingActiveUnits ? 'Refreshing active units…' : 'Refresh active units' }}
+    </button>
+    @if (unitScope !== 'active') {
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-disabled]="loadingPreviousUnits"
+        (click)="loadPreviousUnits()"
+      >
+        {{ loadingPreviousUnits ? 'Refreshing previous units…' : 'Refresh previous units' }}
+      </button>
+    }
+    <button
+      mat-stroked-button
+      type="button"
+      [attr.aria-disabled]="loadingRecommendations"
+      (click)="retryRecommendations()"
+    >
+      {{ loadingRecommendations ? 'Refreshing recommended order…' : 'Refresh recommended order' }}
+    </button>
+  </div>
+  <div class="shrink-0 px-4 sm:px-16">
+    @if (loadingActiveUnits || activeUnitsLoadError) {
+      <ng-container
+        *ngTemplateOutlet="
+          panelState;
+          context: {
+            title: 'Active units',
+            busy: loadingActiveUnits,
+            message: loadingActiveUnits
+              ? 'Loading active units…'
+              : activeUnits.length
+                ? 'Active units could not be refreshed. Showing previously loaded tasks. Use Refresh active units to try again.'
+                : 'Active units could not be loaded. Use Refresh active units to try again.',
+          }
+        "
+      />
+    }
+    @if (loadingRecommendations || recommendationsLoadError) {
+      <ng-container
+        *ngTemplateOutlet="
+          panelState;
+          context: {
+            title: 'Recommended order',
+            busy: loadingRecommendations,
+            message: loadingRecommendations
+              ? 'Loading recommended order…'
+              : 'Recommended order could not be refreshed. Tasks remain available in their last known order. Use Refresh recommended order to try again.',
+          }
+        "
+      />
+    }
+  </div>
+
   <div
     class="dashboard-units-layout flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden px-4 pt-1 pb-6 sm:flex-row sm:gap-6 sm:overflow-x-auto sm:overflow-y-hidden sm:px-16 sm:pt-0"
   >
     @for (unit of displayedUnits; track unit.projectId) {
       <section
-        class="unit-card relative flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1) sm:h-full sm:w-auto sm:max-w-xl sm:flex-[1_0_26rem]"
+        class="unit-card dashboard-project-card relative flex h-auto w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-ot-lg border border-ot-divider bg-ot-surface shadow-(--ot-elevation-1) sm:h-full sm:w-auto sm:max-w-xl sm:flex-[1_0_26rem]"
         [attr.aria-label]="unit.code + ' project tasks'"
         [style.--unit-accent]="unit.accent"
       >
@@ -187,7 +279,7 @@
         >
           <!-- The unit's own colour band: identity only, so the task marks below keep
                the status colours to themselves. -->
-          <div class="unit-band p-4 text-(--ot-unit-on) sm:px-5">
+          <div class="unit-band dashboard-card-header p-4 text-(--ot-unit-on) sm:px-5">
             <h2 class="m-0 sm:hidden">
               <button
                 class="flex min-h-12 w-full min-w-0 items-center gap-3 rounded-ot-sm text-left text-(--ot-unit-on) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
@@ -210,6 +302,7 @@
                     {{ unit.name }} · {{ unit.isPrevious ? 'Previous' : 'Active' }}
                   </span>
                   <span class="mt-2 flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-sm font-normal">
+                    <span>{{ unit.progressLabel }}</span>
                     <span>{{ unit.mobileSummary.taskCountLabel }}</span>
                     <span
                       class="min-w-0 break-words"
@@ -233,7 +326,7 @@
               <div class="flex min-w-0 items-center gap-2">
                 <h2 class="m-0 min-w-0 text-lg leading-tight font-semibold">
                   <a
-                    class="unit-code-link block truncate rounded-ot-xs text-(--ot-unit-on) no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
+                    class="unit-code-link block rounded-ot-xs break-words text-(--ot-unit-on) no-underline underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--ot-unit-on)"
                     [routerLink]="['/projects', unit.projectId, 'dashboard']"
                   >
                     {{ unit.code }}
@@ -253,8 +346,14 @@
                   }
                 </span>
               </div>
-              <p class="m-0 mt-0.5 truncate text-sm" [title]="unit.name">
+              <p class="m-0 mt-0.5 text-sm break-words">
                 {{ unit.name }}
+              </p>
+              <p
+                class="m-0 mt-1 text-sm break-words"
+                [class.font-semibold]="unit.mobileSummary.hasDeadlineWarning"
+              >
+                {{ unit.mobileSummary.deadlineLabel }}
               </p>
             </div>
           </div>
@@ -287,18 +386,20 @@
               </div>
             </div>
 
+            <!-- Outside the collapsible controls, so the unit dashboard is one tap away on a
+                 phone without opening the card first. -->
+            <a
+              class="self-start rounded-ot-xs py-1 text-sm font-semibold text-ot-link underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus sm:hidden"
+              [routerLink]="['/projects', unit.projectId, 'dashboard']"
+            >
+              Open {{ unit.code }} dashboard
+            </a>
+
             <div
               class="dashboard-project-controls min-w-0"
               [class.is-mobile-open]="isMobileProjectExpanded(unit.projectId)"
               [id]="'dashboard-unit-controls-' + unit.projectId"
             >
-              <a
-                class="rounded-ot-xs py-1 text-sm font-semibold text-ot-link underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ot-focus sm:hidden"
-                [routerLink]="['/projects', unit.projectId, 'dashboard']"
-              >
-                Open {{ unit.code }} dashboard
-              </a>
-
               <div class="relative min-w-0 grow">
                 <mat-icon
                   aria-hidden="true"
@@ -332,7 +433,13 @@
                 </button>
                 <mat-menu #sortmenu="matMenu">
                   @for (mode of sortOptions; track mode) {
-                    <button mat-menu-item type="button" (click)="setSort(unit.projectId, mode)">
+                    <button
+                      mat-menu-item
+                      role="menuitemradio"
+                      type="button"
+                      [attr.aria-checked]="getSort(unit.projectId) === mode"
+                      (click)="setSort(unit.projectId, mode)"
+                    >
                       <mat-icon
                         aria-hidden="true"
                         [class.invisible]="getSort(unit.projectId) !== mode"
@@ -365,13 +472,20 @@
                 </button>
                 <mat-menu #filtermenu="matMenu">
                   @for (mode of filterOptions; track mode) {
-                    <div
+                    <button
                       mat-menu-item
+                      role="menuitemcheckbox"
+                      type="button"
+                      [attr.aria-checked]="isFilterEnabled(unit.projectId, mode)"
                       (click)="$event.stopPropagation(); toggleFilter(unit.projectId, mode)"
                     >
-                      <mat-checkbox [checked]="isFilterEnabled(unit.projectId, mode)" />
+                      <mat-icon aria-hidden="true">{{
+                        isFilterEnabled(unit.projectId, mode)
+                          ? 'check_box'
+                          : 'check_box_outline_blank'
+                      }}</mat-icon>
                       {{ mode }}
-                    </div>
+                    </button>
                   }
                 </mat-menu>
               </div>
@@ -435,6 +549,23 @@
     }
 
     @if (
+      unitScope === 'active' &&
+      !loadingActiveUnits &&
+      !activeUnitsLoadError &&
+      activeUnits.length === 0 &&
+      !hasGlobalTaskCriteria
+    ) {
+      <section
+        aria-label="Active units"
+        class="flex w-full shrink-0 flex-col items-start gap-2 self-start rounded-ot-lg border border-ot-divider bg-ot-surface p-6 shadow-(--ot-elevation-1) sm:w-96"
+      >
+        <mat-icon aria-hidden="true" class="text-ot-muted">school</mat-icon>
+        <h3 class="m-0 text-base font-semibold">Active units</h3>
+        <p class="m-0 text-ot-muted" role="status">No active units are available.</p>
+      </section>
+    }
+
+    @if (
       hasGlobalTaskCriteria &&
       displayedUnits.length === 0 &&
       !loadingPreviousUnits &&
@@ -454,6 +585,7 @@
 
     @if (unitScope !== 'active' && loadingPreviousUnits) {
       <div
+        aria-busy="true"
         class="flex w-full shrink-0 flex-col gap-4 self-start rounded-ot-lg border border-ot-divider bg-ot-surface p-5 shadow-(--ot-elevation-1) sm:w-[26rem]"
         role="status"
       >
@@ -473,7 +605,13 @@
         class="flex w-full shrink-0 flex-col items-start gap-2 self-start rounded-ot-lg border border-ot-divider bg-ot-surface p-6 shadow-(--ot-elevation-1) sm:w-96"
       >
         <h3 class="m-0 text-base font-semibold">Previous units</h3>
-        <p class="m-0 text-ot-muted">Previous units could not be loaded.</p>
+        <p class="m-0 text-ot-muted" role="status">
+          {{
+            previousUnits.length
+              ? 'Previous units could not be refreshed. Showing previously loaded tasks. Use Refresh previous units to try again.'
+              : 'Previous units could not be loaded. Use Refresh previous units to try again.'
+          }}
+        </p>
         <button class="mt-1" mat-stroked-button type="button" (click)="retryPreviousUnits()">
           Try again
         </button>
@@ -497,3 +635,14 @@
     }
   </div>
 </div>
+
+<ng-template #panelState let-busy="busy" let-message="message" let-title="title">
+  <section
+    class="dashboard-panel-state mb-3 flex min-w-0 flex-col gap-1 rounded-ot-lg border border-ot-divider bg-ot-surface p-4 text-ot-text shadow-(--ot-elevation-1)"
+    [attr.aria-busy]="!!busy"
+    [attr.aria-label]="title"
+  >
+    <h3 class="m-0 text-base font-semibold">{{ title }}</h3>
+    <p class="m-0 text-ot-muted" role="status">{{ message }}</p>
+  </section>
+</ng-template>

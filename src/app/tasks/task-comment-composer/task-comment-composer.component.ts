@@ -14,6 +14,7 @@ import {
   KeyValueDiffers,
   OnChanges,
   OnDestroy,
+  OnInit,
   QueryList,
   SimpleChanges,
   ViewChild,
@@ -29,6 +30,11 @@ import {
   TaskCommentService,
 } from 'src/app/api/models/doubtfire-model';
 import {UserService} from 'src/app/api/models/doubtfire-model';
+import {
+  AttachmentPolicy,
+  attachmentCategory,
+  attachmentError,
+} from 'src/app/api/models/task-comment/attachment-policy';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {
@@ -36,6 +42,7 @@ import {
   FeedbackDraftStore,
   StagedFeedbackAttachment,
 } from 'src/app/common/services/feedback-draft-store.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 
 interface ApiError {
@@ -55,25 +62,15 @@ export interface TaskCommentComposerData {
   editingComment: TaskComment;
 }
 
-const ACCEPTED_FILE_TYPES = [
-  'audio/mpeg',
-  'audio/vorbis',
-  'audio/mp4',
-  'audio/ogg',
-  'audio/wav',
-  'audio/x-wav',
-  'audio/webm',
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
   'image/png',
-  'image/pdf',
-  'application/pdf',
-  'image/gif',
-  'image/jpg',
+  'image/bmp',
+  'image/tiff',
   'image/jpeg',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/gif',
 ];
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const MAX_ATTACHMENT_BYTES = 30_000_000;
 
 /**
  * The task comment composer is responsible for creating and adding comments to a given task.
@@ -85,7 +82,9 @@ const MAX_ATTACHMENT_BYTES = 30_000_000;
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnChanges, OnDestroy {
+export class TaskCommentComposerComponent
+  implements AfterViewInit, DoCheck, OnChanges, OnDestroy, OnInit
+{
   @Input() task: Task;
   @Input() sharedData: TaskCommentComposerData;
 
@@ -111,7 +110,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
   @ViewChildren('commentInput') input: QueryList<ElementRef<HTMLTextAreaElement>>;
   @ViewChild('uploader') uploader: ElementRef;
   @ViewChild('emojiPickerHost') emojiPickerHost?: ElementRef<HTMLElement>;
-  @ViewChild('emojiPickerButton') emojiPickerButton?: ElementRef<HTMLButtonElement>;
+  // The trigger is a Material button, so read its element rather than the component.
+  @ViewChild('emojiPickerButton', {read: ElementRef})
+  emojiPickerButton?: ElementRef<HTMLButtonElement>;
 
   differ: KeyValueDiffer<string, TaskComment>;
   showEmojiPicker = false;
@@ -135,6 +136,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     private userService: UserService,
     private router: Router,
     private draftStore: FeedbackDraftStore,
+    public readonly theme: ThemeService,
   ) {
     this.differ = this.differs.find({}).create();
     // submitted tasks from sessionStorage, for this user only
@@ -151,6 +153,47 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.routeSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationStart))
       .subscribe(() => this.dismissEmojiPicker());
+  }
+
+  public attachmentPolicy: AttachmentPolicy | null = null;
+  public attachmentPolicyFailed = false;
+
+  ngOnInit(): void {
+    this.taskCommentService.attachmentPolicy().subscribe({
+      next: (policy) => {
+        this.attachmentPolicy = policy;
+        this.cdRef.markForCheck();
+      },
+      error: () => {
+        this.attachmentPolicyFailed = true;
+        this.cdRef.markForCheck();
+      },
+    });
+  }
+
+  // Staged files that are on their way to the server, for the upload status message.
+  public get attachmentsUploading(): number {
+    return this.stagedAttachments.filter((item) => item.status === 'uploading').length;
+  }
+
+  public get attachmentAccept(): string {
+    return (
+      this.attachmentPolicy?.categories
+        .flatMap((item) => item.extensions.map((ext) => `.${ext}`))
+        .join(',') || ''
+    );
+  }
+
+  public get attachmentGuidance(): string {
+    if (!this.attachmentPolicy) {
+      return this.attachmentPolicyFailed
+        ? 'Attachment requirements are unavailable. Reload to try again. You can still send text.'
+        : 'Loading attachment requirements…';
+    }
+    const formats = this.attachmentPolicy.categories
+      .map((item) => `${item.name}: ${item.extensions.join(', ').toUpperCase()}`)
+      .join('; ');
+    return `${formats}. Each file must be smaller than ${this.attachmentPolicy.max_bytes_exclusive / 1_000_000} MB. Select up to ${this.attachmentPolicy.max_selection_count} files. They post when you press Send.`;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -806,15 +849,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -823,22 +858,32 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
+    this.handleClipboardFiles(files, event);
+  }
 
-    if (files.length === 0) {
+  // Files are checked against the server-owned attachment policy, then staged on the
+  // draft. Nothing is posted until Send, so a staged file can still be removed.
+  uploadFiles(files: ArrayLike<File>) {
+    if (!files || files.length === 0) {
+      return;
+    }
+    if (!this.attachmentPolicy) {
+      this.alerts.error('Attachment requirements are unavailable. Reload and try again.', 6000);
+      return;
+    }
+    if (files.length > this.attachmentPolicy.max_selection_count) {
+      this.alerts.error(
+        `Choose at most ${this.attachmentPolicy.max_selection_count} attachments at a time.`,
+        6000,
+      );
+      this.resetUploader();
       return;
     }
 
-    const existingText = this.currentInputText;
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
-  }
-
-  uploadFiles(files: ArrayLike<File>) {
     Array.from(files).forEach((file) => {
       const validationError = this.attachmentValidationError(file);
       if (validationError) {
-        this.alerts.error(validationError, 5000);
+        this.alerts.error(validationError, 6000);
         return;
       }
 
@@ -847,6 +892,52 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
     this.resetUploader();
     this.saveCurrentDraft();
+  }
+
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.currentInputText;
+
+    this.clearPastedPlaceholderContent(existingText);
+    this.uploadFiles(approvedImages);
   }
 
   stageAudioRecording(recording: Blob): void {
@@ -908,6 +999,12 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.recording = false;
   }
 
+  // The policy category a staged file falls under, such as PDF or Spreadsheet.
+  attachmentCategoryName(attachment: StagedFeedbackAttachment): string | null {
+    const named = {name: attachment.fileName} as File;
+    return attachmentCategory(this.attachmentPolicy, named)?.name ?? null;
+  }
+
   private stageAttachment(data: File | Blob, fileName: string, kind: 'file' | 'audio'): void {
     const context = this.draftContext(this.task);
     if (!context) {
@@ -941,15 +1038,22 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.cdRef.detectChanges();
   }
 
+  // The policy decides which formats and sizes are allowed. The extra DOCX and PDF
+  // checks catch a renamed file before it is uploaded.
   private attachmentValidationError(file: File): string | null {
-    if (file.size === 0) {
-      return `${file.name} is empty.`;
+    const policy = this.attachmentPolicy;
+    if (!attachmentCategory(policy, file)) {
+      return 'Unsupported attachment format. Choose one of the listed formats.';
     }
-    if (file.size >= MAX_ATTACHMENT_BYTES) {
-      return `${file.name} is too large. Attachments must be smaller than 30 MB.`;
+    const limitMb = policy.max_bytes_exclusive / 1_000_000;
+    if (file.size === 0) {
+      return `${file.name} is empty. Attachments must not be empty.`;
+    }
+    if (file.size >= policy.max_bytes_exclusive) {
+      return `${file.name} is too large. Attachments must be smaller than ${limitMb} MB.`;
     }
 
-    const mimeType = file.type.toLowerCase();
+    const mimeType = (file.type ?? '').toLowerCase();
     const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
     const unknownMime = mimeType === '' || mimeType === 'application/octet-stream';
     if (extension === 'docx' || mimeType === DOCX_MIME_TYPE) {
@@ -963,14 +1067,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         ? null
         : `${file.name} does not match the PDF file type.`;
     }
-    if (
-      ACCEPTED_FILE_TYPES.includes(mimeType) ||
-      mimeType.startsWith('audio/') ||
-      mimeType.startsWith('image/')
-    ) {
-      return null;
-    }
-    return `Cannot attach ${file.name}. Choose an image, audio file, PDF, or DOCX document.`;
+    return null;
   }
 
   private newClientRequestId(): string {
@@ -987,10 +1084,18 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       status?: number;
       name?: string;
     };
-    if (typeof failure?.error === 'string' && failure.error.trim()) {
+    if (failure?.status === 413) {
+      return attachmentError(failure);
+    }
+    // A proxy can answer with an HTML page, which is no use as a message.
+    if (
+      typeof failure?.error === 'string' &&
+      failure.error.trim() &&
+      !failure.error.trim().startsWith('<')
+    ) {
       return failure.error;
     }
-    if (typeof failure?.error === 'object') {
+    if (failure?.error && typeof failure.error === 'object') {
       const nested = failure.error.error || failure.error.message;
       if (nested) {
         return nested;

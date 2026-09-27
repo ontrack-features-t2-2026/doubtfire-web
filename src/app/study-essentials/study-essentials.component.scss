@@ -72,7 +72,7 @@ a {
   }
 
   &:focus-visible {
-    outline: 3px solid var(--ot-color-primary);
+    outline: 3px solid var(--ot-color-focus);
     outline-offset: 3px;
   }
 }

@@ -16,6 +16,12 @@ A modern, lightweight learning management system.
 - [Contributing](#contributing)
 - [License](#license)
 
+## Desktop and mobile app
+
+OnTrack can be installed as a desktop PWA from a supported browser. See the
+[desktop app guide](docs/desktop-pwa.md) for installation, release checks and the
+browser acceptance checklist. Desktop and mobile use the same web build and API.
+
 ## Getting Started
 
 OnTrack Web requires Node.js 22.22.3 or newer. The exact handover version is in
@@ -59,6 +65,10 @@ npm run typecheck
 npm run test:ci
 npm run deploy
 ```
+
+`npm run test:ci` runs the unit suite with Vitest through Angular's test builder.
+The test target is configured in `angular.json`; shared setup lives in `src/vitest-setup.ts`.
+`npm run test:coverage` writes reports to `coverage/`; Test CI publishes the `web-coverage` artifact.
 
 ## Production build and handover
 
@@ -146,6 +156,8 @@ and browser permission.
 
 ## Resources
 
+See the [documentation index](docs/index.md) for setup, feature guides and contributor handovers.
+
 Doubtfire Web is an [Angular](https://angular.dev) application using
 [Angular Material](https://material.angular.dev/). Production is served as a
 static progressive web application by Nginx.
@@ -157,3 +169,9 @@ Refer to [CONTRIBUTING.md](CONTRIBUTING.md)
 ## License
 
 Licensed under GNU Affero General Public License (AGPL) v3
+
+## Frontend maintenance
+
+- [CSS style guide](docs/css-style-guide.md) and [remaining layout catalogue](docs/migration/ui-catalogue.md)
+- [Legacy source audit](docs/migration/legacy-audit.md) and [Unit Statistics charts](docs/migration/analytics.md)
+- [Migration recovery register](docs/migration/recovery-register.md) and [upstream PR triage](docs/migration/open-pr-triage.md)

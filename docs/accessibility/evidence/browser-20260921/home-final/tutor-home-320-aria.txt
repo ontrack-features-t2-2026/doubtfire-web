@@ -1,0 +1,19 @@
+- banner:
+  - button "Select Unit"
+  - button "Open account menu":
+    - img: ST
+- main:
+  - link "Unit Hub Your unit announcements, HelpHubs and upcoming classes, together.":
+    - /url: /unit-hub
+    - strong: Unit Hub
+    - text: Your unit announcements, HelpHubs and upcoming classes, together.
+  - heading "Units you teach" [level=2]
+  - link "Synthetic Upload and Submission Lab - Tutor":
+    - /url: /units/1/tasks/inbox
+    - text: Synthetic Upload and Submission Lab SYN101
+    - separator
+    - text: Aug 2026 Tutor
+    - progressbar "Teaching period progress for Synthetic Upload and Submission Lab"
+  - link "view all units":
+    - /url: /view-all-units
+    - text: View all

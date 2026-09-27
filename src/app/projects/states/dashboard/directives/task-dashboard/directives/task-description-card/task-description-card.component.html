@@ -47,6 +47,17 @@
         }
       </ol>
     }
+    @if (task?.effectiveDeadlineDate) {
+      <p class="effective-deadline mt-3 text-sm text-ot-text">
+        <strong
+          >Effective submission date: {{ task.effectiveDeadlineDate | date: 'fullDate' }}.</strong
+        >
+        {{ task.effectiveDeadlineExplanation }}
+        @if (task.effectiveDeadlineReason !== 'flexible_date') {
+          The deadline is the end of this day anywhere on earth.
+        }
+      </p>
+    }
   </mat-card-content>
 
   @let calendarUrl = googleCalendarUrl;

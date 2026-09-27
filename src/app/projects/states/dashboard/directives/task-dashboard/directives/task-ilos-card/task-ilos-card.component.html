@@ -14,10 +14,21 @@
             <td class="px-3.5 py-2.5 text-ot-text uppercase">{{ ilo.abbreviation }}</td>
             <td class="px-3.5 py-2.5 text-ot-muted">{{ ilo.fullOutcomeDescription }}</td>
             <td class="flex justify-end px-3.5 py-2.5 text-ot-muted">
-              @for (outcome of getLinkedOutcomes(ilo); track outcome.abbreviation) {
-                <mat-chip-row class="m-0.5" matTooltip="{{ outcome.shortDescription }}">{{
-                  outcome.abbreviation
-                }}</mat-chip-row>
+              @let linkedOutcomes = getLinkedOutcomes(ilo);
+              @if (linkedOutcomes.length) {
+                <mat-chip-set
+                  role="list"
+                  [attr.aria-label]="'Linked outcomes for ' + ilo.abbreviation"
+                >
+                  @for (outcome of linkedOutcomes; track outcome.abbreviation) {
+                    <mat-chip
+                      class="m-0.5"
+                      matTooltip="{{ outcome.shortDescription }}"
+                      role="listitem"
+                      >{{ outcome.abbreviation }}</mat-chip
+                    >
+                  }
+                </mat-chip-set>
               }
             </td>
           </tr>

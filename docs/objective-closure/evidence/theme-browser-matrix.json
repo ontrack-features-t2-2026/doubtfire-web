@@ -1,0 +1,1347 @@
+{
+  "recordedAt": "2026-09-21",
+  "webFinal": "63069182fd176c54865f5c2f21ad46013e3dd3a7",
+  "webEarlierProfileStudent": "898a1db6f7145c9f0b5ecd899957b4c758f91add",
+  "apiIncludes": "7722612",
+  "base": "http://127.0.0.1:4311",
+  "scope": "Real Angular app and synthetic API fixtures. WebKit is not Safari; OS media and CSS zoom are emulated. No human approval or complete a11y certification.",
+  "counts": {
+    "signedOut": {
+      "passed": 28,
+      "failed": 0
+    },
+    "authenticatedGroups": {
+      "passed": 16,
+      "failed": 4,
+      "failureScope": "WebKit calendar timeout and three following navigation protocol frame errors. Profile controls, reload and fresh-context persistence passed without CSS zoom."
+    },
+    "chromeStaffRoutes": {
+      "passed": 5,
+      "failed": 0
+    },
+    "chromePdf": {
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "stages": {
+    "signed-out": [
+      {
+        "browser": "chrome",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "default-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": null,
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "default-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": null,
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": "light",
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bodyWidth": 320
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1418,
+              "formBounds": {
+                "x": 962,
+                "y": 762,
+                "width": 424,
+                "height": 464,
+                "top": 762,
+                "right": 1386,
+                "bottom": 1226,
+                "left": 962
+              }
+            },
+            "keyboard": {
+              "focusedName": "password",
+              "outline": "rgba(0, 0, 0, 0.87) none 3px",
+              "boxShadow": "none"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "print": {
+              "background": "rgb(255, 255, 255)",
+              "pageToken": "",
+              "preference": "dark"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "system-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "system",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "invalid-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "unexpected",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "blocked-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "blocked",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          }
+        ],
+        "version": "153.0.8010.48"
+      },
+      {
+        "browser": "edge",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "default-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": null,
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "default-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": null,
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": "light",
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bodyWidth": 320
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1418,
+              "formBounds": {
+                "x": 962,
+                "y": 762,
+                "width": 424,
+                "height": 464,
+                "top": 762,
+                "right": 1386,
+                "bottom": 1226,
+                "left": 962
+              }
+            },
+            "keyboard": {
+              "focusedName": "password",
+              "outline": "rgba(0, 0, 0, 0.87) none 3px",
+              "boxShadow": "none"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "print": {
+              "background": "rgb(255, 255, 255)",
+              "pageToken": "",
+              "preference": "dark"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "system-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "system",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "invalid-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "unexpected",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "blocked-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "blocked",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          }
+        ],
+        "version": "153.0.4234.32"
+      },
+      {
+        "browser": "firefox",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "default-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": null,
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "default-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": null,
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": "light",
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bodyWidth": 320
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1418,
+              "formBounds": {
+                "x": 962,
+                "y": 763,
+                "width": 424,
+                "height": 462,
+                "top": 763,
+                "right": 1386,
+                "bottom": 1225,
+                "left": 962
+              }
+            },
+            "keyboard": {
+              "focusedName": "password",
+              "outline": "rgba(0, 0, 0, 0.87) 3px",
+              "boxShadow": "none"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "print": {
+              "background": "rgb(255, 255, 255)",
+              "pageToken": "",
+              "preference": "dark"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "system-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "system",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "invalid-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "unexpected",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "blocked-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "blocked",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          }
+        ],
+        "version": "155.0"
+      },
+      {
+        "browser": "webkit",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "default-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": null,
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "default-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": null,
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-light",
+            "status": "passed",
+            "initial": {
+              "marker": "light",
+              "colorScheme": "light",
+              "meta": "#fafafa",
+              "preference": "light",
+              "background": "rgb(255, 255, 255)",
+              "foreground": "rgb(0, 0, 0)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bodyWidth": 320
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1418,
+              "formBounds": {
+                "x": 962,
+                "y": 762.734375,
+                "width": 424,
+                "height": 462.53125,
+                "top": 762.734375,
+                "right": 1386,
+                "bottom": 1225.265625,
+                "left": 962
+              }
+            },
+            "keyboard": {
+              "focusedName": "password",
+              "outline": "3px none rgba(0, 0, 0, 0.87)",
+              "boxShadow": "none"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "explicit-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "explicit preference remains",
+            "print": {
+              "background": "rgb(255, 255, 255)",
+              "pageToken": "#fafafa",
+              "preference": "dark"
+            },
+            "pageErrors": []
+          },
+          {
+            "id": "system-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "system",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "invalid-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "unexpected",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          },
+          {
+            "id": "blocked-dark",
+            "status": "passed",
+            "initial": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "blocked",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "firstPaintScope": "Root marker at early requestAnimationFrame callbacks; not compositor-filmstrip proof.",
+            "reload": "passed",
+            "liveEmulatedColorScheme": "follows system",
+            "pageErrors": []
+          }
+        ],
+        "version": "26.6"
+      }
+    ],
+    "authenticated": [
+      {
+        "browser": "chrome",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "real-profile-theme-controls-and-account-persistence",
+            "status": "passed",
+            "accountWrites": [
+              {
+                "status": 200,
+                "preference": "light"
+              },
+              {
+                "status": 200,
+                "preference": "system"
+              },
+              {
+                "status": 200,
+                "preference": "dark"
+              }
+            ],
+            "keyboardArrowSelection": "passed",
+            "peerProgressContrast": {
+              "foreground": "rgb(153, 162, 176)",
+              "background": "rgb(23, 27, 33)",
+              "ratio": 6.706500401671376
+            },
+            "systemLiveChange": "passed with emulated media",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bounds": {
+                "x": 16,
+                "y": 284,
+                "width": 288,
+                "height": 128,
+                "top": 284,
+                "right": 304,
+                "bottom": 412,
+                "left": 16
+              }
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1280,
+              "bounds": {
+                "x": 288,
+                "y": 410.359375,
+                "width": 704,
+                "height": 80,
+                "top": 410.359375,
+                "right": 992,
+                "bottom": 490.359375,
+                "left": 288
+              }
+            },
+            "reloadAndSessionRestore": "passed",
+            "freshContextAccountPersistence": "passed with no preloaded theme storage"
+          },
+          {
+            "id": "real-calendar-modal-keyboard-and-layout",
+            "status": "passed",
+            "narrow": {
+              "viewport": 320,
+              "bounds": {
+                "x": 8,
+                "y": 134.5,
+                "width": 304,
+                "height": 371,
+                "top": 134.5,
+                "right": 312,
+                "bottom": 505.5,
+                "left": 8
+              },
+              "scrollWidth": 304,
+              "clientWidth": 304
+            }
+          },
+          {
+            "id": "route-student-overview",
+            "path": "/projects/1/dashboard",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 1
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-task-chat-history",
+            "path": "/projects/1/dashboard/1.2P/feedback",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-student-gantt",
+            "path": "/projects/1/plan",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 1,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          }
+        ],
+        "version": "153.0.8010.48",
+        "pageErrors": []
+      },
+      {
+        "browser": "edge",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "real-profile-theme-controls-and-account-persistence",
+            "status": "passed",
+            "accountWrites": [
+              {
+                "status": 200,
+                "preference": "light"
+              },
+              {
+                "status": 200,
+                "preference": "system"
+              },
+              {
+                "status": 200,
+                "preference": "dark"
+              }
+            ],
+            "keyboardArrowSelection": "passed",
+            "peerProgressContrast": {
+              "foreground": "rgb(153, 162, 176)",
+              "background": "rgb(23, 27, 33)",
+              "ratio": 6.706500401671376
+            },
+            "systemLiveChange": "passed with emulated media",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bounds": {
+                "x": 16,
+                "y": 284,
+                "width": 288,
+                "height": 128,
+                "top": 284,
+                "right": 304,
+                "bottom": 412,
+                "left": 16
+              }
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1280,
+              "bounds": {
+                "x": 288,
+                "y": 410.359375,
+                "width": 704,
+                "height": 80,
+                "top": 410.359375,
+                "right": 992,
+                "bottom": 490.359375,
+                "left": 288
+              }
+            },
+            "reloadAndSessionRestore": "passed",
+            "freshContextAccountPersistence": "passed with no preloaded theme storage"
+          },
+          {
+            "id": "real-calendar-modal-keyboard-and-layout",
+            "status": "passed",
+            "narrow": {
+              "viewport": 320,
+              "bounds": {
+                "x": 8,
+                "y": 134.5,
+                "width": 304,
+                "height": 371,
+                "top": 134.5,
+                "right": 312,
+                "bottom": 505.5,
+                "left": 8
+              },
+              "scrollWidth": 304,
+              "clientWidth": 304
+            }
+          },
+          {
+            "id": "route-student-overview",
+            "path": "/projects/1/dashboard",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 1
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-task-chat-history",
+            "path": "/projects/1/dashboard/1.2P/feedback",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-student-gantt",
+            "path": "/projects/1/plan",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 1,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          }
+        ],
+        "version": "153.0.4234.32",
+        "pageErrors": []
+      },
+      {
+        "browser": "firefox",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "real-profile-theme-controls-and-account-persistence",
+            "status": "passed",
+            "accountWrites": [
+              {
+                "status": 200,
+                "preference": "light"
+              },
+              {
+                "status": 200,
+                "preference": "system"
+              },
+              {
+                "status": 200,
+                "preference": "dark"
+              }
+            ],
+            "keyboardArrowSelection": "passed",
+            "peerProgressContrast": {
+              "foreground": "rgb(153, 162, 176)",
+              "background": "rgb(23, 27, 33)",
+              "ratio": 6.706500401671376
+            },
+            "systemLiveChange": "passed with emulated media",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bounds": {
+                "x": 16,
+                "y": 283.5,
+                "width": 288,
+                "height": 128,
+                "top": 283.5,
+                "right": 304,
+                "bottom": 411.5,
+                "left": 16
+              }
+            },
+            "cssZoom200": {
+              "viewport": 1280,
+              "documentWidth": 1280,
+              "bounds": {
+                "x": 288,
+                "y": 409.8666687011719,
+                "width": 704,
+                "height": 80,
+                "top": 409.8666687011719,
+                "right": 992,
+                "bottom": 489.8666687011719,
+                "left": 288
+              }
+            },
+            "reloadAndSessionRestore": "passed",
+            "freshContextAccountPersistence": "passed with no preloaded theme storage"
+          },
+          {
+            "id": "real-calendar-modal-keyboard-and-layout",
+            "status": "passed",
+            "narrow": {
+              "viewport": 320,
+              "bounds": {
+                "x": 8,
+                "y": 132.75,
+                "width": 304,
+                "height": 374.5,
+                "top": 132.75,
+                "right": 312,
+                "bottom": 507.25,
+                "left": 8
+              },
+              "scrollWidth": 304,
+              "clientWidth": 304
+            }
+          },
+          {
+            "id": "route-student-overview",
+            "path": "/projects/1/dashboard",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 1
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-task-chat-history",
+            "path": "/projects/1/dashboard/1.2P/feedback",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 0,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          },
+          {
+            "id": "route-student-gantt",
+            "path": "/projects/1/plan",
+            "status": "passed",
+            "appearance": {
+              "marker": "dark",
+              "colorScheme": "dark",
+              "meta": "#0f1216",
+              "preference": "dark",
+              "background": "rgb(23, 27, 33)",
+              "foreground": "rgb(230, 232, 236)"
+            },
+            "surfaces": {
+              "pdf": 0,
+              "monaco": 0,
+              "gantt": 1,
+              "calendars": 0,
+              "charts": 0
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          }
+        ],
+        "version": "155.0",
+        "pageErrors": []
+      },
+      {
+        "browser": "webkit",
+        "status": "failed",
+        "checks": [
+          {
+            "id": "real-profile-theme-controls-and-account-persistence",
+            "status": "passed",
+            "accountWrites": [
+              {
+                "status": 200,
+                "preference": "light"
+              },
+              {
+                "status": 200,
+                "preference": "system"
+              },
+              {
+                "status": 200,
+                "preference": "dark"
+              }
+            ],
+            "keyboardArrowSelection": "passed",
+            "peerProgressContrast": {
+              "foreground": "rgb(153, 162, 176)",
+              "background": "rgb(23, 27, 33)",
+              "ratio": 6.706500401671376
+            },
+            "systemLiveChange": "passed with emulated media",
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320,
+              "bounds": {
+                "x": 16,
+                "y": 284.125,
+                "width": 288,
+                "height": 128,
+                "top": 284.125,
+                "right": 304,
+                "bottom": 412.125,
+                "left": 16
+              }
+            },
+            "cssZoom200": "not run: isolating WebKit protocol/frame failure after CSS zoom",
+            "reloadAndSessionRestore": "passed",
+            "freshContextAccountPersistence": "passed with no preloaded theme storage"
+          },
+          {
+            "id": "real-calendar-modal-keyboard-and-layout",
+            "status": "failed",
+            "error": "locator.focus: Timeout 20000ms exceeded."
+          },
+          {
+            "id": "route-student-overview",
+            "path": "/projects/1/dashboard",
+            "status": "failed",
+            "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+          },
+          {
+            "id": "route-task-chat-history",
+            "path": "/projects/1/dashboard/1.2P/feedback",
+            "status": "failed",
+            "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+          },
+          {
+            "id": "route-student-gantt",
+            "path": "/projects/1/plan",
+            "status": "failed",
+            "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+          }
+        ],
+        "version": "26.6",
+        "pageErrors": []
+      }
+    ],
+    "staff": [
+      {
+        "browser": "chrome",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "real-tutor-routes",
+            "status": "passed",
+            "routes": [
+              {
+                "id": "analytics-calendar-charts",
+                "path": "/units/1/analytics",
+                "status": "passed",
+                "surfaces": {
+                  "calendar": 1,
+                  "charts": 4,
+                  "monaco": 0
+                },
+                "calendarHeader": {
+                  "foreground": "rgb(230, 232, 236)",
+                  "background": "rgb(23, 27, 33)",
+                  "ratio": 14.08735137307994
+                },
+                "narrow": {
+                  "viewport": 320,
+                  "documentWidth": 320
+                }
+              }
+            ]
+          },
+          {
+            "id": "real-chair-routes",
+            "status": "passed",
+            "routes": [
+              {
+                "id": "unit-task-editor",
+                "path": "/units/1/admin/tasks",
+                "status": "passed",
+                "sectionContrast": {
+                  "foreground": "rgb(230, 232, 236)",
+                  "background": "rgb(23, 27, 33)",
+                  "ratio": 14.08735137307994
+                },
+                "editorBefore": {
+                  "classes": "monaco-editor no-user-select mac  showUnused showDeprecated vs-dark",
+                  "models": [
+                    {
+                      "id": "$model1",
+                      "version": 4,
+                      "length": 78
+                    }
+                  ]
+                },
+                "editorAfter": {
+                  "classes": "monaco-editor no-user-select mac  showUnused showDeprecated vs",
+                  "models": [
+                    {
+                      "id": "$model1",
+                      "version": 4,
+                      "length": 78
+                    }
+                  ]
+                },
+                "editorScope": "Opened disabled synthetic script; changed theme only; did not modify, save or execute code.",
+                "surfaces": {
+                  "calendar": 0,
+                  "charts": 0,
+                  "monaco": 1
+                },
+                "narrow": {
+                  "viewport": 320,
+                  "documentWidth": 320
+                }
+              },
+              {
+                "id": "analytics-calendar-charts",
+                "path": "/units/1/analytics",
+                "status": "passed",
+                "surfaces": {
+                  "calendar": 1,
+                  "charts": 0,
+                  "monaco": 0
+                },
+                "calendarHeader": {
+                  "foreground": "rgb(230, 232, 236)",
+                  "background": "rgb(23, 27, 33)",
+                  "ratio": 14.08735137307994
+                },
+                "narrow": {
+                  "viewport": 320,
+                  "documentWidth": 320
+                }
+              }
+            ]
+          },
+          {
+            "id": "real-admin-routes",
+            "status": "passed",
+            "routes": [
+              {
+                "id": "institution-settings",
+                "path": "/admin/institution-settings",
+                "status": "passed",
+                "surfaces": {
+                  "calendar": 0,
+                  "charts": 0,
+                  "monaco": 0
+                },
+                "narrow": {
+                  "viewport": 320,
+                  "documentWidth": 1231
+                }
+              },
+              {
+                "id": "units-list",
+                "path": "/admin/units",
+                "status": "passed",
+                "surfaces": {
+                  "calendar": 0,
+                  "charts": 0,
+                  "monaco": 0
+                },
+                "narrow": {
+                  "viewport": 320,
+                  "documentWidth": 694
+                }
+              }
+            ]
+          }
+        ],
+        "version": "153.0.8010.48"
+      }
+    ],
+    "pdf": [
+      {
+        "browser": "chrome",
+        "status": "passed",
+        "checks": [
+          {
+            "id": "real-task-sheet-pdf-theme",
+            "status": "passed",
+            "renderedCanvases": 1,
+            "chrome": {
+              "background": "rgba(0, 0, 0, 0)",
+              "color": "rgb(230, 232, 236)"
+            },
+            "narrow": {
+              "viewport": 320,
+              "documentWidth": 320
+            }
+          }
+        ],
+        "version": "153.0.8010.48"
+      }
+    ]
+  },
+  "additionalWebkitHarnessProbe": {
+    "status": "failed",
+    "scope": "One bounded follow-up run omitted CSS zoom and configured fresh-login persistence in a separate WebKit browser process. It failed on the final Dark preference response before the secondary browser was created; subsequent original-page navigation lost its protocol frame. Closing the secondary context does not explain this failure. Original matrix retained.",
+    "failures": [
+      {
+        "id": "real-profile-theme-controls-and-account-persistence",
+        "error": "page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\""
+      },
+      {
+        "id": "real-calendar-modal-keyboard-and-layout",
+        "error": "locator.focus: Timeout 20000ms exceeded."
+      },
+      {
+        "id": "route-student-overview",
+        "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+      },
+      {
+        "id": "route-task-chat-history",
+        "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+      },
+      {
+        "id": "route-student-gantt",
+        "error": "page.goto: Protocol error (Playwright.navigate): Cannot find web frame for the frame id"
+      }
+    ]
+  },
+  "additionalFinalWebKitProbe": {
+    "testedWeb": "c3c1aa02ecbb9522d7ec8d3dab00cfade15f2690",
+    "result": "failed",
+    "note": "One further source-frozen run without CSS zoom still failed before completing profile/persistence, then timed out or lost protocol frames. Earlier successful profile group is not a claim of repeatable current WebKit acceptance.",
+    "evidence": "theme-webkit-final-probe.json"
+  }
+}

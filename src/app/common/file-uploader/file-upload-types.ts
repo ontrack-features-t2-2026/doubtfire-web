@@ -1,6 +1,6 @@
 export const ACCEPTED_TYPES = {
   document: {
-    extensions: ['pdf', 'ps'],
+    extensions: ['pdf'],
     // icon: 'picture_as_pdf',
     icon: 'article_outlined',
     name: 'PDF',
@@ -8,7 +8,7 @@ export const ACCEPTED_TYPES = {
   csv: {
     extensions: ['csv', 'xls', 'xlsx'],
     icon: 'insert_chart_outlined',
-    name: 'CSV',
+    name: 'Spreadsheet',
   },
   code: {
     // prettier-ignore
@@ -21,7 +21,7 @@ export const ACCEPTED_TYPES = {
     // icon: 'code',
     // icon: 'code',
     icon: 'integration_instructions_outlined',
-    name: 'code',
+    name: 'Code',
   },
   image: {
     extensions: ['png', 'bmp', 'tiff', 'tif', 'jpeg', 'jpg', 'gif'],

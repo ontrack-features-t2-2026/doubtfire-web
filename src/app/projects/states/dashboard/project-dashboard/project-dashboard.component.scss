@@ -80,7 +80,7 @@
 .mobile-task-tab--active {
   border-bottom-color: var(--ot-color-primary);
   background: var(--ot-color-selected);
-  color: var(--ot-color-primary);
+  color: var(--ot-color-selected-text);
 }
 
 .mobile-task-tab:disabled {
@@ -245,7 +245,7 @@
   min-width: 375px;
   width: 375px !important;
   border-radius: 0 !important;
-  box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
+  box-shadow: -2px 0 6px var(--ot-scrim);
   z-index: 250;
 }
 
@@ -340,5 +340,5 @@
   z-index: 260;
   transform: translateY(-50%);
   background: var(--ot-color-surface-raised);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 2px 8px var(--ot-scrim);
 }

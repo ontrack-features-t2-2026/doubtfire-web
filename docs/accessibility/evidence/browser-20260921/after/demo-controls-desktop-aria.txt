@@ -1,0 +1,72 @@
+- banner:
+  - link "Home":
+    - /url: /home
+  - button "Select Unit"
+  - button "Switch to light theme"
+  - button "Notifications"
+  - button "Open your calendar subscription settings"
+  - button "Open account menu":
+    - img: AU
+- main:
+  - img
+  - region "Demo controls":
+    - text: Demo controls Local development only
+    - paragraph: Demo mode combines the feature surfaces used for walkthroughs. It does not replace live CPD task data or recommendation scores with fabricated values.
+    - switch "Demo mode off"
+    - text: Demo mode off
+    - paragraph: Changing this setting reloads OnTrack so project and notification caches cannot mix quiet and demonstration data.
+    - heading "What the switch does" [level=2]
+    - term: Off — quiet baseline
+    - definition: Keeps one baseline unit (DEMO20007 when available) and hides the demo notification and peer-comparison surfaces.
+    - term: On — complete walkthrough
+    - definition: Shows the complete cross-unit scenario, a privacy-safe lifecycle spread (60% submitted and 10% complete), and all seven curated local notifications.
+    - heading "Affected surfaces" [level=2]
+    - list:
+      - listitem: "Unit Hub: fictional SIT111 announcements and sessions, with SIT102 excluded and API writes disabled"
+      - listitem: All live local project cards, tasks, deadline warnings, filters, and recommendation scores
+      - listitem: The live notification bell, unread count, and notification history
+      - listitem: Live task-level peer comparison data returned by the local API
+      - listitem: A privacy-safe lifecycle spread (60% submitted and 10% complete), unit summary, and anonymous burndown sample
+    - 'region "Unit Hub: announcements, HelpHubs and classes"':
+      - 'heading "Unit Hub: announcements, HelpHubs and classes" [level=2]'
+      - paragraph: Turn demo mode on above, then open Unit Hub to preview a student enrolled only in SIT111. The sample includes announcements, two HelpHubs and a lecture. SIT102 content stays hidden.
+      - paragraph: Demo dates and content are fictional. Subscriptions and editing are disabled. You can export a calendar copy labelled DEMO. With demo mode off, Unit Hub reads real content for your account.
+      - heading "Use your own HelpHub links" [level=3]
+      - paragraph: "Optional: add Teams joining links you host. They stay in this browser tab and are cleared on sign out. Demo Join buttons and calendar copies will use these real links with fictional dates. Opening a calendar draft shares its details with your chosen calendar provider."
+      - text: HelpHub meeting link
+      - textbox "HelpHub meeting link"
+      - text: Extra HelpHub meeting link
+      - textbox "Extra HelpHub meeting link"
+      - button "Save demo links"
+      - button "Clear demo links"
+      - link "Open Unit Hub":
+        - /url: /unit-hub
+      - group: Try the Teams meeting draft
+    - region "Peer Progress Indicator visual preview":
+      - heading "Peer Progress Indicator visual preview" [level=2]
+      - paragraph: Sample only — fabricated anonymous percentages. Switching previews never calls the API or changes a profile.
+      - button "Full status data" [pressed]
+      - button "Rounded total 90%"
+      - button "Rounded total 110%"
+      - button "Insufficient cohort"
+      - button "Advanced details protected"
+      - article "Peer Progress Indicator":
+        - strong: Peer Progress Indicator
+        - text: Anonymous peers at your target grade
+        - switch "Advanced peer status breakdown": Advanced
+        - strong: 10%
+        - text: of peers have completed this task
+        - progressbar "10% of peers at your target grade have completed this task"
+      - note: These preview states are local visual fixtures. Production always uses the authenticated, privacy-filtered API response.
+    - region "Push notification visual preview":
+      - heading "Push notification visual preview" [level=2]
+      - paragraph: Preview only — no browser permission or push subscription is changed.
+      - img "Example push notification":
+        - strong: OnTrack demo
+        - text: "Feedback is ready New feedback is available for Demo Task 2.1P. Would open: Demo task dashboard"
+      - note:
+        - text: This preview never calls Notification permission APIs, Angular SwPush, or
+        - code: /push_subscriptions
+        - text: .
+      - link "Open My Profile for real notifications":
+        - /url: /edit_profile

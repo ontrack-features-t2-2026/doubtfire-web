@@ -15,7 +15,7 @@
 
 .mat-mdc-progress-spinner circle,
 .mat-mdc-progress-spinner circle {
-  stroke: white;
+  stroke: var(--ot-color-on-primary);
 }
 
 #button-wrapper {
@@ -32,7 +32,8 @@
 }
 
 #audio-recorder-visualiser.audio-visualiser:focus-visible {
-  outline: 2px solid white;
+  // The recorder sits on the composer's primary fill while recording.
+  outline: 2px solid var(--ot-color-on-primary);
   outline-offset: 2px;
 }
 

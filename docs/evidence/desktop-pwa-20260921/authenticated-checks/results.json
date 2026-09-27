@@ -1,0 +1,250 @@
+{
+  "scope": "Production web build with real isolated development Rails/MariaDB and guarded synthetic demo fixtures. No API response mocks.",
+  "checks": [
+    {
+      "check": "Unauthenticated protected route redirects to sign-in",
+      "pass": true,
+      "path": "/sign_in"
+    },
+    {
+      "check": "Database rejects incorrect password",
+      "pass": true
+    },
+    {
+      "check": "Valid database sign-in returns to original protected route",
+      "pass": true,
+      "path": "/notifications"
+    },
+    {
+      "check": "Authenticated notification route loads real database records",
+      "pass": true,
+      "notificationCount": 7
+    },
+    {
+      "check": "Authenticated reload restores session using refresh cookie",
+      "pass": true
+    },
+    {
+      "check": "Sign-out deletes server session and returns to sign-in",
+      "pass": true,
+      "logoutStatus": 204
+    },
+    {
+      "check": "API rejects access token captured before sign-out",
+      "pass": true,
+      "status": 419
+    },
+    {
+      "check": "Refresh cookie cannot restore session after logout",
+      "pass": true,
+      "status": 201
+    },
+    {
+      "check": "Protected route denied after logout",
+      "pass": true
+    }
+  ],
+  "apiResponses": [
+    {
+      "path": "/api/settings/public",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/signout_url",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/access-token",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/auth/method",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/campuses/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/teaching_periods/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications/unread_count",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/unit_roles/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/projects/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/signout_url",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/settings/public",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/access-token",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/settings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/campuses/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications/unread_count",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/teaching_periods/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/unit_roles/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/projects/",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth",
+      "method": "DELETE",
+      "status": 204
+    },
+    {
+      "path": "/api/auth/method",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications/",
+      "method": "GET",
+      "status": 419
+    },
+    {
+      "path": "/api/auth/access-token",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/settings/public",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/signout_url",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/access-token",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/auth/method",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "externalRequests": [
+    "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor/editor.main.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/json.worker-BizpAl9O.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/css.worker-CyhWkhHo.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/html.worker-CA3iAimZ.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/ts.worker-2QLmBukE.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/nls.messages-loader.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/index-CBVt3dzv.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-9cKT3C7t.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor-KLE6jdfb.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BgRy6xDf.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BE88ZNGY.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BPhsneLd.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/toggleHighContrast-qGX7E9o7.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/basic-languages/monaco.contribution.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editorWorkerHost-fVE1cjcC.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor/editor.main.css",
+    "https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2",
+    "https://www.gravatar.com/avatar/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.png",
+    "https://www.gravatar.com/avatar/f5303d32793bda2be1ba838d7d248f563da6fc258ed58e294495b6963059bac8.png",
+    "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/loader.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor/editor.main.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/json.worker-BizpAl9O.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/css.worker-CyhWkhHo.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/html.worker-CA3iAimZ.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/ts.worker-2QLmBukE.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/nls.messages-loader.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/index-CBVt3dzv.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-9cKT3C7t.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor-KLE6jdfb.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BgRy6xDf.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BE88ZNGY.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/monaco.contribution-BPhsneLd.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/toggleHighContrast-qGX7E9o7.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/basic-languages/monaco.contribution.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editorWorkerHost-fVE1cjcC.js",
+    "https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs/editor/editor.main.css",
+    "https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2",
+    "https://www.gravatar.com/avatar/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.png",
+    "https://www.gravatar.com/avatar/f5303d32793bda2be1ba838d7d248f563da6fc258ed58e294495b6963059bac8.png"
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}

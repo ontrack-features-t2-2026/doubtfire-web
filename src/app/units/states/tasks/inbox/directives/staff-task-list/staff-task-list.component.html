@@ -216,32 +216,8 @@
   }
 
   @if (loading) {
-    <div aria-hidden="true" class="min-h-0 flex-1 overflow-hidden">
-      @for (row of skeletonRows; track row) {
-        <div
-          class="flex h-[60px] items-center"
-          [ngClass]="isNarrow ? 'justify-center' : 'gap-2.5 pr-3 pl-2'"
-        >
-          <ngx-skeleton-loader
-            appearance="circle"
-            [theme]="{width: '30px', height: '30px', margin: '0'}"
-          ></ngx-skeleton-loader>
-          @if (!isNarrow) {
-            <div class="min-w-0 flex-1">
-              <ngx-skeleton-loader
-                [theme]="{height: '10px', width: '78%', 'border-radius': '999px', margin: '6px 0'}"
-              ></ngx-skeleton-loader>
-              <ngx-skeleton-loader
-                [theme]="{height: '10px', width: '56%', 'border-radius': '999px', margin: '6px 0'}"
-              ></ngx-skeleton-loader>
-            </div>
-            <ngx-skeleton-loader
-              appearance="circle"
-              [theme]="{width: '36px', height: '36px', margin: '0'}"
-            ></ngx-skeleton-loader>
-          }
-        </div>
-      }
+    <div aria-busy="true" aria-label="Loading tasks" class="min-h-0 flex-1 overflow-hidden">
+      <f-skeleton-loader shape="list-row" [compact]="isNarrow" [count]="12"></f-skeleton-loader>
     </div>
   } @else if (loadError) {
     <!-- role="status" so the outcome is announced, and the message stays in the
@@ -301,11 +277,22 @@
                 matTooltipPosition="right"
                 type="button"
                 [attr.aria-current]="selected ? 'true' : null"
-                [attr.aria-label]="isNarrow ? narrowRowLabel(task) : null"
+                [attr.aria-describedby]="'task-summary-' + task.taskKeyToIdString()"
+                [attr.aria-label]="
+                  isNarrow
+                    ? narrowRowLabel(task)
+                    : (task.project.student.displayName || task.project.student.name) +
+                      ', ' +
+                      task.definition.abbreviation +
+                      ': ' +
+                      task.definition.name
+                "
                 [matTooltip]="isNarrow ? narrowRowLabel(task) : ''"
                 [matTooltipDisabled]="!isNarrow"
                 [ngClass]="isNarrow ? 'justify-center px-1' : 'flex-1 pl-2'"
+                (blur)="hideTaskActionsForFocus(task)"
                 (click)="setSelectedTask(task)"
+                (focus)="showTaskActionsForFocus(task)"
               >
                 <span class="relative flex shrink-0">
                   <user-icon [size]="30" [user]="task.project.student"></user-icon>
@@ -370,7 +357,9 @@
                           </span>
                         }
                       }
-                      <span class="truncate">{{ task.project.student.name }}</span>
+                      <span class="truncate">{{
+                        task.project.student.displayName || task.project.student.name
+                      }}</span>
                     </span>
                     <span class="truncate text-xs leading-snug text-ot-muted">
                       {{ task.definition.abbreviation }} - {{ task.definition.name }}
@@ -445,6 +434,30 @@
                   </span>
                 }
               </button>
+              <span class="sr-only" [id]="'task-summary-' + task.taskKeyToIdString()">
+                {{ task.statusLabel() }}.
+                @if (task.hasGrade()) {
+                  Grade: {{ task.gradeDesc() }}.
+                }
+                @if (task.hasQualityPoints()) {
+                  Quality: {{ task.qualityPts }} of {{ task.definition.maxQualityPts }}.
+                }
+                @if (task.numNewComments > 0) {
+                  {{ task.numNewComments }} new comments.
+                }
+                @if (task.similaritiesDetected) {
+                  Similarities detected.
+                }
+                @if (task.moderationType === 'escalation') {
+                  Escalated by the student.
+                }
+                @if (getWarningIcon(task) === 'warning') {
+                  Feedback due soon.
+                }
+                @if (getWarningIcon(task) === 'overflow') {
+                  Feedback overdue.
+                }
+              </span>
 
               @if (!isNarrow) {
                 <div class="task-row-actions relative size-10 shrink-0">

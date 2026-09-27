@@ -10,7 +10,7 @@
     <div class="truncate text-ot-muted">
       {{ data.assessment.task.definition.abbreviation }}
       {{ data.assessment.task.definition.name }}
-      @if (data.assessment.task.project?.student?.name; as studentName) {
+      @if (data.assessment.task.project?.student?.displayName; as studentName) {
         ({{ studentName }})
       }
     </div>

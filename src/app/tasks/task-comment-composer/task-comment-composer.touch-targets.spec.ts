@@ -12,6 +12,7 @@ import {TaskCommentService, UserService} from 'src/app/api/models/doubtfire-mode
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
 import {FeedbackDraftStore} from 'src/app/common/services/feedback-draft-store.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
@@ -37,6 +38,7 @@ describe('TaskCommentComposerComponent phone actions', () => {
     addComment: ReturnType<typeof vi.fn>;
     editComment: ReturnType<typeof vi.fn>;
     uploadStagedAttachment: ReturnType<typeof vi.fn>;
+    attachmentPolicy: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -45,6 +47,14 @@ describe('TaskCommentComposerComponent phone actions', () => {
       addComment: vi.fn(() => of({id: 1})),
       editComment: vi.fn(() => of({id: 1})),
       uploadStagedAttachment: vi.fn(() => of({state: 'complete', progress: 100})),
+      attachmentPolicy: vi.fn(() =>
+        of({
+          version: 1,
+          categories: [],
+          max_bytes_exclusive: 30_000_000,
+          max_selection_count: 5,
+        }),
+      ),
     };
     // Node exposes storage globals without values unless it is launched with storage files.
     // Use isolated browser-compatible stores while rendering this storage-aware component.
@@ -98,7 +108,9 @@ describe('TaskCommentComposerComponent phone actions', () => {
     ).ɵcmp.styles.join('\n');
 
   const textarea = (): HTMLTextAreaElement =>
-    fixture.nativeElement.querySelector('textarea[aria-label="Message"]') as HTMLTextAreaElement;
+    fixture.nativeElement.querySelector(
+      'textarea[aria-label="Task comment"]',
+    ) as HTMLTextAreaElement;
 
   const sendButton = (): HTMLButtonElement =>
     fixture.nativeElement.querySelector('button[aria-label="Send message"]') as HTMLButtonElement;
@@ -144,11 +156,14 @@ describe('TaskCommentComposerComponent phone actions', () => {
         '.composer-container button, .composer-container textarea',
       ),
     ) as HTMLElement[];
-    const labels = orderedControls.map((element) => element.getAttribute('aria-label'));
+    // Staff tools stay in the page for students but hidden, so only count what is shown.
+    const labels = orderedControls
+      .filter((element) => element.closest('[hidden]') === null)
+      .map((element) => element.getAttribute('aria-label'));
 
     expect(labels).toEqual([
       'Attach a file',
-      'Message',
+      'Task comment',
       'Record audio feedback',
       'Choose an emoji',
       'Send message',
@@ -266,6 +281,21 @@ describe('TaskCommentComposerComponent phone actions', () => {
     enterText('Send and close');
     sendButton().click();
     expect(fixture.componentInstance.showEmojiPicker).toBe(false);
+  });
+
+  it('updates the emoji picker when the resolved theme changes', () => {
+    const theme = TestBed.inject(ThemeService);
+    const picker = fixture.nativeElement.querySelector('emoji-mart') as HTMLElement & {
+      darkMode: boolean;
+    };
+
+    theme.setPreference('dark');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(true);
+
+    theme.setPreference('light');
+    fixture.detectChanges();
+    expect(picker.darkMode).toBe(false);
   });
 
   it('gives both phone controls 48px touch targets without changing their desktop rule', () => {

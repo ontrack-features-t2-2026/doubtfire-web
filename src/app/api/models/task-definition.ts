@@ -88,6 +88,8 @@ export class TaskDefinition extends Entity {
 
   public readonly overseerStepsCache: EntityCache<OverseerStep> = new EntityCache<OverseerStep>();
 
+  resubmissionExtensionsEnabled = true;
+
   readonly unit: Unit;
 
   constructor(unit: Unit) {

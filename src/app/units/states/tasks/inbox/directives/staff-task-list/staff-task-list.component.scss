@@ -6,6 +6,10 @@
   min-height: 0;
 }
 
+:host-context([data-ot-theme='dark']) {
+  --background-gray: rgba(255, 255, 255, 0.06);
+}
+
 ::ng-deep .cdk-virtual-scroll-content-wrapper {
   width: 100%;
 }

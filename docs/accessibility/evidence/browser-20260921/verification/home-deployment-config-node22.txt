@@ -1,0 +1,5 @@
+
+> doubtfire@11.0.0-45 verify:deployment-config
+> node scripts/verify-deployment-config.js
+
+Deployment configuration checks passed.

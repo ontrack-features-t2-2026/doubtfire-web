@@ -16,7 +16,6 @@ import {adapterFactory} from 'angular-calendar/date-adapters/date-fns';
 import {enAU} from 'date-fns/locale';
 import player from 'lottie-web';
 import {PdfViewerModule} from 'ng2-pdf-viewer';
-import {FlexLayoutModule} from 'ng-flex-layout';
 import {LottieComponent, provideLottieOptions} from 'ngx-lottie';
 // TODO: replace back to original ngx-monaco-editor-v2 once it supports angular 22
 import {MonacoEditorModule} from 'ngx-monaco-editor-v2-alternative';
@@ -224,14 +223,20 @@ import {SafePipe} from './common/pipes/safe.pipe';
 import {ProjectCardComponent} from './common/project-card/project-card.component';
 import {ProjectProgressBarComponent} from './common/project-progress-bar/project-progress-bar.component';
 import {ProjectProgressGaugeComponent} from './common/project-progress/project-progress-gauge.component';
+import {PwaConnectionStatusComponent} from './common/pwa-connection/pwa-connection-status.component';
+import {PwaInstallButtonComponent} from './common/pwa/pwa-install-button.component';
+import {PwaInstallService} from './common/pwa/pwa-install.service';
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {EmojiService} from './common/services/emoji.service';
 import {GradeService} from './common/services/grade.service';
 import {HttpAuthenticationInterceptor} from './common/services/http-authentication.interceptor';
 import {HttpErrorInterceptor} from './common/services/http-error.interceptor';
+import {SkeletonLoaderComponent} from './common/skeleton-loader/skeleton-loader.component';
 import {StatusIconComponent} from './common/status-icon/status-icon.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {MonacoThemeDirective} from './common/theme/monaco-theme.directive';
+import {ThemeSettingsComponent} from './common/theme/theme-settings.component';
 import {ThemeToggleComponent} from './common/theme/theme-toggle.component';
 import {UnitCodeComponent} from './common/unit-code/unit-code.component';
 import {UserBadgeComponent} from './common/user-badge/user-badge.component';
@@ -266,6 +271,7 @@ import {TaskPlannerCardComponent} from './projects/states/dashboard/directives/p
 import {CreatePortfolioTaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/create-portfolio-task-list-item/create-portfolio-task-list-item.component';
 import {TaskListItemComponent} from './projects/states/dashboard/directives/student-task-list/task-list-item/task-list-item.component';
 import {DiscussionPromptsViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/discussion-prompts-view/discussion-prompts-view.component';
+import {PreviousSubmissionsComponent} from './projects/states/dashboard/directives/task-dashboard/directives/previous-submissions/previous-submissions.component';
 import {StaffNotesViewComponent} from './projects/states/dashboard/directives/task-dashboard/directives/staff-notes-view/staff-notes-view.component';
 import {TaskAssessmentCardComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-assessment-card/task-assessment-card.component';
 import {PpiWidgetComponent} from './projects/states/dashboard/directives/task-dashboard/directives/task-description-card/ppi-widget/ppi-widget.component';
@@ -302,13 +308,13 @@ import {StaffNotesComponent} from './projects/states/staff-notes/staff-notes.com
 import {TutorDiscussionComponent} from './projects/states/tutor-discussion/tutor-discussion.component';
 import {TutorNotesComponent} from './projects/states/tutor-notes/tutor-notes.component';
 import {TutorialsComponent} from './projects/states/tutorials/tutorials.component';
-import {InstallPromptService} from './sessions/install-prompt/install-prompt.service';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 // import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 // import {PrivacyPolicy} from './config/privacy-policy/privacy-policy';
 import {CheckForUpdateService} from './sessions/service-worker-updater/check-for-update.service';
 import {SignInComponent} from './sessions/states/sign-in/sign-in.component';
+import {StudentOnboardingComponent} from './student-onboarding/student-onboarding.component';
 import {FeedbackAppealModalComponent} from './tasks/modals/feedback-appeal-modal/feedback-appeal-modal.component';
 import {GradeTaskModalComponent} from './tasks/modals/grade-task-modal/grade-task-modal.component';
 import {SubmissionTypeModalComponent} from './tasks/modals/submission-type-modal/submission-type-modal.component';
@@ -397,6 +403,9 @@ import {FUnitTaskListComponent} from './units/task-viewer/directives/unit-task-l
 import {TaskViewerStateComponent} from './units/task-viewer/task-viewer-state.component';
 import {UnitRootStateComponent} from './units/unit-root-state.component';
 import {ProgressBurndownChartComponent} from './visualisations/progress-burndown-chart/progress-burndown-chart.component';
+import {SummaryTaskStatusScatterComponent} from './visualisations/summary-task-status-scatter/summary-task-status-scatter.component';
+import {TargetGradePieChartComponent} from './visualisations/target-grade-pie-chart/target-grade-pie-chart.component';
+import {TaskCompletionBoxPlotComponent} from './visualisations/task-completion-box-plot/task-completion-box-plot.component';
 import {TaskStatusPieChartComponent} from './visualisations/task-status-pie-chart/task-status-pie-chart.component';
 import {TaskVisualisationComponent} from './visualisations/task-visualisation/task-visualisation.component';
 import {WelcomeComponent} from './welcome/welcome.component';
@@ -467,11 +476,15 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
 @NgModule({
   // Components we declare
   declarations: [
+    MonacoThemeDirective,
     AppComponent,
     CrossDashboardComponent,
     DashboardListItemComponent,
     DashboardExpandedListItemComponent,
     TaskStatusPieChartComponent,
+    SummaryTaskStatusScatterComponent,
+    TargetGradePieChartComponent,
+    TaskCompletionBoxPlotComponent,
     AlertComponent,
     AddEngagementDialogComponent,
     EngagementPassportCardComponent,
@@ -704,6 +717,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     UnitTaskInboxStateComponent,
     LegacyRoutePlaceholderComponent,
     NotificationSettingsComponent,
+    ThemeSettingsComponent,
   ],
   providers: [
     // Services we provide
@@ -737,7 +751,6 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     EmojiService,
     FileDownloaderService,
     CheckForUpdateService,
-    InstallPromptService,
     TaskOutcomeAlignmentService,
     // rootScopeProvider,
     {provide: MAT_DATE_LOCALE, useValue: enAU},
@@ -815,9 +828,8 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    PreviousSubmissionsComponent,
     ThemeToggleComponent,
-    EmptyStateComponent,
-    FlexLayoutModule,
     BrowserModule,
     BrowserAnimationsModule,
     DemoToolsModule,
@@ -829,6 +841,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     ClipboardModule,
     DragDropModule,
     ScrollingModule,
+    StudentOnboardingComponent,
     MatToolbarModule,
     MatSidenavModule,
     MatFormFieldModule,
@@ -887,6 +900,10 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     MonacoEditorModule.forRoot(),
     MatChipListbox,
     NgxSkeletonLoaderModule,
+    EmptyStateComponent,
+    SkeletonLoaderComponent,
+    PwaInstallButtonComponent,
+    PwaConnectionStatusComponent,
   ],
   bootstrap: [AppComponent],
 })
@@ -899,7 +916,7 @@ export class DoubtfireAngularModule {
     private constants: DoubtfireConstants,
     private title: Title,
     private updater: CheckForUpdateService,
-    private installer: InstallPromptService,
+    private installer: PwaInstallService,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
   ) {

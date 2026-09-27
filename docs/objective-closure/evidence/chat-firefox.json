@@ -1,0 +1,96 @@
+{
+  "browser": "firefox",
+  "checks": [
+    {
+      "id": "composer-accessible-name-and-emoji-keyboard",
+      "status": "passed"
+    },
+    {
+      "id": "cancel-preserves-draft-and-dialog-keyboard",
+      "status": "passed",
+      "nativeEnter": "passed",
+      "tabOrder": "passed"
+    },
+    {
+      "id": "post-and-download-scores-csv",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 29
+    },
+    {
+      "id": "post-and-download-notes-docx",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 855
+    },
+    {
+      "id": "post-and-download-scores-xlsx",
+      "status": "passed",
+      "httpStatus": 201,
+      "downloadBytes": 1452
+    },
+    {
+      "id": "post-and-view-handout-pdf",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 608,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-tone-wav",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 32078,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "post-and-view-screenshot-png",
+      "status": "passed",
+      "httpStatus": 201,
+      "viewerFetchStatus": 200,
+      "viewerBytes": 639,
+      "note": "Legacy media is converted/compressed by the existing API; byte identity is intentionally asserted only for generic document/spreadsheet downloads."
+    },
+    {
+      "id": "reject-empty-csv-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "reject-excluded-exe-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "reject-exact-30mb-before-request",
+      "status": "passed"
+    },
+    {
+      "id": "api-rejection-preserves-draft-and-valid-retry",
+      "status": "passed",
+      "rejectionStatus": 403,
+      "retryStatus": 201
+    },
+    {
+      "id": "drop-shares-one-confirmation-and-cancel",
+      "status": "passed"
+    },
+    {
+      "id": "paste-shares-one-confirmation-and-cancel",
+      "status": "not-run",
+      "reason": "This engine did not preserve files in the synthetic ClipboardEvent. Actual OS clipboard validation remains manual."
+    },
+    {
+      "id": "narrow-dialog-controls-visible",
+      "status": "passed"
+    }
+  ],
+  "errors": [],
+  "baselineWeb": "283b493367681d1abab23e5fe7c633ba3a57e5c2",
+  "baselineApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "testedWeb": "898a1db6f7145c9f0b5ecd899957b4c758f91add",
+  "testedApi": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "version": "155.0",
+  "status": "passed-with-unrun",
+  "recordedAt": "2026-09-21T05:26:13.834Z"
+}

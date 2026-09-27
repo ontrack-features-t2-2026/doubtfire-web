@@ -86,3 +86,22 @@ describe('TaskDefinitionService grade due-date mapping', () => {
     expect(taskDefinition.effectiveTaskSheetFilename).toBe('COS10001-1.1P-TaskSheet.pdf');
   });
 });
+
+describe('Task definition resubmission setting', () => {
+  it('keeps the default for older responses and maps a task-level opt out', () => {
+    const service = new TaskDefinitionService(null, null, null, null);
+    const unit = new Unit();
+    expect(service.buildInstance({}, {constructorParams: unit}).resubmissionExtensionsEnabled).toBe(
+      true,
+    );
+    const definition = service.buildInstance(
+      {resubmission_extensions_enabled: false},
+      {constructorParams: unit},
+    );
+    expect(definition.resubmissionExtensionsEnabled).toBe(false);
+    definition.resubmissionExtensionsEnabled = true;
+    expect(definition.toJson(service.mapping)['task_def']['resubmission_extensions_enabled']).toBe(
+      true,
+    );
+  });
+});

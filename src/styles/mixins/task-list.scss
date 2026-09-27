@@ -42,7 +42,7 @@
     &:focus {
       cursor: pointer;
       text-decoration: none;
-      // background-color: $list-group-hover-bg;
+      background-color: var(--ot-color-hover);
       &.ready-for-feedback {
         @include custom-box-shadow(
           color.adjust(task-status-color('ready-for-feedback'), $lightness: 15%)
@@ -101,6 +101,8 @@
       }
     }
     &.selected {
+      background-color: var(--ot-color-selected);
+      color: var(--ot-color-selected-text);
       &.ready-for-feedback {
         @include custom-box-shadow(task-status-color('ready-for-feedback'));
       }

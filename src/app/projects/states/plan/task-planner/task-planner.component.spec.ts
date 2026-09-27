@@ -346,6 +346,55 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     view?.destroy();
   });
 
+  // The token sheets are not loaded under jsdom, so contrast is checked by pairing: each
+  // fill must carry the text token designed for it, whose ratio is set with the tokens.
+  it.each([
+    {state: 'highlighted', background: '--ot-color-info', foreground: '--ot-color-inverse-text'},
+    {
+      state: 'above-target',
+      background: '--ot-color-disabled-surface',
+      foreground: '--ot-color-text-muted',
+    },
+    {state: 'complete', background: '--ot-status-complete', foreground: '--ot-status-complete-on'},
+    {
+      state: 'past-deadline',
+      background: '--ot-status-time-exceeded',
+      foreground: '--ot-status-time-exceeded-on',
+    },
+    {
+      state: 'blocked',
+      background: '--ot-status-attention-required',
+      foreground: '--ot-status-attention-required-on',
+    },
+    {
+      state: 'close-deadline',
+      background: '--ot-status-fix-and-resubmit',
+      foreground: '--ot-status-fix-and-resubmit-on',
+    },
+    {state: 'normal', background: '--ot-color-primary', foreground: '--ot-color-on-primary'},
+  ])('renders one contrasting foreground for $state bars', ({state, background, foreground}) => {
+    const item = Object.assign(plannerItem('contrast'), {highlighted: state === 'highlighted'});
+    vi.spyOn(component, 'isAboveTargetGrade').mockReturnValue(state === 'above-target');
+    vi.spyOn(component, 'isComplete').mockReturnValue(state === 'complete');
+    vi.spyOn(component, 'isPastFeedbackDeadline').mockReturnValue(state === 'past-deadline');
+    vi.spyOn(component, 'isBlockedByPrerequisite').mockReturnValue(state === 'blocked');
+    vi.spyOn(component, 'isCloseToFeedbackDeadline').mockReturnValue(state === 'close-deadline');
+    component.items = [item] as never;
+    bar.remove();
+    view.destroy();
+    bar = stampBar(item);
+
+    const classes = [...bar.classList];
+    expect(classes.filter((name) => name.startsWith('[--bar-bg:'))).toEqual([
+      `[--bar-bg:var(${background})]`,
+    ]);
+    // A fixed text colour on the template would fight the per-state one, so only a
+    // single colour class may be present.
+    expect(
+      classes.filter((name) => name.startsWith('[color:') || /^text-(black|white|ot-)/.test(name)),
+    ).toEqual([`[color:var(${foreground})]`]);
+  });
+
   it('gives the bar a role and a tab stop, so a keyboard can reach it', () => {
     expect(bar.getAttribute('role')).toBe('button');
     expect(bar.getAttribute('tabindex')).toBe('0');
@@ -464,5 +513,62 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     button.click();
     expect(prerequisitesModal.shown.length).toBe(1);
     expect(prerequisitesModal.shown[0][1]).toBe(component.items[0].taskDefinition);
+  });
+});
+
+describe('TaskPlannerComponent ink-safe image export', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it.each([false, true])('restores the screen after export (capture fails: %s)', async (fails) => {
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    const root = document.createElement('ngx-gantt');
+    root.style.cssText = 'width: 640px; height: 400px; overflow: hidden;';
+    root.innerHTML = '<div class="gantt-side"></div><div class="gantt-main-container"></div>';
+    const scroll = root.querySelector<HTMLElement>('.gantt-main-container')!;
+    scroll.scrollLeft = 31;
+    scroll.scrollTop = 47;
+    scroll.scrollTo = vi.fn((left: number, top: number) => {
+      scroll.scrollLeft = left;
+      scroll.scrollTop = top;
+    }) as unknown as typeof scroll.scrollTo;
+    const windowScroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const rootTheme = document.documentElement.getAttribute('data-ot-theme');
+    const savedTheme = localStorage.getItem('ontrack.theme.preference');
+    const download = vi.fn();
+    const reportError = vi.fn();
+    const capture = vi.fn(async () => {
+      expect(root.classList.contains('ot-gantt-export')).toBe(true);
+      expect(document.documentElement.getAttribute('data-ot-theme')).toBe(rootTheme);
+      expect(localStorage.getItem('ontrack.theme.preference')).toBe(savedTheme);
+      if (fails) {
+        throw new Error('synthetic capture failure');
+      }
+      return document.createElement('canvas');
+    });
+    Object.assign(component, {
+      ganttComponent: {element: root, view: {width: 1000}},
+      project: {unit: {code: 'TEST'}},
+      ganttPrintService: {html2canvas: capture},
+      alertService: {error: reportError},
+      renderAllGanttBars: async () => {},
+      waitForStableLayout: async () => {},
+      nextAnimationFrame: async () => {},
+      downloadCanvas: download,
+    });
+
+    await component.saveImage();
+
+    expect(capture).toHaveBeenCalledOnce();
+    expect(root.classList.contains('ot-gantt-export')).toBe(false);
+    expect(root.style.width).toBe('640px');
+    expect(root.style.height).toBe('400px');
+    expect(root.style.overflow).toBe('hidden');
+    expect(scroll.scrollLeft).toBe(31);
+    expect(scroll.scrollTop).toBe(47);
+    expect(windowScroll).toHaveBeenCalled();
+    expect(document.documentElement.getAttribute('data-ot-theme')).toBe(rootTheme);
+    expect(localStorage.getItem('ontrack.theme.preference')).toBe(savedTheme);
+    expect(download).toHaveBeenCalledTimes(fails ? 0 : 1);
+    expect(reportError).toHaveBeenCalledTimes(fails ? 1 : 0);
   });
 });

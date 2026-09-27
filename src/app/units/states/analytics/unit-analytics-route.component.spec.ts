@@ -7,12 +7,19 @@ import {ActivatedRoute} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, of, throwError} from 'rxjs';
 import {SidekiqJob} from 'src/app/api/models/sidekiq-job';
 import {Unit} from 'src/app/api/models/unit';
+import {TaskStatusStats, UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
 import {PageContainerComponent} from 'src/app/common/page-container/page-container.component';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {UnitAnalyticsComponent} from './unit-analytics-route.component';
+
+const emptyCompletion = {
+  unit: {min: 0, lower: 0, median: 0, upper: 0, max: 0},
+  tutorial: {},
+  grade: {},
+};
 
 describe('UnitAnalyticsComponent', () => {
   let fixture: ComponentFixture<UnitAnalyticsComponent>;
@@ -82,8 +89,16 @@ describe('UnitAnalyticsComponent', () => {
           },
         },
         {provide: ActivatedRoute, useValue: {parent: {snapshot: {data: {}}}}},
+        {
+          provide: UnitService,
+          useValue: {
+            taskStatusCountByTutorial: vi.fn(() => of({})),
+            targetGradeStats: vi.fn(() => of([])),
+            taskCompletionStats: vi.fn(() => of(emptyCompletion)),
+          },
+        },
       ],
-      // The tutor times card has its own spec.
+      // The tutor times card and the statistics charts have their own specs.
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -213,5 +228,74 @@ describe('UnitAnalyticsComponent', () => {
 
     expect(component.unit.code).toBe('COS20007');
     expect(render().querySelector('header p')?.textContent).toContain('COS20007');
+  });
+});
+
+describe('UnitAnalyticsComponent statistics requests', () => {
+  function setup() {
+    const service = {
+      taskStatusCountByTutorial: vi.fn().mockReturnValue(of({})),
+      targetGradeStats: vi.fn().mockReturnValue(of([])),
+      taskCompletionStats: vi.fn().mockReturnValue(of(emptyCompletion)),
+    };
+    const component = new UnitAnalyticsComponent(
+      null,
+      null,
+      null,
+      null,
+      null,
+      service as unknown as UnitService,
+      'en-AU',
+    );
+    const units = new BehaviorSubject({id: 1} as Unit);
+    component.unit$ = units;
+    return {component, service, units};
+  }
+
+  it('loads all three endpoints for the selected unit', () => {
+    const {component, service} = setup();
+    component.ngOnInit();
+    expect(service.targetGradeStats).toHaveBeenCalledWith(component.unit);
+    expect(component.taskCompletionStats).toEqual(emptyCompletion);
+    expect(component.statisticsLoading).toBe(false);
+    expect(component.statisticsFailed).toBe(false);
+    component.ngOnDestroy();
+  });
+
+  it('keeps successful charts on failure and can retry', () => {
+    const {component, service} = setup();
+    service.targetGradeStats.mockReturnValueOnce(throwError(() => new Error('Denied')));
+    component.ngOnInit();
+    expect(component.statisticsFailed).toBe(true);
+    expect(component.targetGradeStats).toBeNull();
+    expect(component.taskStatusStats).toEqual({});
+    component.loadStatistics();
+    expect(component.statisticsFailed).toBe(false);
+    expect(component.targetGradeStats).toEqual([]);
+    component.ngOnDestroy();
+  });
+
+  it('cancels obsolete requests and resets filters when the unit changes', () => {
+    const {component, service, units} = setup();
+    const pending: Subject<TaskStatusStats> = new Subject();
+    service.taskStatusCountByTutorial.mockReturnValueOnce(pending);
+    component.ngOnInit();
+    expect(component.statisticsLoading).toBe(true);
+    component.tutorialId = 5;
+    units.next({id: 2} as Unit);
+    expect(pending.observed).toBe(false);
+    expect(component.tutorialId).toBeNull();
+    pending.next({99: {}});
+    expect(component.taskStatusStats).toEqual({});
+    component.ngOnDestroy();
+    units.next({id: 3} as Unit);
+    expect(service.targetGradeStats).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not fetch until a unit is available', () => {
+    const {component, service} = setup();
+    component.loadStatistics();
+    expect(service.targetGradeStats).not.toHaveBeenCalled();
+    expect(component.statisticsLoading).toBe(false);
   });
 });

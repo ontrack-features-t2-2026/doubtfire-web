@@ -1,0 +1,199 @@
+{
+  "recordedAt": "2026-09-21T06:12:30.192Z",
+  "base": "http://127.0.0.1:4313",
+  "webRevision": "94068e0758954791e074f723602cd44792a3684b",
+  "apiRevision": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiProvenance": "Private fixture manifest and runtime provenance document; test-only TII/D2L initializer. No deployment-repository checkout executed.",
+  "scope": "Actual browser with synthetic API accounts. Navigation, rendered axe, focus and viewport checks only; no screen reader or native zoom claims.",
+  "checks": [
+    {
+      "id": "student-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "student-dashboard-desktop",
+      "status": "pass",
+      "details": {
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "student-task-enter",
+      "status": "pass",
+      "details": "Native task row activated with Enter and navigated to 1.2P."
+    },
+    {
+      "id": "student-task-desktop",
+      "status": "fail",
+      "details": {
+        "violations": [
+          {
+            "id": "aria-required-parent",
+            "impact": "critical",
+            "nodes": 2
+          },
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2
+          },
+          {
+            "id": "link-name",
+            "impact": "serious",
+            "nodes": 1
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "nodes": 34
+          }
+        ],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 36
+      }
+    },
+    {
+      "id": "student-task-desktop",
+      "status": "pass",
+      "details": {
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "student-task-320",
+      "status": "pass",
+      "details": {
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "student-feedback-320",
+      "status": "pass",
+      "details": {
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "student-feedback-320",
+      "status": "fail",
+      "details": {
+        "violations": [
+          {
+            "id": "region",
+            "impact": "moderate",
+            "nodes": 1
+          }
+        ],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 22
+      }
+    },
+    {
+      "id": "tutor-signin",
+      "status": "pass",
+      "details": "Normal database-authentication UI; private synthetic credentials; no auth bypass."
+    },
+    {
+      "id": "staff-inbox-desktop",
+      "status": "pass",
+      "details": {
+        "viewport": 1280,
+        "documentWidth": 1280,
+        "bodyWidth": 1280
+      }
+    },
+    {
+      "id": "staff-inbox-desktop",
+      "status": "fail",
+      "details": {
+        "violations": [
+          {
+            "id": "aria-progressbar-name",
+            "impact": "serious",
+            "nodes": 1
+          },
+          {
+            "id": "button-name",
+            "impact": "critical",
+            "nodes": 1
+          },
+          {
+            "id": "empty-heading",
+            "impact": "minor",
+            "nodes": 5
+          },
+          {
+            "id": "link-name",
+            "impact": "serious",
+            "nodes": 1
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "nodes": 10
+          }
+        ],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 27
+      }
+    },
+    {
+      "id": "staff-empty-search",
+      "status": "pass",
+      "details": "Named inbox filter leads to textual empty state."
+    },
+    {
+      "id": "staff-inbox-320",
+      "status": "pass",
+      "details": {
+        "viewport": 320,
+        "documentWidth": 320,
+        "bodyWidth": 320
+      }
+    },
+    {
+      "id": "staff-inbox-320",
+      "status": "fail",
+      "details": {
+        "violations": [
+          {
+            "id": "empty-heading",
+            "impact": "minor",
+            "nodes": 4
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "nodes": 7
+          }
+        ],
+        "incomplete": [
+          "aria-allowed-attr",
+          "color-contrast"
+        ],
+        "passes": 23
+      }
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "browser": "Chrome 153.0.8010.48"
+}

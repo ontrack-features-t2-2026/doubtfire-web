@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-21T05:22:29.045843+00:00",
+  "scope": "Real local browser submission against synthetic accounts; exact application jobs and real TeX executed in a disposable worker. No production rollout or human usability sign-off.",
+  "apiSourceSha": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "apiPullRequest": "https://github.com/ontrack-features-t2-2026/doubtfire-api/pull/173",
+  "fixture": {
+    "taskAlias": "uploadStudent/1.1P",
+    "syntheticTaskId": 4,
+    "syntheticHistoryId": 4,
+    "originalFilename": "scores.xlsx",
+    "originalBytes": 1452
+  },
+  "enqueue": {
+    "origin": "Chrome browser file input and submission action",
+    "httpStatus": 201,
+    "evidence": "task-upload-browser/submit-spreadsheet-result.json"
+  },
+  "execution": {
+    "mode": "Dequeued the actual browser-enqueued job and invoked its application perform method, then did the same for its enqueued history job. Used real LuaLaTeX; copied only this task\u2019s generated artifacts back to the API.",
+    "jobs": [
+      {
+        "class": "AcceptSubmissionJob",
+        "jid": null,
+        "jidAvailability": "Not recorded before consuming the queue entry; no identifier is inferred.",
+        "arguments": [4, 5, null, false, false],
+        "result": "ready"
+      },
+      {
+        "class": "CreateSubmissionHistoryJob",
+        "jid": null,
+        "jidAvailability": "Not recorded before consuming the queue entry; no identifier is inferred.",
+        "arguments": [4, 1789967910, false],
+        "result": "retained history available",
+        "argumentProvenance": "Task id and submission timestamp verified from the persisted history; test_submission=false from the originating job."
+      }
+    ],
+    "applicationImage": "ontrack-unit-hub-release-preview-api:20260914",
+    "texImage": "ontrack-texlive-release-validation:20260824",
+    "taskState": "ready",
+    "generatedPdfBytes": 188664,
+    "generatedPdfSha256": "cabee91d2292ad4711d14f04a5b84c5395dd1603494f99cf9388ec90a912fdf6"
+  },
+  "roundTrip": {
+    "storedEntry": "000-csv.xlsx",
+    "originalSha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c",
+    "retainedHistorySha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c",
+    "browserDownloadedSha256": "eace58411a30588aabf716056e0327270511bbb21bfaf63cfebdd84ea57cb47c",
+    "identical": true,
+    "uiTaskStatus": "Awaiting Feedback",
+    "uiVersionLabel": "Current submission",
+    "browserEvidence": "task-upload-browser/verify-submission-history-result.json",
+    "browserResult": "passed"
+  },
+  "validation": {
+    "focusedTests": 25,
+    "assertions": 116,
+    "failures": 0,
+    "errors": 0,
+    "technicalGithubCi": "All five unit shards and aggregate, RuboCop, image builds and CodeQL passed at the exact API source."
+  },
+  "limitations": [
+    "Synthetic local environment, not production.",
+    "Targeted jobs were invoked directly; this does not measure Sidekiq scheduling, concurrency or production worker reliability.",
+    "Sidekiq JIDs were not retained; task/history IDs and hashes are recorded.",
+    "Seeded report/history used for other theme screens are separate from this actual task4 upload."
+  ],
+  "historicalProxyEvidence": {
+    "pullRequest": "https://github.com/ontrack-features-t2-2026/doubtfire-deploy/pull/37",
+    "committedEvidenceSha": "df4519b16acf66cca68ce0eabfcd08f45ea3907b",
+    "executedDeploySha": "8038777309ce98eba8bc7c2f6884f07955472c71",
+    "executedApiSha": "6ca598ceac0914e3ba25f907b57a64e1d923ada7",
+    "file": "production/tests/results/upload-boundaries-20260921.jsonl",
+    "url": "https://github.com/ontrack-features-t2-2026/doubtfire-deploy/blob/df4519b16acf66cca68ce0eabfcd08f45ea3907b/production/tests/results/upload-boundaries-20260921.jsonl",
+    "notesUrl": "https://github.com/ontrack-features-t2-2026/doubtfire-deploy/blob/df4519b16acf66cca68ce0eabfcd08f45ea3907b/production/UPLOAD-LIMITS.md",
+    "checks": 9,
+    "scope": "Historical direct/proxied API boundary probe on its recorded source; not rerun against 7722612."
+  }
+}

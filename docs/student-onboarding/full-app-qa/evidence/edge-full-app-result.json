@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-21",
+  "webSource": "a9e7af46f",
+  "apiSource": "d7f7a5b9",
+  "tutorialVersion": 1,
+  "browser": "edge",
+  "browserVersion": "153.0.4234.32",
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "result": "passed",
+  "checks": [
+    "actual unit selector navigates to the seeded student dashboard",
+    "all four production steps and completion work against actual API data",
+    "replay closes and returns focus to the real account-menu trigger"
+  ],
+  "pageErrors": [],
+  "capture": "headless Playwright check of full application",
+  "secondHumanReview": "pending"
+}

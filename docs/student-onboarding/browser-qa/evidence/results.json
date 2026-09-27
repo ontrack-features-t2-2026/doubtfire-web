@@ -1,0 +1,90 @@
+[
+  {
+    "browser": "chrome",
+    "version": "153.0.8010.48",
+    "result": "passed",
+    "checks": [
+      "automatic offer after synthetic empty history and profile completion",
+      "welcome Tab wraps within modal controls",
+      "guided step allows underlying controls and browser Back",
+      "Escape opens confirmation and Escape returns to the guided step",
+      "four steps and completion persist exact minimal schema",
+      "manual replay preserves completed state",
+      "320px panel stays within viewport; reduced-motion animation disabled",
+      "200% CSS zoom panel remains within viewport (not native browser zoom)",
+      "disabled: safe suppression/fallback",
+      "role=Tutor: safe suppression/fallback",
+      "history: safe suppression/fallback",
+      "storageFailure: safe suppression/fallback",
+      "noUnits&missing: safe suppression/fallback",
+      "reload resumes; skip reoffers next reload; permanent dismissal survives replay",
+      "real pre-boot theme marker selects dark theme; screenshot captured"
+    ]
+  },
+  {
+    "browser": "edge",
+    "version": "153.0.4234.32",
+    "result": "passed",
+    "checks": [
+      "automatic offer after synthetic empty history and profile completion",
+      "welcome Tab wraps within modal controls",
+      "guided step allows underlying controls and browser Back",
+      "Escape opens confirmation and Escape returns to the guided step",
+      "four steps and completion persist exact minimal schema",
+      "manual replay preserves completed state",
+      "320px panel stays within viewport; reduced-motion animation disabled",
+      "200% CSS zoom panel remains within viewport (not native browser zoom)",
+      "disabled: safe suppression/fallback",
+      "role=Tutor: safe suppression/fallback",
+      "history: safe suppression/fallback",
+      "storageFailure: safe suppression/fallback",
+      "noUnits&missing: safe suppression/fallback",
+      "reload resumes; skip reoffers next reload; permanent dismissal survives replay",
+      "real pre-boot theme marker selects dark theme; screenshot captured"
+    ]
+  },
+  {
+    "browser": "firefox",
+    "version": "155.0",
+    "result": "passed",
+    "checks": [
+      "automatic offer after synthetic empty history and profile completion",
+      "welcome Tab wraps within modal controls",
+      "guided step allows underlying controls and browser Back",
+      "Escape opens confirmation and Escape returns to the guided step",
+      "four steps and completion persist exact minimal schema",
+      "manual replay preserves completed state",
+      "320px panel stays within viewport; reduced-motion animation disabled",
+      "200% CSS zoom panel remains within viewport (not native browser zoom)",
+      "disabled: safe suppression/fallback",
+      "role=Tutor: safe suppression/fallback",
+      "history: safe suppression/fallback",
+      "storageFailure: safe suppression/fallback",
+      "noUnits&missing: safe suppression/fallback",
+      "reload resumes; skip reoffers next reload; permanent dismissal survives replay",
+      "real pre-boot theme marker selects dark theme; screenshot captured"
+    ]
+  },
+  {
+    "browser": "webkit",
+    "version": "26.6",
+    "result": "passed",
+    "checks": [
+      "automatic offer after synthetic empty history and profile completion",
+      "welcome Tab wraps within modal controls",
+      "guided step allows underlying controls and browser Back",
+      "Escape opens confirmation and Escape returns to the guided step",
+      "four steps and completion persist exact minimal schema",
+      "manual replay preserves completed state",
+      "320px panel stays within viewport; reduced-motion animation disabled",
+      "200% CSS zoom panel remains within viewport (not native browser zoom)",
+      "disabled: safe suppression/fallback",
+      "role=Tutor: safe suppression/fallback",
+      "history: safe suppression/fallback",
+      "storageFailure: safe suppression/fallback",
+      "noUnits&missing: safe suppression/fallback",
+      "reload resumes; skip reoffers next reload; permanent dismissal survives replay",
+      "real pre-boot theme marker selects dark theme; screenshot captured"
+    ]
+  }
+]

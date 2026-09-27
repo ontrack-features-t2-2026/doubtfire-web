@@ -1,0 +1,5 @@
+rule_id,raw_messages,distinct_elements,affected_files
+@angular-eslint/template/mouse-events-have-key-events,0,0,0
+@angular-eslint/template/label-has-associated-control,11,11,4
+@angular-eslint/template/click-events-have-key-events,12,12,10
+@angular-eslint/template/interactive-supports-focus,14,14,12

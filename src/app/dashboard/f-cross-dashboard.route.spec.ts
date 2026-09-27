@@ -23,6 +23,7 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
 
   const globalStateMock = {
     isLoadingSubject: new BehaviorSubject<boolean>(false),
+    projectLoadErrorSubject: new BehaviorSubject<boolean>(false),
     loadedUnitRoles: {currentValues: []},
     currentUserProjects: {values: of([])},
     onLoad: (run: () => void) => run(),
@@ -30,12 +31,14 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
 
   const projectServiceMock = {
     query: vi.fn().mockReturnValue(of([])),
+    fetchAll: vi.fn().mockReturnValue(of([])),
   };
 
   beforeEach(() => {
     userServiceMock.currentUser.role = 'Student';
     isAuthorisedMock.mockClear();
     projectServiceMock.query.mockClear();
+    projectServiceMock.fetchAll.mockClear();
 
     TestBed.configureTestingModule({
       providers: [
@@ -65,6 +68,10 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
           useValue: {taskStatusUpdated$: EMPTY},
         },
       ],
+    }).overrideComponent(CrossDashboardComponent, {
+      // Route/guard and query-state integration is covered here. The component
+      // suite renders the actual template with its Angular Material imports.
+      set: {template: '<p>Cross-project dashboard</p>', styles: []},
     });
   });
 
@@ -103,7 +110,7 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
         CrossDashboardComponent,
       );
       expect(component.unitScope).toBe(scope);
-      expect(projectServiceMock.query).toHaveBeenCalledTimes(1);
+      expect(projectServiceMock.fetchAll).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -113,7 +120,7 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
       const harness = await RouterTestingHarness.create();
       const component = await harness.navigateByUrl(url, CrossDashboardComponent);
       expect(component.unitScope).toBe('active');
-      expect(projectServiceMock.query).not.toHaveBeenCalled();
+      expect(projectServiceMock.fetchAll).not.toHaveBeenCalled();
     },
   );
 
@@ -128,7 +135,7 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
     expect(component.unitScope).toBe('all');
     await harness.navigateByUrl('/dashboard', CrossDashboardComponent);
     expect(component.unitScope).toBe('active');
-    expect(projectServiceMock.query).toHaveBeenCalledTimes(1);
+    expect(projectServiceMock.fetchAll).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the open phone card when unrelated query parameters change', async () => {
@@ -137,7 +144,7 @@ describe('Cross-Project Dashboard route (/dashboard)', () => {
     component.expandedMobileProjectId = 42;
     await harness.navigateByUrl('/dashboard?scope=all&tab=tasks', CrossDashboardComponent);
     expect(component.expandedMobileProjectId).toBe(42);
-    expect(projectServiceMock.query).toHaveBeenCalledTimes(1);
+    expect(projectServiceMock.fetchAll).toHaveBeenCalledTimes(1);
   });
 
   it('writes scope changes while preserving unrelated query parameters and the fragment', async () => {

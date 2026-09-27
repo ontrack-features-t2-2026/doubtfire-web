@@ -57,6 +57,8 @@
     "!/beta/**",
     "!/beta",
     "!/legacy",
-    "!/legacy/**"
+    "!/legacy/**",
+    "!/api",
+    "!/api/**"
   ]
 }

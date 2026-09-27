@@ -1,0 +1,12 @@
+- dialog "Choose Your Unit":
+  - heading "Choose Your Unit" [level=2]
+  - status: "Step 1 of 4: Choose Your Unit"
+  - paragraph: Use the unit selector to open the unit you want to work on.
+  - button "Back" [disabled]
+  - button "Next"
+  - button "Skip for now"
+  - button "Close"
+  - button "Find unit selector"
+  - paragraph:
+    - link "Written tutorial guide (opens in a new tab)":
+      - /url: https://github.com/ontrack-features-t2-2026/github-guide/blob/main/docs/student-onboarding/student-guide.md

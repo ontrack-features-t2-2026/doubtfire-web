@@ -1,0 +1,34 @@
+Native Chrome accessibility inspection — 21 September 2026
+Full application default/development build: local combined a9e7af46f3eb17c4fefbac168a46688c73496286
+API: d7f7a5b9c2d34ef279ac3a70bc58823def64005c
+Fresh synthetic account; no project history. No real student data.
+
+Observed sequence through the native computer-use accessibility interface:
+1. /sign_in accepted the synthetic account. Stay logged in was unchecked.
+2. /welcome showed the existing profile form and no tutorial.
+   Required synthetic first/last name, student ID and example.invalid email were already populated.
+   Research-statistics checkbox was unchecked; no push permission was requested.
+3. Confirm Account was selected. The real profile request completed and navigation reached /home.
+4. Automatic tutorial welcome appeared; focused element was the heading Welcome to OnTrack.
+   Exposed names: Welcome to OnTrack; Start tutorial; Skip for now; Close;
+   Written tutorial guide (opens in a new tab).
+5. Native browser zoom shortcut was applied five times from100%.
+   Browser accessibility output explicitly reported: button Zoom: 200%.
+   The native screenshot showed the heading, all three controls and written guide within the viewport.
+6. The page-only screenshot tutorial-v1-20260921-native-200.png was saved through
+   DevTools' Capture screenshot command, with native zoom still200%.
+
+The screenshot has no browser-profile chrome or real account/assessment information.
+The foreground Chrome process's exact version was not queried before interruption;
+the separate headless Chrome recording reports153.0.8010.48.
+
+Limit: the Mac locked before closing DevTools/restoring zoom or proceeding with
+native keyboard-only steps. Automatic unlock failed. No native restore action
+is claimed. After unlocking, close DevTools, select the localhost page, press Cmd+0
+and close only the dedicated QA window. No OS permission/security setting was changed.
+The four-step recording/checks were then completed in independent headless contexts.
+
+Console observations in the native profile included installed-extension errors
+and the default-build missing service-worker warning. This is not zero-console-error
+or production/service-worker acceptance evidence. The clean headless recording
+recorded no pageerror events. No human screen-reader or reviewer approval is claimed.

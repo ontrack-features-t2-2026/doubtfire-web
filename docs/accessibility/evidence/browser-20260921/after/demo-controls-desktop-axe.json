@@ -1,0 +1,137 @@
+{
+  "url": "/demo-controls",
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": [
+        {
+          "target": [
+            ".ppi-preview__safety"
+          ],
+          "html": "<p _ngcontent-ng-c2683506703=\"\" role=\"note\" class=\"ppi-preview__safety\"> These preview states are local visual fixtures. Production always uses the authenticated, privacy-filtered API response. </p>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #52525b, background color: #1f2530, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".push-preview__notification > strong"
+          ],
+          "html": "<strong _ngcontent-ng-c2683506703=\"\">OnTrack demo</strong>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #e6e8ec, background color: #ffffff, font size: 10.5pt (14px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".push-preview__notification > span:nth-child(2)"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">Feedback is ready</span>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #e6e8ec, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".push-preview__notification > span:nth-child(3)"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">New feedback is available for Demo Task 2.1P.</span>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #e6e8ec, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".push-preview__safety"
+          ],
+          "html": "<p _ngcontent-ng-c2683506703=\"\" role=\"note\" class=\"push-preview__safety\"> This preview never calls Notification permission APIs, Angular SwPush, or <code _ngcontent-ng-c2683506703=\"\">/push_subscriptions</code>. </p>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #52525b, background color: #1f2530, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "code"
+          ],
+          "html": "<code _ngcontent-ng-c2683506703=\"\">/push_subscriptions</code>",
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #52525b, background color: #1f2530, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "aria-prohibited-attr",
+      "nodes": [
+        {
+          "target": [
+            ".ppi-preview__choices"
+          ],
+          "html": "<div _ngcontent-ng-c2683506703=\"\" aria-label=\"Choose a peer progress preview state\" class=\"ppi-preview__choices\">",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute is not well supported on a div with no valid role attribute."
+        },
+        {
+          "target": [
+            ".ppi-preview-card__value"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\" aria-label=\"Peer completion progress at your target grade\" class=\"ppi-preview-card__value\"><strong _ngcontent-ng-c2683506703=\"\">10%</strong><span _ngcontent-ng-c2683506703=\"\">of peers have completed this task</span></span>",
+          "failureSummary": "Fix all of the following:\n  aria-label attribute is not well supported on a span with no valid role attribute."
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#ppi-preview-card-title"
+          ],
+          "html": "<strong _ngcontent-ng-c2683506703=\"\" id=\"ppi-preview-card-title\">Peer Progress Indicator</strong>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__identity > span:nth-child(2) > small"
+          ],
+          "html": "<small _ngcontent-ng-c2683506703=\"\">Anonymous peers at your target grade</small>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__toggle > span:nth-child(2)"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">Advanced</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__value > strong"
+          ],
+          "html": "<strong _ngcontent-ng-c2683506703=\"\">10%</strong>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__value > span"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">of peers have completed this task</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__scale > span:nth-child(1)"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">10%</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        },
+        {
+          "target": [
+            ".ppi-preview-card__scale > span:nth-child(2)"
+          ],
+          "html": "<span _ngcontent-ng-c2683506703=\"\">Peer cohort</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+        }
+      ]
+    }
+  ],
+  "passes": 37
+}

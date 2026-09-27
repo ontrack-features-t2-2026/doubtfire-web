@@ -1,6 +1,7 @@
 :host {
   display: block;
   height: auto;
+  min-width: 0;
 }
 
 form,
@@ -14,6 +15,10 @@ form,
   padding: 16px clamp(16px, 4vw, 28px) calc(3rem + env(safe-area-inset-bottom));
 }
 
+.main,
+mat-form-field {
+  min-width: 0;
+}
 
 h1 {
   // THM-M01: was hardcoded black.
@@ -105,6 +110,14 @@ section {
 }
 
 .push-opt-in {
+  button {
+    max-width: 100%;
+    height: auto;
+    min-height: 36px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   // The rule above sizes the profile avatar icon at 50px. Left alone it would
   // apply to the icon inside this button too and blow the button apart.
   .mat-icon {

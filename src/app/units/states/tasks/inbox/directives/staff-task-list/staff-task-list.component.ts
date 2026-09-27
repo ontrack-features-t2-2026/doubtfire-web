@@ -115,7 +115,6 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
   loading = true;
   /** The last task query failed, so the list offers a retry instead of a blank panel. */
   loadError = false;
-  skeletonRows = Array.from({length: 12}, (_, index) => index);
 
   // The list is drawn twice, once for wide screens and once for phones, so each copy
   // needs its own id for the filter toggle to point at.
@@ -461,7 +460,8 @@ export class StaffTaskListComponent implements OnInit, OnChanges, OnDestroy {
    * task and anything that needs attention in its name and tooltip.
    */
   public narrowRowLabel(task: Task): string {
-    const parts = [task.project?.student?.name, task.definition?.abbreviation];
+    const student = task.project?.student;
+    const parts = [student?.displayName || student?.name, task.definition?.abbreviation];
     if (task.numNewComments > 0) {
       parts.push(`${task.numNewComments} new comment${task.numNewComments === 1 ? '' : 's'}`);
     }

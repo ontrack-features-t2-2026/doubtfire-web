@@ -1,0 +1,148 @@
+- link:
+  - /url: /home
+- text: SYN101
+- button "Dashboard"
+- button "Switch to light theme"
+- button "Notifications"
+- button "Show my QR code"
+- button "Open your calendar subscription settings"
+- button "Open account menu":
+  - img: SS
+- textbox "Search tasks":
+  - /placeholder: Search Tasks
+- button "Task list filters"
+- navigation:
+  - button "Spreadsheet Investigation 1.1P - Pass Task Start now Working On It 2 new comments Due soon":
+    - text: Spreadsheet Investigation 1.1P - Pass Task Start now
+    - img "Working On It"
+    - img "2 new comments": "2"
+    - img "Due soon"
+  - button "Chair Save Validation 9.9P - Pass Task Start now Not Started Due soon":
+    - text: Chair Save Validation 9.9P - Pass Task Start now
+    - img "Not Started"
+    - img "Due soon"
+  - button "Report and Feedback 1.2P - Pass Task Start now Resubmit Due soon" [pressed]:
+    - text: Report and Feedback 1.2P - Pass Task Start now
+    - img "Resubmit"
+    - img "Due soon"
+  - button "Planning Reflection 2.1P - Pass Task Start now Working On It 2 new comments":
+    - text: Planning Reflection 2.1P - Pass Task Start now
+    - img "Working On It"
+    - img "2 new comments": "2"
+  - link "Create Portfolio Create and submit your portfolio Not Started":
+    - /url: /projects/1/portfolio
+    - text: Create Portfolio Create and submit your portfolio
+    - img "Not Started"
+- tablist:
+  - tab "Task Details" [selected]
+  - tab "Task Sheet"
+  - tab "Your Submission"
+- tabpanel "Task Details"
+- button "Task actions"
+- text: Task Learning Outcomes These outcomes describe the key skills and knowledge you are aiming to achieve by completing this task.
+- table:
+  - rowgroup:
+    - row "O5 Quis veniam eos amet. O1":
+      - cell "O5"
+      - cell "Quis veniam eos amet."
+      - cell "O1":
+        - row "O1":
+          - gridcell "O1"
+    - row "O6 Cupiditate explicabo omnis excepturi. O2":
+      - cell "O6"
+      - cell "Cupiditate explicabo omnis excepturi."
+      - cell "O2":
+        - row "O2":
+          - gridcell "O2"
+- paragraph: 1.2P
+- text: Report and Feedback
+- paragraph: Synthetic task for browser verification. Upload the requested evidence and discuss the result.
+- text: "Complete By:"
+- slider "Complete By:" [disabled]: "4"
+- text: 27 Sep
+- button "Edit in Task Planner"
+- paragraph:
+  - strong: "Effective submission date: Sunday, September 27, 2026."
+  - text: Your planned submission date.
+- list:
+  - listitem: Pass Task
+  - listitem: I'm planning to start this task by Thu 10 Sep.
+  - listitem: I'm aiming to submit this task by Sun 27 Sep.
+  - listitem: To receive feedback, I must submit this task by Sun 4 Oct.
+- button "Task Sheet"
+- link "Add to Google Calendar, opens in a new tab":
+  - /url: https://calendar.google.com/calendar/render?action=TEMPLATE&text=SYN101%3A%201.2P%3A%20Report%20and%20Feedback&dates=20260927%2F20260928
+  - text: Add to Google Calendar
+- text: Task status
+- combobox "Task status":
+  - img "Resubmit"
+  - text: Resubmit
+- paragraph: It looks like your work is on the right track, but it does require some extra work to achieve the required standard. Review your submission and the feedback from your tutor. Fix the issues identified, and resubmit it to be reassessed. Make sure to check your submission thoroughly, and note any limit on the number of times each task can be reassessed.
+- button "Upload Submission"
+- button "More task options"
+- text: Aim To Complete Soon - Due in 6 Days
+- paragraph:
+  - text: Your target due date for this task is
+  - strong: 27 Sep
+  - text: . You should aim to complete this task before then to keep your progress on track.
+- text: Submission
+- paragraph: You can choose to download your submission or the files you uploaded below.
+- paragraph:
+  - text: You uploaded this submission
+  - strong: 01/01/1970
+  - text: .
+- paragraph: If you feel there has been an error in your submission, you can request to regenerate your submission under the "Actions" dropdown menu.
+- button "Download submission"
+- button "More download options"
+- text: Previous submissions
+- paragraph: Retained versions, newest first. Only files selected for submission history are included.
+- status
+- list:
+  - listitem:
+    - strong: Previous submission
+    - text: — latest retained archive
+    - paragraph: "Archive file: submission-3.zip"
+    - paragraph:
+      - time: Sep 20, 2026, 2:46:58 PM
+    - button "Download archived submission Sep 20, 2026, 2:46:58 PM": Download files
+  - listitem:
+    - strong: Previous submission
+    - paragraph: "Archive file: submission-2.zip"
+    - paragraph:
+      - time: Sep 19, 2026, 2:46:58 PM
+    - button "Download archived submission Sep 19, 2026, 2:46:58 PM": Download files
+  - listitem:
+    - strong: Previous submission
+    - paragraph: "Archive file: submission-1.zip"
+    - paragraph:
+      - time: Sep 18, 2026, 2:46:58 PM
+    - paragraph: Files unavailable. This archive may have been removed, may be incomplete, or may use an older format.
+- button "Refresh history"
+- article "Peer Progress Indicator":
+  - text: Peer Progress Indicator Anonymous peers at your target grade
+  - strong: Peer progress is unavailable for this unit
+  - text: Enable demo mode to show live peer comparison data.
+- paragraph: Synthetic Tutor Today at 2:45 PM
+- img: ST
+- paragraph: "Synthetic tutor feedback: please check the evidence for Report and Feedback."
+- button "Reply to this comment"
+- paragraph: Synthetic Student Today at 2:45 PM
+- paragraph: I will review the feedback and upload an updated version.
+- button "Reply to this comment"
+- button "Delete this comment"
+- paragraph: Synthetic Tutor Today at 2:46 PM
+- img: ST
+- paragraph: "Synthetic tutor feedback: please check the evidence for Report and Feedback."
+- button "Reply to this comment"
+- paragraph: Synthetic Student Today at 2:46 PM
+- paragraph: I will review the feedback and upload an updated version.
+- button "Reply to this comment"
+- button "Delete this comment"
+- status: "PDF: PDF; Document: DOCX; Spreadsheet: CSV, XLSX; Image: PNG, BMP, TIFF, TIF, JPEG, JPG, GIF; Audio: WAV, OGG, MP3, MP4, WEBM, AAC, PCM, AIFF, FLAC, WMA, ALAC. Each file must be smaller than 30 MB. Select up to 5 files; confirm each separately."
+- form:
+  - button "Attach a file"
+  - button "Record audio feedback"
+  - textbox "Task comment":
+    - /placeholder: Aa
+    - text: Aa
+  - button "Choose an emoji"

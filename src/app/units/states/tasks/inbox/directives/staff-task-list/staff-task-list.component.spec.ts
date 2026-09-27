@@ -10,7 +10,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
 import {ActivatedRoute, Router} from '@angular/router';
 import {EMPTY, Subject, of, throwError} from 'rxjs';
-import {UserService} from 'src/app/api/models/doubtfire-model';
+import {User, UserService} from 'src/app/api/models/doubtfire-model';
 import {Task} from 'src/app/api/models/task';
 import {Unit} from 'src/app/api/models/unit';
 import {UnitRole} from 'src/app/api/models/unit-role';
@@ -21,6 +21,7 @@ import {CsvResultModalService} from 'src/app/common/modals/csv-result-modal/csv-
 import {CsvUploadModalService} from 'src/app/common/modals/csv-upload-modal/csv-upload-modal.service';
 import {SidekiqProgressModalService} from 'src/app/common/modals/sidekiq-progress-modal/sidekiq-progress-modal.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {SkeletonLoaderComponent} from 'src/app/common/skeleton-loader/skeleton-loader.component';
 import {SelectedTaskService} from 'src/app/projects/states/dashboard/selected-task.service';
 import {StaffTaskListComponent} from './staff-task-list.component';
 
@@ -449,6 +450,7 @@ describe('StaffTaskListComponent rendered empty state', () => {
         // The real one, not a stub: these tests assert the text it renders and that
         // its icon is decorative, which is exactly what it is responsible for.
         EmptyStateComponent,
+        SkeletonLoaderComponent,
       ],
       providers: [
         {provide: SelectedTaskService, useValue: {setSelectedTask: () => {}}},
@@ -509,6 +511,9 @@ describe('StaffTaskListComponent rendered empty state', () => {
 
   it('keeps the empty state hidden while the list is loading', () => {
     expect(emptyState()).toBeNull();
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).not.toBeNull();
+    finishLoading();
+    expect(fixture.nativeElement.querySelector('f-skeleton-loader')).toBeNull();
   });
 
   it('keeps the empty state hidden before a result is available', () => {
@@ -522,6 +527,7 @@ describe('StaffTaskListComponent rendered empty state', () => {
       id: 1,
       taskKeyToIdString: () => 'task-1',
       statusClass: () => 'need-help',
+      statusLabel: () => 'Need Help',
       project: {student: {name: 'A Student'}},
       definition: {abbreviation: '1.1P', name: 'A Task'},
       daysSinceSubmission: () => 0,
@@ -540,5 +546,43 @@ describe('StaffTaskListComponent rendered empty state', () => {
     expect(status.querySelector('p').textContent.trim()).toBe(component.emptyState.message);
     expect(status.querySelector('p').classList.contains('sr-only')).toBe(true);
     expect(status.querySelector('p').hasAttribute('aria-hidden')).toBe(false);
+  });
+
+  it.each([
+    {displayName: 'Demo Student'},
+    Object.assign(new User(), {firstName: 'Demo', lastName: 'Student'}),
+  ])('names native task rows with an optional display name or the model name', async (student) => {
+    const task = {
+      id: 1,
+      taskKeyToIdString: () => 'task-1',
+      statusClass: () => 'need-help',
+      statusLabel: () => 'Need Help',
+      project: {student},
+      definition: {abbreviation: '1.1P', name: 'Demonstration task'},
+      daysSinceSubmission: () => 0,
+      hasGrade: () => false,
+      hasQualityPoints: () => false,
+    } as unknown as Task;
+    finishLoading([task]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    // The row button marks the open task with aria-current, so it is found by its summary.
+    const select = fixture.nativeElement.querySelector(
+      'button[aria-describedby^="task-summary-"]',
+    ) as HTMLButtonElement;
+    expect(select).toBeTruthy();
+    expect(select.getAttribute('aria-label')).toBe('Demo Student, 1.1P: Demonstration task');
+    expect(select.textContent).toContain('Demo Student');
+    expect(select.querySelector('h4')).toBeNull();
+    expect(select.querySelector('button, a, input, [role="option"]')).toBeNull();
+    expect(select.tabIndex).toBe(0);
+    const summary = document.getElementById(select.getAttribute('aria-describedby'));
+    expect(summary.textContent).toContain('Need Help');
+    const activate = vi.spyOn(component, 'setSelectedTask').mockImplementation(() => {});
+    select.click();
+    expect(activate).toHaveBeenCalledExactlyOnceWith(task);
+    component.isNarrow = true;
+    fixture.detectChanges();
+    expect(select.getAttribute('aria-label')).toContain('Demo Student');
   });
 });

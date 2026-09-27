@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
@@ -16,6 +16,7 @@ import {By} from '@angular/platform-browser';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {Project} from 'src/app/api/models/project';
 import {Unit} from 'src/app/api/models/unit';
+import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {EmptyStateComponent} from 'src/app/common/empty-state/empty-state.component';
@@ -376,5 +377,78 @@ describe('PortfoliosListComponent', () => {
     ]);
     expect(progress.segments[0].color).toBe('var(--ot-status-complete-graphic)');
     expect(progress.label).toBe('Task progress: Complete 100%');
+  });
+});
+
+function projectStub(name: string): Project {
+  return {
+    student: {name, username: name.toLowerCase()},
+    hasPortfolio: true,
+    hasTutor: () => true,
+    tutorNames: () => '',
+    shortTutorialDescription: () => '',
+    taskStats: [],
+  } as unknown as Project;
+}
+
+describe('PortfoliosListComponent empty state', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [PortfoliosListComponent],
+      imports: [MatTableModule, EmptyStateComponent],
+      providers: [
+        {
+          provide: TaskService,
+          useValue: {statusColors: new Map(), statusLabels: new Map()},
+        },
+        {provide: UserService, useValue: {}},
+        {provide: GradeService, useValue: {gradeValuesFor: () => [], gradeLabel: () => ''}},
+        {provide: FileDownloaderService, useValue: {}},
+        {provide: UnitService, useValue: {}},
+        {provide: AlertService, useValue: {}},
+        {provide: SidekiqProgressModalService, useValue: {}},
+        {provide: D2lTransferModal, useValue: {}},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  // The loading rows are drawn in the template, and the table is hidden with a class so
+  // the sort survives, so this checks the placeholder text and the class.
+  it('renders the empty state only while the filtered list has no rows', () => {
+    const fixture = TestBed.createComponent(PortfoliosListComponent);
+    const root = fixture.nativeElement as HTMLElement;
+    fixture.componentRef.setInput('unit', {
+      students: [],
+      hasD2lMapping: () => false,
+    } as unknown as Unit);
+
+    fixture.detectChanges();
+
+    expect(root.querySelector('f-empty-state')).toBeNull();
+    expect(root.textContent).toContain('Loading students');
+
+    fixture.componentRef.setInput('loading', false);
+    fixture.detectChanges();
+
+    const emptyState = root.querySelector('f-empty-state') as HTMLElement;
+    const table = root.querySelector('table') as HTMLTableElement;
+    const tableScrollContainer = table.parentElement as HTMLDivElement;
+
+    expect(emptyState).toBeTruthy();
+    expect(root.textContent).not.toContain('Loading students');
+    expect(emptyState.closest('table')).toBeNull();
+    expect(tableScrollContainer.classList.contains('hidden')).toBe(true);
+
+    fixture.componentRef.setInput('unit', {
+      students: [projectStub('Cy Cole')],
+      hasD2lMapping: () => false,
+    } as unknown as Unit);
+    fixture.detectChanges();
+
+    expect(root.querySelector('f-empty-state')).toBeNull();
+    expect(tableScrollContainer.classList.contains('hidden')).toBe(false);
   });
 });

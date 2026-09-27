@@ -1,0 +1,12 @@
+- dialog "Use the Calendar":
+  - heading "Use the Calendar" [level=2]
+  - status: "Step 4 of 4: Use the Calendar"
+  - paragraph: Open the calendar options to download or subscribe to important unit dates.
+  - button "Back"
+  - button "Finish"
+  - button "Skip for now"
+  - button "Close"
+  - button "Find Calendar"
+  - paragraph:
+    - link "Written tutorial guide (opens in a new tab)":
+      - /url: https://github.com/ontrack-features-t2-2026/github-guide/blob/main/docs/student-onboarding/student-guide.md

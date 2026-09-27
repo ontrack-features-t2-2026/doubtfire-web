@@ -9,6 +9,7 @@ import {NotificationsPageComponent} from './common/notifications-page/notificati
 import {ScormPlayerComponent} from './common/scorm-player/scorm-player.component';
 import {SubmissionFilesDownloadComponent} from './common/submission-files-download/submission-files-download.component';
 import {SuccessCloseComponent} from './common/success-close/success-close.component';
+import {courseFlowDirtyGuard} from './courseflow/coursemap/course-flow-dirty.guard';
 import {CrossDashboardComponent} from './dashboard/f-cross-dashboard.component';
 import {DemoControlsComponent} from './demo/demo-controls/demo-controls.component';
 import {demoToolsGuard} from './demo/demo-tools.guard';
@@ -69,6 +70,17 @@ export const routes: Routes = [
   {path: 'edit_profile', component: EditProfileComponent},
   {path: 'verify_additional_email', component: VerifyAdditionalEmailComponent},
   {path: 'notifications', component: NotificationsPageComponent},
+  ...['coursemap', 'coursemap/:courseMapId'].map((path) => ({
+    path,
+    loadComponent: () =>
+      import('./courseflow/coursemap/coursemap.component').then((m) => m.CoursemapComponent),
+    canActivate: [roleWhitelistGuard],
+    canDeactivate: [courseFlowDirtyGuard],
+    data: {
+      pageTitle: 'Course Flow',
+      roleWhitelist: ['Student', 'Tutor', 'Convenor', 'Admin', 'Auditor'],
+    },
+  })),
   {
     path: 'unit-hub',
     loadComponent: () => import('./unit-hub/unit-hub.component').then((m) => m.UnitHubComponent),

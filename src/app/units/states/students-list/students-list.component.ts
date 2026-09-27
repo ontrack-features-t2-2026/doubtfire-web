@@ -115,15 +115,17 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
     this.subscriptions.push(
       this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
+        this.loadSub?.unsubscribe();
+        this.studentCacheSub?.unsubscribe();
         if (!unit) {
-          this.loadingStudents = false;
+          this.loadingStudents = true;
+          this.loadError = false;
           return;
         }
 
         this.unit = unit;
         this.staffFilter = unit.myRole === 'Tutor' ? 'mine' : 'all';
 
-        this.studentCacheSub?.unsubscribe();
         this.studentCacheSub = this.unit.studentCache.values.subscribe(() => {
           this.updateSuggestions();
           this.updateDataSource();
@@ -296,7 +298,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     project.switchToCampus(campus).subscribe({
       next: (updated: Project) => {
-        this.alerts.success(`Campus changed for ${updated.student.name}`, 2000);
+        this.alerts.success(`Campus changed for ${updated.student.displayName}`, 2000);
       },
       error: (message) => {
         project.campus = originalCampus;
@@ -444,7 +446,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'username':
         return project.student?.username?.toLowerCase() || '';
       case 'name':
-        return project.student?.name?.toLowerCase() || '';
+        return project.student?.displayName?.toLowerCase() || '';
       case 'stats':
         return project.orderScale ?? 0;
       case 'grade':
@@ -458,7 +460,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'tutorial':
         return project.shortTutorialDescription().toLowerCase();
       default:
-        return project.student?.name?.toLowerCase() || '';
+        return project.student?.displayName?.toLowerCase() || '';
     }
   }
 
@@ -477,7 +479,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private csvRow(project: Project): string[] {
     const row = [
       project.student?.username || '',
-      project.student?.name || '',
+      project.student?.displayName || '',
       project.student?.email || '',
       String(project.portfolioStatus ?? ''),
     ];

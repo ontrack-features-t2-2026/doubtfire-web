@@ -1,0 +1,52 @@
+- banner:
+  - link "Home":
+    - /url: /home
+  - text: SYN101
+  - button "Inbox"
+  - button "Switch to light theme"
+  - button "Notifications"
+  - button "Show my QR code"
+  - button "Open your calendar subscription settings"
+  - button "Open account menu":
+    - img: ST
+- main:
+  - textbox "Search the inbox":
+    - /placeholder: Search Inbox
+  - button "Inbox search dropdown"
+  - button "Refresh Inbox"
+  - text: 4 Tasks
+  - 'button "Synthetic Student, 1.2P: Report and Feedback"':
+    - img: SS
+    - text: Synthetic Student 1.2P - Report and Feedback
+    - img "Resubmit"
+  - text: Resubmit. 2 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Student, 2.1P: Planning Reflection"':
+    - img: SS
+    - text: Synthetic Student 2.1P - Planning Reflection
+    - img "Working On It"
+  - text: Working On It. 2 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Student, 1.1P: Spreadsheet Investigation"':
+    - img: SS
+    - text: Synthetic Student 1.1P - Spreadsheet Investigation
+    - img "Working On It"
+  - text: Working On It. 3 new comments.
+  - button "task overflow"
+  - 'button "Synthetic Other Stude, 1.1P: Spreadsheet Investigation"':
+    - img: SO
+    - text: Synthetic Other Stude 1.1P - Spreadsheet Investigation
+    - img "Awaiting Feedback"
+  - text: Awaiting Feedback. 96 new comments.
+  - button "task overflow"
+  - paragraph: Select a task to review
+  - status:
+    - paragraph: No comments on this task yet.
+  - status: "PDF: PDF; Document: DOCX; Spreadsheet: CSV, XLSX; Image: PNG, BMP, TIFF, TIF, JPEG, JPG, GIF; Audio: WAV, OGG, MP3, MP4, WEBM, AAC, PCM, AIFF, FLAC, WMA, ALAC. Each file must be smaller than 30 MB. Select up to 5 files; confirm each separately."
+  - button "Mark as Redo" [disabled]
+  - button "Mark as Resubmit" [disabled]
+  - button "Mark as Discuss" [disabled]
+  - button "Mark as Complete" [disabled]
+  - button "Submission Options" [disabled]
+  - button "Download submitted files" [disabled]
+  - button "Download Submission" [disabled]

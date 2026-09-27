@@ -40,6 +40,7 @@ export class TaskDefinitionService extends CachedEntityService<TaskDefinition> {
       'hasJplagReport',
       'assessInPortfolioOnly',
       'requiresDiscussion',
+      'resubmissionExtensionsEnabled',
       {
         keys: 'targetDate',
         toEntityFn: MappingFunctions.mapDateToEndOfDay,

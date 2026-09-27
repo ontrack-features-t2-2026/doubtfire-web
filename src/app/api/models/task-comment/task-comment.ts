@@ -58,7 +58,9 @@ export class TaskComment extends Entity {
   }
 
   public get isBubbleComment(): boolean {
-    return ['text', 'discussion', 'audio', 'image', 'pdf', 'document'].includes(this.commentType);
+    return ['text', 'discussion', 'audio', 'image', 'pdf', 'document', 'spreadsheet'].includes(
+      this.commentType,
+    );
   }
 
   public get isStaffAuthored(): boolean {

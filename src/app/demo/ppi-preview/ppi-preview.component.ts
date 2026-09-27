@@ -126,7 +126,8 @@ export class PpiPreviewComponent {
           entry.status === 'ready_for_feedback'
             ? 'Ready for Feedback'
             : (TaskStatus.STATUS_LABELS.get(entry.status) ?? entry.status),
-        color: TaskStatus.STATUS_COLORS.get(entry.status) ?? '#64748b',
+        // The status mark tokens, as the live widget uses, so bars clear 3:1 in dark too.
+        color: `var(--ot-status-${TaskStatus.statusClass(entry.status)}-graphic, var(--ot-color-text-muted))`,
       }));
   }
 

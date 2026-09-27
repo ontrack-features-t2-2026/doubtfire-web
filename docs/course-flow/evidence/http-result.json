@@ -1,0 +1,16 @@
+{
+  "base": "http://127.0.0.1:4320",
+  "checks": [
+    "anonymous catalog access denied",
+    "ordinary student can retrieve course catalog",
+    "student creates an incomplete plan with explicit empty periods",
+    "other student and administrator cannot read, edit, delete, or list this private plan",
+    "client-supplied ownership rejected",
+    "whole-plan save and HTTP reload preserve positions, empty periods, and configured rule results",
+    "stale updates and deletes rejected",
+    "invalid placements reject atomically without changing stored data or version",
+    "prerequisite and offering violations are saved as explicit planning issues",
+    "owner deletes the current plan"
+  ],
+  "completed": true
+}

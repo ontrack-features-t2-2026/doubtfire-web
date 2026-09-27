@@ -147,6 +147,16 @@ describe('DemoControlsComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-status="not_started"]')).toBeTruthy();
   });
 
+  it('keeps the named demo section inside the app-owned main landmark', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('main, [role="main"]')).toBeNull();
+    const section = element.querySelector('section.demo-controls');
+    expect(section.getAttribute('aria-labelledby')).toBe('demo-controls-title');
+    expect(section.querySelector('#demo-controls-title').textContent.trim()).toBe(
+      'Demo walkthrough',
+    );
+  });
+
   it('toggles presentation without reloading or mutating entity caches', () => {
     fixture.componentInstance.setDemoMode({checked: true} as MatSlideToggleChange);
     expect(demoMode.setEnabled).toHaveBeenCalledWith(true);

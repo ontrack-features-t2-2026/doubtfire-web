@@ -337,7 +337,9 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
       classes.push('flash');
     }
     if (item.highlighted) {
-      classes.push('[--bar-bg:var(--ot-color-info)]', '[color:var(--ot-color-on-primary)]');
+      // White text sits under 3:1 on the lighter dark-theme info fill, so the
+      // highlighted bar takes the inverse text colour, which clears AA in both themes.
+      classes.push('[--bar-bg:var(--ot-color-info)]', '[color:var(--ot-color-inverse-text)]');
     } else if (this.isAboveTargetGrade(item)) {
       classes.push(
         '[--bar-bg:var(--ot-color-disabled-surface)]',
@@ -511,6 +513,8 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     try {
+      // Scope the ink-safe palette to this export; keep the account preference intact.
+      ganttEl.classList.add('ot-gantt-export');
       await this.renderAllGanttBars(ganttEl);
       this.resetGanttScroll(scrollElements);
       window.scrollTo(windowScrollPosition.left, windowScrollPosition.top);
@@ -532,6 +536,7 @@ export class TaskPlannerComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.alertService.error(`Failed to download task plan: ${error}`, 6000);
     } finally {
+      ganttEl.classList.remove('ot-gantt-export');
       ganttEl.style.width = originalStyle.width;
       ganttEl.style.height = originalStyle.height;
       ganttEl.style.overflow = originalStyle.overflow;

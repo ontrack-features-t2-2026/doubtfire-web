@@ -13,7 +13,7 @@
       [matTooltip]="isRecording || isRequestingPermission ? 'Stop recording' : 'Start recording'"
       (click)="recordingToggle()"
     >
-      <mat-icon class="text-white"
+      <mat-icon class="text-ot-on-primary"
         >{{isRecording || isRequestingPermission ? 'stop_circle' : 'radio_button_checked' }}
       </mat-icon>
     </button>
@@ -24,7 +24,7 @@
       [hidden]="!recordingAvailable"
       (click)="playStop()"
     >
-      <mat-icon style="color: white">{{ isPlaying ? 'pause_circle' : 'play_circle' }}</mat-icon>
+      <mat-icon class="text-ot-on-primary">{{ isPlaying ? 'pause_circle' : 'play_circle' }}</mat-icon>
     </button>
     <audio #audioRecorderPlayer></audio>
     <div class="min-w-0 flex-1">

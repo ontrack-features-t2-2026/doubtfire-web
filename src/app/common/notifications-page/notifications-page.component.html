@@ -58,11 +58,16 @@
       <button class="notifications-retry" mat-stroked-button (click)="load()">Try again</button>
     </div>
   } @else if (!notifications.length) {
-    <div class="notifications-placeholder py-6" tabindex="-1">
-      <p>You have no notifications yet.</p>
-      <p class="notification-time">
-        Comments on your tasks, feedback and reminders will show up here.
-      </p>
+    <!--
+      Wrapped so that deleting the last notification can move focus here
+      (focusAfterDelete) instead of dropping it to the document body.
+    -->
+    <div class="notifications-placeholder" tabindex="-1">
+      <f-empty-state
+        hint="Comments on your tasks, feedback and reminders will show up here."
+        icon="notifications_none"
+        message="You have no notifications yet."
+      ></f-empty-state>
     </div>
   } @else {
     <!--

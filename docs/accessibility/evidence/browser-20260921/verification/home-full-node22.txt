@@ -1,0 +1,41 @@
+
+> doubtfire@11.0.0-45 test:ci
+> ng test --no-watch --no-progress
+
+Application bundle generation complete. [25.591 seconds] - 2026-09-21T06:44:36.305Z
+
+
+ RUN  v4.1.9 <web-worktree>
+
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/index.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/html5-qrcode.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/core.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/strings.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/utils.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/code-decoder.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/zxing-html5-qrcode-decoder.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/native-bar-code-detector.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/camera/factories.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/camera/core-impl.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/camera/retriever.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/state-manager.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/html5-qrcode-scanner.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/image-assets.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/storage.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/camera/permissions.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/scan-type-selector.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/torch-button.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/base.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/file-selection-ui.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/camera-selection-ui.js" points to missing source files
+Sourcemap for "<workspace>/worktrees/a11y-keyboard-20260920/node_modules/html5-qrcode/esm/ui/scanner/camera-zoom-ui.js" points to missing source files
+Warning: A vi.mock("ng2-pdf-viewer") call in "<web-worktree>/src/app/common/pdf-viewer/pdf-viewer.component.spec.ts" is not at the top level of the module. Although it appears nested, it will be hoisted and executed before any tests run. Move it to the top level to reflect its actual execution order. This will become an error in a future version.
+See: https://vitest.dev/guide/mocking/modules#how-it-works
+Could not parse CSS stylesheet
+Could not parse CSS stylesheet
+
+ Test Files  179 passed (179)
+      Tests  1347 passed (1347)
+   Start at  16:44:37
+   Duration  42.24s (transform 18.10s, setup 29.96s, import 122.74s, tests 143.07s, environment 925.07s)

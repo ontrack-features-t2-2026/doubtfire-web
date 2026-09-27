@@ -10,6 +10,7 @@ import {
   TimeoutError,
   catchError,
   forkJoin,
+  of,
   switchMap,
   tap,
   throwError,
@@ -139,6 +140,7 @@ export class GlobalStateService implements OnDestroy {
    * protect views from attempting to access details before they are loaded.
    */
   public isLoadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  public projectLoadErrorSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   /**
    * A finite, user-visible bootstrap state. isLoadingSubject remains for older
@@ -349,6 +351,7 @@ export class GlobalStateService implements OnDestroy {
     window.removeEventListener('resize', this.resetHeightListener);
     this.isLoadingSubject.complete();
     this.startupStateSubject.complete();
+    this.projectLoadErrorSubject.complete();
     this.showHideHeader.complete();
     this.currentViewAndEntitySubject$.complete();
   }
@@ -357,6 +360,7 @@ export class GlobalStateService implements OnDestroy {
     this.globalsSubscription?.unsubscribe();
     const startedAt = Date.now();
     this.startupAttempt += 1;
+    this.projectLoadErrorSubject.next(false);
     this.isLoadingSubject.next(true);
     this.publishStartupState({
       status: 'loading',
@@ -387,15 +391,7 @@ export class GlobalStateService implements OnDestroy {
         switchMap(() =>
           forkJoin([
             this.requiredStartupRequest('unit roles', this.unitRoleService.query()),
-            this.requiredStartupRequest(
-              'projects',
-              this.projectService.query(undefined, {
-                params: {
-                  include_inactive: false,
-                  include_task_definitions: true,
-                },
-              }),
-            ),
+            this.loadCurrentUserProjects(),
           ]),
         ),
         timeout({first: STARTUP_TIMEOUT_MS}),
@@ -404,6 +400,28 @@ export class GlobalStateService implements OnDestroy {
         next: () => this.completeGlobalLoad(startedAt),
         error: (error: unknown) => this.failGlobalLoad(startedAt, error),
       });
+  }
+
+  /**
+   * Query the projects the current user studies. A failure here does not stop startup:
+   * it opens the loading gate with projectLoadErrorSubject set, so views can render a
+   * recoverable project error instead of blocking the whole application.
+   */
+  private loadCurrentUserProjects(): Observable<Project[]> {
+    return this.projectService
+      .query(undefined, {
+        params: {
+          include_inactive: false,
+          include_task_definitions: true,
+        },
+      })
+      .pipe(
+        catchError(() => {
+          this.projectLoadErrorSubject.next(true);
+          this.alerts.error('Unable to access the units you study.', 6000);
+          return of([] as Project[]);
+        }),
+      );
   }
 
   public retryStartup(): void {
@@ -545,6 +563,7 @@ export class GlobalStateService implements OnDestroy {
    * Clear all of the project and unit role data on sign out
    */
   public clearUnitsAndProjects(): void {
+    this.projectLoadErrorSubject.next(false);
     this.loadedUnits.clear();
     this.loadedUnitRoles.clear();
     this.userService.cache.clear();

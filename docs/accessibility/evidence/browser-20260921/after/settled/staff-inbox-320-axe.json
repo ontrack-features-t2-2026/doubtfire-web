@@ -1,0 +1,115 @@
+{
+  "url": "/units/1/tasks/inbox",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        {
+          "target": [
+            "f-unit-code"
+          ],
+          "html": "<f-unit-code _ngcontent-ng-c40233...=\"\" data-onboarding-targ...=\"unit-selector\" class=\"mat-mdc-tooltip-trig...\" _nghost-ng-c42417668...=\"\" aria-haspopup=\"menu\" aria-expanded=\"false\" aria-describedby=\"cdk-describedby-mess...\" cdk-describedby-host=\"ng-1\">",
+          "failureSummary": "Fix all of the following:\n  Check that there is no problem if the ARIA attribute is ignored on this element: aria-expanded=\"false\""
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "svg[width=\"32\"][height=\"32\"][_ngcontent-ng-c2005649891=\"\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">ST</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .self-center > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5.min-w-0 > .truncate"
+          ],
+          "html": "<span _ngcontent-ng-c327837805=\"\" class=\"truncate\">Synthetic Student</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-2P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+          ],
+          "html": "<div _ngcontent-ng-c327837805=\"\" class=\"task-details truncate\"> 1.2P - Report and Feedback </div>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .self-center > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5.min-w-0 > .truncate"
+          ],
+          "html": "<span _ngcontent-ng-c327837805=\"\" class=\"truncate\">Synthetic Student</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-2-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+          ],
+          "html": "<div _ngcontent-ng-c327837805=\"\" class=\"task-details truncate\"> 2.1P - Planning Reflection </div>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .self-center > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SS</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5.min-w-0 > .truncate"
+          ],
+          "html": "<span _ngcontent-ng-c327837805=\"\" class=\"truncate\">Synthetic Student</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-4-1-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+          ],
+          "html": "<div _ngcontent-ng-c327837805=\"\" class=\"task-details truncate\"> 1.1P - Spreadsheet Investigation </div>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .self-center > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+          ],
+          "html": "<tspan x=\"0\" y=\"3\" fill=\"white\">SO</tspan>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .task-list-data.truncate.flex-1 > .student-name.gap-0\\.5.min-w-0 > .truncate"
+          ],
+          "html": "<span _ngcontent-ng-c327837805=\"\" class=\"truncate\">Synthetic Other Stude</span>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "button[aria-describedby=\"task-summary-task-key-5-1-1P\"] > .task-list-data.truncate.flex-1 > .task-details.truncate[_ngcontent-ng-c327837805=\"\"]"
+          ],
+          "html": "<div _ngcontent-ng-c327837805=\"\" class=\"task-details truncate\"> 1.1P - Spreadsheet Investigation </div>",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        }
+      ]
+    }
+  ],
+  "passes": 27
+}

@@ -54,7 +54,9 @@
   background: var(--ot-color-selected);
   border: 1px solid var(--ot-color-divider);
   border-radius: 50%;
-  color: var(--ot-color-primary);
+  // The link blue, not primary: dark primary is a fill colour and sits near 2:1 as a
+  // glyph on the selected wash. In light the two are the same colour.
+  color: var(--ot-color-link);
   display: inline-flex;
   flex: 0 0 2.5rem;
   height: 2.5rem;
@@ -153,7 +155,7 @@
   min-width: 0;
 
   strong {
-    color: var(--ot-color-primary);
+    color: var(--ot-color-link);
     font-size: clamp(1.75rem, 7cqi, 2.5rem);
     letter-spacing: -0.04em;
     line-height: 1;
@@ -276,8 +278,9 @@
 .ppi-segment {
   flex-basis: 0;
 
+  // The card surface shows through between segments, matching the bar's frame.
   & + & {
-    border-left: 1px solid rgb(255 255 255 / 58%);
+    border-left: 1px solid color-mix(in srgb, var(--ot-color-surface) 58%, transparent);
   }
 }
 
@@ -308,7 +311,7 @@
 }
 
 .ppi-swatch {
-  border: 1px solid rgb(0 0 0 / 12%);
+  border: 1px solid color-mix(in srgb, var(--ot-color-text) 20%, transparent);
   border-radius: 50%;
   height: 9px;
   width: 9px;

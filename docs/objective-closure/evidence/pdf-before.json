@@ -1,0 +1,31 @@
+{
+  "stage": "before",
+  "recordedAt": "2026-09-21T05:40:37.550Z",
+  "browser": "Chrome 153.0.8010.48",
+  "apiCommit": "7722612ef019b03bd6b4fb9319b83c52b0dac902",
+  "scope": "Actual local Angular application with synthetic fixtures. Automated browser and keyboard checks; no human screen-reader observation.",
+  "checks": [
+    {
+      "id": "outgoing-pdf-appearance-and-semantics",
+      "theme": "light",
+      "tag": "A",
+      "href": null,
+      "tabIndex": 0,
+      "name": null,
+      "foreground": "rgb(57, 57, 255)",
+      "background": "rgb(57, 57, 255)",
+      "contrast": 1,
+      "outlineStyle": "none",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(255, 255, 255)",
+      "text": "picture_as_pdf\nview pdf"
+    },
+    {
+      "id": "pdf-anchor-cannot-receive-keyboard-focus",
+      "status": "confirmed-defect",
+      "focusable": false
+    }
+  ],
+  "status": "confirmed-defect",
+  "webSourceNote": "Baseline 63069182f before viewer fix"
+}

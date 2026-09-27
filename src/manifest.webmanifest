@@ -1,4 +1,5 @@
 {
+  "id": "/index.html",
   "name": "OnTrack learning and feedback",
   "short_name": "OnTrack",
   "icons": [
@@ -23,5 +24,28 @@
   "background_color": "#3939ff",
   "display": "standalone",
   "scope": "/",
-  "start_url": "/index.html"
+  "start_url": "/index.html",
+  "description": "Access your units, tasks, feedback and notifications in the OnTrack app.",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Home",
+      "short_name": "Home",
+      "description": "Open your OnTrack units and projects",
+      "url": "/home"
+    },
+    {
+      "name": "Notifications",
+      "short_name": "Notifications",
+      "description": "Read your OnTrack notifications",
+      "url": "/notifications"
+    },
+    {
+      "name": "Unit Hub",
+      "short_name": "Unit Hub",
+      "description": "View announcements and classes",
+      "url": "/unit-hub"
+    }
+  ]
 }

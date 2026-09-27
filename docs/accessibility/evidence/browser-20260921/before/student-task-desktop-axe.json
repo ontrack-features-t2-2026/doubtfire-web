@@ -1,0 +1,351 @@
+{
+  "violations": [
+    {
+      "id": "aria-required-parent",
+      "impact": "critical",
+      "help": "Certain ARIA roles must be contained by particular parents",
+      "nodes": [
+        {
+          "target": [
+            "#mat-mdc-chip-0"
+          ],
+          "failureSummary": "Fix any of the following:\n  Required ARIA parents role not present: grid, rowgroup, table, treegrid"
+        },
+        {
+          "target": [
+            "#mat-mdc-chip-1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Required ARIA parents role not present: grid, rowgroup, table, treegrid"
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": [
+        {
+          "target": [
+            "#mat-tab-group-0-label-0 > .mdc-tab__content > .mdc-tab__text-label"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.18 (foreground color: #5457e5, background color: #171b21, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".mdc-tab__text-label > .gap-1.items-center[_ngcontent-ng-c3639081411=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.53 (foreground color: #585b5f, background color: #171b21, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    },
+    {
+      "id": "link-name",
+      "impact": "serious",
+      "help": "Links must have discernible text",
+      "nodes": [
+        {
+          "target": [
+            "a[routerlink=\"/home\"]"
+          ],
+          "failureSummary": "Fix all of the following:\n  Element is in tab order and does not have accessible text\n\nFix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+        }
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "nodes": [
+        {
+          "target": [
+            ".items-center.flex[_ngcontent-ng-c4023340239=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".search"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".task-dashboard-tabs > mat-tab-header > .mat-mdc-tab-label-container._mat-animation-noopable"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#mat-tab-group-0-content-0"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-ilos-card"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-description-card > mat-card > mat-card-header"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".markdown-to-pdf"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "label[for=\"task-due-date-2\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "mat-slider"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".grow-0"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".effective-deadline"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "ul > li:nth-child(1)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "ul > li:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "li:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".text-amber-600"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".space-x-1:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            ".mat-mdc-form-field-type-mat-select > .mat-mdc-text-field-wrapper.mdc-text-field.mdc-text-field--outlined"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-status-card > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-content"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "div > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-header"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "div > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-content:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-submission-card > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-header"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-submission-card > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-content > p:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-task-submission-card > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-content > p:nth-child(3)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "mat-card-content > p:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "f-previous-submissions > .mat-mdc-card-outlined.mdc-card--outlined[appearance=\"outlined\"] > mat-card-header"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "mat-card-content > p[_ngcontent-ng-c4147434608=\"\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "p[aria-describedby=\"cdk-describedby-message-ng-1-8\"][cdk-describedby-host=\"ng-1\"][mattooltipposition=\"above\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-3 > .comment-by-other-user.comment.items-end > .comment-container.flex-row.justify-start > .bubble.text-bubble.first-in-series"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-4 > .own[cdk-describedby-host=\"ng-1\"][mattooltipposition=\"above\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-4 > .comment.items-end.flex-row-reverse > .comment-container.flex-row-reverse.justify-start > .bubble.text-bubble.first-in-series"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-9 > p[cdk-describedby-host=\"ng-1\"][mattooltipposition=\"above\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-9 > .comment-by-other-user.comment.items-end > .comment-container.flex-row.justify-start > .bubble.text-bubble.first-in-series"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-10 > .own[cdk-describedby-host=\"ng-1\"][mattooltipposition=\"above\"]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "target": [
+            "#comment-10 > .comment.items-end.flex-row-reverse > .comment-container.flex-row-reverse.justify-start > .bubble.text-bubble.first-in-series"
+          ],
+          "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    }
+  ],
+  "incomplete": [
+    {
+      "id": "aria-allowed-attr",
+      "nodes": [
+        [
+          "f-unit-code"
+        ]
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "nodes": [
+        [
+          "svg[width=\"32\"][height=\"32\"][_ngcontent-ng-c2005649891=\"\"] > text > tspan"
+        ],
+        [
+          "#mat-badge-content-2"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(1) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .text-ellipsis.truncate[_ngcontent-ng-c2028811816=\"\"]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(1) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .leading-tight.text-\\[14px\\].mr-1"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(1) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .font-normal.text-sky-500.text-\\[12px\\]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(1) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .pr-0\\.5.relative.mr-1 > .-top-2.drop-shadow-\\[0_4px_2px_rgba\\(0\\,0\\,0\\,0\\.15\\)\\].right-0\\.5 > .bg-blue-500.text-white[aria-label=\"2 new comments\"]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(2) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .text-ellipsis.truncate[_ngcontent-ng-c2028811816=\"\"]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(2) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .leading-tight.text-\\[14px\\].mr-1"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(2) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .font-normal.text-sky-500.text-\\[12px\\]"
+        ],
+        [
+          ".bg-\\[var\\(--ot-color-selected\\)\\] > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .text-ellipsis.truncate[_ngcontent-ng-c2028811816=\"\"]"
+        ],
+        [
+          ".bg-\\[var\\(--ot-color-selected\\)\\] > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .leading-tight.text-\\[14px\\].mr-1"
+        ],
+        [
+          ".bg-\\[var\\(--ot-color-selected\\)\\] > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .font-normal.text-sky-500.text-\\[12px\\]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(4) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .text-ellipsis.truncate[_ngcontent-ng-c2028811816=\"\"]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(4) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .leading-tight.text-\\[14px\\].mr-1"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(4) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .gap-3.flex-1.min-w-0 > .gap-3.text-ellipsis.min-w-0 > .flex-col.justify-start.text-ellipsis > .gap-0\\.5.min-w-0.items-center > .font-normal.text-sky-500.text-\\[12px\\]"
+        ],
+        [
+          ".text-left.focus-visible\\:outline-2\\!.focus-visible\\:-outline-offset-2\\!:nth-child(4) > .mdc-list-item__content > .mat-mdc-list-item-unscoped-content.mdc-list-item__primary-text > .gap-2.justify-between.w-full > .pr-0\\.5.relative.mr-1 > .-top-2.drop-shadow-\\[0_4px_2px_rgba\\(0\\,0\\,0\\,0\\.15\\)\\].right-0\\.5 > .bg-blue-500.text-white[aria-label=\"2 new comments\"]"
+        ],
+        [
+          ".flex-col.justify-start[_ngcontent-ng-c1047662116=\"\"] > .text-ellipsis.truncate[_ngcontent-ng-c1047662116=\"\"]"
+        ],
+        [
+          ".text-\\[14px\\].text-\\[color\\:var\\(--ot-color-text-muted\\)\\][_ngcontent-ng-c1047662116=\"\"]"
+        ],
+        [
+          "#mat-mdc-chip-0 > .mat-mdc-chip-action[role=\"gridcell\"][matchipaction=\"\"] > .mdc-evolution-chip__text-label.mat-mdc-chip-action-label"
+        ],
+        [
+          "#mat-mdc-chip-1 > .mat-mdc-chip-action[role=\"gridcell\"][matchipaction=\"\"] > .mdc-evolution-chip__text-label.mat-mdc-chip-action-label"
+        ],
+        [
+          "mat-label"
+        ],
+        [
+          "#comment-3 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-9\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+        ],
+        [
+          "#comment-9 > .comment-by-other-user.comment.items-end > .comment-user-icon-wrapper[_ngcontent-ng-c3012172957=\"\"] > user-icon[mattooltipposition=\"left\"][aria-describedby=\"cdk-describedby-message-ng-1-9\"] > svg[_ngcontent-ng-c2005649891=\"\"][shape-rendering=\"geometricPrecision\"][font-smooth=\"antialiased\"] > text > tspan"
+        ]
+      ]
+    }
+  ],
+  "passes": 36
+}

@@ -18,7 +18,6 @@ hr {
 
 .fade-text {
   color: var(--ot-color-text-muted);
-  opacity: 0.8;
 }
 
 .hr-text {
@@ -30,7 +29,6 @@ hr {
   color: var(--ot-color-text-muted);
   text-align: center;
   height: 1.5em;
-  opacity: 0.8;
   &:before {
     content: '';
     background: linear-gradient(to right, transparent, var(--ot-color-divider), transparent);
@@ -44,8 +42,6 @@ hr {
     content: attr(data-content);
     position: relative;
     display: inline-block;
-    color: var(--ot-color-text-muted);
-
     padding: 0 0.5em;
     line-height: 1.5em;
 

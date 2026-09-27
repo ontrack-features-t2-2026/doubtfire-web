@@ -2,13 +2,15 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {MatButtonModule} from '@angular/material/button';
+import {MatButton, MatButtonModule} from '@angular/material/button';
+import {MatDialog} from '@angular/material/dialog';
 import {MatIconModule} from '@angular/material/icon';
+import {MatIconTestingModule} from '@angular/material/icon/testing';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {Router} from '@angular/router';
+import {Router, RouterLink, provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {AuthenticationService, Unit} from 'src/app/api/models/doubtfire-model';
 import {NotificationService} from 'src/app/api/services/notification.service';
@@ -18,12 +20,15 @@ import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
+import {StudentOnboardingService} from 'src/app/student-onboarding/student-onboarding.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
 import {CalendarModalService} from '../modals/calendar-modal/calendar-modal.service';
 import {QrModalService} from '../modals/qr-modal/qr-modal.service';
 import {SidekiqJobsModalService} from '../modals/sidekiq-jobs-modal/sidekiq-jobs-modal.service';
 import {TutorNotesModalService} from '../modals/tutor-notes-modal/tutor-notes-modal.service';
 import {IsActiveUnitRole} from '../pipes/is-active-unit-role.pipe';
+import {PwaInstallDialogComponent} from '../pwa/pwa-install-dialog.component';
+import {expectAccessible} from '../testing/accessibility';
 import {HeaderComponent} from './header.component';
 
 const emptyProvider = {};
@@ -36,6 +41,11 @@ describe('HeaderComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [HeaderComponent],
       providers: [
+        {
+          provide: MatDialog,
+          useValue: {open: vi.fn().mockReturnValue({afterClosed: () => of(undefined)})},
+        },
+        {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
         {provide: CalendarModalService, useValue: emptyProvider},
         {provide: AboutDoubtfireModal, useValue: emptyProvider},
         {provide: IsActiveUnitRole, useValue: emptyProvider},
@@ -63,6 +73,18 @@ describe('HeaderComponent', () => {
     component = fixture.componentInstance;
   });
 
+  it('opens installation help from the account menu action', () => {
+    const trigger = {focus: vi.fn()} as unknown as MatButton;
+    component.openInstallHelp(trigger);
+    expect(trigger.focus).toHaveBeenCalledOnce();
+    expect(TestBed.inject(MatDialog).open).toHaveBeenCalledWith(PwaInstallDialogComponent, {
+      width: '560px',
+      maxWidth: 'calc(100vw - 32px)',
+      autoFocus: 'first-heading',
+      restoreFocus: false,
+    });
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -88,12 +110,19 @@ describe('HeaderComponent', () => {
         imports: [
           MatButtonModule,
           MatIconModule,
+          MatIconTestingModule,
           MatMenuModule,
           MatToolbarModule,
           MatTooltipModule,
           NoopAnimationsModule,
+          RouterLink,
         ],
         providers: [
+          {
+            provide: MatDialog,
+            useValue: {open: vi.fn().mockReturnValue({afterClosed: () => of(undefined)})},
+          },
+          {provide: StudentOnboardingService, useValue: {available: false, replay: vi.fn()}},
           {provide: CalendarModalService, useValue: calendarModalServiceStub},
           {provide: AboutDoubtfireModal, useValue: emptyProvider},
           {provide: IsActiveUnitRole, useValue: emptyProvider},
@@ -129,7 +158,7 @@ describe('HeaderComponent', () => {
           {provide: SidekiqJobService, useValue: {sidekiqJobsSubject: of([])}},
           {provide: SidekiqJobsModalService, useValue: emptyProvider},
           {provide: QrModalService, useValue: emptyProvider},
-          {provide: Router, useValue: {url: '/projects/1/dashboard'}},
+          provideRouter([]),
           {provide: TutorNotesModalService, useValue: emptyProvider},
         ],
         schemas: [NO_ERRORS_SCHEMA],
@@ -137,6 +166,54 @@ describe('HeaderComponent', () => {
 
       fixture = TestBed.createComponent(HeaderComponent);
       component = fixture.componentInstance;
+    });
+
+    it('gives the rendered logo link a name and a real home destination', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const logo = fixture.nativeElement.querySelector('a[href="/home"]') as HTMLAnchorElement;
+      expect(logo).not.toBeNull();
+      expect(logo.getAttribute('aria-label')).toBe('Home');
+      expect(logo.querySelector('mat-icon').getAttribute('aria-hidden')).toBe('true');
+      const results = await expectAccessible(logo);
+      expect(results.passes.some((rule) => rule.id === 'link-name')).toBe(true);
+
+      // The SVG is decorative: losing the link's name must fail the regression.
+      logo.removeAttribute('aria-label');
+      await expect(expectAccessible(logo)).rejects.toThrow('link-name');
+    });
+
+    it('exposes one banner only while the responsive header is shown', () => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('[role="banner"]').length).toBe(1);
+
+      breakpointObserverStub.isMatched.mockReturnValue(true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelectorAll('[role="banner"]').length).toBe(1);
+      expect(fixture.nativeElement.querySelector('a[href="/home"]')).toBeNull();
+
+      component.showHeader = false;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role="banner"]')).toBeNull();
+    });
+
+    it('opens the shared tutorial from the existing account menu when eligible', async () => {
+      const tutorial = TestBed.inject(StudentOnboardingService) as unknown as {
+        available: boolean;
+        replay: ReturnType<typeof vi.fn>;
+      };
+      tutorial.available = true;
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('[aria-label="Open account menu"]').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const entries = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].filter(
+        (entry) => entry.textContent.includes('Tutorial and Help'),
+      );
+      expect(entries.length).toBe(1);
+      entries[0].click();
+      expect(tutorial.replay).toHaveBeenCalledOnce();
     });
 
     it('keeps the calendar out of the toolbar at every width', () => {

@@ -1,0 +1,222 @@
+{
+  "startedAt": "2026-09-21T07:48:29.916Z",
+  "source": "dist/browser",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/153.0.8010.48",
+    "revision": "@199a3a541d76237379e353b348e64045584db057",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+    "jsVersion": "15.3.76.12"
+  },
+  "syntheticApi": true,
+  "syntheticReleaseVariants": true,
+  "actualProductionCodeChanged": false,
+  "osInstallationTested": false,
+  "institutionalSsoTested": false,
+  "realNotificationDeliveryTested": false,
+  "checks": [
+    "Synthetic release A caches successfully in the actual production Angular worker, which reaches NORMAL.",
+    "Real VERSION_READY for B shows the app Reload action; the existing document and synthetic unsaved DOM value survive 10 seconds with no automatic navigation.",
+    "Clicking the actual app Reload action activates synthetic release B and reloads successfully; worker remains NORMAL.",
+    "Restoring a previously known identical ngsw manifest is correctly recorded as insufficient: Angular returns NO_NEW_VERSION_DETECTED and retains B as latest.",
+    "A newly opened client on the same browser profile still receives cached B after the identical old-image restore, confirming the rollback limitation also affects subsequent app launches.",
+    "Publishing A asset content as a fresh Angular manifest produces a real rollback VERSION_READY; app Reload restores A successfully with unchanged manifest identity and worker scope.",
+    "Rolled-back A reloads from the real service worker while offline and shows the app offline warning.",
+    "Reconnect succeeds; checking the restored release again correctly reports no newer version."
+  ],
+  "events": [
+    {
+      "at": "2026-09-21T07:48:46.543Z",
+      "type": "VERSION_DETECTED",
+      "version": {
+        "hash": "aff132443292f12373d1db1c0d748bacc254b27e"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:47.170Z",
+      "type": "VERSION_READY",
+      "currentVersion": {
+        "hash": "0cb3dcfce460bc800c5823ba6778a80822fb3b42"
+      },
+      "latestVersion": {
+        "hash": "aff132443292f12373d1db1c0d748bacc254b27e"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:47.173Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 623074409,
+      "result": true
+    },
+    {
+      "at": "2026-09-21T07:48:50.489Z",
+      "type": "NO_NEW_VERSION_DETECTED",
+      "version": {
+        "hash": "aff132443292f12373d1db1c0d748bacc254b27e"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:50.491Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 9482774,
+      "result": false
+    },
+    {
+      "at": "2026-09-21T07:48:57.379Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 3536086,
+      "result": true
+    },
+    {
+      "at": "2026-09-21T07:48:58.055Z",
+      "type": "NO_NEW_VERSION_DETECTED",
+      "version": {
+        "hash": "0cb3dcfce460bc800c5823ba6778a80822fb3b42"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:58.056Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 53807837,
+      "result": false
+    },
+    {
+      "at": "2026-09-21T07:48:59.168Z",
+      "type": "VERSION_DETECTED",
+      "version": {
+        "hash": "edd0c979b747b29643f402ff557c845e7fc6a5fa"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:59.414Z",
+      "type": "VERSION_READY",
+      "currentVersion": {
+        "hash": "aff132443292f12373d1db1c0d748bacc254b27e"
+      },
+      "latestVersion": {
+        "hash": "edd0c979b747b29643f402ff557c845e7fc6a5fa"
+      }
+    },
+    {
+      "at": "2026-09-21T07:48:59.419Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 864755101,
+      "result": true
+    },
+    {
+      "at": "2026-09-21T07:48:59.650Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 6950346,
+      "result": true
+    },
+    {
+      "at": "2026-09-21T07:49:00.709Z",
+      "type": "NO_NEW_VERSION_DETECTED",
+      "version": {
+        "hash": "edd0c979b747b29643f402ff557c845e7fc6a5fa"
+      }
+    },
+    {
+      "at": "2026-09-21T07:49:00.710Z",
+      "type": "OPERATION_COMPLETED",
+      "nonce": 846356478,
+      "result": false
+    }
+  ],
+  "states": {
+    "initial": "NGSW Debug Info:\n\nDriver version: 22.0.3\nDriver state: NORMAL ((nominal))\nLatest manifest hash: 0cb3dcfce460bc800c5823ba6778a80822fb3b42\nLast update check: 3s325u\n\n=== Version 0cb3dcfce460bc800c5823ba6778a80822fb3b42 ===\n\nClients: 531381b0-dfbe-4588-a589-c6e809a5e0f0\n\n=== Idle Task Queue ===\nLast update tick: 45u\nLast update run: never\nTask queue:\n * init post-load (cleanup)\n\nDebug log:\n\n\n",
+    "updated": "NGSW Debug Info:\n\nDriver version: 22.0.3\nDriver state: NORMAL ((nominal))\nLatest manifest hash: aff132443292f12373d1db1c0d748bacc254b27e\nLast update check: 7s566u\n\n=== Version 0cb3dcfce460bc800c5823ba6778a80822fb3b42 ===\n\nClients: \n\n=== Version aff132443292f12373d1db1c0d748bacc254b27e ===\n\nClients: 531381b0-dfbe-4588-a589-c6e809a5e0f0, c424e232-b93f-4f5c-a4e1-5c70dca7487a\n\n=== Idle Task Queue ===\nLast update tick: 3u\nLast update run: 6s624u\nTask queue:\n * check-updates-on-navigation\n\nDebug log:\n\n\n",
+    "exactRestore": "NGSW Debug Info:\n\nDriver version: 22.0.3\nDriver state: NORMAL ((nominal))\nLatest manifest hash: aff132443292f12373d1db1c0d748bacc254b27e\nLast update check: 8u\n\n=== Version 0cb3dcfce460bc800c5823ba6778a80822fb3b42 ===\n\nClients: \n\n=== Version aff132443292f12373d1db1c0d748bacc254b27e ===\n\nClients: 531381b0-dfbe-4588-a589-c6e809a5e0f0, c424e232-b93f-4f5c-a4e1-5c70dca7487a\n\n=== Idle Task Queue ===\nLast update tick: 15u\nLast update run: 6s636u\nTask queue:\n * check-updates-on-navigation\n\nDebug log:\n\n\n",
+    "rolledBack": "NGSW Debug Info:\n\nDriver version: 22.0.3\nDriver state: NORMAL ((nominal))\nLatest manifest hash: edd0c979b747b29643f402ff557c845e7fc6a5fa\nLast update check: 961u\n\n=== Version 0cb3dcfce460bc800c5823ba6778a80822fb3b42 ===\n\nClients: \n\n=== Version aff132443292f12373d1db1c0d748bacc254b27e ===\n\nClients: 531381b0-dfbe-4588-a589-c6e809a5e0f0, 136e9e7b-508f-4c23-bf21-86eef407d83d\n\n=== Version edd0c979b747b29643f402ff557c845e7fc6a5fa ===\n\nClients: c424e232-b93f-4f5c-a4e1-5c70dca7487a, 4337f9e8-e688-42ea-a0e0-a6dafe281a4c\n\n=== Idle Task Queue ===\nLast update tick: 33u\nLast update run: 8s698u\nTask queue:\n * check-updates-on-navigation\n\nDebug log:\n\n\n"
+  },
+  "releases": {
+    "A": {
+      "label": "A",
+      "versionHash": "0cb3dcfce460bc800c5823ba6778a80822fb3b42",
+      "indexHash": "5578020127951b12f0acbcc203dc5ffbc690398d",
+      "assetTableHash": "3094275af31c626f4e25afa884ddee7224902126",
+      "timestamp": 1789976909918
+    },
+    "B": {
+      "label": "B",
+      "versionHash": "aff132443292f12373d1db1c0d748bacc254b27e",
+      "indexHash": "e5724cbc051ff2bb10fc03f105d2c79b3952a7d4",
+      "assetTableHash": "c7126616a9bded2eed687289b05b74f443dfc242",
+      "timestamp": 1789976909919
+    },
+    "rollback": {
+      "label": "A",
+      "versionHash": "edd0c979b747b29643f402ff557c845e7fc6a5fa",
+      "indexHash": "5578020127951b12f0acbcc203dc5ffbc690398d",
+      "assetTableHash": "3094275af31c626f4e25afa884ddee7224902126",
+      "timestamp": 1789976909920
+    }
+  },
+  "identity": {
+    "id": "/index.html",
+    "name": "OnTrack learning and feedback",
+    "short_name": "OnTrack",
+    "icons": [
+      {
+        "src": "/assets/icons/android-chrome-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/assets/icons/android-chrome-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      },
+      {
+        "src": "/assets/icons/android-chrome-maskable-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ],
+    "theme_color": "#3939ff",
+    "background_color": "#3939ff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/index.html",
+    "description": "Access your units, tasks, feedback and notifications in the OnTrack app.",
+    "categories": ["education", "productivity"],
+    "prefer_related_applications": false,
+    "shortcuts": [
+      {
+        "name": "Home",
+        "short_name": "Home",
+        "description": "Open your OnTrack units and projects",
+        "url": "/home"
+      },
+      {
+        "name": "Notifications",
+        "short_name": "Notifications",
+        "description": "Read your OnTrack notifications",
+        "url": "/notifications"
+      },
+      {
+        "name": "Unit Hub",
+        "short_name": "Unit Hub",
+        "description": "View announcements and classes",
+        "url": "/unit-hub"
+      }
+    ]
+  },
+  "origin": "http://127.0.0.1:51262",
+  "registration": {
+    "scope": "http://127.0.0.1:51262/",
+    "scriptURL": "http://127.0.0.1:51262/ngsw-worker.js"
+  },
+  "exactRestoreNewClient": {
+    "release": "B",
+    "responseFromServiceWorker": true
+  },
+  "offline": {
+    "online": false,
+    "bodyText": "Select Unit\narrow_drop_down\ndark_mode\nnotifications\ncalendar_month\nAU\n\nYou’re offline. Reconnect to sign in, load current information or submit work. Work is not queued for upload.\n\nLoading...\n\nManage your learning, with feedback you'll want to receive."
+  },
+  "result": "PASS",
+  "pageErrors": [],
+  "finishedAt": "2026-09-21T07:49:00.710Z"
+}

@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-21",
+  "browser": "Google Chrome 153.0.8010.48",
+  "sourceCommit": "20e8420ed7b81b65823c4efc0585432e8969b794",
+  "fixture": "Synthetic projects and student; production build with local API fixtures and local Monaco assets; fixture server rejects service-worker assets",
+  "method": "Native Chrome UI operated through computer-use tools; not headless viewport emulation",
+  "checks": [
+    {
+      "check": "Actual browser page zoom",
+      "result": "pass",
+      "observed": "Native Chrome accessibility state reported Zoom: 200%; later Zoom: 100% after reset."
+    },
+    {
+      "check": "Reflow and wrapping",
+      "result": "pass",
+      "observed": "At 200%, the grid became one column and the long SYN1 name wrapped without clipping the card controls or feedback link."
+    },
+    {
+      "check": "Search and keyboard traversal at 200%",
+      "result": "pass",
+      "observed": "Typing Design changed result text from 15 tasks in 3 units to 3 tasks in 3 units; Tab moved focus to Card density."
+    },
+    {
+      "check": "Filter menu focus at 200%",
+      "result": "pass",
+      "observed": "The SYN1 filter menu opened; Escape returned focus to Filter tasks in SYN1."
+    },
+    {
+      "check": "Screen-reader speech and live announcement",
+      "result": "not verified",
+      "observed": "Accessibility tree exposed named controls and result text, but VoiceOver output could not be attached or observed reliably. No speech, announcement, or human screen-reader pass is claimed."
+    }
+  ],
+  "limitations": [
+    "Spot check only; existing Chrome/WebKit matrix covers additional states.",
+    "Actual browser chrome screenshot retained locally only; no user-profile browser chrome is published.",
+    "Human screen-reader confirmation and institutional browser/viewport acceptance remain open."
+  ]
+}

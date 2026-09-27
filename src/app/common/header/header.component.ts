@@ -1,7 +1,9 @@
 import {BreakpointObserver} from '@angular/cdk/layout';
 import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
+import {MatButton} from '@angular/material/button';
+import {MatDialog} from '@angular/material/dialog';
 import {Router} from '@angular/router';
-import {Subscription, asapScheduler, observeOn} from 'rxjs';
+import {Subscription, asapScheduler, observeOn, take} from 'rxjs';
 import {
   AuthenticationService,
   Project,
@@ -16,12 +18,15 @@ import {DoubtfireConstants, LogoSettings} from 'src/app/config/constants/doubtfi
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {GlobalStateService, ViewType} from 'src/app/projects/states/index/global-state.service';
 import {CheckForUpdateService} from 'src/app/sessions/service-worker-updater/check-for-update.service';
+import {StudentOnboardingService} from 'src/app/student-onboarding/student-onboarding.service';
 import {AboutDoubtfireModal} from '../modals/about-doubtfire-modal/about-doubtfire-modal.component';
 import {CalendarModalService} from '../modals/calendar-modal/calendar-modal.service';
 import {QrModalService} from '../modals/qr-modal/qr-modal.service';
 import {SidekiqJobsModalService} from '../modals/sidekiq-jobs-modal/sidekiq-jobs-modal.service';
 import {TutorNotesModalService} from '../modals/tutor-notes-modal/tutor-notes-modal.service';
 import {IsActiveUnitRole} from '../pipes/is-active-unit-role.pipe';
+import {PwaInstallDialogComponent} from '../pwa/pwa-install-dialog.component';
+import {PwaInstallService} from '../pwa/pwa-install.service';
 
 @Component({
   selector: 'app-header',
@@ -71,6 +76,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private router: Router,
     private tutorNotesModal: TutorNotesModalService,
     readonly demoMode: DemoModeStore,
+    readonly studentOnboarding: StudentOnboardingService,
+    readonly pwaInstall: PwaInstallService,
+    private dialog: MatDialog,
   ) {}
 
   public externalName: string;
@@ -247,6 +255,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   update(): void {
     this.checkForUpdateService.checkForUpdate();
+  }
+
+  openInstallHelp(trigger: MatButton): void {
+    const dialog = this.dialog.open(PwaInstallDialogComponent, {
+      width: '560px',
+      maxWidth: 'calc(100vw - 32px)',
+      autoFocus: 'first-heading',
+      restoreFocus: false,
+    });
+    // The menu item disappears while the dialog opens. Restore to the persistent
+    // account button instead of the detached menu item.
+    dialog
+      .afterClosed()
+      .pipe(take(1))
+      .subscribe(() => {
+        trigger.focus();
+      });
   }
 
   openAboutModal(): void {

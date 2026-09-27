@@ -92,6 +92,7 @@
               <div
                 class="flex flex-col items-center border-t border-ot-border px-0.5 py-[7px] text-[11px] leading-[1.15] text-ot-muted"
                 [class.!text-ot-link]="week.week === currentWeek"
+                [class.font-semibold]="week.week === currentWeek"
               >
                 <span>Week</span>
                 <strong class="mt-0.5 text-sm text-current">{{ week.week }}</strong>

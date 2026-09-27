@@ -1,0 +1,26 @@
+{
+  "url": "/sign_in",
+  "violations": [],
+  "incomplete": [
+    {
+      "id": "color-contrast",
+      "nodes": [
+        {
+          "target": [
+            "#mat-input-0"
+          ],
+          "html": "<input _ngcontent-ng-c32027...=\"\" autocomplete=\"username\" matinput=\"\" name=\"username\" required=\"\" class=\"mat-mdc-input-elemen...\" id=\"mat-input-0\" aria-required=\"true\" style=\"\">",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        },
+        {
+          "target": [
+            "#mat-input-1"
+          ],
+          "html": "<input _ngcontent-ng-c32027...=\"\" autocomplete=\"current-password\" matinput=\"\" name=\"password\" required=\"\" type=\"password\" class=\"mat-mdc-input-elemen...\" id=\"mat-input-1\" aria-required=\"true\" style=\"\">",
+          "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+        }
+      ]
+    }
+  ],
+  "passes": 25
+}

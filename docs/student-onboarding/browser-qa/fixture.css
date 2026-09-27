@@ -1,0 +1,40 @@
+/* Only the synthetic surrounding controls are styled here. The tutorial uses the
+   unmodified application styles, fonts, tokens and Angular Material theme. */
+body {
+  margin: 0;
+  background: var(--ot-color-page);
+  color: var(--ot-color-text);
+}
+.qa-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--ot-color-surface);
+  border-bottom: 1px solid var(--ot-color-border);
+}
+.qa-main {
+  padding: 2rem;
+}
+.qa-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+.qa-toolbar button,
+.qa-controls button,
+.qa-main select {
+  padding: 0.7rem;
+  font: inherit;
+  border: 1px solid currentcolor;
+  border-radius: 4px;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+}
+.qa-toolbar button:focus-visible,
+.qa-controls button:focus-visible,
+.qa-main select:focus-visible {
+  outline: 3px solid currentcolor;
+  outline-offset: 3px;
+}

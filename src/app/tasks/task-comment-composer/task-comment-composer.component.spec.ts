@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {SimpleChange} from '@angular/core';
 import {EMPTY, Subject, of, throwError} from 'rxjs';
 import {TaskComment} from 'src/app/api/models/doubtfire-model';
+import {AttachmentPolicy} from 'src/app/api/models/task-comment/attachment-policy';
 import {AttachmentUploadState, TaskCommentService} from 'src/app/api/services/task-comment.service';
 import {
   FeedbackDraftContext,
@@ -10,6 +11,25 @@ import {
 import {TaskCommentComposerComponent} from './task-comment-composer.component';
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+// The same categories the API publishes at /task_comments/upload_policy.
+const CHAT_POLICY: AttachmentPolicy = {
+  version: 1,
+  max_bytes_exclusive: 30_000_000,
+  max_selection_count: 5,
+  categories: [
+    {id: 'pdf', name: 'PDF', extensions: ['pdf'], preview: 'pdf'},
+    {id: 'document', name: 'Document', extensions: ['docx'], preview: 'download'},
+    {id: 'spreadsheet', name: 'Spreadsheet', extensions: ['csv', 'xlsx'], preview: 'download'},
+    {
+      id: 'image',
+      name: 'Image',
+      extensions: ['png', 'bmp', 'tiff', 'tif', 'jpeg', 'jpg', 'gif'],
+      preview: 'image',
+    },
+    {id: 'audio', name: 'Audio', extensions: ['wav', 'ogg', 'mp3', 'webm'], preview: 'audio'},
+  ],
+};
 
 function memoryStorage(): Storage {
   const values: Map<string, string> = new Map();
@@ -85,11 +105,13 @@ function createComposer(taskValue = task(1), userId = 7): ComposerHarness {
     {scrollDown: vi.fn()} as never,
     alerts as never,
     taskCommentService as unknown as TaskCommentService,
-    {detectChanges: vi.fn()} as never,
+    {detectChanges: vi.fn(), markForCheck: vi.fn()} as never,
     {currentUser: {id: userId}} as never,
     {events: EMPTY} as never,
     draftStore,
+    {isDark: () => false} as never,
   );
+  component.attachmentPolicy = CHAT_POLICY;
   component.task = taskValue as never;
   component.sharedData = {originalComment: null, editingComment: null};
   component.input = {first: {nativeElement: message}} as never;
@@ -162,7 +184,7 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     expect(harness.component.stagedAttachments).toEqual([]);
     expect(harness.alerts.error).toHaveBeenCalledWith(
       expect.stringContaining('does not match'),
-      5000,
+      6000,
     );
   });
 
@@ -174,7 +196,7 @@ describe('TaskCommentComposerComponent staged feedback', () => {
     expect(harness.component.stagedAttachments).toEqual([]);
     expect(harness.alerts.error).toHaveBeenCalledWith(
       expect.stringContaining('smaller than 30 MB'),
-      5000,
+      6000,
     );
   });
 
@@ -419,5 +441,268 @@ describe('TaskCommentComposerComponent addCommentWithType', () => {
     expect(component.comment.text).toBe('');
     expect(component.commentsViewer.scrollDown).toHaveBeenCalled();
     logSpy.mockRestore();
+  });
+});
+
+function clipboardComposer(text = 'draft text') {
+  const harness = createComposer();
+  harness.message.value = text;
+  const uploadSpy = vi.spyOn(harness.component, 'uploadFiles').mockImplementation(() => {});
+
+  return {
+    component: harness.component,
+    message: harness.message,
+    alerts: harness.alerts,
+    uploadSpy,
+  };
+}
+
+function clipboardPasteEvent(files: File[]) {
+  return {
+    clipboardData: {
+      files,
+      items: [],
+    },
+    preventDefault: vi.fn(),
+  } as never as ClipboardEvent;
+}
+
+function beforeInputPasteEvent(files: File[]) {
+  return {
+    inputType: 'insertFromPaste',
+    dataTransfer: {files},
+    preventDefault: vi.fn(),
+  } as never as InputEvent;
+}
+
+describe('TaskCommentComposerComponent clipboard image paste', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+  });
+
+  it('accepts an approved image from the paste event', () => {
+    const {component, uploadSpy} = clipboardComposer();
+    const image = new File(['image'], 'screenshot.png', {
+      type: 'image/png',
+      lastModified: 10,
+    });
+    const event = clipboardPasteEvent([image]);
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledWith([image]);
+  });
+
+  it('accepts an approved image from the beforeinput path', () => {
+    const {component, uploadSpy} = clipboardComposer();
+    const image = new File(['image'], 'screenshot.png', {
+      type: 'image/png',
+      lastModified: 20,
+    });
+    const event = beforeInputPasteEvent([image]);
+
+    component.handleBeforeInput(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledOnce();
+    expect(uploadSpy).toHaveBeenCalledWith([image]);
+  });
+
+  it('prevents beforeinput and paste from creating the same attachment twice', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-17T12:00:00Z'));
+
+    const {component, uploadSpy} = clipboardComposer();
+    const image = new File(['image'], 'screenshot.png', {
+      type: 'image/png',
+      lastModified: 30,
+    });
+
+    component.handleBeforeInput(beforeInputPasteEvent([image]));
+    component.handlePaste(clipboardPasteEvent([image]));
+
+    expect(uploadSpy).toHaveBeenCalledOnce();
+
+    vi.useRealTimers();
+  });
+
+  it('preserves text already typed when an image is pasted', () => {
+    vi.useFakeTimers();
+
+    const {component, message} = clipboardComposer('keep this text');
+    const image = new File(['image'], 'screenshot.png', {
+      type: 'image/png',
+      lastModified: 40,
+    });
+
+    component.handlePaste(clipboardPasteEvent([image]));
+
+    // Simulate browser-inserted placeholder content before the deferred restore runs.
+    message.value = 'temporary pasted placeholder';
+    vi.runAllTimers();
+
+    expect(message.value).toBe('keep this text');
+
+    vi.useRealTimers();
+  });
+
+  it('rejects unsupported clipboard files with a clear message', () => {
+    const {component, alerts, uploadSpy} = clipboardComposer();
+    const pdf = new File(['pdf'], 'evidence.pdf', {
+      type: 'application/pdf',
+      lastModified: 50,
+    });
+    const event = clipboardPasteEvent([pdf]);
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(uploadSpy).not.toHaveBeenCalled();
+    expect(alerts.error).toHaveBeenCalledWith(
+      'Clipboard paste supports approved image files only.',
+      4000,
+    );
+  });
+
+  it('leaves normal text or HTML paste alone when there is no clipboard file', () => {
+    const {component, alerts, uploadSpy} = clipboardComposer();
+    const event = {
+      clipboardData: {
+        files: [],
+        items: [],
+        types: ['text/plain', 'text/html'],
+      },
+      preventDefault: vi.fn(),
+    } as never as ClipboardEvent;
+
+    component.handlePaste(event);
+
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(uploadSpy).not.toHaveBeenCalled();
+    expect(alerts.error).not.toHaveBeenCalled();
+  });
+
+  // Attachments are staged and only post on Send, so removing one is how a
+  // student backs out of it.
+  it('does not post an attachment that is removed before Send', () => {
+    const harness = createComposer();
+    const image = new File(['image'], 'cancelled.png', {type: 'image/png'});
+    harness.component.uploadFiles([image]);
+    const [staged] = harness.component.stagedAttachments;
+
+    harness.component.removeStagedAttachment(staged.clientRequestId);
+    harness.component.addComment();
+
+    expect(harness.component.stagedAttachments).toEqual([]);
+    expect(harness.taskCommentService.uploadStagedAttachment).not.toHaveBeenCalled();
+    expect(harness.taskCommentService.addComment).not.toHaveBeenCalled();
+  });
+
+  it('shows the API failure when a staged image cannot be posted', () => {
+    const harness = createComposer();
+    harness.taskCommentService.uploadStagedAttachment.mockReturnValue(
+      throwError(() => new Error('Upload failed')),
+    );
+    harness.component.uploadFiles([new File(['image'], 'failed.png', {type: 'image/png'})]);
+
+    harness.component.addComment();
+
+    expect(harness.component.stagedAttachments[0]).toMatchObject({
+      status: 'failed',
+      error: 'Upload failed',
+    });
+    expect(harness.alerts.error).toHaveBeenCalledWith(
+      expect.stringContaining('could not be sent'),
+      6000,
+    );
+  });
+});
+
+describe('server-owned chat attachment policy', () => {
+  const policy: AttachmentPolicy = {
+    version: 1,
+    max_bytes_exclusive: 30_000_000,
+    max_selection_count: 5,
+    categories: [
+      {id: 'document', name: 'Document', extensions: ['docx'], preview: 'download'},
+      {id: 'spreadsheet', name: 'Spreadsheet', extensions: ['csv', 'xlsx'], preview: 'download'},
+    ],
+  };
+
+  beforeEach(() => {
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: memoryStorage(),
+    });
+  });
+
+  it('shows exact requirements and stages DOCX, CSV and XLSX even with empty browser MIME', () => {
+    const harness = createComposer();
+    harness.component.attachmentPolicy = policy;
+    harness.component.uploadFiles(
+      ['report.DOCX', 'results.csv', 'results.xlsx'].map((name) => new File(['data'], name)),
+    );
+    expect(harness.component.stagedAttachments.map((item) => item.fileName)).toEqual([
+      'report.DOCX',
+      'results.csv',
+      'results.xlsx',
+    ]);
+    expect(harness.taskCommentService.uploadStagedAttachment).not.toHaveBeenCalled();
+    expect(harness.component.attachmentAccept).toBe('.docx,.csv,.xlsx');
+    expect(harness.component.attachmentGuidance).toContain('smaller than 30 MB');
+    expect(harness.component.attachmentCategoryName(harness.component.stagedAttachments[1])).toBe(
+      'Spreadsheet',
+    );
+    expect(harness.alerts.error).not.toHaveBeenCalled();
+  });
+
+  it('rejects excluded formats, empty files, exact boundary and excessive selection before staging', () => {
+    const harness = createComposer();
+    harness.component.attachmentPolicy = policy;
+    const boundary = new File(['data'], 'large.csv');
+    Object.defineProperty(boundary, 'size', {value: 30_000_000});
+    harness.component.uploadFiles([
+      new File(['x'], 'macro.xlsm'),
+      new File([], 'empty.csv'),
+      boundary,
+    ]);
+    harness.component.uploadFiles(Array.from({length: 6}, () => new File(['x'], 'a.csv')));
+    expect(harness.component.stagedAttachments).toEqual([]);
+    expect(harness.alerts.error).toHaveBeenCalledTimes(4);
+  });
+
+  it('fails closed when policy cannot be loaded and preserves a draft on proxy 413', () => {
+    const harness = createComposer();
+    harness.component.attachmentPolicy = null;
+    harness.message.value = 'My draft';
+    harness.component.uploadFiles([new File(['x'], 'a.csv')]);
+    expect(harness.alerts.error).toHaveBeenCalledWith(expect.stringContaining('unavailable'), 6000);
+    expect(harness.component.stagedAttachments).toEqual([]);
+
+    harness.component.attachmentPolicy = policy;
+    harness.component.uploadFiles([new File(['x'], 'a.csv')]);
+    harness.taskCommentService.uploadStagedAttachment.mockReturnValue(
+      throwError(() => ({status: 413, error: '<html>Request too large</html>'})),
+    );
+    harness.component.addComment();
+
+    expect(harness.message.value).toBe('My draft');
+    expect(harness.component.attachmentsUploading).toBe(0);
+    expect(harness.component.stagedAttachments[0].error).toContain('too large');
+    expect(harness.taskCommentService.addComment).not.toHaveBeenCalled();
   });
 });

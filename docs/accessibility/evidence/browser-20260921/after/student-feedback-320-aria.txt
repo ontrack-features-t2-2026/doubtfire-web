@@ -1,0 +1,37 @@
+- banner:
+  - text: SYN101
+  - button "Dashboard"
+  - button "Open account menu":
+    - img: SS
+- main:
+  - text: 1.2P Report and Feedback
+  - navigation "Project dashboard navigation":
+    - button "Show project overview": Overview
+    - button "Show task list": Tasks
+    - button "Show task details": Details
+    - button "Show feedback" [pressed]: Feedback
+  - region "Selected task":
+    - paragraph: Synthetic Tutor Today at 2:45 PM
+    - img: ST
+    - paragraph: "Synthetic tutor feedback: please check the evidence for Report and Feedback."
+    - button "Reply to this comment"
+    - paragraph: Synthetic Student Today at 2:45 PM
+    - paragraph: I will review the feedback and upload an updated version.
+    - button "Reply to this comment"
+    - button "Delete this comment"
+    - paragraph: Synthetic Tutor Today at 2:46 PM
+    - img: ST
+    - paragraph: "Synthetic tutor feedback: please check the evidence for Report and Feedback."
+    - button "Reply to this comment"
+    - paragraph: Synthetic Student Today at 2:46 PM
+    - paragraph: I will review the feedback and upload an updated version.
+    - button "Reply to this comment"
+    - button "Delete this comment"
+    - status: "PDF: PDF; Document: DOCX; Spreadsheet: CSV, XLSX; Image: PNG, BMP, TIFF, TIF, JPEG, JPG, GIF; Audio: WAV, OGG, MP3, MP4, WEBM, AAC, PCM, AIFF, FLAC, WMA, ALAC. Each file must be smaller than 30 MB. Select up to 5 files; confirm each separately."
+    - form:
+      - button "Attach a file"
+      - button "Record audio feedback"
+      - textbox "Task comment":
+        - /placeholder: Aa
+        - text: Aa
+      - button "Choose an emoji"

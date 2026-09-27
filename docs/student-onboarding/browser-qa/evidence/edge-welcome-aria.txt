@@ -1,0 +1,10 @@
+- dialog "Welcome to OnTrack":
+  - heading "Welcome to OnTrack" [level=2]
+  - status
+  - paragraph: Take a quick tour of the main areas you will use to find your unit, tasks, target grade and calendar.
+  - button "Start tutorial"
+  - button "Skip for now"
+  - button "Close"
+  - paragraph:
+    - link "Written tutorial guide (opens in a new tab)":
+      - /url: https://github.com/ontrack-features-t2-2026/github-guide/blob/main/docs/student-onboarding/student-guide.md

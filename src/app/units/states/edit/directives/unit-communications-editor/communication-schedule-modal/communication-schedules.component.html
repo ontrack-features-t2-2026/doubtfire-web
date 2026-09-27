@@ -82,11 +82,10 @@
       }
     </ul>
   } @else {
-    <p
-      class="m-0 rounded-ot-md border border-dashed border-ot-border px-4 py-3 text-sm text-ot-muted"
-    >
-      No schedules yet. Add one to run this set on a set day, once or on repeat. You can also run it
-      by hand with Run set.
-    </p>
+    <f-empty-state
+      hint="Add one to run this set on a set day, once or on repeat. You can also run it by hand with Run set."
+      icon="event_available"
+      message="No schedules yet"
+    ></f-empty-state>
   }
 </div>
