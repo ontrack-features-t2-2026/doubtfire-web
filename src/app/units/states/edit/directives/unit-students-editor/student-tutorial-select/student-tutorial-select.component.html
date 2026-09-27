@@ -1,5 +1,10 @@
 <mat-form-field appearance="outline" class="data-entry" floatLabel="auto">
-  <mat-select multiple [compareWith]="compareSelection" [value]="student.tutorials">
+  <mat-select
+    aria-label="Tutorial"
+    multiple
+    [compareWith]="compareSelection"
+    [value]="student.tutorials"
+  >
     @if (tutorialsForStreamAndStudent(student).length > 0) {
       <mat-optgroup label="No stream">
         @for (tutorial of tutorialsForStreamAndStudent(student); track tutorial) {

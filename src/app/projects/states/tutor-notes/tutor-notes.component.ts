@@ -35,8 +35,6 @@ export class TutorNotesComponent implements OnInit {
 
   replyingToNote?: TutorNote;
 
-  hoveredNoteId: number | null = null;
-
   constructor(
     private userService: UserService,
     private tutorNoteService: TutorNoteService,

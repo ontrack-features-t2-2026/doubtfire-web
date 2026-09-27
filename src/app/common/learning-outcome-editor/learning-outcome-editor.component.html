@@ -96,20 +96,36 @@
     <mat-paginator class="mat-elevation-z0" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
     <span class="flex-grow"></span>
     @if (abbreviationPrefix !== 'GLO') {
-      <label>Outcomes CSV</label>
-      <button mat-icon-button (click)="downloadCsv('Learning Outcomes')">
+      <span>Outcomes CSV</span>
+      <button
+        aria-label="Download outcomes CSV"
+        mat-icon-button
+        (click)="downloadCsv('Learning Outcomes')"
+      >
         <mat-icon>download</mat-icon>
       </button>
-      <button mat-icon-button (click)="uploadCsv('Learning Outcomes')">
+      <button
+        aria-label="Upload outcomes CSV"
+        mat-icon-button
+        (click)="uploadCsv('Learning Outcomes')"
+      >
         <mat-icon>upload_file</mat-icon>
       </button>
       <span class="flex-grow"></span>
     }
-    <label>Feedback CSV</label>
-    <button mat-icon-button (click)="downloadCsv('Feedback Templates')">
+    <span>Feedback CSV</span>
+    <button
+      aria-label="Download feedback CSV"
+      mat-icon-button
+      (click)="downloadCsv('Feedback Templates')"
+    >
       <mat-icon>download</mat-icon>
     </button>
-    <button mat-icon-button (click)="uploadCsv('Feedback Templates')">
+    <button
+      aria-label="Upload feedback CSV"
+      mat-icon-button
+      (click)="uploadCsv('Feedback Templates')"
+    >
       <mat-icon>upload_file</mat-icon>
     </button>
     <span class="flex-grow"></span>

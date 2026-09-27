@@ -1,6 +1,6 @@
 <mat-card class="w-125 px-4">
   <mat-card-header>
-    <mat-card-title> Assess Task Quality </mat-card-title>
+    <h2 mat-dialog-title>Assess Task Quality</h2>
   </mat-card-header>
   <mat-card-content>
     <!-- For Grade Tasks -->
@@ -17,15 +17,13 @@
         <div class="flex justify-center">
           <mat-button-toggle-group
             #group="matButtonToggleGroup"
+            aria-label="Task grade"
             hideSingleSelectionIndicator="true"
             [value]="selectedGrade"
             [(ngModel)]="selectedGrade"
           >
             @for (idx of gradeValues; track idx) {
               <mat-button-toggle
-                aria-describedby="This student completed the task to a {{
-                  gradeName(idx)
-                }} standard"
                 aria-label="Mark task as {{ gradeName(idx) }}"
                 class="p-2"
                 matTooltip="This student completed the task to a {{ gradeName(idx) }} standard"
@@ -50,8 +48,20 @@
             {{ task.definition.abbreviation }}
           </span>
         </p>
-        <mat-slider class="w-full" [discrete]="true" [max]="totalRating" [min]="0" [step]="1">
-          <input matSliderThumb [ngModel]="rating" (ngModelChange)="updateRating($event)" />
+        <mat-slider
+          class="w-full"
+          [discrete]="true"
+          [displayWith]="formatQualityRating"
+          [max]="totalRating"
+          [min]="0"
+          [step]="1"
+        >
+          <input
+            aria-label="Task quality rating"
+            matSliderThumb
+            [ngModel]="rating"
+            (ngModelChange)="updateRating($event)"
+          />
         </mat-slider>
         <div class="flex justify-end">
           <p>Rating: {{ rating }} / {{ totalRating }}</p>

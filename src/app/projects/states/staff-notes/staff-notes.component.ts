@@ -34,8 +34,6 @@ export class StaffNotesComponent implements OnInit {
 
   replyingToNote?: StaffNote;
 
-  hoveredNoteId: number | null = null;
-
   constructor(
     private userService: UserService,
     private staffNoteService: StaffNoteService,

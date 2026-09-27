@@ -1,45 +1,22 @@
 <ng-template #TaskListSkeleton>
-  <div class="h-full overflow-hidden">
-    <ngx-skeleton-loader
-      [theme]="{height: '48px', 'border-radius': '16px', margin: '0 0 14px'}"
-    ></ngx-skeleton-loader>
-    @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
-      <div class="flex h-[60px] items-center gap-[10px] px-[6px]">
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '8px', height: '8px', margin: '0'}"
-        ></ngx-skeleton-loader>
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '30px', height: '30px', margin: '0'}"
-        ></ngx-skeleton-loader>
-        <div class="min-w-0 flex-1">
-          <ngx-skeleton-loader
-            [theme]="{height: '10px', width: '78%', 'border-radius': '999px', margin: '6px 0'}"
-          ></ngx-skeleton-loader>
-          <ngx-skeleton-loader
-            [theme]="{height: '10px', width: '56%', 'border-radius': '999px', margin: '6px 0'}"
-          ></ngx-skeleton-loader>
-        </div>
-        <ngx-skeleton-loader
-          appearance="circle"
-          [theme]="{width: '32px', height: '32px', margin: '0'}"
-        ></ngx-skeleton-loader>
-      </div>
-    }
+  <div aria-busy="true" aria-label="Loading task inbox" class="h-full overflow-hidden">
+    <f-skeleton-loader shape="row" [count]="1"></f-skeleton-loader>
+    <f-skeleton-loader shape="list-row" [count]="8"></f-skeleton-loader>
   </div>
 </ng-template>
 
 <ng-template #BlankPanelSkeleton>
-  <ngx-skeleton-loader
+  <f-skeleton-loader
     class="block size-full"
-    [theme]="{height: '100%', width: '100%', 'border-radius': '8px', margin: '0'}"
-  ></ngx-skeleton-loader>
+    shape="card"
+    [count]="1"
+    [theme]="{height: '100%'}"
+  ></f-skeleton-loader>
 </ng-template>
 
 @if (!isMobileView) {
-  <div class="min-h-0 px-3" fxFill fxHide fxLayout="column" fxShow.gt-xs>
-    <div class="min-h-0" fxFlex fxLayout="row" fxLayoutAlign="center stretch">
+  <div class="m-0 hidden size-full min-h-0 min-w-full flex-col px-3 min-[600px]:flex">
+    <div class="flex max-h-full min-h-0 flex-1 flex-row items-stretch justify-center">
       <div #inboxpanel class="staff-task-list inbox-panel overflow-hidden" id="inboxpanel">
         @if (loading) {
           <ng-container *ngTemplateOutlet="TaskListSkeleton"></ng-container>
@@ -68,7 +45,7 @@
         ></div>
       }
 
-      <div class="inbox-panel overflow-hidden" fxFlex>
+      <div class="inbox-panel flex-1 overflow-hidden">
         @if (loading) {
           <ng-container *ngTemplateOutlet="BlankPanelSkeleton"></ng-container>
         } @else {
@@ -131,7 +108,7 @@
     <f-footer class="z-10 shrink-0" [viewType]="viewType"></f-footer>
   </div>
 } @else {
-  <div #mobile fxFill fxHide fxLayout="row" fxShow.xs>
+  <div #mobile class="m-0 hidden size-full min-h-full min-w-full flex-row max-[599.98px]:flex">
     <div
       #inboxpanel
       class="inbox-panel mobile overflow-hidden"
@@ -152,7 +129,10 @@
         ></df-staff-task-list>
       }
     </div>
-    <div fxFill fxLayout="column" fxLayoutAlign="space-between stretch" [hidden]="!taskSelected">
+    <div
+      class="m-0 flex size-full min-h-full max-w-full min-w-full flex-col items-stretch justify-between"
+      [hidden]="!taskSelected"
+    >
       <div class="flex items-center">
         <button
           aria-label="Back to inbox"
@@ -163,7 +143,7 @@
           <mat-icon>arrow_back_ios_new</mat-icon>
         </button>
         <h3 class="mb-0">{{ taskData?.selectedTask?.project.student.nickname }}</h3>
-        <div fxFlex></div>
+        <div class="flex-1"></div>
         <button
           aria-label="Open current document"
           mat-icon-button
@@ -183,7 +163,7 @@
         </button>
       </div>
 
-      <div class="inbox-panel mobile overflow-hidden" fxFlex>
+      <div class="inbox-panel mobile flex-1 overflow-hidden">
         @if (loading) {
           <ng-container *ngTemplateOutlet="BlankPanelSkeleton"></ng-container>
         } @else {
@@ -227,6 +207,21 @@
           <task-comments-viewer [task]="taskData.selectedTask"> </task-comments-viewer>
         }
       </div>
+      <f-footer
+        class="z-10 block shrink-0"
+        role="region"
+        [attr.aria-label]="
+          taskData?.selectedTask
+            ? 'Assessment actions for ' +
+              taskData.selectedTask.definition.abbreviation +
+              ', ' +
+              (taskData.selectedTask.project.student.displayName ||
+                taskData.selectedTask.project.student.name ||
+                'selected student')
+            : 'Assessment actions'
+        "
+        [viewType]="viewType"
+      ></f-footer>
     </div>
   </div>
 }

@@ -36,6 +36,14 @@
   background-color: var(--bar-bg);
 }
 
+// The bar is reachable by tab, so its focus has to be visible. currentColor is already
+// chosen per bar to contrast with that bar's background, so it works on every colour the
+// planner uses.
+.gantt-bar:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+}
+
 .flash {
   transition: background-color 500ms ease-in-out;
 }
