@@ -13,21 +13,29 @@ import {
   KeyValueDiffer,
   KeyValueDiffers,
   OnChanges,
+  OnInit,
   QueryList,
   SimpleChanges,
   ViewChild,
   ViewChildren,
 } from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
-import {BehaviorSubject, Subscription} from 'rxjs';
+import {BehaviorSubject, Subscription, finalize} from 'rxjs';
 import {
   FeedbackTemplate,
   Task,
   TaskComment,
   TaskCommentService,
 } from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/models/doubtfire-model';
+import {
+  AttachmentPolicy,
+  attachmentCategory,
+  attachmentError,
+} from 'src/app/api/models/task-comment/attachment-policy';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {EmojiService} from 'src/app/common/services/emoji.service';
+import {ThemeService} from 'src/app/common/theme/theme.service';
 import {TaskCommentsViewerComponent} from '../task-comments-viewer/task-comments-viewer.component';
 import {AttachmentConfirmationDialogComponent} from './attachment-confirmation-dialog/attachment-confirmation-dialog.component';
 
@@ -48,20 +56,12 @@ export interface TaskCommentComposerData {
   editingComment: TaskComment;
 }
 
-const ACCEPTED_FILE_TYPES = [
-  'audio/mpeg',
-  'audio/vorbis',
-  'audio/mp4',
-  'audio/ogg',
-  'audio/wav',
-  'audio/x-wav',
-  'audio/webm',
+const APPROVED_CLIPBOARD_IMAGE_TYPES = [
   'image/png',
-  'image/pdf',
-  'application/pdf',
-  'image/gif',
-  'image/jpg',
+  'image/bmp',
+  'image/tiff',
   'image/jpeg',
+  'image/gif',
 ];
 
 /**
@@ -80,13 +80,14 @@ const ACCEPTED_FILE_TYPES = [
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnChanges {
+export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnChanges, OnInit {
   @Input() task: Task;
   @Input() sharedData: TaskCommentComposerData;
 
   public $userIsTyping: BehaviorSubject<boolean> = new BehaviorSubject(false);
   private draftSaveSubscription = new Subscription();
   private readonly DRAFT_KEY_PREFIX = 'task_comment_draft_';
+  private readonly SUBMITTED_KEY_PREFIX = 'task_comments_submitted_';
   public isDraftLoaded = false;
   private submittedTaskIds: Set<number | string> = new Set();
 
@@ -122,17 +123,57 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     private alerts: AlertService,
     @Inject(TaskCommentService) private taskCommentService: TaskCommentService,
     private cdRef: ChangeDetectorRef,
+    private userService: UserService,
+    public readonly theme: ThemeService,
   ) {
     this.differ = this.differs.find({}).create();
-    // submitted tasks from sessionStorage
+    // submitted tasks from sessionStorage, for this user only
     try {
-      const saved = sessionStorage.getItem('task_comments_submitted');
+      const key = this.submittedKey();
+      const saved = key ? sessionStorage.getItem(key) : null;
       if (saved) {
         this.submittedTaskIds = new Set(JSON.parse(saved));
       }
     } catch (e) {
       console.error('Error loading submitted tasks:', e);
     }
+  }
+
+  public attachmentPolicy: AttachmentPolicy | null = null;
+  public attachmentPolicyFailed = false;
+  public attachmentsUploading = 0;
+
+  ngOnInit(): void {
+    this.taskCommentService.attachmentPolicy().subscribe({
+      next: (policy) => {
+        this.attachmentPolicy = policy;
+        this.cdRef.markForCheck();
+      },
+      error: () => {
+        this.attachmentPolicyFailed = true;
+        this.cdRef.markForCheck();
+      },
+    });
+  }
+
+  public get attachmentAccept(): string {
+    return (
+      this.attachmentPolicy?.categories
+        .flatMap((item) => item.extensions.map((ext) => `.${ext}`))
+        .join(',') || ''
+    );
+  }
+
+  public get attachmentGuidance(): string {
+    if (!this.attachmentPolicy) {
+      return this.attachmentPolicyFailed
+        ? 'Attachment requirements are unavailable. Reload to try again. You can still send text.'
+        : 'Loading attachment requirements…';
+    }
+    const formats = this.attachmentPolicy.categories
+      .map((item) => `${item.name}: ${item.extensions.join(', ').toUpperCase()}`)
+      .join('; ');
+    return `${formats}. Each file must be smaller than ${this.attachmentPolicy.max_bytes_exclusive / 1_000_000} MB. Select up to ${this.attachmentPolicy.max_selection_count} files; confirm each separately.`;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -199,10 +240,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
         // Update session storage
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
@@ -215,10 +256,39 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     this.saveCurrentDraft();
   }
 
-  private getDraftKey(task: Task): string {
+  // The id of whoever is signed in, or null during sign out when currentUser has
+  // already been swapped for the anonymous user. A draft with nobody to own it is
+  // not worth keeping, so callers return early on null rather than inventing a
+  // key. The id and not the username or the email: ids are stable, and an email
+  // in a storage key is personal data sitting in plain sight in dev tools.
+  private currentUserId(): number | null {
+    const id = this.userService?.currentUser?.id;
+    return typeof id === 'number' && id > 0 ? id : null;
+  }
+
+  private submittedKey(): string | null {
+    const userId = this.currentUserId();
+    return userId === null ? null : `${this.SUBMITTED_KEY_PREFIX}${userId}`;
+  }
+
+  // The key used to name a task identified the task and never the person, so on a
+  // shared machine the next person to open the same task was handed the previous
+  // person's unsent words.
+  //
+  // The user segment is written as uid<id> rather than the bare number. A legacy
+  // key is task_comment_draft_<taskId> or task_comment_draft_<projectId>_<defId>,
+  // so a bare number would make task_comment_draft_5_7 mean both "user 5, task 7"
+  // and "project 5, definition 7". The marker makes the two shapes impossible to
+  // confuse, which is what lets sign out sweep the old ones safely.
+  private getDraftKey(task: Task): string | null {
+    const userId = this.currentUserId();
+    if (userId === null) {
+      return null;
+    }
+
     // If task has an ID, use it
     if (task.id) {
-      return `${this.DRAFT_KEY_PREFIX}${task.id}`;
+      return `${this.DRAFT_KEY_PREFIX}uid${userId}_${task.id}`;
     }
 
     // For "not started" tasks, create a composite key using only valid properties
@@ -226,7 +296,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     // Fix: Use task.definition.id instead of task.definition_id
     const definitionId = task.definition?.id || 'unknown';
 
-    return `${this.DRAFT_KEY_PREFIX}${projectId}_${definitionId}`;
+    return `${this.DRAFT_KEY_PREFIX}uid${userId}_${projectId}_${definitionId}`;
   }
 
   private hasContent(raw: string): boolean {
@@ -240,6 +310,9 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
 
     try {
       let raw: string;
@@ -277,6 +350,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const draftKey = this.getDraftKey(task);
+    if (draftKey === null) {
+      return;
+    }
+
     try {
       const draft = localStorage.getItem(draftKey);
 
@@ -538,10 +615,10 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
         this.submittedTaskIds.add(taskKey);
 
         try {
-          sessionStorage.setItem(
-            'task_comments_submitted',
-            JSON.stringify([...this.submittedTaskIds]),
-          );
+          const submittedKey = this.submittedKey();
+          if (submittedKey) {
+            sessionStorage.setItem(submittedKey, JSON.stringify([...this.submittedTaskIds]));
+          }
         } catch (e) {
           console.error('Error saving submitted tasks:', e);
         }
@@ -586,8 +663,6 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
       next: (_success: TaskComment) => {
         this.comment.text = '';
         this.commentsViewer.scrollDown();
-        console.log('implement - check map comments');
-        //this.task.comments = this.ts.mapComments(this.task.comments);
       },
       error: (message: string) => this.alerts.error(message, 6000),
     });
@@ -599,15 +674,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 
   handlePaste(event: ClipboardEvent) {
     const files = this.getClipboardFiles(event);
-
-    if (files.length === 0) {
-      return;
-    }
-
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
-    event.preventDefault();
-    this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
+    this.handleClipboardFiles(files, event);
   }
 
   handleBeforeInput(event: InputEvent) {
@@ -616,34 +683,80 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     }
 
     const files = Array.from(event.dataTransfer?.files ?? []);
+    this.handleClipboardFiles(files, event);
+  }
 
+  uploadFiles(files: ArrayLike<File>) {
+    if (!this.attachmentPolicy) {
+      this.alerts.error('Attachment requirements are unavailable. Reload and try again.', 6000);
+      return;
+    }
+    if (files.length > this.attachmentPolicy.max_selection_count) {
+      this.alerts.error(
+        `Choose at most ${this.attachmentPolicy.max_selection_count} attachments at a time.`,
+        6000,
+      );
+      this.resetUploader();
+      return;
+    }
+    const acceptedFiles: File[] = [];
+    Array.from(files).forEach((file) => {
+      if (!attachmentCategory(this.attachmentPolicy, file)) {
+        this.alerts.error('Unsupported attachment format. Choose one of the listed formats.', 6000);
+      } else if (file.size === 0 || file.size >= this.attachmentPolicy.max_bytes_exclusive) {
+        this.alerts.error('Attachments must not be empty and must be smaller than 30 MB.', 6000);
+      } else {
+        acceptedFiles.push(file);
+      }
+    });
+    this.confirmAttachmentsSequentially(acceptedFiles);
+    this.resetUploader();
+  }
+
+  private lastClipboardPasteSignature = '';
+  private lastClipboardPasteAt = 0;
+  private readonly CLIPBOARD_DUPLICATE_WINDOW_MS = 250;
+
+  private handleClipboardFiles(files: File[], event: ClipboardEvent | InputEvent) {
     if (files.length === 0) {
       return;
     }
 
-    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
     event.preventDefault();
+
+    const approvedImages = files.filter((file) =>
+      APPROVED_CLIPBOARD_IMAGE_TYPES.includes(file.type.toLowerCase()),
+    );
+
+    if (approvedImages.length !== files.length) {
+      this.alerts.error('Clipboard paste supports approved image files only.', 4000);
+    }
+
+    if (approvedImages.length === 0) {
+      return;
+    }
+
+    const signature = approvedImages
+      .map((file) => `${file.name}:${file.type}:${file.size}:${file.lastModified}`)
+      .sort()
+      .join('|');
+
+    const now = Date.now();
+
+    if (
+      signature === this.lastClipboardPasteSignature &&
+      now - this.lastClipboardPasteAt < this.CLIPBOARD_DUPLICATE_WINDOW_MS
+    ) {
+      return;
+    }
+
+    this.lastClipboardPasteSignature = signature;
+    this.lastClipboardPasteAt = now;
+
+    const existingText = this.input?.first?.nativeElement?.innerText ?? '';
+
     this.clearPastedPlaceholderContent(existingText);
-    this.uploadFiles(files);
-  }
-
-  uploadFiles(files: ArrayLike<File>) {
-    const acceptedFiles: File[] = [];
-
-    Array.from(files).forEach((file) => {
-      if (
-        ACCEPTED_FILE_TYPES.includes(file.type) ||
-        file.type.startsWith('audio/') ||
-        file.type.startsWith('image/')
-      ) {
-        acceptedFiles.push(file);
-      } else {
-        this.alerts.error('Cannot upload that file - only images, audio, and PDFs.', 4000);
-      }
-    });
-
-    this.confirmAttachmentsSequentially(acceptedFiles);
-    this.resetUploader();
+    this.uploadFiles(approvedImages);
   }
 
   private getClipboardFiles(event: ClipboardEvent): File[] {
@@ -678,16 +791,20 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     });
   }
 
-  // # Upload image files as comments to a given task
-  postAttachmentComment(file) {
-    this.taskCommentService.addComment(this.task, file, 'file', null).subscribe(
-      (_tc: TaskComment) => {
-        this.commentsViewer.scrollDown();
-      },
-      (error: Error) => {
-        this.alerts.error(error.message, 2000);
-      },
-    );
+  postAttachmentComment(file: File) {
+    this.attachmentsUploading++;
+    this.taskCommentService
+      .addComment(this.task, file, 'file', null)
+      .pipe(
+        finalize(() => {
+          this.attachmentsUploading--;
+          this.cdRef.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => this.commentsViewer.scrollDown(),
+        error: (error) => this.alerts.error(attachmentError(error), 6000),
+      });
   }
 
   private confirmAttachmentsSequentially(files: File[], index: number = 0) {
@@ -698,6 +815,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
     const dialogRef = this.dialog.open(AttachmentConfirmationDialogComponent, {
       data: {
         file: files[index],
+        category: attachmentCategory(this.attachmentPolicy, files[index])?.name,
       },
       maxWidth: '720px',
       width: 'min(92vw, 720px)',
@@ -790,7 +908,7 @@ export class TaskCommentComposerComponent implements AfterViewInit, DoCheck, OnC
 }
 
 // The discussion prompt composer dialog Component
-// eslint-disable-next-line max-classes-per-file
+
 @Component({
   selector: 'discussion-prompt-composer-dialog.html',
   templateUrl: 'discussion-prompt-composer-dialog.html',

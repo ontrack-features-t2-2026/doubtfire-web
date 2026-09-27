@@ -1,11 +1,13 @@
 @if (loadingIncludedTasks) {
-  <div class="flex min-h-[150px] w-full flex-col items-center justify-center gap-3">
-    <div>Loading tasks...</div>
-    <mat-progress-spinner mode="indeterminate"> </mat-progress-spinner>
+  <div class="w-full" role="status">
+    <span class="sr-only">Loading tasks...</span>
+    <f-skeleton-loader shape="row" [count]="4"></f-skeleton-loader>
   </div>
 } @else {
   @if (tasksInPortfolio.length === 0) {
-    <div class="flex size-full flex-col items-center justify-center p-2.5 text-gray-400">
+    <div
+      class="flex size-full flex-col items-center justify-center p-2.5 text-[color:var(--ot-color-text-muted)]"
+    >
       <mat-icon class="scale-125">assignment_late</mat-icon>
       <p class="p-2.5">No tasks found</p>
     </div>

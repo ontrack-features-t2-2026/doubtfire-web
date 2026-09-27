@@ -2,7 +2,7 @@
   @if (blobUrl && fileType === 'pdf') {
     @if (!loaded) {
       <mat-progress-bar
-        mode="determinate"
+        [mode]="pdfLoadingTotalKnown ? 'determinate' : 'indeterminate'"
         [value]="pdfLoadingProgressPercentage"
       ></mat-progress-bar>
     }
@@ -21,7 +21,7 @@
   }
   @if (fileType === 'html') {
     <div>
-      <iframe height="100%" width="100%" [src]="blobUrl | safe"></iframe>
+      <iframe height="100%" title="Submission preview" width="100%" [src]="blobUrl | safe"></iframe>
     </div>
   }
 </div>

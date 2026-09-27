@@ -1,4 +1,4 @@
-<mat-card>
+<mat-card [class.shadow-none]="true">
   <mat-card-content>
     @if (!showUploader) {
       <button class="w-full" color="primary" mat-raised-button (click)="showUploader = true">
@@ -7,7 +7,7 @@
       </button>
     }
 
-    <div class="flex gap-1">
+    <div class="flex flex-col gap-1 sm:flex-row">
       @if (showUploader && uploadingInfo === null && shownUploadZones.length) {
         <div class="w-full">
           @for (upload of shownUploadZones; track upload) {
@@ -26,6 +26,7 @@
               <button
                 class="file-drop-zone min-h-[250px] w-full"
                 type="button"
+                [attr.aria-describedby]="describedBy"
                 (click)="fileInput.click()"
                 (dragleave)="onDragLeave($event)"
                 (dragover)="onDragOver($event)"
@@ -60,6 +61,7 @@
                 class="file-input"
                 type="file"
                 [accept]="upload.accept"
+                [attr.aria-describedby]="describedBy"
                 (change)="onFileSelected($event, upload)"
               />
             </div>
@@ -68,7 +70,12 @@
               <div class="flex items-center gap-3">
                 <mat-icon>{{ upload.display.icon }}</mat-icon>
                 {{ upload.model[0].name }}
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               </div>
@@ -90,7 +97,12 @@
 
               @if (upload.model?.length > 0) {
                 <em>{{ upload.model[0].name }}</em>
-                <button mat-icon-button (click)="clearEnqueuedUpload(upload)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  [attr.aria-label]="'Remove ' + upload.model[0].name"
+                  (click)="clearEnqueuedUpload(upload)"
+                >
                   <mat-icon>close</mat-icon>
                 </button>
               } @else {
@@ -129,6 +141,7 @@
           </div>
 
           <mat-progress-bar
+            aria-label="File upload progress"
             mode="determinate"
             [value]="$safeNavigationMigration(uploadingInfo?.progress)"
           >

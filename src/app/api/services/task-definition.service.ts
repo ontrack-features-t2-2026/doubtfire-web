@@ -40,6 +40,7 @@ export class TaskDefinitionService extends CachedEntityService<TaskDefinition> {
       'hasJplagReport',
       'assessInPortfolioOnly',
       'requiresDiscussion',
+      'resubmissionExtensionsEnabled',
       {
         keys: 'targetDate',
         toEntityFn: MappingFunctions.mapDateToEndOfDay,
@@ -169,10 +170,10 @@ export class TaskDefinitionService extends CachedEntityService<TaskDefinition> {
           return (data[key] ?? []).map((gradeDate) => ({
             targetGrade: gradeDate.target_grade,
             targetDueDate: gradeDate.target_due_date
-              ? MappingFunctions.mapDateToDay(gradeDate, 'target_due_date', null)
+              ? MappingFunctions.mapCivilDateToDay(gradeDate, 'target_due_date', null)
               : undefined,
             startDate: gradeDate.start_date
-              ? MappingFunctions.mapDateToDay(gradeDate, 'start_date', null)
+              ? MappingFunctions.mapCivilDateToDay(gradeDate, 'start_date', null)
               : undefined,
           }));
         },
