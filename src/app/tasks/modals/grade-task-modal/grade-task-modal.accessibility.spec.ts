@@ -56,7 +56,7 @@ describe('GradeTaskModalComponent rendered accessibility', () => {
     const dialog = document.querySelector('mat-dialog-container')!;
     await expectAccessible(dialog as HTMLElement);
     const titleId = dialog.getAttribute('aria-labelledby')!;
-    expect(document.getElementById(titleId)?.textContent).toContain('Assess Task Quality');
+    expect(document.getElementById(titleId)?.textContent).toContain('Assess task quality');
     expect(dialog.querySelector('[role="radiogroup"]')?.getAttribute('aria-label')).toBe(
       'Task grade',
     );

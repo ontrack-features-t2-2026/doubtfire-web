@@ -7,7 +7,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatTabsModule} from '@angular/material/tabs';
 import {ActivatedRoute} from '@angular/router';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
@@ -29,7 +29,14 @@ describe('Task dashboard rendered tabs', () => {
         MatTabsModule,
       ],
       providers: [
-        {provide: TaskService, useValue: {markedStatuses: [], statusSeq: new Map()}},
+        {
+          provide: TaskService,
+          useValue: {
+            markedStatuses: [],
+            statusSeq: new Map(),
+            taskSubmissionCompleted$: new Subject(),
+          },
+        },
         {provide: UserService, useValue: {}},
         {provide: ActivatedRoute, useValue: {}},
         {provide: FileDownloaderService, useValue: {}},
@@ -48,6 +55,9 @@ describe('Task dashboard rendered tabs', () => {
       project: {},
       unit: {staff: []},
       submissionUrl: () => '/synthetic-submission.pdf',
+      hasSubmissionHistory() {
+        return this.hasPdf || this.processingPdf;
+      },
     } as unknown as Task;
     fixture.detectChanges();
     await fixture.whenStable();

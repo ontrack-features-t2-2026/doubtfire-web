@@ -12,6 +12,7 @@ import {MatTooltipModule} from '@angular/material/tooltip';
 import {RouterLink, provideRouter} from '@angular/router';
 import {BehaviorSubject} from 'rxjs';
 import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {StatusIconComponent} from 'src/app/common/status-icon/status-icon.component';
 import {expectAccessible} from 'src/app/common/testing/accessibility';
 import {FUnitTaskListComponent} from './unit-task-list.component';
@@ -37,7 +38,7 @@ describe('FUnitTaskListComponent native task actions', () => {
         MatTooltipModule,
         RouterLink,
       ],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), {provide: UserService, useValue: {currentUser: {id: 1}}}],
       // Only the expanded portfolio child is outside this test's scope.
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -115,10 +116,10 @@ describe('FUnitTaskListComponent native task actions', () => {
       row.querySelectorAll('[role="img"]:not([aria-hidden="true"])'),
     ).map((badge) => badge.getAttribute('aria-label'));
     expect(badgeNames).toEqual([
+      'Due soon',
       'Not Started',
       '2 new comments',
       'Similarities Detected',
-      'Due soon',
     ]);
   });
 

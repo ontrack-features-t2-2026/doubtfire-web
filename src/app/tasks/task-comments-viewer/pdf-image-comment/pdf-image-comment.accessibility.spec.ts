@@ -6,6 +6,7 @@ import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloa
 import {CommentsModalService} from 'src/app/common/modals/comments-modal/comments-modal.service';
 import {SafePipe} from 'src/app/common/pipes/safe.pipe';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {SentAttachmentCardComponent} from '../sent-attachment-card/sent-attachment-card.component';
 import {PdfImageCommentComponent} from './pdf-image-comment.component';
 
 describe('PDF and image attachment keyboard controls', () => {
@@ -22,7 +23,7 @@ describe('PDF and image attachment keyboard controls', () => {
     modal = {show: vi.fn()};
     alerts = {error: vi.fn()};
     await TestBed.configureTestingModule({
-      declarations: [PdfImageCommentComponent, SafePipe],
+      declarations: [PdfImageCommentComponent, SafePipe, SentAttachmentCardComponent],
       imports: [MatIconModule],
       providers: [
         {provide: FileDownloaderService, useValue: downloader},
@@ -33,6 +34,8 @@ describe('PDF and image attachment keyboard controls', () => {
     fixture = TestBed.createComponent(PdfImageCommentComponent);
   });
 
+  // A PDF opens its authorised URL straight away and the modal owns the loading state.
+  // An image is fetched on load, so the preview button opens the fetched copy.
   it.each(['pdf', 'image'])('opens the %s preview from a named native button', (commentType) => {
     const comment = {commentType, attachmentUrl: '/attachment'} as TaskComment;
     fixture.componentInstance.comment = comment;
@@ -43,7 +46,7 @@ describe('PDF and image attachment keyboard controls', () => {
     expect(button.type).toBe('button');
     expect(button.tabIndex).toBe(0);
     expect(button.getAttribute('aria-label')).toBe(
-      commentType === 'pdf' ? 'View PDF attachment' : 'View image attachment',
+      commentType === 'pdf' ? 'Preview PDF attachment: PDF attachment' : 'Preview image attachment',
     );
     button.focus();
     expect(document.activeElement).toBe(button);
@@ -53,8 +56,11 @@ describe('PDF and image attachment keyboard controls', () => {
     // jsdom does not synthesize the native button activation from Enter.
     button.click();
 
-    expect(modal.show).toHaveBeenCalledExactlyOnceWith('blob:attachment', comment);
-    expect(downloader.downloadBlob).toHaveBeenCalledTimes(1);
+    expect(modal.show).toHaveBeenCalledExactlyOnceWith(
+      commentType === 'pdf' ? '/attachment' : 'blob:attachment',
+      comment,
+    );
+    expect(downloader.downloadBlob).toHaveBeenCalledTimes(commentType === 'pdf' ? 0 : 1);
     expect(alerts.error).not.toHaveBeenCalled();
     if (commentType === 'image') {
       expect(button.querySelector('img').getAttribute('alt')).toBe('Image attachment preview');
@@ -64,7 +70,7 @@ describe('PDF and image attachment keyboard controls', () => {
   it('reports a failed attachment download without opening an empty preview', () => {
     downloader.downloadBlob.mockImplementation((_url, _success, failure) => failure('offline'));
     fixture.componentInstance.comment = {
-      commentType: 'pdf',
+      commentType: 'image',
       attachmentUrl: '/attachment',
     } as TaskComment;
     fixture.detectChanges();
@@ -72,6 +78,9 @@ describe('PDF and image attachment keyboard controls', () => {
     fixture.nativeElement.querySelector('button').click();
 
     expect(modal.show).not.toHaveBeenCalled();
-    expect(alerts.error).toHaveBeenCalledWith('Unable to download image comment. offline', 6000);
+    expect(alerts.error).toHaveBeenCalledWith(
+      'Unable to load this image attachment. Please try again.',
+      6000,
+    );
   });
 });

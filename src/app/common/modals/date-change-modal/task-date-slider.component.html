@@ -72,13 +72,13 @@
   <div class="flex flex-row">
     @if (editMode) {
       @if (afterDeadline()) {
-        <p class="bg-orange-100 p-1 text-sm">
+        <p class="border border-ot-warning bg-ot-raised p-1 text-sm text-ot-warning">
           <strong>Warning: </strong>
           Your planned due date is after the last date to receive feedback for this task. You will
           not receive feedback on this task to help you ensure it is up to the required standard.
         </p>
       } @else if (closeToDeadline()) {
-        <p class="bg-yellow-100 p-1 text-sm">
+        <p class="border border-ot-warning bg-ot-raised p-1 text-sm text-ot-warning">
           <strong>Caution: </strong>
           Your planned due date is close to the last date to receive feedback for this task. This
           may make it challenging to have sufficient time to address any feedback you receive.

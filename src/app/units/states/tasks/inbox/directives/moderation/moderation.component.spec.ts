@@ -30,12 +30,12 @@ describe('ModerationComponent action names', () => {
       'random_sample',
       [
         'Show more from this tutor',
-        'Snooze task',
-        'Dismiss moderation task',
+        'Snooze this task',
+        'Dismiss from moderation',
         'Show less from this tutor',
       ],
     ],
-    ['escalation', ['Overturn', 'Upheld']],
+    ['escalation', ['Overturn the outcome', 'Uphold the outcome']],
   ])(
     'names the %s actions on the buttons rather than the hidden icons',
     (moderationType, labels) => {
