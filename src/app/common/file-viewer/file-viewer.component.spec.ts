@@ -14,7 +14,8 @@ describe('FileViewerComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [FileViewerComponent, SafePipe],
       providers: [
-        {provide: FileDownloaderService, useValue: {}},
+        // The component releases its blob URL on destroy.
+        {provide: FileDownloaderService, useValue: {releaseBlob: () => undefined}},
         {provide: AlertService, useValue: {}},
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -66,5 +67,19 @@ describe('FileViewerComponent', () => {
 
     expect(c.pdfLoadingProgressPercentage).toBe(0);
     expect(c.pdfLoadingTotalKnown).toBe(false);
+  });
+
+  // An iframe with no height of its own is 150px tall, which cut a similarity report
+  // off after its first lines, and an untitled iframe has no accessible name.
+  it('gives an HTML preview a title and a height of its own', () => {
+    const c = component as never as {fileType: string; blobUrl: string};
+    c.fileType = 'html';
+    c.blobUrl = 'blob:http://localhost/preview';
+    fixture.detectChanges();
+
+    const frame: HTMLIFrameElement = fixture.nativeElement.querySelector('iframe');
+    expect(frame.getAttribute('title')).toBe('Submission preview');
+    expect(frame.hasAttribute('height')).toBe(false);
+    expect(frame.className).toContain('h-[32rem]');
   });
 });
