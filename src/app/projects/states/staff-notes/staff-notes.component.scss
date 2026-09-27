@@ -1,37 +1,19 @@
-.mat-icon {
-  color: #9696969d;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  vertical-align: middle;
-  text-align: center;
-  margin-left: 0.3em;
+// The card paints its surface here rather than with bg-ot-surface: Tailwind utilities are
+// !important in this app, and an !important background would block the flash below.
+.note-card {
+  background-color: var(--ot-color-surface);
 }
 
-.mat-icon:hover {
-  color: black;
-}
-
-// Edit, reply and delete are real buttons, stripped back to look the way the bare icons
-// they replaced did.
+// Compact icon buttons for edit, reply and delete on each note card.
 .note-action {
-  padding: 0;
-  border: 0;
-  background: none;
-  line-height: 0;
-  cursor: pointer;
+  --mat-icon-button-state-layer-size: 32px;
+  --mat-icon-button-icon-size: 20px;
+  color: var(--ot-color-text-muted);
 }
 
+.note-action:hover,
 .note-action:focus-visible {
-  border-radius: 2px;
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
-}
-
-.note-action:hover .mat-icon,
-.note-action:focus-visible .mat-icon {
-  color: black;
+  color: var(--ot-color-text);
 }
 
 // The row used to be shown by a mouseover handler writing hoveredNoteId, which no keyboard
@@ -48,15 +30,23 @@
   opacity: 1;
 }
 
-@keyframes blueGlowFade {
+// A touch screen has no hover to reveal them with, so they stay in view there.
+@media (hover: none) {
+  .note-actions {
+    opacity: 1;
+  }
+}
+
+// Picking the note a reply points at scrolls to it and flashes it.
+@keyframes note-flash {
   0% {
-    background-color: rgba(66, 133, 244, 0.6);
+    background-color: var(--ot-color-selected);
   }
   100% {
-    background-color: transparent;
+    background-color: var(--ot-color-surface);
   }
 }
 
 .flash-highlight {
-  animation: blueGlowFade 1s ease-out;
+  animation: note-flash 1s ease-out;
 }

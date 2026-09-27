@@ -1,31 +1,254 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CdkCopyToClipboard, Clipboard, ClipboardModule} from '@angular/cdk/clipboard';
+import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {FormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCardModule} from '@angular/material/card';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatChipsModule} from '@angular/material/chips';
-import {MAT_DIALOG_DATA} from '@angular/material/dialog';
+import {MAT_DIALOG_DATA, MatDialogModule} from '@angular/material/dialog';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
 import {MatMenuModule} from '@angular/material/menu';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatSelectModule} from '@angular/material/select';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatTabsModule} from '@angular/material/tabs';
+import {MatTooltipModule} from '@angular/material/tooltip';
 import {By} from '@angular/platform-browser';
-import {Subject, of} from 'rxjs';
-import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
+import {NoopAnimationsModule} from '@angular/platform-browser/animations';
+import {Subject, of, throwError} from 'rxjs';
+import {Project, Webcal} from 'src/app/api/models/doubtfire-model';
+import {ProjectService} from 'src/app/api/services/project.service';
+import {WebcalService} from 'src/app/api/services/webcal.service';
+import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
 import {DEMO_TOOLS_AVAILABLE} from 'src/app/demo/demo-mode.store';
-import {FileDownloaderService} from '../../file-downloader/file-downloader.service';
 import {AlertService} from '../../services/alert.service';
 import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal.service';
 import {CalendarModalComponent} from './calendar-modal.component';
 
-const emptyProvider = {};
+function buildWebcal(): Webcal {
+  const webcal = new Webcal();
+  webcal.enabled = true;
+  webcal.guid = 'calendar-guid';
+  webcal.includeStartDates = false;
+  webcal.reminder = {time: 1, unit: 'W'};
+  webcal.unitExclusions = [];
+  return webcal;
+}
+
+function buildProject(id: number, code: string, name: string): Project {
+  return {
+    id,
+    unit: {
+      id,
+      code,
+      name,
+      teachingPeriod: {active: true},
+    },
+  } as Project;
+}
 
 describe('CalendarModalComponent', () => {
-  let component: CalendarModalComponent;
   let fixture: ComponentFixture<CalendarModalComponent>;
-  let fileDownloaderStub: {downloadFile: ReturnType<typeof vi.fn>};
+  let component: CalendarModalComponent;
+  let webcalService: {
+    get: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
+  let projectService: {query: ReturnType<typeof vi.fn>};
+  let fileDownloader: {downloadFileWithFeedback: ReturnType<typeof vi.fn>};
 
   beforeEach(async () => {
-    fileDownloaderStub = {downloadFile: vi.fn()};
+    webcalService = {
+      get: vi.fn(() => of(buildWebcal())),
+      update: vi.fn((webcal: Webcal) => of(webcal)),
+    };
+    projectService = {
+      query: vi.fn(() =>
+        of([
+          buildProject(1, 'COS10001', 'Introduction to Programming'),
+          buildProject(2, 'COS20007', 'Object Oriented Programming'),
+        ]),
+      ),
+    };
+    fileDownloader = {downloadFileWithFeedback: vi.fn()};
+
+    await TestBed.configureTestingModule({
+      declarations: [CalendarModalComponent],
+      imports: [
+        ClipboardModule,
+        CommonModule,
+        FormsModule,
+        MatButtonModule,
+        MatCardModule,
+        MatCheckboxModule,
+        MatChipsModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatInputModule,
+        MatMenuModule,
+        MatProgressSpinnerModule,
+        MatSelectModule,
+        MatSlideToggleModule,
+        MatTabsModule,
+        MatTooltipModule,
+        NoopAnimationsModule,
+      ],
+      providers: [
+        {provide: DEMO_TOOLS_AVAILABLE, useValue: true},
+        {provide: MAT_DIALOG_DATA, useValue: {}},
+        {provide: WebcalService, useValue: webcalService},
+        {provide: ProjectService, useValue: projectService},
+        {provide: FileDownloaderService, useValue: fileDownloader},
+        {provide: DoubtfireConstants, useValue: {API_URL: 'https://api.example.test/api'}},
+        {provide: AlertService, useValue: {success: vi.fn(), error: vi.fn()}},
+        {provide: ConfirmationModalService, useValue: {show: vi.fn()}},
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CalendarModalComponent);
+    component = fixture.componentInstance;
+  });
+
+  async function render(): Promise<void> {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('renders wrapped unit controls and one grammatical reminder group', async () => {
+    await render();
+
+    const chips: HTMLElement = fixture.nativeElement.querySelector('.calendar-unit-chips');
+    const reminder: HTMLElement = fixture.nativeElement.querySelector('.calendar-reminder-group');
+    const reminderText = reminder.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(chips.textContent).toContain('COS10001 Introduction to Programming');
+    expect(chips.textContent).toContain('COS20007 Object Oriented Programming');
+    expect(reminder.querySelector('legend')?.textContent).toContain('Event reminder');
+    expect(reminderText).toMatch(/Remind me.*Amount.*Time unit.*before each event\./);
+    expect(reminder.querySelector('input[aria-label="Reminder amount"]')).not.toBeNull();
+    expect(reminder.querySelector('[aria-label="Reminder time unit"]')).not.toBeNull();
+  });
+
+  it('keeps all provider tabs visible and switches to provider-specific instructions', async () => {
+    await render();
+
+    const host: HTMLElement = fixture.nativeElement;
+    const tabLabels = Array.from(host.querySelectorAll<HTMLElement>('.mat-mdc-tab')).map((tab) =>
+      tab.textContent.trim(),
+    );
+
+    expect(tabLabels).toEqual(['Google', 'Apple', 'Outlook']);
+
+    component.selectedCalendarProviderIndex = 2;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('.calendar-provider-help__instructions').textContent,
+    ).toContain('Subscribe from web');
+  });
+
+  it('keeps learning sessions opt-in and restores the saved preference after a failed update', async () => {
+    await render();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    const response: Subject<Webcal> = new Subject();
+    webcalService.update.mockReturnValue(response);
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+
+    expect(webcalService.update).toHaveBeenCalledWith(
+      expect.objectContaining({includeLearningSessions: true}),
+    );
+    expect(component.working).toBe(true);
+    response.error(new Error('offline'));
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(component.working).toBe(false);
+  });
+
+  it('blocks the session subscription preference in demo mode', async () => {
+    await render();
+    component.demoMode.configureScenario('calendar-spec', 1);
+    component.demoMode.setEnabled(true);
+    webcalService.update.mockClear();
+
+    component.webcal.includeLearningSessions = true;
+    component.toggleIncludeLearningSessions();
+    fixture.detectChanges();
+
+    expect(webcalService.update).not.toHaveBeenCalled();
+    expect(component.webcal.includeLearningSessions).toBe(false);
+    expect(fixture.nativeElement.querySelector('#calendar-sessions-hint').textContent).toContain(
+      'turned off in demo mode',
+    );
+    component.demoMode.clearScenario();
+  });
+
+  it('uses the shared download feedback helper with a useful ICS filename', async () => {
+    await render();
+
+    component.downloadCalendar();
+
+    expect(fileDownloader.downloadFileWithFeedback).toHaveBeenCalledWith(
+      'https://api.example.test/api/webcal/calendar-guid',
+      'ontrack-calendar.ics',
+      {requestKey: 'web-calendar-ics'},
+    );
+  });
+
+  it('does not start an ICS download before a calendar URL exists', () => {
+    component.webcal = null;
+
+    component.downloadCalendar();
+
+    expect(fileDownloader.downloadFileWithFeedback).not.toHaveBeenCalled();
+  });
+
+  it('finishes a failed initial load with a retry action instead of a permanent spinner', async () => {
+    webcalService.get.mockReturnValue(throwError(() => new Error('offline')));
+
+    await render();
+
+    expect(component.working).toBe(false);
+    expect(component.loadError).toBe(true);
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
+      'Calendar settings could not be loaded',
+    );
+    expect(
+      fixture.nativeElement.querySelector('.calendar-dialog__error button').textContent,
+    ).toContain('Retry');
+  });
+
+  it('gives a newly-enabled reminder complete default values before saving', async () => {
+    const webcal = buildWebcal();
+    webcal.reminder = null;
+    webcalService.get.mockReturnValue(of(webcal));
+    await render();
+
+    component.newReminderActive = true;
+    component.onToggleReminderActive();
+
+    expect(component.newReminderTime).toBe(1);
+    expect(component.newReminderUnit).toBe('W');
+  });
+});
+
+const emptyProvider = {};
+
+describe('CalendarModalComponent save and download guards', () => {
+  let component: CalendarModalComponent;
+  let fixture: ComponentFixture<CalendarModalComponent>;
+  let fileDownloaderStub: {downloadFileWithFeedback: ReturnType<typeof vi.fn>};
+
+  beforeEach(async () => {
+    fileDownloaderStub = {downloadFileWithFeedback: vi.fn()};
 
     await TestBed.configureTestingModule({
       declarations: [CalendarModalComponent],
@@ -85,65 +308,6 @@ describe('CalendarModalComponent', () => {
     expect(component.working).toBe(true);
   });
 
-  it('keeps learning sessions opt-in and restores the saved preference after a failed update', () => {
-    const response: Subject<Webcal> = new Subject();
-    const update = vi.fn().mockReturnValue(response);
-    const internals = component as unknown as {
-      webcalService: {update: typeof update};
-      alerts: {error: ReturnType<typeof vi.fn>};
-      loadWebcal: (value: Webcal) => void;
-    };
-    internals.webcalService = {update};
-    internals.alerts = {error: vi.fn()};
-    const webcal = Object.assign(new Webcal(), {
-      enabled: true,
-      guid: 'saved-guid',
-      unitExclusions: [],
-    });
-    expect(webcal.includeLearningSessions).toBe(false);
-    internals.loadWebcal(webcal);
-    component.webcal.includeLearningSessions = true;
-    component.toggleIncludeLearningSessions();
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({includeLearningSessions: true}));
-    expect(component.working).toBe(true);
-    response.error(new Error('offline'));
-    expect(component.webcal.includeLearningSessions).toBe(false);
-    expect(component.working).toBe(false);
-  });
-
-  it('blocks the new session subscription preference even when demo users open Calendar from the account menu', () => {
-    const update = vi.fn();
-    const internals = component as unknown as {
-      webcalService: {update: typeof update};
-      loadWebcal: (value: Webcal) => void;
-    };
-    internals.webcalService = {update};
-    internals.loadWebcal(
-      Object.assign(new Webcal(), {enabled: true, guid: 'saved-guid', unitExclusions: []}),
-    );
-    component.demoMode.setEnabled(true);
-    component.webcal.includeLearningSessions = true;
-    component.toggleIncludeLearningSessions();
-    expect(update).not.toHaveBeenCalled();
-    expect(component.webcal.includeLearningSessions).toBe(false);
-    component.demoMode.reset();
-  });
-
-  it('downloads the feed as an .ics file when the webcal is enabled', () => {
-    const webcal = new Webcal();
-    webcal.enabled = true;
-    webcal.guid = 'abc-123';
-    component.webcal = webcal;
-
-    component.downloadCalendar();
-
-    expect(fileDownloaderStub.downloadFile).toHaveBeenCalledOnce();
-    expect(fileDownloaderStub.downloadFile).toHaveBeenCalledWith(
-      'https://doubtfire.test/api/webcal/abc-123',
-      'ontrack-calendar.ics',
-    );
-  });
-
   it('does not download when the webcal is disabled', () => {
     const webcal = new Webcal();
     webcal.enabled = false;
@@ -152,7 +316,7 @@ describe('CalendarModalComponent', () => {
 
     component.downloadCalendar();
 
-    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadFileWithFeedback).not.toHaveBeenCalled();
   });
 
   it('does not download when the webcal is enabled but has no guid', () => {
@@ -163,15 +327,7 @@ describe('CalendarModalComponent', () => {
 
     component.downloadCalendar();
 
-    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
-  });
-
-  it('does not download when there is no webcal loaded yet', () => {
-    component.webcal = null;
-
-    component.downloadCalendar();
-
-    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadFileWithFeedback).not.toHaveBeenCalled();
   });
 
   it('refuses every other save while one is in flight and holds the download until it lands', () => {
@@ -232,13 +388,13 @@ describe('CalendarModalComponent', () => {
     expect(component.newReminderActive).toBe(true);
     expect(component.newReminderTime).toBe(1);
     expect(component.newReminderUnit).toBe('W');
-    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadFileWithFeedback).not.toHaveBeenCalled();
 
     pending[0].next(webcal);
     component.downloadCalendar();
 
     expect(component.working).toBe(false);
-    expect(fileDownloaderStub.downloadFile).toHaveBeenCalledOnce();
+    expect(fileDownloaderStub.downloadFileWithFeedback).toHaveBeenCalledOnce();
   });
 
   it('does not download while a settings update is still saving', () => {
@@ -250,7 +406,7 @@ describe('CalendarModalComponent', () => {
 
     component.downloadCalendar();
 
-    expect(fileDownloaderStub.downloadFile).not.toHaveBeenCalled();
+    expect(fileDownloaderStub.downloadFileWithFeedback).not.toHaveBeenCalled();
   });
 });
 
@@ -342,12 +498,11 @@ describe('CalendarModalComponent accessible URL controls', () => {
     expect(fixture.componentInstance.copying).toBe(false);
   });
 
-  it('gives the adjacent icon-only copy and regenerate buttons separate accessible names', () => {
+  it('gives the adjacent copy and regenerate buttons separate accessible names', () => {
     const root: HTMLElement = fixture.nativeElement;
-    const copy = root.querySelector<HTMLButtonElement>('button[matTooltip="Copy URL"]')!;
-    const regenerate = root.querySelector<HTMLButtonElement>(
-      'button[matTooltip="Regenerate URL"]',
-    )!;
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('button'));
+    const copy = buttons.find((button) => button.textContent?.includes('Copy URL'))!;
+    const regenerate = buttons.find((button) => button.textContent?.includes('Regenerate URL'))!;
     expect(copy.getAttribute('aria-label')).toBe('Copy web calendar URL');
     expect(regenerate.getAttribute('aria-label')).toBe('Regenerate web calendar URL');
     expect(copy.disabled).toBe(false);
@@ -357,20 +512,24 @@ describe('CalendarModalComponent accessible URL controls', () => {
     ).toBeTruthy();
   });
 
-  it('names the enable switch and reminder icon controls', () => {
+  it('names the enable switch and reminder controls', () => {
     fixture.componentInstance.newReminderActive = true;
     fixture.detectChanges();
     const root: HTMLElement = fixture.nativeElement;
     const toggle = root.querySelector('mat-slide-toggle button[role="switch"]');
     expect(toggle?.getAttribute('aria-label')).toBe('Enable web calendar');
-    expect(root.querySelector('button[aria-label="Save reminder changes"]')).not.toBeNull();
-    expect(root.querySelector('button[aria-label="Cancel reminder changes"]')).not.toBeNull();
+    // The reminder actions are text buttons, so their visible text is their name.
+    const labels = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).map((button) =>
+      button.textContent?.trim(),
+    );
+    expect(labels).toContain('Save reminder');
+    expect(labels).toContain('Cancel changes');
   });
 
   it('uses named native buttons to exclude a unit and open the add-unit menu', () => {
     fixture.componentInstance.projects = [
-      {unit: {id: 1, code: 'TEST101', name: 'Test unit'}},
-      {unit: {id: 2, code: 'TEST202', name: 'Other unit'}},
+      {id: 1, unit: {id: 1, code: 'TEST101', name: 'Test unit'}},
+      {id: 2, unit: {id: 2, code: 'TEST202', name: 'Other unit'}},
     ] as Project[];
     fixture.componentInstance.webcal.unitExclusions = [2];
     fixture.detectChanges();
@@ -401,7 +560,7 @@ describe('CalendarModalComponent accessible URL controls', () => {
   it('disables the download a copy button while a settings update is saving', () => {
     const root: HTMLElement = fixture.nativeElement;
     const download = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
-      button.textContent?.includes('Download a copy'),
+      button.textContent?.includes('Download .ics'),
     )!;
     expect(download.disabled).toBe(false);
 

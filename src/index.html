@@ -4,7 +4,10 @@
     <base href="/" />
     <meta content="no-referrer" name="referrer" />
 
-    <meta content="#fafafa" name="theme-color" />
+    <!-- THM-W01: light page colour as the pre-JS default. The pre-boot script below
+         sets the resolved page colour, and ThemeService keeps it in step on every
+         theme change. -->
+    <meta content="#f3f4f6" name="theme-color" />
     <!-- CSP: this inline pre-boot theme script depends on unsafe-inline in nginx.conf.
          Before removing it, allow this exact script's SHA-256 in script-src or
          serve a per-response nonce. Otherwise dark first paint stops working. -->
@@ -31,7 +34,7 @@
       document.documentElement.style.colorScheme = resolved;
       document
         .querySelector('meta[name="theme-color"]')
-        .setAttribute('content', resolved === 'dark' ? '#0f1216' : '#fafafa');
+        .setAttribute('content', resolved === 'dark' ? '#21262d' : '#f3f4f6');
     </script>
 
     <link
@@ -52,7 +55,7 @@
     <!-- 180×180 -->
     <link href="/manifest.webmanifest" rel="manifest" />
 
-    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport" />
     <meta charset="utf-8" />
     <meta content="IE=edge" http-equiv="X-UA-Compatible" />
     <meta content="Learning and feedback tool." name="description" />

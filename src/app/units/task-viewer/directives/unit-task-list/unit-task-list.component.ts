@@ -10,7 +10,14 @@ import {
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Subject, takeUntil} from 'rxjs';
-import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {
+  Project,
+  Task,
+  TaskDefinition,
+  TaskStatus,
+  TaskStatusEnum,
+} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {TaskDefinitionNamePipe} from 'src/app/common/filters/task-definition-name.pipe';
 
 type TaskListSortOption = 'default' | 'abbreviation' | 'targetDate' | 'startDate' | 'dueDate';
@@ -69,6 +76,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
 
   filteredTaskDefinitions: TaskDefinition[]; // list of tasks which match the taskSearch term
   searchText: string = ''; // task search term from user input
+  activeStatusFilter: TaskStatusEnum | null = null;
   taskDefinitionNamePipe = new TaskDefinitionNamePipe();
   viewPreferences: TaskListViewPreferences = {...DEFAULT_VIEW_PREFERENCES};
   sortOptions: TaskListSortOptionView[] = [
@@ -78,6 +86,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     {value: 'dueDate', label: 'Due date', icon: 'event_repeat'},
     {value: 'abbreviation', label: 'Abbreviation', icon: 'sort_by_alpha'},
   ];
+  readonly statusOptions = TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status) => ({
+    status,
+    label: TaskStatus.STATUS_LABELS.get(status) ?? status,
+  }));
 
   protected get gradeNames(): Record<number, string> {
     const unit = this.project?.unit ?? this.taskDefinitions?.[0]?.unit;
@@ -89,6 +101,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
   constructor(
     private angularRouter: Router,
     private route: ActivatedRoute,
+    private userService: UserService,
   ) {}
 
   applyFilters() {
@@ -100,10 +113,41 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     );
 
     this.filteredTaskDefinitions = matchingTaskDefinitions
+      .filter((taskDef) => this.matchesStatusFilter(taskDef))
       .filter((taskDef) => this.shouldShowTaskDefinition(taskDef))
       .sort((a, b) => this.compareTaskDefinitions(a, b));
 
     this.deselectHiddenTaskDefinition();
+  }
+
+  public clearSearch(): void {
+    if (!this.searchText) {
+      return;
+    }
+
+    this.searchText = '';
+    this.applyFilters();
+  }
+
+  public setStatusFilter(value: string | TaskStatusEnum | null): void {
+    const status = TaskStatus.isStatus(value) ? value : null;
+    if (status === this.activeStatusFilter) {
+      return;
+    }
+
+    this.activeStatusFilter = status;
+    this.applyFilters();
+    void this.angularRouter.navigate([], {
+      relativeTo: this.route,
+      queryParams: {taskStatus: status, taskView: 'tasks'},
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  public get activeStatusFilterLabel(): string | null {
+    return this.activeStatusFilter
+      ? (TaskStatus.STATUS_LABELS.get(this.activeStatusFilter) ?? this.activeStatusFilter)
+      : null;
   }
 
   // The search term only narrows what the list shows, so typing must not close the
@@ -122,8 +166,22 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       return;
     }
 
+    // Following a link or notification into another unit swaps this list while the
+    // old unit's task is still selected. The url already names the task to open in
+    // the new unit, so leave it for applyRouteTaskSelection. Rewriting it to the bare
+    // dashboard here is what used to land those links on the unit overview.
+    const routeOpensAnotherListedTask =
+      !!this.routeTaskAbbreviation &&
+      !!this.taskDefinitions?.some(
+        (taskDef) =>
+          taskDef.abbreviation === this.routeTaskAbbreviation &&
+          taskDef.id !== this.selectedTaskDef.id,
+      );
+
     this.selectedTaskDefinition$?.next(null);
-    this.replaceSelectionUrl(null);
+    if (!routeOpensAnotherListedTask) {
+      this.replaceSelectionUrl(null);
+    }
   }
 
   public setSortBy(sortBy: TaskListSortOption): void {
@@ -246,6 +304,10 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     return this.taskForTaskDef(taskDef);
   }
 
+  public taskStatusLabel(task: Task): string {
+    return TaskStatus.STATUS_LABELS.get(task?.status) ?? 'Status unavailable';
+  }
+
   public taskStartApproaching(task: Task): boolean {
     return (
       !!task &&
@@ -310,6 +372,15 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.routeTaskAbbreviation = params.get('taskAbbreviation');
       queueMicrotask(() => this.applyRouteTaskSelection());
+    });
+
+    this.route.queryParamMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const status = params.get('taskStatus');
+      const nextFilter = TaskStatus.isStatus(status) ? status : null;
+      if (nextFilter !== this.activeStatusFilter) {
+        this.activeStatusFilter = nextFilter;
+        this.applyFilters();
+      }
     });
   }
 
@@ -382,6 +453,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     if (this.selectionUrlBase) {
       return this.angularRouter.createUrlTree(
         taskDef ? [...this.selectionUrlBase, taskDef.abbreviation] : this.selectionUrlBase,
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -389,6 +461,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
     if (this.route.parent?.snapshot.data.unit && unitId) {
       return this.angularRouter.createUrlTree(
         taskDef ? ['/units', unitId, 'tasks', taskDef.abbreviation] : ['/units', unitId, 'tasks'],
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -398,6 +471,7 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
         taskDef
           ? ['/projects', projectId, 'dashboard', taskDef.abbreviation]
           : ['/projects', projectId, 'dashboard'],
+        {queryParamsHandling: 'preserve'},
       );
     }
 
@@ -420,6 +494,14 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
       this.isTaskDefinitionAboveTargetGrade(taskDef) &&
       !this.hasNewComments(task)
     );
+  }
+
+  private matchesStatusFilter(taskDef: TaskDefinition): boolean {
+    if (!this.activeStatusFilter) {
+      return true;
+    }
+
+    return this.taskForTaskDef(taskDef)?.status === this.activeStatusFilter;
   }
 
   private isTaskDefinitionAboveTargetGrade(taskDef: TaskDefinition): boolean {
@@ -582,7 +664,8 @@ export class FUnitTaskListComponent implements OnChanges, OnInit, OnDestroy {
 
   private get viewPreferencesStorageKey(): string {
     const unitId = this.project?.unit?.id ?? this.taskDefinitions?.[0]?.unit?.id ?? 'unknown';
-    return `ontrack.unitTaskList.${unitId}.viewPreferences`;
+    const userId = this.userService.currentUser?.id ?? 'unknown';
+    return `ontrack.user.${userId}.unitTaskList.${unitId}.viewPreferences`;
   }
 
   private get viewPreferencesStorage(): Storage | null {

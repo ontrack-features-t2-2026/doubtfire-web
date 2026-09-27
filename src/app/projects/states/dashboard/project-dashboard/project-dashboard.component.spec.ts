@@ -4,7 +4,7 @@ import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
-import {BehaviorSubject, EMPTY, Subject, of, tap} from 'rxjs';
+import {BehaviorSubject, EMPTY, Subject, of, tap, throwError} from 'rxjs';
 import {Project, Task, TaskDefinition, Unit} from 'src/app/api/models/doubtfire-model';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
@@ -18,13 +18,18 @@ describe('ProjectDashboardComponent task selection', () => {
   let fixture: ComponentFixture<ProjectDashboardComponent>;
   let taskStatusUpdated$: Subject<Task>;
   let taskSubmissionCompleted$: Subject<Task>;
+  let commentsNarrow$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
+  let phoneLayout$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
 
-  const project = {id: 7} as Project;
+  // findTaskForDefinition is read when the phone layout opens the selected task.
+  const project = {id: 7, findTaskForDefinition: () => undefined} as unknown as Project;
   const selectedTaskDefinition = {id: 42} as TaskDefinition;
 
   beforeEach(async () => {
     taskStatusUpdated$ = new Subject<Task>();
     taskSubmissionCompleted$ = new Subject<Task>();
+    commentsNarrow$ = new BehaviorSubject({matches: false, breakpoints: {}});
+    phoneLayout$ = new BehaviorSubject({matches: false, breakpoints: {}});
 
     await TestBed.configureTestingModule({
       declarations: [ProjectDashboardComponent],
@@ -50,7 +55,10 @@ describe('ProjectDashboardComponent task selection', () => {
         },
         {
           provide: BreakpointObserver,
-          useValue: {observe: () => of({matches: false, breakpoints: {}})},
+          // ngOnInit observes the comments breakpoint first, then the phone one.
+          useValue: {
+            observe: vi.fn().mockReturnValueOnce(commentsNarrow$).mockReturnValueOnce(phoneLayout$),
+          },
         },
         {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
       ],
@@ -72,10 +80,11 @@ describe('ProjectDashboardComponent task selection', () => {
     expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
   });
 
-  it('returns to the dashboard after the selected task submission completes', () => {
+  it('keeps the submitted task selected after its upload completes', () => {
     taskSubmissionCompleted$.next({project, definition: selectedTaskDefinition} as Task);
 
-    expect(component.selectedTaskDefinition$.value).toBeNull();
+    expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
+    expect(component.mobilePane).toBe('task');
   });
 
   it('ignores submission events from another project or task definition', () => {
@@ -90,6 +99,33 @@ describe('ProjectDashboardComponent task selection', () => {
       definition: {id: selectedTaskDefinition.id + 1},
     } as Task);
     expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
+  });
+
+  it('toggles the full-screen chat and drops it when the task closes', () => {
+    component.toggleCommentsFullscreen();
+    expect(component.commentsFullscreen).toBe(true);
+
+    component.toggleCommentsFullscreen();
+    expect(component.commentsFullscreen).toBe(false);
+
+    // A full-screen chat with no task behind it would leave nothing to exit back to.
+    component.toggleCommentsFullscreen();
+    component.selectedTaskDefinition$.next(null);
+
+    expect(component.commentsFullscreen).toBe(false);
+  });
+
+  it('keeps a full-screen chat open when the window narrows, and leaves it for phones', () => {
+    component.toggleCommentsFullscreen();
+
+    commentsNarrow$.next({matches: true, breakpoints: {}});
+
+    expect(component.commentsFullscreen).toBe(true);
+    expect(component.commentsPanelCollapsed).toBe(false);
+
+    phoneLayout$.next({matches: true, breakpoints: {}});
+
+    expect(component.commentsFullscreen).toBe(false);
   });
 });
 
@@ -162,6 +198,44 @@ describe('ProjectDashboardComponent route reuse', () => {
     expect(displayedProject.id).toBe(18);
     expect(component.selectedTaskDefinition$.value).toBeNull();
     expect(setView).toHaveBeenLastCalledWith(ViewType.PROJECT, secondProject);
+
+    component.ngOnDestroy();
+  });
+
+  // A wrong or stale link, or no access, left the page on its skeleton forever.
+  it('shows a failed load instead of the skeleton, and loads again on retry', () => {
+    const projectGet = vi
+      .fn()
+      .mockReturnValueOnce(throwError(() => new Error('404')))
+      .mockImplementation(
+        (params: {id: number}, options: {mappingCompleteCallback: (project: Project) => void}) => {
+          options.mappingCompleteCallback(firstProject);
+          return of(firstProject);
+        },
+      );
+    const component = new ProjectDashboardComponent(
+      {} as UserService,
+      {get: projectGet} as unknown as ProjectService,
+      {taskSubmissionCompleted$: new Subject<Task>()} as unknown as TaskService,
+      {get: vi.fn(() => of(firstUnit))} as unknown as UnitService,
+      {setView: vi.fn()} as unknown as GlobalStateService,
+      {
+        parent: {
+          data: of({project: firstProject}),
+          snapshot: {paramMap: convertToParamMap({projectId: firstProject.id})},
+        },
+      } as unknown as ActivatedRoute,
+      {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+      {navigate: vi.fn().mockResolvedValue(true)} as unknown as Router,
+    );
+    component.project$ = new BehaviorSubject(firstProject).asObservable();
+
+    component.ngOnInit();
+    expect(component.projectLoadFailed).toBe(true);
+
+    component.retryProjectLoad();
+    expect(component.projectLoadFailed).toBe(false);
+    expect(projectGet).toHaveBeenCalledTimes(2);
 
     component.ngOnDestroy();
   });

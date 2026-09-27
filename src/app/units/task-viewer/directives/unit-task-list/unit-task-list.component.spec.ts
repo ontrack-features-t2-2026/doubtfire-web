@@ -3,10 +3,9 @@ import {Directive, NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ActivatedRoute, Router, convertToParamMap} from '@angular/router';
 import {BehaviorSubject, Subject} from 'rxjs';
-import {Project, Task, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {Project, Task, TaskDefinition, TaskStatusEnum} from 'src/app/api/models/doubtfire-model';
+import {UserService} from 'src/app/api/services/user.service';
 import {FUnitTaskListComponent} from './unit-task-list.component';
-
-const emptyProvider = {};
 
 const flushTaskSelection = async (): Promise<void> => {
   await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -32,11 +31,13 @@ const taskForDefinition = (
   definition: TaskDefinition,
   topWeight: number,
   numNewComments = 0,
+  status: TaskStatusEnum = 'not_started',
 ): Task =>
   ({
     definition,
     topWeight,
     numNewComments,
+    status,
   }) as Task;
 
 const studentProject = () =>
@@ -63,19 +64,30 @@ describe('FUnitTaskListComponent', () => {
   let component: FUnitTaskListComponent;
   let fixture: ComponentFixture<FUnitTaskListComponent>;
   let routeParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routeQueryParamMap$: Subject<ReturnType<typeof convertToParamMap>>;
+  let routerNavigate: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
     routeParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routeQueryParamMap$ = new Subject<ReturnType<typeof convertToParamMap>>();
+    routerNavigate = vi.fn().mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
       declarations: [FUnitTaskListComponent],
       providers: [
-        {provide: Router, useValue: emptyProvider},
+        {
+          provide: Router,
+          useValue: {navigate: routerNavigate, createUrlTree: vi.fn()},
+        },
+        {provide: UserService, useValue: {currentUser: {id: 99}}},
         {
           provide: ActivatedRoute,
-          useValue: {paramMap: routeParamMap$.asObservable()},
+          useValue: {
+            paramMap: routeParamMap$.asObservable(),
+            queryParamMap: routeQueryParamMap$.asObservable(),
+          },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -104,6 +116,22 @@ describe('FUnitTaskListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('releases the task list scrollbar to the phone document while preserving desktop styles', () => {
+    const styles = (
+      FUnitTaskListComponent as unknown as {
+        ɵcmp: {styles: string[]};
+      }
+    ).ɵcmp.styles.join('\n');
+
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-y:\s*visible/,
+    );
+    expect(styles).toMatch(
+      /@media\s*\(max-width:\s*639\.98px\)[\s\S]*?\.scrollable[^{]*\{[^}]*overflow-x:\s*clip/,
+    );
+    expect(styles).toMatch(/\.scrollable[^{]*\{[^}]*overflow-y:\s*scroll/);
   });
 
   it('follows task route changes without recreating the component', async () => {
@@ -435,6 +463,66 @@ describe('FUnitTaskListComponent', () => {
     expect(selectedTaskDefinition$.value).toBeNull();
   });
 
+  // A notification or link into another unit swaps the list while the old unit's task
+  // is still selected. The url names the task to open there, so the list must follow it
+  // instead of rewriting the address to the unit overview.
+  describe('when the list moves to another unit', () => {
+    let navigateByUrl: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      navigateByUrl = vi.fn();
+      const internals = component as unknown as {
+        angularRouter: unknown;
+        route: unknown;
+        routeTaskAbbreviation: string | null;
+      };
+      internals.angularRouter = {
+        createUrlTree: vi.fn((commands: unknown[]) => commands.join('/')),
+        navigateByUrl,
+      };
+      internals.route = {
+        paramMap: routeParamMap$.asObservable(),
+        parent: {
+          snapshot: {
+            paramMap: convertToParamMap({projectId: '3'}),
+            data: {project: {}},
+          },
+        },
+      };
+      component.project = studentProject();
+      component.targetGrade = 0;
+      component.tasks = [];
+    });
+
+    it('opens the linked task in the new unit and keeps it in the url', () => {
+      const oldUnitTask = taskDefinition(1, 'DUE3');
+      const newUnitTask = taskDefinition(11, 'DUE3');
+      component.taskDefinitions = [oldUnitTask];
+      const selectedTaskDefinition$ = openTaskDefinition(component, oldUnitTask);
+      (component as unknown as {routeTaskAbbreviation: string}).routeTaskAbbreviation = 'DUE3';
+
+      component.taskDefinitions = [newUnitTask];
+      component.ngOnChanges({taskDefinitions: {} as never});
+
+      expect(navigateByUrl).not.toHaveBeenCalled();
+      expect(selectedTaskDefinition$.value).toBe(newUnitTask);
+    });
+
+    it('still drops a filtered-out task from the url', () => {
+      const passTask = taskDefinition(1, 'P1', undefined, 0);
+      const creditTask = taskDefinition(2, 'C1', undefined, 1);
+      component.taskDefinitions = [passTask, creditTask];
+      component.toggleShowAboveTargetGrade(true);
+      const selectedTaskDefinition$ = openTaskDefinition(component, creditTask);
+      (component as unknown as {routeTaskAbbreviation: string}).routeTaskAbbreviation = 'C1';
+
+      component.toggleShowAboveTargetGrade(false);
+
+      expect(selectedTaskDefinition$.value).toBeNull();
+      expect(navigateByUrl).toHaveBeenCalledWith('/projects/3/dashboard', {replaceUrl: true});
+    });
+  });
+
   it('badges the filter button while tasks beyond the target grade are hidden', () => {
     component.project = studentProject();
     component.targetGrade = 0;
@@ -479,6 +567,72 @@ describe('FUnitTaskListComponent', () => {
     component.applyFilters();
 
     expect(component.filteredTaskDefinitions).toEqual([passTask, creditTask]);
+  });
+
+  it('intersects canonical status routing with text search and clears either filter', () => {
+    const completeAlpha = taskDefinition(1, 'A1');
+    completeAlpha.name = 'Alpha complete';
+    const completeBeta = taskDefinition(2, 'B1');
+    completeBeta.name = 'Beta complete';
+    const workingAlpha = taskDefinition(3, 'A2');
+    workingAlpha.name = 'Alpha working';
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [completeAlpha, completeBeta, workingAlpha];
+    component.tasks = [
+      taskForDefinition(completeAlpha, 1, 0, 'complete'),
+      taskForDefinition(completeBeta, 2, 0, 'complete'),
+      taskForDefinition(workingAlpha, 3, 0, 'working_on_it'),
+    ];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'complete'}));
+    component.searchText = 'Alpha';
+    component.applyFilters();
+
+    expect(component.activeStatusFilter).toBe('complete');
+    expect(component.activeStatusFilterLabel).toBe('Complete');
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha]);
+
+    component.clearSearch();
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta]);
+
+    component.setStatusFilter(null);
+    expect(component.filteredTaskDefinitions).toEqual([completeAlpha, completeBeta, workingAlpha]);
+    expect(routerNavigate).toHaveBeenLastCalledWith([], {
+      relativeTo: expect.anything(),
+      queryParams: {taskStatus: null, taskView: 'tasks'},
+      queryParamsHandling: 'merge',
+    });
+  });
+
+  it('rejects unknown status query values and preserves a zero-result canonical filter', () => {
+    const task = taskDefinition(1, 'A1');
+    component.project = studentProject();
+    component.targetGrade = 0;
+    component.taskDefinitions = [task];
+    component.tasks = [taskForDefinition(task, 1, 0, 'not_started')];
+
+    fixture.detectChanges();
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'invented-status'}));
+    expect(component.activeStatusFilter).toBeNull();
+    expect(component.filteredTaskDefinitions).toEqual([task]);
+
+    routeQueryParamMap$.next(convertToParamMap({taskStatus: 'fail'}));
+    expect(component.activeStatusFilter).toBe('fail');
+    expect(component.filteredTaskDefinitions).toEqual([]);
+  });
+
+  it('stores view preferences under the current user and unit instead of a global key', () => {
+    component.project = studentProject();
+    component.taskDefinitions = [taskDefinition(1, 'A1')];
+
+    component.setSortBy('abbreviation');
+
+    expect(globalThis.localStorage.setItem).toHaveBeenCalledWith(
+      'ontrack.user.99.unitTaskList.20.viewPreferences',
+      expect.any(String),
+    );
   });
 });
 
@@ -551,7 +705,8 @@ describe('FUnitTaskListComponent task status badges', () => {
     await TestBed.configureTestingModule({
       declarations: [FUnitTaskListComponent, StubMatMenu],
       providers: [
-        {provide: Router, useValue: emptyProvider},
+        {provide: Router, useValue: {}},
+        {provide: UserService, useValue: {currentUser: {id: 99}}},
         {
           provide: ActivatedRoute,
           useValue: {paramMap: new Subject<ReturnType<typeof convertToParamMap>>()},
@@ -618,7 +773,8 @@ describe('FUnitTaskListComponent task status badges', () => {
   it('names the badges in the collapsed list as well', () => {
     render(makeTask({numNewComments: 2, isDueSoon: () => true}), true);
 
-    expect(labels()).toEqual(['2 new comments', 'Due soon']);
+    expect(labels()).toHaveLength(2);
+    expect(labels()).toEqual(expect.arrayContaining(['2 new comments', 'Due soon']));
   });
 
   // Failure path: a badge whose condition is false is not rendered, so a

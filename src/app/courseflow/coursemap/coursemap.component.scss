@@ -1,6 +1,6 @@
 :host {
   display: block;
-  color: var(--mat-sys-on-surface, #202b36);
+  color: var(--ot-color-text);
 }
 
 .course-flow {
@@ -53,11 +53,11 @@ p {
   text-transform: uppercase;
 }
 .panel {
-  border: 1px solid var(--mat-sys-outline-variant, #c4cbd2);
+  border: 1px solid var(--ot-color-border);
   border-radius: 10px;
   padding: 18px;
   margin: 0 0 20px;
-  background: var(--mat-sys-surface, #fff);
+  background: var(--ot-color-surface);
   min-width: 0;
 }
 legend {
@@ -80,22 +80,22 @@ select {
   min-width: 0;
   min-height: 44px;
   padding: 8px 10px;
-  border: 1px solid var(--mat-sys-outline, #687582);
+  border: 1px solid var(--ot-color-border);
   border-radius: 6px;
   color: inherit;
-  background: var(--mat-sys-surface, #fff);
+  background: var(--ot-color-surface);
 }
 button {
-  border: 1px solid var(--mat-sys-outline, #687582);
+  border: 1px solid var(--ot-color-border);
   border-radius: 6px;
   min-height: 44px;
   padding: 9px 14px;
   color: inherit;
-  background: var(--mat-sys-surface-container, #eef2f5);
+  background: var(--ot-color-surface-raised);
   cursor: pointer;
 }
 button:hover:not(:disabled) {
-  background: var(--mat-sys-surface-container-high, #dce7ee);
+  background: var(--ot-color-hover);
 }
 button:disabled,
 fieldset:disabled button {
@@ -106,19 +106,19 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid var(--mat-sys-primary, #0059a0);
+  outline: 3px solid var(--ot-color-primary);
   outline-offset: 3px;
 }
 button.primary {
-  background: var(--mat-sys-primary, #0059a0);
-  color: var(--mat-sys-on-primary, #fff);
+  background: var(--ot-color-primary);
+  color: var(--ot-color-on-primary);
   border-color: transparent;
 }
 button.primary:hover:not(:disabled) {
   filter: brightness(0.9);
 }
 button.danger {
-  color: var(--mat-sys-error, #a72323);
+  color: var(--ot-color-error);
 }
 button.secondary {
   background: transparent;
@@ -126,7 +126,7 @@ button.secondary {
 .hint,
 .unit-rules {
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface-variant, #45525f);
+  color: var(--ot-color-text-muted);
 }
 .hint {
   margin: 10px 0;
@@ -135,7 +135,7 @@ button.secondary {
   min-height: 24px;
 }
 .error-panel {
-  border: 1px solid var(--mat-sys-error, #a72323);
+  border: 1px solid var(--ot-color-error);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 20px;
@@ -164,7 +164,7 @@ button.secondary {
 }
 .plan-link[aria-current] {
   font-weight: 700;
-  background: var(--mat-sys-surface-container, #eef2f5);
+  background: var(--ot-color-surface-raised);
 }
 .plan-details {
   display: flex;
@@ -216,11 +216,11 @@ button.secondary {
   padding-bottom: 10px;
 }
 .unit-card {
-  border: 1px solid var(--mat-sys-outline-variant, #c4cbd2);
+  border: 1px solid var(--ot-color-border);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 10px;
-  background: var(--mat-sys-surface-container-low, #f6f8fa);
+  background: var(--ot-color-surface-raised);
   cursor: grab;
   overflow-wrap: anywhere;
 }
@@ -262,7 +262,7 @@ button.secondary {
   gap: 10px;
 }
 .slot {
-  border: 1px dashed var(--mat-sys-outline, #687582);
+  border: 1px dashed var(--ot-color-border);
   border-radius: 6px;
   min-height: 135px;
   padding: 8px;
@@ -285,7 +285,7 @@ button.secondary {
 }
 .cdk-drag-preview {
   box-sizing: border-box;
-  box-shadow: 0 5px 12px rgb(0 0 0 / 20%);
+  box-shadow: 0 5px 12px var(--ot-scrim);
 }
 .cdk-drag-placeholder {
   opacity: 0.35;

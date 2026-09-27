@@ -119,8 +119,8 @@ describe('Inbox phone assessment actions', () => {
     expect(footer().getAttribute('aria-label')).toBe('Assessment actions for 1.1P, Alex Student');
     expect(footer().parentElement.lastElementChild).toBe(footer());
     expect(footer().parentElement.hidden).toBe(false);
-    expect(footer().querySelector('.footer-content .footer-assessment')).not.toBeNull();
-    expect(footer().querySelector('.footer-content .footer-utilities')).not.toBeNull();
+    expect(footer().querySelector('.footer-assessment')).not.toBeNull();
+    expect(footer().querySelector('.footer-utilities')).not.toBeNull();
     expect(complete().disabled).toBe(false);
     complete().click();
     expect(selectedTask.value.updateTaskStatus).toHaveBeenCalledExactlyOnceWith('complete');
@@ -151,7 +151,7 @@ describe('Inbox phone assessment actions', () => {
     fixture.detectChanges();
     expect(complete().disabled).toBe(true);
     const claim: HTMLButtonElement = footer().querySelector('f-task-claim button');
-    expect(claim.textContent).toContain('Claim Task');
+    expect(claim.textContent).toContain('Claim task');
     claim.click();
     fixture.detectChanges();
 
@@ -166,12 +166,12 @@ describe('Inbox phone assessment actions', () => {
     selectedTask.value.claimedByUnitRoleId = 20;
     fixture.detectChanges();
     expect(complete().disabled).toBe(true);
-    expect(claim.textContent).toContain('Claimed by tutor');
+    expect(claim.textContent).toContain('Claimed by another tutor');
     expect(selectedTask.value.updateTaskStatus).not.toHaveBeenCalled();
   });
 
   it('hides the actions with the submission when returning to the phone inbox list', () => {
-    fixture.nativeElement.querySelector('[aria-label="Back to inbox"]').click();
+    fixture.nativeElement.querySelector('[aria-label="Back to the task list"]').click();
     fixture.detectChanges();
     expect(footer().parentElement.hidden).toBe(true);
     expect(fixture.nativeElement.querySelector('#inboxpanel').hidden).toBe(false);
@@ -184,6 +184,6 @@ describe('Inbox phone assessment actions', () => {
     const footers = fixture.debugElement.queryAll(By.directive(FooterComponent));
     expect(footers).toHaveLength(1);
     expect(footers[0].componentInstance.viewType).toBe('explorer');
-    expect(fixture.nativeElement.querySelector('[aria-label="Back to inbox"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Back to the task list"]')).toBeNull();
   });
 });

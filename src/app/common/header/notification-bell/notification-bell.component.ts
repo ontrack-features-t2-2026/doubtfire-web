@@ -6,6 +6,7 @@ import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
+import {presentationFor} from 'src/app/common/notifications/notification-presentation';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ConfirmationModalService} from '../../modals/confirmation-modal/confirmation-modal.service';
 
@@ -47,35 +48,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
    * them.
    */
   public static readonly RECENT_COUNT = 5;
-
-  /**
-   * The icon and colour for a notification's category.
-   *
-   * Keyed on notificationType and nothing finer, because that is all the api
-   * sends. NotificationEntity exposes id, notification_type, message, link,
-   * read_at and created_at, and the event naming the specific thing that
-   * happened is deliberately not among them. So a new task, a due date change
-   * and a due soon reminder all share the one task icon. Icons per event would
-   * need `expose :event` on the api first, and then this stops being a closed
-   * list of five and becomes something every event ticket has to edit, which is
-   * the coupling the mailer templates were shaped to avoid.
-   */
-  private static readonly CATEGORIES: Record<string, {icon: string; tone: string}> = {
-    feedback: {icon: 'chat_bubble', tone: 'feedback'},
-    task: {icon: 'assignment', tone: 'task'},
-    portfolio: {icon: 'collections_bookmark', tone: 'portfolio'},
-    extension: {icon: 'more_time', tone: 'extension'},
-    general: {icon: 'campaign', tone: 'general'},
-  };
-
-  /**
-   * For a category this build has not heard of.
-   *
-   * Notification::TYPES is validated on the api, so the five above are the five
-   * that exist today. A sixth added there would reach a browser running older
-   * web code, and a row with no icon at all is worse than a generic one.
-   */
-  private static readonly UNKNOWN_CATEGORY = {icon: 'notifications', tone: 'general'};
 
   unreadCount = 0;
 
@@ -157,6 +129,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
    */
   get bellLabel(): string {
     return this.unreadCount ? `Notifications, ${this.unreadCount} unread` : 'Notifications';
+  }
+
+  get badgeText(): number | string {
+    return this.unreadCount > 99 ? '99+' : this.unreadCount;
   }
 
   /**
@@ -292,11 +268,15 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   }
 
   iconFor(notification: Notification): string {
-    return this.categoryFor(notification).icon;
+    return presentationFor(notification).icon;
   }
 
   toneFor(notification: Notification): string {
-    return this.categoryFor(notification).tone;
+    return presentationFor(notification).tone;
+  }
+
+  labelFor(notification: Notification): string {
+    return presentationFor(notification).label;
   }
 
   /**
@@ -309,7 +289,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   rowLabel(notification: Notification): string {
     const state = notification.isRead ? 'Read' : 'Unread';
 
-    return `${state}. ${notification.message}. ${this.timeAgo(notification)}`;
+    return `${state}. ${this.labelFor(notification)}. ${notification.message}. ${this.timeAgo(notification)}`;
   }
 
   /**
@@ -376,13 +356,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   private updateRecent(): void {
     this.recent = this.notifications.slice(0, NotificationBellComponent.RECENT_COUNT);
-  }
-
-  private categoryFor(notification: Notification): {icon: string; tone: string} {
-    return (
-      NotificationBellComponent.CATEGORIES[notification.notificationType] ??
-      NotificationBellComponent.UNKNOWN_CATEGORY
-    );
   }
 
   /**

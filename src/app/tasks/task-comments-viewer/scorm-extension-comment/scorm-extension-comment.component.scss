@@ -12,12 +12,7 @@ hr {
 }
 
 .hr-fade {
-  background: linear-gradient(
-    to right,
-    transparent,
-    color-mix(in srgb, var(--ot-color-text-muted) 62%, transparent),
-    transparent
-  );
+  background: linear-gradient(to right, transparent, var(--ot-color-divider), transparent);
   width: 100%;
 }
 
@@ -31,17 +26,12 @@ hr {
   position: relative;
   outline: 0;
   border: 0;
-  color: var(--ot-color-text);
+  color: var(--ot-color-text-muted);
   text-align: center;
   height: 1.5em;
   &:before {
     content: '';
-    background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in srgb, var(--ot-color-text-muted) 62%, transparent),
-      transparent
-    );
+    background: linear-gradient(to right, transparent, var(--ot-color-divider), transparent);
     position: absolute;
     left: 0;
     top: 50%;
@@ -56,6 +46,6 @@ hr {
     line-height: 1.5em;
 
     color: var(--ot-color-text-muted);
-    background-color: var(--ot-color-surface);
+    background-color: var(--ot-color-page);
   }
 }

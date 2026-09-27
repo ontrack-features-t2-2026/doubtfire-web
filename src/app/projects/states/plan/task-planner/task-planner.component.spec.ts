@@ -20,6 +20,41 @@ const taskDefinition = (id: number, targetGrade: number): TaskDefinition =>
     startDate: new Date(2026, 0, id),
   }) as TaskDefinition;
 
+describe('TaskPlannerComponent bar states', () => {
+  const planner = (status: string, targetGrade = 0) => {
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    component.targetGrade = 0;
+    const item = {
+      taskDefinition: {targetGrade},
+      task: {status},
+    } as never;
+    return {component, item};
+  };
+
+  it('shows a complete task as done instead of a deadline warning', () => {
+    const {component, item} = planner('complete');
+    // Even past its feedback deadline, a finished task has nothing left to warn about.
+    component.isPastFeedbackDeadline = () => true;
+
+    expect(component.getItemClasses(item)).toContain('[--bar-bg:var(--ot-status-complete)]');
+  });
+
+  it('keeps the deadline warning on a task that is still open', () => {
+    const {component, item} = planner('working_on_it');
+    component.isPastFeedbackDeadline = () => true;
+
+    expect(component.getItemClasses(item)).toContain('[--bar-bg:var(--ot-status-time-exceeded)]');
+  });
+
+  it('sizes the chart from its row count', () => {
+    const {component} = planner('not_started');
+    component.items = [{}, {}, {}] as never;
+
+    // 52px date header, three 44px rows and room for the timeline scrollbar.
+    expect(component.ganttHeight).toBe(52 + 3 * 44 + 18);
+  });
+});
+
 describe('TaskPlannerComponent target-grade filtering', () => {
   it('shows tasks beyond the target grade only when the student opts in', () => {
     const passTask = taskDefinition(1, 0);
@@ -37,6 +72,25 @@ describe('TaskPlannerComponent target-grade filtering', () => {
     component.showTasksAboveTargetGrade = true;
 
     expect(component.taskDefs()).toEqual([passTask, creditTask]);
+  });
+
+  it('rebuilds the visible planner data when the beyond-target toggle changes', () => {
+    const passTask = taskDefinition(1, 0);
+    const creditTask = taskDefinition(2, 1);
+    const component = Object.create(TaskPlannerComponent.prototype) as TaskPlannerComponent;
+    component.project = {
+      id: 15,
+      unit: {taskDefinitions: [passTask, creditTask]},
+      findTaskForDefinition: () => null,
+    } as unknown as Project;
+    component.targetGrade = 0;
+    component.showTasksAboveTargetGrade = false;
+    const refreshItems = vi.spyOn(component, 'refreshItems').mockImplementation(() => undefined);
+
+    component.setShowTasksAboveTargetGrade(true);
+
+    expect(component.taskDefs()).toEqual([passTask, creditTask]);
+    expect(refreshItems).toHaveBeenCalledWith(false);
   });
 
   it('reveals an above-target task requested by a direct planner link', () => {
@@ -200,7 +254,7 @@ function plannerItem(id: string) {
     start,
     end: start + day,
     links: [] as {link: string; color: {active: string; default: string}}[],
-    taskDefinition: {id: 1, targetGrade: 0},
+    taskDefinition: {id: 1, abbreviation: 'A1', name: 'Assignment 1', targetGrade: 0},
     task: {
       status: 'not_started',
       startDate: new Date(start * 1000),
@@ -249,7 +303,13 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
       declarations: [TaskPlannerComponent],
       imports: [CommonModule],
       providers: [
-        {provide: GradeService, useValue: emptyProvider},
+        {
+          provide: GradeService,
+          useValue: {
+            gradeLabel: () => 'Pass',
+            gradeValuesFor: () => [0],
+          },
+        },
         {provide: AlertService, useValue: emptyProvider},
         {provide: ConfirmationModalService, useValue: emptyProvider},
         {provide: TaskPlannerPrerequisitesModalService, useValue: prerequisitesModal},
@@ -267,7 +327,7 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
       id: 1,
       unit: {
         allowFlexibleDates: false,
-        taskDefinitions: [],
+        taskDefinitions: [{id: 1, abbreviation: 'A1', name: 'Assignment 1', targetGrade: 0}],
         gradeDefinitions: [],
         getTaskPrerequisites: () => EMPTY,
       },
@@ -286,16 +346,36 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     view?.destroy();
   });
 
+  // The token sheets are not loaded under jsdom, so contrast is checked by pairing: each
+  // fill must carry the text token designed for it, whose ratio is set with the tokens.
   it.each([
-    {state: 'highlighted', background: '#03c6fc', foreground: 'text-black'},
-    {state: 'above-target', background: '#9ca3af', foreground: 'text-black'},
-    {state: 'past-deadline', background: '#cd3704', foreground: 'text-white'},
-    {state: 'blocked', background: '#e88307', foreground: 'text-black'},
-    {state: 'close-deadline', background: '#ffc53d', foreground: 'text-black'},
-    {state: 'normal', background: '#0e467b', foreground: 'text-white'},
+    {state: 'highlighted', background: '--ot-color-info', foreground: '--ot-color-inverse-text'},
+    {
+      state: 'above-target',
+      background: '--ot-color-disabled-surface',
+      foreground: '--ot-color-text-muted',
+    },
+    {state: 'complete', background: '--ot-status-complete', foreground: '--ot-status-complete-on'},
+    {
+      state: 'past-deadline',
+      background: '--ot-status-time-exceeded',
+      foreground: '--ot-status-time-exceeded-on',
+    },
+    {
+      state: 'blocked',
+      background: '--ot-status-attention-required',
+      foreground: '--ot-status-attention-required-on',
+    },
+    {
+      state: 'close-deadline',
+      background: '--ot-status-fix-and-resubmit',
+      foreground: '--ot-status-fix-and-resubmit-on',
+    },
+    {state: 'normal', background: '--ot-color-primary', foreground: '--ot-color-on-primary'},
   ])('renders one contrasting foreground for $state bars', ({state, background, foreground}) => {
     const item = Object.assign(plannerItem('contrast'), {highlighted: state === 'highlighted'});
     vi.spyOn(component, 'isAboveTargetGrade').mockReturnValue(state === 'above-target');
+    vi.spyOn(component, 'isComplete').mockReturnValue(state === 'complete');
     vi.spyOn(component, 'isPastFeedbackDeadline').mockReturnValue(state === 'past-deadline');
     vi.spyOn(component, 'isBlockedByPrerequisite').mockReturnValue(state === 'blocked');
     vi.spyOn(component, 'isCloseToFeedbackDeadline').mockReturnValue(state === 'close-deadline');
@@ -304,10 +384,15 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     view.destroy();
     bar = stampBar(item);
 
-    expect(bar.classList.contains(`[--bar-bg:${background}]`)).toBe(true);
+    const classes = [...bar.classList];
+    expect(classes.filter((name) => name.startsWith('[--bar-bg:'))).toEqual([
+      `[--bar-bg:var(${background})]`,
+    ]);
+    // A fixed text colour on the template would fight the per-state one, so only a
+    // single colour class may be present.
     expect(
-      [...bar.classList].filter((name) => name === 'text-black' || name === 'text-white'),
-    ).toEqual([foreground]);
+      classes.filter((name) => name.startsWith('[color:') || /^text-(black|white|ot-)/.test(name)),
+    ).toEqual([`[color:var(${foreground})]`]);
   });
 
   it('gives the bar a role and a tab stop, so a keyboard can reach it', () => {
@@ -346,6 +431,88 @@ describe('TaskPlannerComponent gantt bar keyboard access', () => {
     bar.dispatchEvent(new FocusEvent('focus'));
 
     expect(component.overlayLines).toBe(true);
+  });
+
+  it('keeps a phone-first task card alongside the richer desktop timeline', () => {
+    component.showDatesColumn = true;
+    fixture.detectChanges();
+
+    const mobileCard: HTMLElement = fixture.nativeElement.querySelector('.mobile-task-card');
+    const desktopPlanner: HTMLElement = fixture.nativeElement.querySelector('.desktop-planner');
+    const text = mobileCard.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(mobileCard).not.toBeNull();
+    expect(desktopPlanner).not.toBeNull();
+    expect(text).toContain('Pass task');
+    expect(text).toContain('A1 Assignment 1');
+    expect(text).toContain('Not Started');
+    expect(text).toContain('Start date');
+    expect(text).toContain('Target / due date');
+    expect(text).toContain('Deadline');
+    expect(text).toContain('No prerequisite or dependent tasks');
+  });
+
+  it('shows a compact date range when task-date detail is off and labelled dates when it is on', () => {
+    component.showDatesColumn = false;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.mobile-task-card__date-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.mobile-task-card__dates')).toBeNull();
+
+    component.showDatesColumn = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.mobile-task-card__dates dt').length).toBe(3);
+  });
+
+  it('summarises both directions and opens the full task-connections view', () => {
+    const prerequisiteDefinition = {
+      id: 2,
+      abbreviation: 'P1',
+      name: 'Prerequisite',
+      targetGrade: 0,
+    };
+    const dependentDefinition = {
+      id: 3,
+      abbreviation: 'D1',
+      name: 'Dependent',
+      targetGrade: 0,
+    };
+    const mutableUnit = component.project.unit as unknown as {
+      taskDefinitions: TaskDefinition[];
+    };
+    mutableUnit.taskDefinitions = [
+      component.items[0].taskDefinition,
+      prerequisiteDefinition,
+      dependentDefinition,
+    ] as never;
+    component.taskPrerequisites = [
+      {
+        id: 1,
+        taskDefinitionId: 1,
+        prerequisiteId: 2,
+        prerequisite: prerequisiteDefinition,
+      },
+      {
+        id: 2,
+        taskDefinitionId: 3,
+        prerequisiteId: 1,
+        taskDefinition: dependentDefinition,
+      },
+    ] as never;
+    fixture.detectChanges();
+
+    const connections: HTMLElement = fixture.nativeElement.querySelector(
+      '.mobile-task-card__connections',
+    );
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button[aria-label^="View prerequisites"]',
+    );
+
+    expect(connections.textContent).toContain('1 prerequisite; 1 dependent');
+    button.click();
+    expect(prerequisitesModal.shown.length).toBe(1);
+    expect(prerequisitesModal.shown[0][1]).toBe(component.items[0].taskDefinition);
   });
 });
 

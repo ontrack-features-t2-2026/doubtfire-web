@@ -7,12 +7,17 @@ import {
   captureAndScrubAuthCallback,
   redactAuthCallbackFromUrl,
 } from './app/security/auth-callback';
+import {
+  captureAndScrubAdditionalEmailVerification,
+  redactAdditionalEmailVerificationFromUrl,
+} from './app/security/additional-email-verification-callback';
 
 // Authentication callbacks may contain a one-time credential. Remove it from
 // browser history before any telemetry SDK or application code can observe it.
 const telemetrySafe = captureAndScrubAuthCallback();
+const additionalEmailTelemetrySafe = captureAndScrubAdditionalEmailVerification();
 
-if (environment.sentryDsn && telemetrySafe) {
+if (environment.sentryDsn && telemetrySafe && additionalEmailTelemetrySafe) {
   Sentry.init({
     dsn: environment.sentryDsn,
     tunnel: '/api/client-reports',
@@ -26,14 +31,18 @@ if (environment.sentryDsn && telemetrySafe) {
     sendDefaultPii: false,
     beforeSend(event) {
       if (event.request?.url) {
-        event.request.url = redactAuthCallbackFromUrl(event.request.url);
+        event.request.url = redactAdditionalEmailVerificationFromUrl(
+          redactAuthCallbackFromUrl(event.request.url),
+        );
       }
       return event;
     },
     beforeBreadcrumb(breadcrumb) {
       const url = breadcrumb.data?.['url'];
       if (typeof url === 'string') {
-        breadcrumb.data['url'] = redactAuthCallbackFromUrl(url);
+        breadcrumb.data['url'] = redactAdditionalEmailVerificationFromUrl(
+          redactAuthCallbackFromUrl(url),
+        );
       }
       return breadcrumb;
     },

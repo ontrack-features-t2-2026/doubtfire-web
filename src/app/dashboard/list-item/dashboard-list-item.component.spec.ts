@@ -3,8 +3,11 @@ import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {MatTooltipModule} from '@angular/material/tooltip';
 import {RouterLink, provideRouter} from '@angular/router';
 import {TaskDefinition} from '../../api/models/task-definition';
+import {TaskStatus} from '../../api/models/task-status';
+import {StatusIconComponent} from '../../common/status-icon/status-icon.component';
 import {
   DashboardListItemComponent,
   DashboardTask,
@@ -83,8 +86,8 @@ describe('DashboardListItemComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [DashboardListItemComponent],
-      imports: [MatButtonModule, MatIconModule, RouterLink],
+      declarations: [DashboardListItemComponent, StatusIconComponent],
+      imports: [MatButtonModule, MatIconModule, MatTooltipModule, RouterLink],
       providers: [provideRouter([])],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -97,7 +100,6 @@ describe('DashboardListItemComponent', () => {
       subtitle: '1.1P - Pass Task',
       statusLabel: 'Resubmit',
       abbreviation: '1.1P',
-      color: '#123456',
       comments: 0,
       hasFeedback: false,
       status: 'fix_and_resubmit',
@@ -158,14 +160,13 @@ describe('DashboardListItemComponent', () => {
     expect(feedbackIcon.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('renders warning text and an icon alongside the separate status colour', () => {
+  it('renders warning text and an icon alongside the separate status circle', () => {
     fixture.componentRef.setInput('task', {
       taskDefinitionId: 10,
       title: 'Accessible task',
       subtitle: '1.1P - Pass Task',
       statusLabel: 'Not Started',
       abbreviation: '1.1P',
-      color: '#123456',
       comments: 0,
       hasFeedback: false,
       status: 'not_started',
@@ -186,13 +187,18 @@ describe('DashboardListItemComponent', () => {
 
     const badge = fixture.nativeElement.querySelector('.bg-orange-100') as HTMLElement;
     const icon = badge.querySelector('mat-icon') as HTMLElement;
-    const statusStrip = fixture.nativeElement.firstElementChild.firstElementChild as HTMLElement;
+    const statusChip = fixture.nativeElement.querySelector(
+      'status-icon .status-chip',
+    ) as HTMLElement;
 
     expect(badge.textContent).toContain('Due within 24 hours');
     expect(icon.textContent.trim()).toBe('schedule');
     expect(icon.getAttribute('aria-hidden')).toBe('true');
     expect(icon.classList).toContain('!leading-none');
-    expect(statusStrip.style.backgroundColor).toBe('rgb(18, 52, 86)');
+    expect(statusChip.classList).toContain('not-started');
+    expect(statusChip.querySelector('mat-icon')?.textContent?.trim()).toBe(
+      TaskStatus.STATUS_MATERIAL_ICONS.get('not_started'),
+    );
     expect(fixture.nativeElement.textContent).toContain('Status: Not Started');
   });
 
@@ -217,7 +223,9 @@ describe('DashboardListItemComponent', () => {
     fixture.detectChanges();
     const badge = fixture.nativeElement.querySelector('[role="status"]');
     expect(badge.getAttribute('aria-label')).toBe('3 unread comments on Security Review');
-    expect(badge.classList.contains('bg-formatif-blue')).toBe(true);
+    // The redesign's badge takes the themed primary pair, which keeps 4.5:1 in both themes.
+    expect(badge.classList.contains('bg-ot-primary')).toBe(true);
+    expect(badge.classList.contains('text-ot-on-primary')).toBe(true);
     expect(fixture.nativeElement.textContent).not.toContain('New feedback');
   });
 

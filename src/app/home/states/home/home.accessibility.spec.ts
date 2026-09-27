@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
@@ -15,8 +15,10 @@ import {HomeComponent} from './home.component';
 
 describe('Home unit navigation accessibility', () => {
   let fixture: ComponentFixture<HomeComponent>;
+  let shell: HTMLElement;
 
   beforeEach(async () => {
+    const day = 24 * 60 * 60 * 1000;
     const unit = {
       id: 8,
       active: true,
@@ -24,6 +26,9 @@ describe('Home unit navigation accessibility', () => {
       name: 'Demonstration unit',
       code: 'DEMO',
       myRole: 'Student',
+      startDate: new Date(Date.now() - 30 * day),
+      endDate: new Date(Date.now() + 30 * day),
+      weekNumber: () => 5,
       teachingPeriodProgress: 50,
     };
     await TestBed.configureTestingModule({
@@ -40,8 +45,13 @@ describe('Home unit navigation accessibility', () => {
             showHeader: vi.fn(),
             setView: vi.fn(),
             onLoad: (fn: () => void) => fn(),
+            isLoadingSubject: of(false),
             unitRolesSubject: of([
-              {unit: {...unit, name: 'Teaching demonstration unit'}, role: 'Tutor'},
+              {
+                id: 3,
+                unit: {...unit, code: 'TEACH', name: 'Teaching demonstration unit'},
+                role: 'Tutor',
+              },
             ]),
             projectsSubject: of([{id: 12, unit}]),
           },
@@ -50,21 +60,33 @@ describe('Home unit navigation accessibility', () => {
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
     fixture = TestBed.createComponent(HomeComponent);
+    // The app shell renders every page inside its one main landmark, so the section
+    // headers on this page are not page banners.
+    shell = document.createElement('main');
+    fixture.nativeElement.replaceWith(shell);
+    shell.appendChild(fixture.nativeElement);
     Object.assign(fixture.componentInstance, {$safeNavigationMigration: (value: unknown) => value});
     fixture.detectChanges();
   });
 
+  afterEach(() => shell.remove());
+
+  // Each unit card is named by its title link, which carries the unit code.
+  const cardTitleLinks = (): HTMLAnchorElement[] => [
+    ...fixture.nativeElement.querySelectorAll('[id^="staff-unit-"] a, [id^="study-unit-"] a'),
+  ];
+
   it('renders staff and student cards as named native links with actual route destinations', () => {
-    const links = [
-      ...fixture.nativeElement.querySelectorAll('a.removeStyle'),
-    ] as HTMLAnchorElement[];
+    const links = cardTitleLinks();
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/units/8/tasks/inbox',
       '/projects/12/dashboard',
     ]);
+    expect(links.map((link) => link.textContent?.trim())).toEqual(['TEACH', 'DEMO']);
+    // the name starts with the visible code, then says which unit and role
     expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
-      'Teaching demonstration unit - Tutor',
-      'Demonstration unit',
+      'TEACH, Teaching demonstration unit - Tutor',
+      'DEMO, Demonstration unit',
     ]);
     for (const link of links) {
       expect(link.tabIndex).toBe(0);
@@ -75,10 +97,21 @@ describe('Home unit navigation accessibility', () => {
   });
 
   it('does not create navigation stops for inactive units', () => {
-    fixture.componentInstance.unitRoles = [];
-    fixture.componentInstance.projects = [];
+    const component = fixture.componentInstance;
+    component.unitRolesLoaded(
+      component.unitRoles.map((unitRole) => ({
+        ...unitRole,
+        unit: {...unitRole.unit, isActive: false},
+      })) as never,
+    );
+    component.projectsLoaded(
+      component.projects.map((project) => ({
+        ...project,
+        unit: {...project.unit, isActive: false},
+      })) as never,
+    );
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('a.removeStyle')).toBeNull();
+    expect(cardTitleLinks()).toEqual([]);
   });
 
   it('passes automated accessibility checks for the student and staff entry points', async () => {

@@ -22,10 +22,10 @@ export class TaskComment extends Entity {
   recipientReadTime: string;
   commentType: string = 'text';
   isNew: boolean;
-  attachmentFileName: string;
-  attachmentMimeType: string;
-  attachmentByteSize: number;
   replyToId: number;
+  attachmentFileName?: string;
+  attachmentMimeType?: string;
+  attachmentByteSize?: number;
 
   // Data calculated from the above
   initials: string;

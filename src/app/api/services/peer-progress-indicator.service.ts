@@ -4,9 +4,13 @@ import {Observable, map, of} from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {
+  DemoPpiHook,
+  DemoScenarioRegistryService,
+  DemoUnitHook,
+} from 'src/app/demo/demo-scenario-registry.service';
+import {
   DemoPeerProgressState,
   createDemoUnitSummary,
-  createMaskedPeerProgressIndicator,
 } from 'src/app/demo/fixtures/peer-progress-demo.fixtures';
 import {
   PeerProgressDistributionUnavailableReason,
@@ -59,11 +63,13 @@ export class PeerProgressIndicatorService {
   constructor(
     private httpClient: HttpClient,
     private demoMode: DemoModeStore,
+    private demoRegistry: DemoScenarioRegistryService,
   ) {}
 
   getIndicator(projectId: number, taskDefinitionId: number): Observable<PeerProgressIndicator> {
-    if (this.demoMode.shouldMaskApiData) {
-      return of(createMaskedPeerProgressIndicator(taskDefinitionId));
+    const demoUnit = this.findDemoUnit(projectId, taskDefinitionId);
+    if (demoUnit) {
+      return of(this.mapDemoIndicator(demoUnit));
     }
 
     const url = `${API_URL}/projects/${projectId}/task_def_id/${taskDefinitionId}/peer_progress`;
@@ -184,5 +190,99 @@ export class PeerProgressIndicatorService {
     state: DemoPeerProgressState,
   ): Observable<PeerProgressUnitSummary> {
     return of(createDemoUnitSummary(unitId, targetGrade, studentPercentage, state));
+  }
+
+  /**
+   * Maps the guarded Batch 09 contract into the existing privacy-safe summary.
+   * Dynamic demo IDs stay in the registry and never enter normal entity caches.
+   */
+  getScenarioUnitSummary(
+    projectId: number,
+    unitId: number,
+    targetGrade: number,
+    studentPercentage: number | null,
+  ): Observable<PeerProgressUnitSummary> {
+    const unit = this.findDemoUnit(projectId);
+
+    if (!unit || unit.unit_id !== unitId) {
+      return of(createDemoUnitSummary(unitId, targetGrade, studentPercentage, 'unavailable'));
+    }
+
+    if (unit.ppi.state !== 'available') {
+      return of(createDemoUnitSummary(unitId, targetGrade, studentPercentage, 'suppressed'));
+    }
+
+    const submittedPercentage = this.mapCompactPercentage(unit.ppi.submitted_percentage);
+    if (submittedPercentage === null) {
+      return of(createDemoUnitSummary(unitId, targetGrade, studentPercentage, 'unavailable'));
+    }
+
+    return of({
+      ...createDemoUnitSummary(unitId, targetGrade, studentPercentage, 'normal'),
+      submittedPercentage,
+      cohortLabel: `Anonymous cohort — ${unit.ppi.task_abbreviation} submitted`,
+      lastUpdatedAt: this.demoRegistry.scenario?.generated_at ?? null,
+    });
+  }
+
+  private findDemoUnit(projectId: number, taskDefinitionId?: number): DemoUnitHook | undefined {
+    if (!this.demoMode.enabled) {
+      return undefined;
+    }
+
+    return this.demoRegistry.scenario?.units.find(
+      (unit) =>
+        unit.project_id === projectId &&
+        (taskDefinitionId === undefined || unit.ppi.task_definition_id === taskDefinitionId),
+    );
+  }
+
+  private mapDemoIndicator(unit: DemoUnitHook): PeerProgressIndicator {
+    const hook: DemoPpiHook = unit.ppi;
+    const timestamp = this.demoRegistry.scenario?.generated_at ?? null;
+
+    if (hook.state !== 'available') {
+      return {
+        taskDefinitionId: hook.task_definition_id,
+        unitId: unit.unit_id,
+        targetGrade: null,
+        submittedPercentage: null,
+        completedPercentage: null,
+        distributionAvailable: false,
+        statusDistribution: [],
+        isUserEnabled: true,
+        isSuppressed: hook.unavailable_reason === 'insufficient_cohort',
+        isStale: false,
+        isFeatureEnabled: true,
+        lastUpdatedAt: timestamp,
+        unavailableMessage: 'Not enough students to show anonymous peer progress for this unit.',
+        unavailableReason: 'insufficient_cohort',
+        distributionUnavailableReason: 'insufficient_cohort',
+      };
+    }
+
+    const submittedPercentage = this.mapCompactPercentage(hook.submitted_percentage);
+    const completedPercentage = this.mapCompactPercentage(hook.completed_percentage);
+    const statusDistribution = this.mapStatusDistribution(hook.status_distribution);
+    const compactAvailable = submittedPercentage !== null || completedPercentage !== null;
+
+    return {
+      taskDefinitionId: hook.task_definition_id,
+      unitId: unit.unit_id,
+      targetGrade: null,
+      submittedPercentage,
+      completedPercentage,
+      distributionAvailable: statusDistribution !== null,
+      statusDistribution: statusDistribution ?? [],
+      isUserEnabled: true,
+      isSuppressed: false,
+      isStale: false,
+      isFeatureEnabled: true,
+      lastUpdatedAt: timestamp,
+      unavailableMessage: compactAvailable ? '' : 'Peer progress is unavailable for this unit.',
+      unavailableReason: compactAvailable ? null : 'snapshot_unavailable',
+      distributionUnavailableReason:
+        statusDistribution === null ? 'detailed_data_unavailable' : null,
+    };
   }
 }

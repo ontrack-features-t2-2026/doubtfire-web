@@ -1,0 +1,97 @@
+{
+  "capturedAt": "2026-08-30T08:59:37+10:00",
+  "environment": {
+    "url": "http://localhost:4400/projects/2/dashboard/1.1P",
+    "viewportHeight": 844,
+    "data": "local synthetic fixture",
+    "liveSubmissionPerformed": false,
+    "microphonePermissionRequested": false
+  },
+  "inputBehaviour": {
+    "returnKeyResult": "Line one\n",
+    "returnKeySubmitted": false,
+    "explicitSendEnabledForNonWhitespace": true,
+    "explicitSendDisabledAfterClear": true,
+    "textareaMaximumHeightPx": 144
+  },
+  "phoneWidths": [
+    {
+      "viewportWidthPx": 320,
+      "documentScrollWidthPx": 320,
+      "horizontalOverflowPx": 0,
+      "formWidthPx": 320,
+      "formBottomInsetPx": 15,
+      "controlBottomInsetWithinFormPx": 12,
+      "multilineTextarea": {"widthPx": 94, "heightPx": 144},
+      "controls": {
+        "attachment": {"widthPx": 44, "heightPx": 48},
+        "microphone": {"widthPx": 44, "heightPx": 48},
+        "emoji": {"widthPx": 44, "heightPx": 44},
+        "send": {"widthPx": 52, "heightPx": 44}
+      }
+    },
+    {
+      "viewportWidthPx": 360,
+      "documentScrollWidthPx": 360,
+      "horizontalOverflowPx": 0,
+      "formWidthPx": 360,
+      "formBottomInsetPx": 15,
+      "controlBottomInsetWithinFormPx": 12,
+      "multilineTextarea": {"widthPx": 114, "heightPx": 144},
+      "controls": {
+        "attachment": {"widthPx": 48, "heightPx": 48},
+        "microphone": {"widthPx": 48, "heightPx": 48},
+        "emoji": {"widthPx": 44, "heightPx": 44},
+        "send": {"widthPx": 56, "heightPx": 44}
+      }
+    },
+    {
+      "viewportWidthPx": 390,
+      "documentScrollWidthPx": 390,
+      "horizontalOverflowPx": 0,
+      "formWidthPx": 390,
+      "formBottomInsetPx": 15,
+      "controlBottomInsetWithinFormPx": 12,
+      "multilineTextarea": {"widthPx": 144, "heightPx": 144},
+      "controls": {
+        "attachment": {"widthPx": 48, "heightPx": 48},
+        "microphone": {"widthPx": 48, "heightPx": 48},
+        "emoji": {"widthPx": 44, "heightPx": 44},
+        "send": {"widthPx": 56, "heightPx": 44}
+      }
+    },
+    {
+      "viewportWidthPx": 412,
+      "documentScrollWidthPx": 412,
+      "horizontalOverflowPx": 0,
+      "formWidthPx": 412,
+      "formBottomInsetPx": 15,
+      "controlBottomInsetWithinFormPx": 12,
+      "multilineTextarea": {"widthPx": 166, "heightPx": 144},
+      "controls": {
+        "attachment": {"widthPx": 48, "heightPx": 48},
+        "microphone": {"widthPx": 48, "heightPx": 48},
+        "emoji": {"widthPx": 44, "heightPx": 44},
+        "send": {"widthPx": 56, "heightPx": 44}
+      }
+    }
+  ],
+  "emojiPickerAt390Px": {
+    "leftPx": 8,
+    "rightPx": 382,
+    "topPx": 321,
+    "bottomPx": 741,
+    "widthPx": 374,
+    "heightPx": 420,
+    "withinViewport": true,
+    "escapeDismissed": true,
+    "escapeReturnedFocusToTrigger": true
+  },
+  "desktopAt1024Px": {
+    "documentScrollWidthPx": 1024,
+    "horizontalOverflowPx": 0,
+    "composerSidebarWidthPx": 248,
+    "controlHeightPx": 44,
+    "sendWidthPx": 59.05
+  }
+}

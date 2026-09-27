@@ -12,11 +12,18 @@ import {
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, filter, map, of, takeUntil} from 'rxjs';
-import {Project, TaskDefinition} from 'src/app/api/models/doubtfire-model';
+import {
+  Project,
+  TaskDefinition,
+  TaskStatus,
+  TaskStatusEnum,
+} from 'src/app/api/models/doubtfire-model';
+import {NotificationFeedbackRouteIntentService} from 'src/app/api/services/notification-feedback-route-intent.service';
 import {ProjectService} from 'src/app/api/services/project.service';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UnitService} from 'src/app/api/services/unit.service';
 import {UserService} from 'src/app/api/services/user.service';
+import {ConversationLandingService} from 'src/app/tasks/task-comments-viewer/conversation-landing.service';
 import {FUnitTaskListComponent} from 'src/app/units/task-viewer/directives/unit-task-list/unit-task-list.component';
 import {GlobalStateService, ViewType} from '../../index/global-state.service';
 
@@ -56,6 +63,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   private readonly destroy$: Subject<void> = new Subject();
   private readonly projectLoadCancel$: Subject<void> = new Subject();
   private projectReady = false;
+  // Set when the project itself could not be loaded (a wrong or stale link, no
+  // access, or no connection). Without it the page stayed on its skeleton forever.
+  public projectLoadFailed = false;
   private activeProjectId: number | null = null;
   private projectActivation = 0;
 
@@ -70,6 +80,8 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
     private angularRouter: Router,
+    private notificationFeedbackIntents?: NotificationFeedbackRouteIntentService,
+    private conversationLanding?: ConversationLandingService,
   ) {}
 
   public readonly taskListCollapsedWidth = 75;
@@ -82,8 +94,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
   public startLeftX = 0;
   public isCommentsNarrow = false;
   public commentsCollapsed = false;
+  // Desktop only: the chat covers the task list and task pane so a long
+  // conversation has room. Esc or the same button puts it back.
+  public commentsFullscreen = false;
   public isPhoneLayout = false;
   public mobilePane: 'overview' | 'task' | 'feedback' = 'task';
+  public activeTaskStatusFilter: TaskStatusEnum | null = null;
+  private taskFilterNavigationActive = false;
 
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
   private readonly phoneBreakpoint = '(max-width: 639.98px)';
@@ -156,7 +173,9 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(({matches}) => {
         this.isCommentsNarrow = matches;
-        this.commentsCollapsed = matches;
+        // Narrowing the window must not tuck away a chat the student has made
+        // full screen; that would hide its exit button along with it.
+        this.commentsCollapsed = matches && !this.commentsFullscreen;
         window.dispatchEvent(new Event('resize'));
       });
 
@@ -165,6 +184,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(({matches}) => {
         this.isPhoneLayout = matches;
+        if (matches) {
+          // The phone layout has its own feedback pane and no full-screen mode.
+          this.commentsFullscreen = false;
+        }
         if (matches && this.selectedTaskDefinition$.value) {
           this.mobilePane = this.shouldOpenFeedback(this.selectedTaskDefinition$.value)
             ? 'feedback'
@@ -176,6 +199,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     this.selectedTaskDefinition$.pipe(takeUntil(this.destroy$)).subscribe((taskDefinition) => {
       if (!taskDefinition) {
         this.mobilePane = 'task';
+        this.commentsFullscreen = false;
         return;
       }
 
@@ -185,7 +209,13 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         // the task pane instead.
         this.mobilePane = this.shouldOpenFeedback(taskDefinition) ? 'feedback' : 'task';
       }
+
+      this.forwardNotificationLanding(taskDefinition);
     });
+
+    this.notificationFeedbackIntents?.requests$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.forwardNotificationLanding(this.selectedTaskDefinition$.value));
 
     this.route.paramMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (
@@ -194,6 +224,33 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         this.selectedTaskDefinition$.value
       ) {
         this.mobilePane = 'feedback';
+      }
+    });
+
+    this.route.queryParamMap?.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+      const requestedStatus = params.get('taskStatus');
+      const nextStatus = TaskStatus.isStatus(requestedStatus) ? requestedStatus : null;
+      const nextTaskFilterNavigation = params.get('taskView') === 'tasks' || !!nextStatus;
+      if (
+        nextStatus === this.activeTaskStatusFilter &&
+        nextTaskFilterNavigation === this.taskFilterNavigationActive
+      ) {
+        return;
+      }
+
+      const wasTaskFilterNavigation = this.taskFilterNavigationActive;
+      this.activeTaskStatusFilter = nextStatus;
+      this.taskFilterNavigationActive = nextTaskFilterNavigation;
+      if (nextTaskFilterNavigation) {
+        // Overview cards navigate to the canonical dashboard route with this query
+        // parameter. Query-only route reuse must still expose the task list rather
+        // than leaving the phone on the overview or stale task pane.
+        this.selectedTaskDefinition$.next(null);
+        this.mobilePane = 'task';
+      } else if (wasTaskFilterNavigation) {
+        // The companion view marker lets browser Back restore the Overview pane,
+        // while a user-cleared status retains taskView=tasks and stays in Tasks.
+        this.mobilePane = 'overview';
       }
     });
 
@@ -208,7 +265,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         activeProject?.id === task.project?.id &&
         selectedTaskDefinition?.id === task.definition?.id
       ) {
-        this.selectedTaskDefinition$.next(null);
+        // A successful upload belongs to the task the student was working on.
+        // Keep that exact selection while TaskDashboard exposes its queued or
+        // ready submission state; returning to the generic list loses context.
+        this.mobilePane = 'task';
       }
     });
 
@@ -244,8 +304,20 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
+  public toggleCommentsFullscreen(): void {
+    this.commentsFullscreen = !this.commentsFullscreen;
+    window.dispatchEvent(new Event('resize'));
+  }
+
   public showMobilePane(pane: 'overview' | 'task' | 'feedback'): void {
     this.mobilePane = pane;
+    if (pane === 'overview' && this.taskFilterNavigationActive) {
+      void this.angularRouter.navigate([], {
+        relativeTo: this.route,
+        queryParams: {taskStatus: null, taskView: null},
+        queryParamsHandling: 'merge',
+      });
+    }
     this.syncSelectedTaskRoute(pane);
   }
 
@@ -298,7 +370,10 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       commands.push('feedback');
     }
 
-    void this.angularRouter.navigate(commands, {replaceUrl: true});
+    void this.angularRouter.navigate(commands, {
+      replaceUrl: true,
+      queryParamsHandling: 'preserve',
+    });
   }
 
   private shouldOpenFeedback(taskDefinition: TaskDefinition): boolean {
@@ -307,6 +382,31 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
       this.hasFeedbackRouteSelection ||
       (this.hasTaskRouteSelection && (task?.numNewComments ?? 0) > 0)
     );
+  }
+
+  private forwardNotificationLanding(taskDefinition: TaskDefinition | null): void {
+    if (!taskDefinition || !this.notificationFeedbackIntents || !this.conversationLanding) {
+      return;
+    }
+
+    const projectId =
+      this.activeProjectId ?? Number(this.route.parent?.snapshot.paramMap.get('projectId'));
+    if (!projectId) {
+      return;
+    }
+
+    const intent = this.notificationFeedbackIntents.consume({
+      projectId,
+      taskAbbreviation: taskDefinition.abbreviation,
+    });
+    if (!intent) {
+      return;
+    }
+
+    this.conversationLanding.requestLatestMessages({
+      projectId,
+      taskDefinitionId: taskDefinition.id,
+    });
   }
 
   private activateProject(project: Project, projectId: number): void {
@@ -326,6 +426,7 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
     const activation = ++this.projectActivation;
     this.activeProjectId = projectId;
     this.projectReady = false;
+    this.projectLoadFailed = false;
     this.selectedTaskDefinition$.next(null);
     this.projectSubject.next(project);
 
@@ -354,7 +455,23 @@ export class ProjectDashboardComponent implements OnInit, OnDestroy {
         },
       )
       .pipe(takeUntil(this.projectLoadCancel$), takeUntil(this.destroy$))
-      .subscribe();
+      .subscribe({
+        error: () => {
+          if (activation === this.projectActivation) {
+            this.projectLoadFailed = true;
+          }
+        },
+      });
+  }
+
+  public retryProjectLoad(): void {
+    if (!this.activeProjectId) {
+      return;
+    }
+
+    this.projectLoadCancel$.next();
+    this.projectLoadFailed = false;
+    this.loadProject(this.activeProjectId, ++this.projectActivation);
   }
 
   private loadUnit(project: Project, activation: number): void {

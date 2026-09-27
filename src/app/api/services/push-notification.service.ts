@@ -11,9 +11,13 @@ import {
   of,
   switchMap,
   take,
+  timeout,
 } from 'rxjs';
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
+
+/** How long sign out waits on push clean-up before it carries on without it. */
+export const QUIET_UNSUBSCRIBE_LIMIT_MS = 5000;
 
 /**
  * Why the browser cannot be subscribed to push right now, or null if it can.
@@ -226,44 +230,83 @@ export class PushNotificationService {
    * there until the push service returned 410 for it.
    */
   public unsubscribe(): Observable<void> {
-    // Angular exposes SwPush.subscription as NEVER when service workers are
-    // disabled, so waiting on it would prevent sign-out from continuing.
-    if (!this.swPush.isEnabled) {
-      return of(void 0);
-    }
-
-    // take(1) matters. swPush.subscription never completes, so without it the
-    // returned observable would stay open forever and re-fire on every change.
-    return this.swPush.subscription.pipe(
-      take(1),
-      switchMap((subscription) => {
-        if (!subscription) {
-          return of(void 0);
-        }
-
-        return this.removeServerSubscription(subscription.endpoint).pipe(
-          // Server cleanup failing must not leave the browser subscribed. If
-          // the delete fails we still unsubscribe locally: the browser stops
-          // receiving immediately, and the row left behind is removed the
-          // first time the push service answers 410 for it, which deliver_to
-          // in PushNotificationService already handles.
-          catchError(() => of(void 0)),
-          switchMap(() => from(this.swPush.unsubscribe())),
-          map(() => void 0),
-        );
-      }),
-    );
+    return this.unsubscribeWithin();
   }
 
   /**
-   * Unsubscribe, but never fail.
+   * Unsubscribe, but never fail, and never wait long on anything outside this page.
    *
    * For sign out, where the caller cannot do anything useful with an error and
    * must not be blocked by one. Prefer unsubscribe() anywhere a person is
    * waiting on the result and should be told it did not work.
    */
   public unsubscribeQuietly(): Observable<void> {
-    return this.unsubscribe().pipe(catchError(() => of(void 0)));
+    return this.unsubscribeWithin(QUIET_UNSUBSCRIBE_LIMIT_MS).pipe(catchError(() => of(void 0)));
+  }
+
+  /**
+   * With a limit, each wait on something outside this page gives up after it:
+   * finding the subscription, the api delete and the browser unsubscribe. A slow
+   * api delete still goes on to unsubscribe the browser, which matters more.
+   */
+  private unsubscribeWithin(limitMs?: number): Observable<void> {
+    const within = <T>(source: Observable<T>, fallback: T): Observable<T> =>
+      limitMs === undefined
+        ? source
+        : source.pipe(timeout({first: limitMs, with: () => of(fallback)}));
+
+    // Angular exposes SwPush.subscription as NEVER when service workers are
+    // disabled, so waiting on it would prevent sign-out from continuing.
+    if (!this.swPush.isEnabled) {
+      return of(void 0);
+    }
+
+    // SwPush only answers once a service worker controls this page, and a page
+    // can have none with the worker enabled: it registers six seconds after
+    // bootstrap, a hard reload bypasses it, and the dev server has no worker
+    // file to register. Waiting on SwPush then never ends, which left sign out
+    // stuck. The browser's own registration answers at once, with nothing when
+    // there is none.
+    const container = typeof navigator === 'undefined' ? undefined : navigator.serviceWorker;
+    let found: Observable<PushSubscription | null>;
+    let unsubscribeInBrowser: (subscription: PushSubscription) => Promise<unknown>;
+
+    if (container?.controller) {
+      // take(1) matters. swPush.subscription never completes, so without it the
+      // returned observable would stay open forever and re-fire on every change.
+      // Unsubscribing through SwPush, not the browser, keeps subscription$ current.
+      found = this.swPush.subscription.pipe(take(1));
+      unsubscribeInBrowser = () => this.swPush.unsubscribe();
+    } else if (container) {
+      found = from(container.getRegistration()).pipe(
+        switchMap((registration) =>
+          registration ? from(registration.pushManager.getSubscription()) : of(null),
+        ),
+      );
+      unsubscribeInBrowser = (subscription) => subscription.unsubscribe();
+    } else {
+      return of(void 0);
+    }
+
+    return within(found, null).pipe(
+      switchMap((subscription) => {
+        if (!subscription) {
+          return of(void 0);
+        }
+
+        return within(this.removeServerSubscription(subscription.endpoint), undefined).pipe(
+          // Server cleanup failing must not leave the browser subscribed. If
+          // the delete fails we still unsubscribe locally: the browser stops
+          // receiving immediately, and the row left behind is removed the
+          // first time the push service answers 410 for it, which deliver_to
+          // in PushNotificationService already handles.
+          catchError(() => of(void 0)),
+          switchMap(() =>
+            within(from(unsubscribeInBrowser(subscription)).pipe(map(() => void 0)), undefined),
+          ),
+        );
+      }),
+    );
   }
 
   private registerSubscription(subscription: PushSubscription): Observable<void> {

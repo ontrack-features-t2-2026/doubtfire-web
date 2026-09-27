@@ -25,4 +25,6 @@ export interface PeerProgressUnitSummary extends Omit<
   | 'distributionUnavailableReason'
 > {
   studentPercentage: number | null;
+  /** Explicit scope for the anonymous metric (for example, DUE7 submissions). */
+  cohortLabel?: string;
 }

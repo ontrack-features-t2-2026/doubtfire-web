@@ -57,6 +57,8 @@ describe('TaskStatusCardComponent', () => {
       blockedByPrerequisiteTasks: vi.fn().mockReturnValue(false),
       canApplyForExtension: () => false,
       inSubmittedState: () => false,
+      hasSubmissionHistory: () => false,
+      requiresFileUpload: () => true,
       triggerTransition: vi.fn(),
     } as unknown as Task;
     component.triggers = [
@@ -106,5 +108,30 @@ describe('TaskStatusCardComponent', () => {
       TestBed.inject(OverlayContainer).getContainerElement().querySelector('[role="listbox"]'),
     ).toBeNull();
     expect(component.task.triggerTransition).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {history: false, requiresFiles: true, first: true, replacement: false},
+    {history: true, requiresFiles: true, first: false, replacement: true},
+    {history: true, requiresFiles: false, first: false, replacement: false},
+  ])(
+    'shows exactly one appropriate upload action for $history/$requiresFiles',
+    ({history, requiresFiles, first, replacement}) => {
+      component.task = {
+        hasSubmissionHistory: () => history,
+        requiresFileUpload: () => requiresFiles,
+      } as unknown as Task;
+
+      expect(component.showUploadSubmission).toBe(first);
+      expect(component.showUploadNewFiles).toBe(replacement);
+    },
+  );
+
+  it('marks the replacement action pending while details or PDF processing is unresolved', () => {
+    component.task = {processingPdf: true, loadingSubmissionDetails: false} as Task;
+    expect(component.submissionActionPending).toBe(true);
+
+    component.task = {processingPdf: false, loadingSubmissionDetails: true} as Task;
+    expect(component.submissionActionPending).toBe(true);
   });
 });

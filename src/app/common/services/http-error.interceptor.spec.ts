@@ -20,7 +20,7 @@ const authenticationService = {
   timeoutAuthentication: () => {},
 };
 
-function messageFor(error: HttpErrorResponse): Promise<unknown> {
+function messageFor(error: HttpErrorResponse, path = '/api/units'): Promise<unknown> {
   const interceptor = new HttpErrorInterceptor(
     authenticationService as never,
     userService as never,
@@ -32,12 +32,21 @@ function messageFor(error: HttpErrorResponse): Promise<unknown> {
 
   return new Promise((resolve) => {
     interceptor
-      .intercept(new HttpRequest('GET', '/api/units'), handler)
+      .intercept(new HttpRequest('GET', path), handler)
       .subscribe({error: (message: unknown) => resolve(message)});
   });
 }
 
 describe('HttpErrorInterceptor', () => {
+  it.each([0, 403, 404, 419, 503])(
+    'preserves the typed access-token failure for status %s',
+    async (status) => {
+      const failure = new HttpErrorResponse({status, statusText: 'Session request failed'});
+      const error = await messageFor(failure, '/api/auth/access-token');
+      expect(error).toBe(failure);
+    },
+  );
+
   it('falls back to the status text when the response body is empty', async () => {
     const message = await messageFor(
       new HttpErrorResponse({status: 502, statusText: 'Bad Gateway', error: null}),

@@ -65,8 +65,11 @@ describe('Host-provided demo meeting links', () => {
   it('retains links across mode toggles but clears them when authentication resets demo state', () => {
     const store = new DemoMeetingLinksStore(true);
     const mode = new DemoModeStore(true);
+    // Demo mode only switches on for a loaded scenario, as it does after sign-in.
+    mode.configureScenario('links-spec', 1);
     store.save({helpHub: hosted, extraHelpHub: ''});
     mode.setEnabled(true);
+    expect(mode.enabled).toBe(true);
     mode.setEnabled(false);
     expect(store.links.helpHub).toBe(hosted);
     mode.reset();
