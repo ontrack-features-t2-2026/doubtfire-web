@@ -64,7 +64,7 @@ export class InboxComponent implements OnInit, OnDestroy {
   subs$: Observable<unknown>;
 
   private inboxStartSize$: Subject<number> = new Subject();
-  private dragMove$: Subject<{event: CdkDragMove; div: HTMLDivElement}> = new Subject();
+  private dragMove$: Subject<{event: CdkDragMove; div: HTMLElement}> = new Subject();
   private dragMoveAudited$;
   private readonly destroy$: Subject<void> = new Subject();
   private readonly commentsBreakpoint = '(max-width: 999.98px)';
@@ -220,19 +220,19 @@ export class InboxComponent implements OnInit, OnDestroy {
     window.dispatchEvent(new Event('resize'));
   }
 
-  startedDragging(event: CdkDragStart, div: HTMLDivElement) {
+  startedDragging(event: CdkDragStart, div: HTMLElement) {
     document.body.classList.add('split-pane-resizing');
     event.source.element.nativeElement.classList.add('hovering');
     const w = div.getBoundingClientRect().width;
     this.inboxStartSize$.next(w);
   }
 
-  dragging(event: CdkDragMove, div: HTMLDivElement) {
+  dragging(event: CdkDragMove, div: HTMLElement) {
     this.dragMove$.next({event, div});
     event.source.reset();
   }
 
-  stoppedDragging(event: CdkDragEnd, _div: HTMLDivElement) {
+  stoppedDragging(event: CdkDragEnd, _div: HTMLElement) {
     document.body.classList.remove('split-pane-resizing');
     event.source.element.nativeElement.classList.remove('hovering');
   }

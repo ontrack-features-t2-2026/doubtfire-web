@@ -1,4 +1,5 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Subscription} from 'rxjs';
 import {GroupSet, Unit, UnitRole} from 'src/app/api/models/doubtfire-model';
 import {GroupSetService} from 'src/app/api/services/group-set.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
@@ -24,7 +25,7 @@ interface GroupSetEditModel {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class UnitGroupSetEditorComponent implements OnInit {
+export class UnitGroupSetEditorComponent implements OnInit, OnDestroy {
   @Input() unit: Unit;
   @Input() unitRole: UnitRole;
 
@@ -37,18 +38,34 @@ export class UnitGroupSetEditorComponent implements OnInit {
     file: {name: 'Group CSV', type: 'csv'},
   };
 
+  public readonly columns = [
+    'name',
+    'capacity',
+    'createGroups',
+    'manageGroups',
+    'restrictTutorials',
+    'actions',
+  ];
+
   public editingGroupSetId: number | null = null;
   public editingGroupSetModel: GroupSetEditModel | null = null;
 
   public studentStaffOptions = [
-    {value: true, text: 'Staff and Students'},
-    {value: false, text: 'Staff Only'},
+    {value: true, text: 'Staff and students'},
+    {value: false, text: 'Staff only'},
   ];
 
   public tutorialOptions = [
-    {value: true, text: 'Same Tutorial'},
-    {value: false, text: 'Any Tutorial'},
+    {value: true, text: 'Same tutorial only'},
+    {value: false, text: 'Any tutorial'},
   ];
+
+  // Handed to the uploaders once. Binding `fn.bind(this)` in the template made a
+  // new function on every check, so the uploaders saw a changed input each time.
+  public readonly handleGroupCSVSuccess = (response: CsvResult) => this.onGroupCSVSuccess(response);
+  public readonly handleGroupCSVComplete = () => this.onGroupCSVComplete();
+
+  private groupSetsSub?: Subscription;
 
   constructor(
     private groupSetService: GroupSetService,
@@ -62,6 +79,25 @@ export class UnitGroupSetEditorComponent implements OnInit {
     if (this.unit?.groupSets?.length > 0) {
       this.selectGroupSet(this.unit.groupSets[0]);
     }
+
+    // Reloading the unit, as a CSV import does, builds new group set objects with
+    // the new groups in them. Follow the open set to its new object, or the page
+    // keeps showing the old one without the imported groups.
+    this.groupSetsSub = this.unit?.groupSetsCache?.values?.subscribe((groupSets) => {
+      const selected = this.selectedGroupSet;
+      if (!selected || groupSets.includes(selected)) {
+        return;
+      }
+      this.selectGroupSet(groupSets.find((set) => set.id === selected.id) ?? groupSets[0] ?? null);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.groupSetsSub?.unsubscribe();
+  }
+
+  public get canSaveGroupSet(): boolean {
+    return !!this.editingGroupSetModel?.name?.trim();
   }
 
   addGroupSet(): void {
@@ -95,11 +131,22 @@ export class UnitGroupSetEditorComponent implements OnInit {
   }
 
   saveGroupSet(groupSet: GroupSet): void {
-    if (!this.editingGroupSetModel) {
+    if (!this.editingGroupSetModel || !this.canSaveGroupSet) {
       return;
     }
 
-    groupSet.name = this.editingGroupSetModel.name;
+    // The set is changed before the request so the request carries the new
+    // values. If it fails, put the old ones back, or the table shows values the
+    // server never took.
+    const previous: GroupSetEditModel = {
+      name: groupSet.name,
+      allowStudentsToCreateGroups: groupSet.allowStudentsToCreateGroups,
+      allowStudentsToManageGroups: groupSet.allowStudentsToManageGroups,
+      keepGroupsInSameClass: groupSet.keepGroupsInSameClass,
+      capacity: groupSet.capacity,
+    };
+
+    groupSet.name = this.editingGroupSetModel.name.trim();
     groupSet.allowStudentsToCreateGroups = this.editingGroupSetModel.allowStudentsToCreateGroups;
     groupSet.allowStudentsToManageGroups = this.editingGroupSetModel.allowStudentsToManageGroups;
     groupSet.keepGroupsInSameClass = this.editingGroupSetModel.keepGroupsInSameClass;
@@ -110,7 +157,10 @@ export class UnitGroupSetEditorComponent implements OnInit {
         this.alertService.success('Group set updated.', 2000);
         this.cancelEditGroupSet();
       },
-      error: (message) => this.alertService.error(`Failed to update group set. ${message}`, 6000),
+      error: (message) => {
+        Object.assign(groupSet, previous);
+        this.alertService.error(`Failed to update group set. ${message}`, 6000);
+      },
     });
   }
 
@@ -136,24 +186,27 @@ export class UnitGroupSetEditorComponent implements OnInit {
   }
 
   removeGroupSet(groupSet: GroupSet): void {
+    // One click used to delete the set and every group in it.
     this.confirmationModal.show(
-      `Delete ${groupSet.name}`,
-      'This deletes every group in this set and removes all student memberships. This cannot be undone.',
-      () => {
-        this.groupSetService.delete(groupSet, {cache: this.unit.groupSetsCache}).subscribe({
-          next: () => {
-            if (groupSet === this.selectedGroupSet) {
-              this.selectGroupSet(this.unit.groupSets[0] ?? null);
-            }
-            this.alertService.success('Group set deleted.', 2000);
-          },
-          error: (message) =>
-            this.alertService.error(`Failed to delete group set. ${message}`, 6000),
-        });
-      },
-      undefined,
-      'Delete',
+      `Delete ${groupSet.name || 'this group set'}`,
+      'This deletes the group set and all of its groups. You cannot undo this.',
+      () => this.deleteGroupSet(groupSet),
     );
+  }
+
+  private deleteGroupSet(groupSet: GroupSet): void {
+    this.groupSetService.delete(groupSet, {cache: this.unit.groupSetsCache}).subscribe({
+      next: () => {
+        if (groupSet === this.selectedGroupSet) {
+          this.selectGroupSet(this.unit.groupSets[0] ?? null);
+        }
+        if (this.editingGroupSetId === groupSet.id) {
+          this.cancelEditGroupSet();
+        }
+        this.alertService.success('Group set deleted.', 2000);
+      },
+      error: (message) => this.alertService.error(`Failed to delete group set. ${message}`, 6000),
+    });
   }
 
   selectGroupSet(groupSet: GroupSet | null): void {
@@ -173,7 +226,12 @@ export class UnitGroupSetEditorComponent implements OnInit {
 
   onGroupCSVSuccess(response: CsvResult): void {
     this.csvResultModal.show('Group CSV upload results.', response);
-    this.selectGroupSet(this.selectedGroupSet);
+    // The groups arrive with the unit, so reload it. Selecting the same set
+    // again, as this used to do, changed nothing, and the new groups did not show
+    // until the page was reloaded.
+    if ((response?.success?.length ?? 0) > 0) {
+      this.unit.refresh();
+    }
   }
 
   onGroupCSVComplete(): void {

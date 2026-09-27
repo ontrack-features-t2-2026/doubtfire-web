@@ -45,11 +45,12 @@ export class HttpErrorInterceptor implements HttpInterceptor {
 
     return request$.pipe(
       catchError((error: HttpErrorResponse) => {
+        // Session restoration needs the status to distinguish expiry from an
+        // offline or unavailable server. Other callers still receive messages.
+        if (this.isAccessTokenRequest(request)) {
+          return throwError(() => error);
+        }
         if (this.isAuthError(error)) {
-          if (this.isAccessTokenRequest(request)) {
-            return throwError(() => this.errorForRequest(request, error));
-          }
-
           if (!this.refreshTokenInProgress) {
             console.log('Refreshing access token');
             this.refreshTokenInProgress = true;

@@ -21,6 +21,7 @@ function buildTask(overrides: {
   dueDate?: Date;
   hasTaskSheet?: boolean;
   hasTaskResources?: boolean;
+  taskSheetFilename?: string;
 }): Task {
   const unit = new Unit();
   unit.code = overrides.unitCode ?? 'COS10001';
@@ -35,11 +36,15 @@ function buildTask(overrides: {
   definition.startDate = new Date(2026, 8, 1);
   definition.targetGrade = 0;
   definition.hasTaskSheet = overrides.hasTaskSheet ?? true;
+  definition.taskSheetFilename = overrides.taskSheetFilename;
   definition.hasTaskResources = overrides.hasTaskResources ?? false;
 
   const task = new Task(unit);
   task.definition = definition;
   task.dueDate = overrides.dueDate;
+  task.project = new Project(unit);
+  task.project.targetGrade = 0;
+  vi.spyOn(task, 'localDeadlineDate').mockReturnValue(overrides.dueDate);
 
   return task;
 }
@@ -47,15 +52,13 @@ function buildTask(overrides: {
 describe('TaskDescriptionCardComponent', () => {
   let component: TaskDescriptionCardComponent;
   let fixture: ComponentFixture<TaskDescriptionCardComponent>;
+  const downloadFile = vi.fn();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [TaskDescriptionCardComponent, MarkedPipe],
       imports: [NoopAnimationsModule, MatButtonModule, MatIconModule],
-      providers: [
-        GradeService,
-        {provide: FileDownloaderService, useValue: {downloadFile: () => undefined}},
-      ],
+      providers: [GradeService, {provide: FileDownloaderService, useValue: {downloadFile}}],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
@@ -71,6 +74,27 @@ describe('TaskDescriptionCardComponent', () => {
     // either). vi.restoreAllMocks() restores the original window.open and clears the
     // spy's history after every test, not just the ones that create it directly.
     vi.restoreAllMocks();
+    downloadFile.mockReset();
+  });
+
+  it('uses the API-authoritative task-sheet filename with a rolling-safe fallback', () => {
+    const task = buildTask({
+      unitCode: 'COS10001',
+      abbreviation: '1.1P',
+      taskSheetFilename: 'COS10001-1.1P-TaskSheet.pdf',
+    });
+    component.task = task;
+    component.taskDef = task.definition;
+    component.unit = task.unit;
+    vi.spyOn(task.definition, 'getTaskPDFUrl').mockReturnValue('/task-sheet');
+
+    component.downloadTaskSheet();
+
+    expect(downloadFile).toHaveBeenCalledWith('/task-sheet', 'COS10001-1.1P-TaskSheet.pdf');
+
+    task.definition.taskSheetFilename = undefined;
+    component.downloadTaskSheet();
+    expect(downloadFile).toHaveBeenLastCalledWith('/task-sheet', 'COS10001-1.1P-TaskSheet.pdf');
   });
 
   it('renders the Add to Google Calendar button when the task has a due date, with a correct href, target and rel', () => {
@@ -278,6 +302,148 @@ describe('TaskDescriptionCardComponent', () => {
     expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 
+  describe('key dates timeline', () => {
+    function timelineTask(status: Task['status'] = 'not_started'): Task {
+      const task = buildTask({dueDate: new Date(2026, 8, 15, 23, 59, 59, 999)});
+      task.project = new Project(task.unit);
+      task.project.targetGrade = 0;
+      task.project.specConDays = 0;
+      task.definition.dueDate = new Date(2026, 8, 29, 23, 59, 59, 999);
+      // Exercise the real feedback deadline, including special consideration,
+      // instead of the calendar-link fixture's due-date stub.
+      vi.mocked(task.localDeadlineDate).mockRestore();
+      task.status = status;
+      return task;
+    }
+
+    function render(task: Task): HTMLElement[] {
+      component.task = task;
+      component.taskDef = task.definition;
+      component.unit = task.unit;
+      fixture.detectChanges();
+      return Array.from(fixture.nativeElement.querySelectorAll('.task-dates__step'));
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('lists the start, due and feedback dates in order', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const steps = render(timelineTask());
+
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
+      ).toEqual(['Start', 'Due', 'Feedback by']);
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__date').textContent.trim()),
+      ).toEqual(['Tue 1 Sep', 'Tue 15 Sep', 'Tue 29 Sep']);
+    });
+
+    it('includes special consideration in the feedback date without moving the due date', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+      const task = timelineTask();
+      task.project.specConDays = 2;
+
+      const steps = render(task);
+
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__date').textContent.trim()),
+      ).toEqual(['Tue 1 Sep', 'Tue 15 Sep', 'Thu 1 Oct']);
+    });
+
+    it('marks the dates that have passed and says when the next one is', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const [start, due, feedback] = render(timelineTask());
+
+      expect(start.classList).toContain('task-dates__step--passed');
+      expect(due.classList).toContain('task-dates__step--next');
+      expect(due.querySelector('.task-dates__when').textContent.trim()).toBe('In 5 days');
+      expect(feedback.classList).not.toContain('task-dates__step--next');
+      expect(feedback.querySelector('.task-dates__when')).toBeNull();
+    });
+
+    it('says Today for a date later the same day', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 15, 9, 0));
+
+      const [, due] = render(timelineTask());
+
+      expect(due.querySelector('.task-dates__when').textContent.trim()).toBe('Today');
+    });
+
+    it('fills the line between two dates by how much of the time has gone', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      // Halfway between the start (1 Sept, midnight) and the due date (15 Sept, 23:59).
+      const start = new Date(2026, 8, 1).getTime();
+      const due = new Date(2026, 8, 15, 23, 59, 59, 999).getTime();
+      vi.setSystemTime(new Date(start + (due - start) / 2));
+
+      render(timelineTask());
+      const [first, second] = component.keyDates;
+
+      expect(first.progress).toBeCloseTo(0.5, 2);
+      expect(second.progress).toBe(0);
+    });
+
+    it('keeps the dates but drops the countdown once the task is submitted', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+
+      const steps = render(timelineTask('ready_for_feedback'));
+
+      expect(steps).toHaveLength(3);
+      expect(fixture.nativeElement.querySelector('.task-dates__step--next')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.task-dates__when')).toBeNull();
+    });
+
+    it('puts a planned submit date after the feedback date in date order, and flags it', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+      const task = timelineTask();
+      task.unit.allowFlexibleDates = true;
+      task.targetDueDate = new Date(2026, 8, 30, 23, 59, 59, 999);
+      task.definition.dueDate = new Date(2026, 8, 15, 23, 59, 59, 999);
+
+      const steps = render(task);
+
+      expect(
+        steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
+      ).toEqual(['Planned start', 'Feedback by', 'Planned submit']);
+      // The nearer feedback date is the one to count down to.
+      expect(steps[1].classList).toContain('task-dates__step--next');
+      expect(steps[1].querySelector('.task-dates__when').textContent.trim()).toBe('In 5 days');
+      expect(steps[2].querySelector('.task-dates__warning').textContent).toContain(
+        'After the feedback date',
+      );
+    });
+
+    it('draws each change detection pass for one moment, so the development check agrees', () => {
+      let clock = new Date(2026, 8, 10, 9, 0).getTime();
+      // Every read of the clock moves it on a minute and a bit, which would change the
+      // countdown and the line between Angular's check and its development re-check.
+      vi.spyOn(Date, 'now').mockImplementation(() => (clock += 61_000));
+
+      expect(() => render(timelineTask())).not.toThrow();
+    });
+
+    it('notes an extension on the due date', () => {
+      vi.useFakeTimers({toFake: ['Date']});
+      vi.setSystemTime(new Date(2026, 8, 10, 9, 0));
+      const task = timelineTask();
+      task.extensions = 2;
+
+      const [, due] = render(task);
+
+      expect(due.querySelector('.task-dates__note').textContent.trim()).toBe('Extended 2 weeks');
+    });
+  });
+
   it('does not call window.open on Space when there is no resolvable due date', () => {
     // Defensive coverage for handleCalendarLinkKeydown's own null guard. The anchor
     // only renders inside @if (googleCalendarUrl), so this branch is unreachable through
@@ -294,27 +460,21 @@ describe('TaskDescriptionCardComponent', () => {
   });
 });
 
-// The template guards the feedback deadline line on feedbackDate() and
-// emphasises it with shouldShowDeadline(). Rendering the real template in a
-// unit test is avoided here for the same reason the header spec blanks its
-// own: the template calls a migration-shim global and pulls in DI-heavy
-// children, and standing that up pollutes the shared vitest worker. Build a
-// bare instance instead so the delegation those bindings rely on is locked in.
 function bareCard(): TaskDescriptionCardComponent {
   return Object.create(TaskDescriptionCardComponent.prototype) as TaskDescriptionCardComponent;
 }
 
-describe('TaskDescriptionCardComponent feedback deadline (SXP-05)', () => {
+describe('TaskDescriptionCardComponent feedback deadline', () => {
   const deadline = new Date('2026-09-01T00:00:00Z');
 
-  it('feedbackDate reads the task deadline when a task is present', () => {
+  it('reads the task deadline when a task is present', () => {
     const component = bareCard();
     component.task = {localDeadlineDate: () => deadline} as unknown as Task;
 
     expect(component.feedbackDate()).toBe(deadline);
   });
 
-  it('feedbackDate falls back to the task definition deadline with no task', () => {
+  it('falls back to the task-definition deadline when there is no task', () => {
     const component = bareCard();
     component.task = undefined;
     component.taskDef = {localDeadlineDate: () => deadline} as unknown as TaskDefinition;
@@ -322,7 +482,7 @@ describe('TaskDescriptionCardComponent feedback deadline (SXP-05)', () => {
     expect(component.feedbackDate()).toBe(deadline);
   });
 
-  it('feedbackDate is undefined when neither carries a deadline', () => {
+  it('returns no deadline when neither model has one', () => {
     const component = bareCard();
     component.task = undefined;
     component.taskDef = undefined;
@@ -330,7 +490,7 @@ describe('TaskDescriptionCardComponent feedback deadline (SXP-05)', () => {
     expect(component.feedbackDate()).toBeUndefined();
   });
 
-  it('shouldShowDeadline is true only within 14 days of the deadline', () => {
+  it('emphasises only task deadlines within fourteen days', () => {
     const near = bareCard();
     near.task = {daysUntilDeadlineDate: () => 10} as unknown as Task;
     expect(near.shouldShowDeadline()).toBe(true);
@@ -340,7 +500,7 @@ describe('TaskDescriptionCardComponent feedback deadline (SXP-05)', () => {
     expect(far.shouldShowDeadline()).toBe(false);
   });
 
-  it('shouldShowDeadline is falsy with no task', () => {
+  it('does not emphasise a deadline when there is no task', () => {
     const component = bareCard();
     component.task = undefined;
 

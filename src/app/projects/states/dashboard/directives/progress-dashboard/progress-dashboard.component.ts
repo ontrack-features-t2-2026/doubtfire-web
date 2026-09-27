@@ -94,8 +94,27 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
     return this.demoMode.enabled && !this.viewingOtherStudentProject;
   }
 
+  public get targetGradeName(): string {
+    return this.grades.names[this.project?.targetGrade] ?? 'your target grade';
+  }
+
+  /**
+   * Counted on every render, not cached, because the dashboard route resolves tasks
+   * progressively and a cached count would stay at zero after they arrive.
+   */
+  public get targetProgressText(): string {
+    const tasks = this.project?.activeTasks?.() ?? [];
+    if (tasks.length === 0) {
+      return 'This sets which tasks you need to do.';
+    }
+
+    const completed = tasks.filter((task) => task.status === 'complete').length;
+    return `${completed} of ${tasks.length} tasks complete for ${this.targetGradeName}`;
+  }
+
   updateTargetGrade(newGrade: number): void {
     if (
+      this.viewingOtherStudentProject ||
       this.isUpdatingTargetGrade ||
       newGrade === undefined ||
       newGrade === null ||
@@ -143,14 +162,14 @@ export class ProgressDashboardComponent implements OnChanges, OnInit {
 
     this.peerProgressView = resolvePeerProgressUnitSummaryState(true, null, null);
 
-    // PPI-F02 demonstration only.
-    // A live authorised unit-level API remains future work.
+    // Demo-only unit summaries consume the guarded Batch 09 contract. A live
+    // authorised unit-level API remains future work.
     this.peerProgressService
-      .getDemoUnitSummary(
+      .getScenarioUnitSummary(
+        this.project.id,
         this.project.unit.id,
         this.project.targetGrade,
         studentPercentage,
-        'normal',
       )
       .pipe(take(1))
       .subscribe({

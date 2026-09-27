@@ -39,6 +39,8 @@ export class UserService extends CachedEntityService<User> {
       'hasRunFirstTimeSetup',
       'pronouns',
       'acceptedTiiEula',
+      'institutionalIdentityManaged',
+      'emailEditable',
     );
 
     this._currentUser = this.anonymousUser;

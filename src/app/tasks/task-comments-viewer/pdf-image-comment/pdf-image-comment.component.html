@@ -1,17 +1,22 @@
-<button
-  class="max-w-full cursor-pointer rounded border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current focus-visible:outline-solid"
-  type="button"
-  [attr.aria-label]="
-    comment.commentType === 'pdf' ? 'View PDF attachment' : 'View image attachment'
-  "
-  (click)="openCommentsModal()"
->
-  @if (comment.commentType === 'image' && resourceUrl) {
-    <img alt="Image attachment preview" height="100%" width="100%" [src]="resourceUrl | safe" />
-  }
-  @if (comment.commentType === 'pdf') {
-    <span class="flex items-center gap-1">
-      <mat-icon aria-hidden="true">picture_as_pdf</mat-icon> view pdf
-    </span>
-  }
-</button>
+@if (comment.commentType === 'image') {
+  <button
+    class="image-attachment"
+    type="button"
+    [attr.aria-label]="isLoadingImage ? 'Loading image attachment' : 'Preview image attachment'"
+    [disabled]="isLoadingImage || !resourceUrl"
+    (click)="openCommentsModal()"
+  >
+    @if (resourceUrl) {
+      <img alt="Image attachment preview" [src]="resourceUrl | safe" />
+    } @else {
+      <mat-icon aria-hidden="true">image</mat-icon>
+      <span>Loading image…</span>
+    }
+  </button>
+} @else if (comment.commentType === 'pdf') {
+  <sent-attachment-card
+    action="preview"
+    [comment]="comment"
+    (activate)="openCommentsModal()"
+  ></sent-attachment-card>
+}

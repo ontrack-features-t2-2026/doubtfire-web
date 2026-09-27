@@ -41,15 +41,16 @@ describe('Tutorial stream empty state', () => {
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
     const fixture = TestBed.createComponent(UnitTutorialsManagerComponent);
-    fixture.componentRef.setInput('unit', {tutorialStreams: []} as unknown as Unit);
+    fixture.componentRef.setInput('unit', {tutorialStreams: [], tutorials: []} as unknown as Unit);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('f-empty-state').textContent).toContain(
-      'No tutorials yet',
+      'No tutorial streams yet',
     );
-    expect(fixture.nativeElement.querySelector('button').textContent).toContain(
-      'New Tutorial Stream',
-    );
-    fixture.componentRef.setInput('unit', {tutorialStreams: [{id: 1}]} as unknown as Unit);
+    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Add a stream');
+    fixture.componentRef.setInput('unit', {
+      tutorialStreams: [{id: 1}],
+      tutorials: [],
+    } as unknown as Unit);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('f-empty-state')).toBeNull();
     expect(fixture.nativeElement.querySelector('df-unit-tutorials-list')).not.toBeNull();
