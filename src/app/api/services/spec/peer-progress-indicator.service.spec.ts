@@ -6,6 +6,10 @@ import {PeerProgressIndicator} from 'src/app/api/models/peer-progress-indicator'
 import API_URL from 'src/app/config/constants/apiUrl';
 import {DemoModeStore} from 'src/app/demo/demo-mode.store';
 import {
+  DemoScenarioContract,
+  DemoScenarioRegistryService,
+} from 'src/app/demo/demo-scenario-registry.service';
+import {
   DEMO_STATUS_DISTRIBUTION,
   DISABLED_STATE,
   NORMAL_STATE,
@@ -16,14 +20,17 @@ import {PeerProgressIndicatorService} from '../peer-progress-indicator.service';
 describe('PeerProgressIndicatorService', () => {
   let service: PeerProgressIndicatorService;
   let httpMock: HttpTestingController;
-  let demoMode: {shouldMaskApiData: boolean};
+  let demoMode: {enabled: boolean};
+  let demoRegistry: {scenario: DemoScenarioContract | null};
 
   beforeEach(() => {
-    demoMode = {shouldMaskApiData: false};
+    demoMode = {enabled: false};
+    demoRegistry = {scenario: null};
     TestBed.configureTestingModule({
       providers: [
         PeerProgressIndicatorService,
         {provide: DemoModeStore, useValue: demoMode},
+        {provide: DemoScenarioRegistryService, useValue: demoRegistry},
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
@@ -314,25 +321,7 @@ describe('PeerProgressIndicatorService', () => {
     expect(request.cancelled).toBe(true);
   });
 
-  it('masks task peer comparison without calling the API while local demo mode is off', () => {
-    demoMode.shouldMaskApiData = true;
-    let result: PeerProgressIndicator | undefined;
-
-    service.getIndicator(7, 99).subscribe((value) => {
-      result = value;
-    });
-
-    httpMock.expectNone(`${API_URL}/projects/7/task_def_id/99/peer_progress`);
-    expect(result).toMatchObject({
-      taskDefinitionId: 99,
-      submittedPercentage: null,
-      isFeatureEnabled: false,
-      unavailableMessage: 'Enable demo mode to show live peer comparison data.',
-    });
-  });
-
-  it('keeps the genuine API path when masking is unavailable in production', () => {
-    demoMode.shouldMaskApiData = false;
+  it('keeps the genuine API path when the walkthrough presentation is off', () => {
     service.getIndicator(7, 99).subscribe();
 
     httpMock.expectOne(`${API_URL}/projects/7/task_def_id/99/peer_progress`).flush({
@@ -345,6 +334,172 @@ describe('PeerProgressIndicatorService', () => {
       is_feature_enabled: true,
       last_updated_at: '2026-08-23T00:00:00Z',
       unavailable_message: '',
+    });
+  });
+
+  it('uses the guarded scenario hook only for its exact project and task while demo is on', () => {
+    demoMode.enabled = true;
+    demoRegistry.scenario = {
+      generated_at: '2026-08-31T00:00:00Z',
+      units: [
+        {
+          key: 'DEMO10001',
+          code: 'DEMO10001',
+          name: 'Foundations',
+          unit_id: 11,
+          project_id: 21,
+          ppi: {
+            state: 'available',
+            unavailable_reason: null,
+            task_abbreviation: 'DUE7',
+            task_definition_id: 31,
+            submitted_percentage: 60,
+            completed_percentage: 10,
+            status_distribution: DEMO_STATUS_DISTRIBUTION,
+          },
+        },
+      ],
+    } as DemoScenarioContract;
+
+    let result: PeerProgressIndicator | undefined;
+    service.getIndicator(21, 31).subscribe((value) => (result = value));
+
+    expect(result).toMatchObject({
+      taskDefinitionId: 31,
+      unitId: 11,
+      submittedPercentage: 60,
+      completedPercentage: 10,
+      distributionAvailable: true,
+      statusDistribution: DEMO_STATUS_DISTRIBUTION,
+      lastUpdatedAt: '2026-08-31T00:00:00Z',
+    });
+    httpMock.expectNone(`${API_URL}/projects/21/task_def_id/31/peer_progress`);
+
+    service.getIndicator(21, 32).subscribe();
+    httpMock.expectOne(`${API_URL}/projects/21/task_def_id/32/peer_progress`).flush({
+      task_definition_id: 32,
+      unit_id: 11,
+      target_grade: 0,
+      submitted_percentage: null,
+      is_suppressed: false,
+      is_stale: false,
+      is_feature_enabled: true,
+      last_updated_at: null,
+      unavailable_message: 'Progress unavailable.',
+    });
+  });
+
+  it('maps every varied Batch 09 unit hook without creating a second registry', () => {
+    demoMode.enabled = true;
+    const availableUnits = [
+      {key: 'DEMO10001', unitId: 11, projectId: 21, taskId: 31, submitted: 60, completed: 10},
+      {key: 'DEMO20007', unitId: 12, projectId: 22, taskId: 32, submitted: 70, completed: 20},
+      {key: 'DEMO30046', unitId: 13, projectId: 23, taskId: 33, submitted: 50, completed: 20},
+    ] as const;
+
+    demoRegistry.scenario = {
+      generated_at: '2026-08-31T00:00:00Z',
+      units: [
+        ...availableUnits.map((unit) => ({
+          key: unit.key,
+          code: unit.key,
+          name: `Unit ${unit.key}`,
+          unit_id: unit.unitId,
+          project_id: unit.projectId,
+          ppi: {
+            state: 'available' as const,
+            unavailable_reason: null,
+            task_abbreviation: 'DUE7',
+            task_definition_id: unit.taskId,
+            submitted_percentage: unit.submitted,
+            completed_percentage: unit.completed,
+            status_distribution: DEMO_STATUS_DISTRIBUTION,
+          },
+        })),
+        {
+          key: 'DEMO30243',
+          code: 'DEMO30243',
+          name: 'Unit DEMO30243',
+          unit_id: 14,
+          project_id: 24,
+          ppi: {
+            state: 'unavailable' as const,
+            unavailable_reason: 'insufficient_cohort',
+            task_abbreviation: 'DUE7',
+            task_definition_id: 34,
+            submitted_percentage: null,
+            completed_percentage: null,
+            status_distribution: null,
+          },
+        },
+      ],
+    } as DemoScenarioContract;
+
+    for (const unit of availableUnits) {
+      let indicator: PeerProgressIndicator | undefined;
+      service.getIndicator(unit.projectId, unit.taskId).subscribe((value) => (indicator = value));
+
+      expect(indicator).toMatchObject({
+        unitId: unit.unitId,
+        taskDefinitionId: unit.taskId,
+        submittedPercentage: unit.submitted,
+        completedPercentage: unit.completed,
+      });
+
+      service.getScenarioUnitSummary(unit.projectId, unit.unitId, 0, 40).subscribe((summary) => {
+        expect(summary).toMatchObject({
+          unitId: unit.unitId,
+          submittedPercentage: unit.submitted,
+          cohortLabel: 'Anonymous cohort — DUE7 submitted',
+        });
+      });
+    }
+
+    service.getIndicator(24, 34).subscribe((indicator) => {
+      expect(indicator.submittedPercentage).toBeNull();
+      expect(indicator.completedPercentage).toBeNull();
+      expect(indicator.isSuppressed).toBe(true);
+    });
+  });
+
+  it('keeps the unavailable demo unit privacy-safe in task and unit summaries', () => {
+    demoMode.enabled = true;
+    demoRegistry.scenario = {
+      generated_at: '2026-08-31T00:00:00Z',
+      units: [
+        {
+          key: 'DEMO30243',
+          code: 'DEMO30243',
+          name: 'Professional Practice',
+          unit_id: 12,
+          project_id: 22,
+          ppi: {
+            state: 'unavailable',
+            unavailable_reason: 'insufficient_cohort',
+            task_abbreviation: 'DUE7',
+            task_definition_id: 32,
+            submitted_percentage: null,
+            completed_percentage: null,
+            status_distribution: null,
+          },
+        },
+      ],
+    } as DemoScenarioContract;
+
+    let indicator: PeerProgressIndicator | undefined;
+    service.getIndicator(22, 32).subscribe((value) => (indicator = value));
+    expect(indicator).toMatchObject({
+      submittedPercentage: null,
+      completedPercentage: null,
+      isSuppressed: true,
+      unavailableReason: 'insufficient_cohort',
+      statusDistribution: [],
+    });
+
+    service.getScenarioUnitSummary(22, 12, 0, 30).subscribe((summary) => {
+      expect(summary.studentPercentage).toBe(30);
+      expect(summary.submittedPercentage).toBeNull();
+      expect(summary.isSuppressed).toBe(true);
     });
   });
 

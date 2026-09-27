@@ -17,6 +17,7 @@ describe('PeerProgressUnitSummaryComponent', () => {
     targetGrade: 3,
     studentPercentage: 65,
     submittedPercentage: 42,
+    cohortLabel: 'Anonymous cohort — DUE7 submitted',
     isSuppressed: false,
     isStale: false,
     isFeatureEnabled: true,
@@ -49,18 +50,18 @@ describe('PeerProgressUnitSummaryComponent', () => {
     const text = render(baseSummary);
 
     expect(component.view.state).toBe('success');
-    expect(text).toContain('Your progress');
+    expect(text).toContain('Your unit completion');
     expect(text).toContain('65%');
-    expect(text).toContain('Anonymous cohort');
+    expect(text).toContain('Anonymous cohort — DUE7 submitted');
     expect(text).toContain('42%');
 
     expect(
-      fixture.nativeElement.querySelector('[aria-label="Your unit progress: 65 percent"]'),
+      fixture.nativeElement.querySelector('[aria-label="Your unit completion: 65 percent"]'),
     ).toBeTruthy();
 
     expect(
       fixture.nativeElement.querySelector(
-        '[aria-label="Anonymous cohort unit progress: 42 percent"]',
+        '[aria-label="Anonymous cohort — DUE7 submitted: 42 percent"]',
       ),
     ).toBeTruthy();
 
