@@ -10,16 +10,10 @@
     <table class="overflow-hidden rounded-lg">
       <tbody>
         @for (ilo of learningOutcomes; track ilo) {
-          <tr
-            class="border-b border-[color:var(--ot-color-divider)] odd:bg-[var(--ot-color-page)] even:bg-[var(--ot-color-surface)]"
-          >
-            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text)] uppercase">
-              {{ ilo.abbreviation }}
-            </td>
-            <td class="px-3.5 py-2.5 text-[color:var(--ot-color-text-muted)]">
-              {{ ilo.fullOutcomeDescription }}
-            </td>
-            <td class="flex justify-end px-3.5 py-2.5 text-[color:var(--ot-color-text-muted)]">
+          <tr class="border-b border-ot-divider odd:bg-ot-raised even:bg-ot-surface">
+            <td class="px-3.5 py-2.5 text-ot-text uppercase">{{ ilo.abbreviation }}</td>
+            <td class="px-3.5 py-2.5 text-ot-muted">{{ ilo.fullOutcomeDescription }}</td>
+            <td class="flex justify-end px-3.5 py-2.5 text-ot-muted">
               @let linkedOutcomes = getLinkedOutcomes(ilo);
               @if (linkedOutcomes.length) {
                 <mat-chip-set

@@ -39,14 +39,15 @@ $comment-inner-border-radius: 4px;
   margin: 0;
 }
 
+// The same gutter on both sides, so a bubble never sits against the panel edge. A
+// page that shows the comments wider sets --comments-gutter to give them more room.
 .comments-body {
-  padding-left: 10px;
+  padding-inline: var(--comments-gutter, 0.875rem);
   overflow-y: auto;
   @include scrollable();
 }
 
 .comments-scroll-content {
-  padding-right: 4px;
   max-height: 100%;
 }
 
@@ -186,18 +187,13 @@ $comment-inner-border-radius: 4px;
       position: relative;
       outline: 0;
       border: 0;
-      color: var(--ot-color-text);
+      color: var(--ot-color-text-muted);
       text-align: center;
       height: 1.5em;
 
       &:before {
         content: '';
-        background: linear-gradient(
-          to right,
-          transparent,
-          color-mix(in srgb, var(--ot-color-text-muted) 62%, transparent),
-          transparent
-        );
+        background: linear-gradient(to right, transparent, var(--ot-color-divider), transparent);
         position: absolute;
         left: 0;
         top: 50%;
@@ -212,7 +208,7 @@ $comment-inner-border-radius: 4px;
         padding: 0 0.5em;
         line-height: 1.5em;
         color: var(--ot-color-text-muted);
-        background-color: var(--ot-color-surface);
+        background-color: var(--ot-color-page);
       }
     }
   }
@@ -351,7 +347,9 @@ $comment-inner-border-radius: 4px;
   }
 
   @mixin base-bubble {
-    max-width: 300px;
+    // A page that shows the comments wider, such as the full-screen chat, sets
+    // --comment-bubble-max-width so a message is not wrapped into a narrow strip.
+    max-width: var(--comment-bubble-max-width, 300px);
     margin-left: 5px;
     display: flex;
     color: var(--ot-color-on-primary);
@@ -360,7 +358,7 @@ $comment-inner-border-radius: 4px;
     padding-bottom: 6px;
     padding-left: 0;
     line-height: 1.5em;
-    background: $comment-bubble-color;
+    background: var(--ot-color-primary);
 
     .comment-text,
     .comment-pdf,
@@ -401,7 +399,7 @@ $comment-inner-border-radius: 4px;
 
     a p,
     a {
-      color: var(--ot-color-on-primary);
+      color: inherit;
       margin-bottom: 0px;
     }
 
@@ -421,6 +419,13 @@ $comment-inner-border-radius: 4px;
   .pdf-bubble {
     @include base-bubble;
     display: inline-block;
+  }
+
+  .comment .document-bubble {
+    display: inline-block;
+    margin-left: 5px;
+    max-width: min(28rem, calc(100vw - 5rem));
+    min-width: 0;
   }
 
   // Audio comments
@@ -461,14 +466,16 @@ $comment-inner-border-radius: 4px;
     background: $discussion-comment-bubble-color;
   } */
 
+  // Other people's bubbles take their own fill: the raised surface is white in light,
+  // which vanished against the near-white panel.
   .comment.comment-by-other-user .text-bubble {
-    background: $comment-bubble-color-other-user;
+    background: var(--ot-comment-bubble);
     color: var(--ot-color-text);
     margin-left: 0;
   }
 
   .comment.comment-by-other-user .pdf-bubble {
-    background: $comment-bubble-color-other-user;
+    background: var(--ot-comment-bubble);
     color: var(--ot-color-text);
     margin-right: 50px;
     margin-left: 0;
@@ -477,6 +484,11 @@ $comment-inner-border-radius: 4px;
       color: var(--ot-color-text);
       margin-bottom: 0;
     }
+  }
+
+  .comment.comment-by-other-user .document-bubble {
+    margin-left: 0;
+    margin-right: 5px;
   }
 
   .comment.comment-by-other-user .audio-bubble {
@@ -532,5 +544,37 @@ $comment-inner-border-radius: 4px;
 
   #contextOverlay {
     position: absolute;
+  }
+}
+
+@media (max-width: 639.98px) {
+  :host {
+    display: block;
+    width: 100%;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .comments-panel {
+    height: auto !important;
+    min-height: calc(100dvh - var(--mobile-task-tabs-height));
+    overflow: visible;
+  }
+
+  .comments-body {
+    height: auto !important;
+    min-height: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .comments-scroll-content {
+    max-height: none;
+  }
+
+  .anchor,
+  .conversation-end,
+  .comments-footer {
+    scroll-margin-top: var(--mobile-sticky-offset);
   }
 }

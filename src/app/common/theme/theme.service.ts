@@ -11,9 +11,10 @@ import {Observable, Subscription} from 'rxjs';
  * 'system' is an instruction, never a resolved value.
  *
  * This service owns the token layer's marker and the resolved-theme signal. The
- * no-flash <head> script (THM-F04), the Tailwind dark variant (THM-F03), the
- * accessible toggle (THM-F02) consume this service. Browser theme-color chrome
- * follows the resolved page colour (THM-M04).
+ * no-flash <head> script (THM-F04), the Tailwind dark variant (THM-F03) and the
+ * accessible toggle (THM-F02) consume this service. The browser theme-color chrome
+ * (THM-W01, THM-M04) is applied here in applyResolved, since it must follow the
+ * resolved page colour.
  */
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -26,8 +27,8 @@ export const THEME_STORAGE_KEY = 'ontrack.theme.preference';
 
 /** Keep in sync with the pre-boot script and page tokens (regression-tested). */
 export const THEME_BROWSER_COLORS: Record<ResolvedTheme, string> = {
-  light: '#fafafa',
-  dark: '#0f1216',
+  light: '#f3f4f6',
+  dark: '#21262d',
 };
 export const THEME_UPDATED_AT_STORAGE_KEY = 'ontrack.theme.preference.updatedAt';
 export const THEME_ACCOUNT_ID_STORAGE_KEY = 'ontrack.theme.preference.accountId';

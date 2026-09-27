@@ -100,8 +100,8 @@ describe('special surface palette', () => {
   it('overrides dark root tokens for print without persisting another preference', () => {
     const print = css.slice(css.indexOf('@media print'));
     expect(print).toContain(':root[data-ot-theme=dark]');
-    expect(print).toContain('--ot-color-page: #fafafa');
-    expect(print).toContain('--ot-color-text: #212121');
+    expect(print).toContain(`--ot-color-page: ${tokens('light')['--ot-color-page']}`);
+    expect(print).toContain(`--ot-color-text: ${tokens('light')['--ot-color-text']}`);
     expect(print).toContain('color-scheme: light');
   });
   it.each(['light', 'dark'])('%s text, links and actions meet AA contrast on surfaces', (mode) => {
