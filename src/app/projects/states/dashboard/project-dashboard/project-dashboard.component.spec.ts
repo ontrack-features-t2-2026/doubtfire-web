@@ -18,7 +18,6 @@ describe('ProjectDashboardComponent task selection', () => {
   let fixture: ComponentFixture<ProjectDashboardComponent>;
   let taskStatusUpdated$: Subject<Task>;
   let taskSubmissionCompleted$: Subject<Task>;
-  let commentsNarrow$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
   let phoneLayout$: BehaviorSubject<{matches: boolean; breakpoints: object}>;
 
   // findTaskForDefinition is read when the phone layout opens the selected task.
@@ -28,7 +27,6 @@ describe('ProjectDashboardComponent task selection', () => {
   beforeEach(async () => {
     taskStatusUpdated$ = new Subject<Task>();
     taskSubmissionCompleted$ = new Subject<Task>();
-    commentsNarrow$ = new BehaviorSubject({matches: false, breakpoints: {}});
     phoneLayout$ = new BehaviorSubject({matches: false, breakpoints: {}});
 
     await TestBed.configureTestingModule({
@@ -55,10 +53,8 @@ describe('ProjectDashboardComponent task selection', () => {
         },
         {
           provide: BreakpointObserver,
-          // ngOnInit observes the comments breakpoint first, then the phone one.
-          useValue: {
-            observe: vi.fn().mockReturnValueOnce(commentsNarrow$).mockReturnValueOnce(phoneLayout$),
-          },
+          // ngOnInit observes the phone breakpoint. The panel layout owns the rest.
+          useValue: {observe: vi.fn().mockReturnValue(phoneLayout$)},
         },
         {provide: Router, useValue: {navigate: vi.fn().mockResolvedValue(true)}},
       ],
@@ -101,31 +97,21 @@ describe('ProjectDashboardComponent task selection', () => {
     expect(component.selectedTaskDefinition$.value).toBe(selectedTaskDefinition);
   });
 
-  it('toggles the full-screen chat and drops it when the task closes', () => {
-    component.toggleCommentsFullscreen();
-    expect(component.commentsFullscreen).toBe(true);
-
-    component.toggleCommentsFullscreen();
-    expect(component.commentsFullscreen).toBe(false);
+  it('drops the full-screen chat when the task closes', () => {
+    component.fullscreenPanel = 'comments';
 
     // A full-screen chat with no task behind it would leave nothing to exit back to.
-    component.toggleCommentsFullscreen();
     component.selectedTaskDefinition$.next(null);
 
-    expect(component.commentsFullscreen).toBe(false);
+    expect(component.fullscreenPanel).toBeNull();
   });
 
-  it('keeps a full-screen chat open when the window narrows, and leaves it for phones', () => {
-    component.toggleCommentsFullscreen();
-
-    commentsNarrow$.next({matches: true, breakpoints: {}});
-
-    expect(component.commentsFullscreen).toBe(true);
-    expect(component.commentsPanelCollapsed).toBe(false);
+  it('leaves full screen for the phone layout', () => {
+    component.fullscreenPanel = 'comments';
 
     phoneLayout$.next({matches: true, breakpoints: {}});
 
-    expect(component.commentsFullscreen).toBe(false);
+    expect(component.fullscreenPanel).toBeNull();
   });
 });
 
@@ -200,6 +186,94 @@ describe('ProjectDashboardComponent route reuse', () => {
     expect(setView).toHaveBeenLastCalledWith(ViewType.PROJECT, secondProject);
 
     component.ngOnDestroy();
+  });
+
+  describe('signed off check', () => {
+    const build = (options: {view?: boolean; taskSelectionUrlBase?: unknown[] | null} = {}) => {
+      const navigate = vi.fn().mockResolvedValue(true);
+      const checkProject = vi.fn().mockResolvedValue(options.view ? 'view' : null);
+      const component = new ProjectDashboardComponent(
+        {} as UserService,
+        {
+          get: (
+            params: {id: number},
+            callbacks: {mappingCompleteCallback: (project: Project) => void},
+          ) => {
+            callbacks.mappingCompleteCallback(firstProject);
+            return of(firstProject);
+          },
+        } as unknown as ProjectService,
+        {taskSubmissionCompleted$: new Subject<Task>()} as unknown as TaskService,
+        {get: () => of(firstUnit)} as unknown as UnitService,
+        {setView: vi.fn()} as unknown as GlobalStateService,
+        {
+          parent: {
+            data: of({project: firstProject}),
+            snapshot: {paramMap: convertToParamMap({projectId: firstProject.id})},
+          },
+        } as unknown as ActivatedRoute,
+        {observe: () => of({matches: false, breakpoints: {}})} as unknown as BreakpointObserver,
+        {navigate} as unknown as Router,
+        undefined,
+        undefined,
+        {checkProject} as never,
+      );
+      component.taskSelectionUrlBase = options.taskSelectionUrlBase ?? null;
+      component.project$ = of(firstProject);
+      return {component, checkProject, navigate};
+    };
+
+    it('checks once when the project has loaded, without a preview by default', () => {
+      const {component, checkProject} = build();
+
+      component.ngOnInit();
+      component.retryProjectLoad();
+
+      expect(checkProject).toHaveBeenCalledTimes(1);
+      expect(checkProject).toHaveBeenCalledWith(firstProject, {preview: false});
+      component.ngOnDestroy();
+    });
+
+    it('never checks inside the staff portfolio view', () => {
+      const {component, checkProject} = build({taskSelectionUrlBase: ['/units', 1]});
+
+      component.ngOnInit();
+
+      expect(checkProject).not.toHaveBeenCalled();
+      component.ngOnDestroy();
+    });
+
+    it('filters the task list to completed tasks when asked to view them', async () => {
+      const {component, navigate} = build({view: true});
+
+      component.ngOnInit();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: {taskStatus: 'complete', taskView: 'tasks'},
+          queryParamsHandling: 'merge',
+        }),
+      );
+      component.ngOnDestroy();
+    });
+
+    it('opens a collapsed task list when a status card filters it', () => {
+      vi.useFakeTimers();
+      const {component} = build({view: true});
+      const expandFromRail = vi.fn();
+      (component as unknown as {taskListPanel: {expandFromRail: () => void}}).taskListPanel = {
+        expandFromRail,
+      };
+
+      (component as unknown as {revealTaskList: () => void}).revealTaskList();
+      vi.runAllTimers();
+
+      expect(expandFromRail).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
+    });
   });
 
   // A wrong or stale link, or no access, left the page on its skeleton forever.

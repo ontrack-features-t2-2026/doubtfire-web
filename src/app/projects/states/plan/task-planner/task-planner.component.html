@@ -171,7 +171,7 @@
 
 <!-- The chart gets a fixed height from its row count, since ngx-gantt fills its
      container; the toolbar and legend above it are free to wrap. -->
-<div class="planner-chart desktop-planner" [style.height.px]="ganttHeight">
+<div class="planner-chart desktop-planner" [style.height.px]="items?.length ? ganttHeight : 220">
   <ngx-gantt
     #gantt
     class="desktop-planner h-full overflow-hidden"
@@ -188,6 +188,9 @@
     [virtualScrollEnabled]="false"
   >
     <ngx-gantt-table>
+      <ng-template #tableEmpty>
+        <p class="planner-empty">No tasks to show for this target grade.</p>
+      </ng-template>
       <ngx-gantt-column name="Tasks" width="350px">
         <ng-template #cell let-item="item">
           <!-- A real link, so the row opens the task from the keyboard as well. The code is

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatMenuModule} from '@angular/material/menu';
@@ -8,6 +8,8 @@ import {Project, Task, User} from 'src/app/api/models/doubtfire-model';
 import {TaskService} from 'src/app/api/services/task.service';
 import {UserService} from 'src/app/api/services/user.service';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
+import {PanelFullscreenButtonComponent} from 'src/app/common/panel-layout/panel-fullscreen-button.component';
+import {PanelComponent} from 'src/app/common/panel-layout/panel.component';
 import {DashboardViews, SelectedTaskService} from '../../selected-task.service';
 import {TaskDashboardComponent} from './task-dashboard.component';
 
@@ -35,7 +37,7 @@ describe('TaskDashboardComponent', () => {
     userServiceStub.currentUser = undefined;
     await TestBed.configureTestingModule({
       declarations: [TaskDashboardComponent],
-      imports: [MatMenuModule],
+      imports: [MatMenuModule, PanelFullscreenButtonComponent],
       providers: [
         {provide: TaskService, useValue: taskServiceStub},
         {provide: FileDownloaderService, useValue: emptyProvider},
@@ -60,13 +62,32 @@ describe('TaskDashboardComponent', () => {
     const project = new Project();
     project.id = 1;
     const task = new Task(project);
-    task.definition = {id: 2} as Task['definition'];
+    task.definition = {
+      id: 2,
+      uploadRequirements: [{key: 'file0'}],
+    } as unknown as Task['definition'];
     component.task = task;
     fixture.detectChanges();
 
+    task.status = 'ready_for_feedback';
+    task.submissionProcessingState = 'queued';
     taskServiceStub.taskSubmissionCompleted$.next(task);
 
     expect(component.currentView).toBe(DashboardViews.submission);
+  });
+
+  it('stays on Task Details when a task that takes no uploads is set Ready for Feedback', () => {
+    const project = new Project();
+    project.id = 1;
+    const task = new Task(project);
+    task.definition = {id: 2, uploadRequirements: []} as unknown as Task['definition'];
+    component.task = task;
+    fixture.detectChanges();
+
+    task.status = 'ready_for_feedback';
+    taskServiceStub.taskSubmissionCompleted$.next(task);
+
+    expect(component.currentView).toBe(DashboardViews.details);
   });
 
   it('allows the project owner to view peer progress', () => {
@@ -270,4 +291,80 @@ describe('TaskDashboardComponent', () => {
       expect(body.classList).not.toContain('task-dashboard-body--document');
     },
   );
+});
+
+describe('TaskDashboardComponent full screen', () => {
+  let fixture: ComponentFixture<TaskDashboardComponent>;
+  let panel: {
+    panelTitle: string;
+    isFullscreen: boolean;
+    stacked: boolean;
+    toggleFullscreen: ReturnType<typeof vi.fn>;
+  };
+
+  const task = () =>
+    ({
+      project: new Project(),
+      unit: {staff: []},
+      definition: {hasTaskSheet: false, hasTaskResources: false},
+      hasPdf: false,
+      processingPdf: false,
+      submissionProcessingActive: false,
+      submissionPdfReady: false,
+      submissionFilesReady: false,
+      hasSubmissionHistory: () => false,
+      blockedByPrerequisiteTasks: () => false,
+    }) as unknown as Task;
+
+  beforeEach(async () => {
+    panel = {
+      panelTitle: 'Selected task',
+      isFullscreen: false,
+      stacked: false,
+      toggleFullscreen: vi.fn(),
+    };
+    await TestBed.configureTestingModule({
+      declarations: [TaskDashboardComponent],
+      imports: [MatMenuModule, PanelFullscreenButtonComponent],
+      providers: [
+        {provide: TaskService, useValue: taskServiceStub},
+        {provide: FileDownloaderService, useValue: emptyProvider},
+        {provide: ActivatedRoute, useValue: emptyProvider},
+        {provide: UserService, useValue: {}},
+        {provide: SelectedTaskService, useValue: selectedTaskServiceStub},
+        {provide: PanelComponent, useValue: panel},
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TaskDashboardComponent);
+    fixture.componentInstance.task = task();
+    fixture.componentInstance.currentView = DashboardViews.details;
+    fixture.detectChanges();
+  });
+
+  it('puts the full-screen button in the tab bar, just before the task actions menu', () => {
+    const toggle = fixture.nativeElement.querySelector(
+      'app-panel-fullscreen-button button',
+    ) as HTMLButtonElement;
+
+    expect(toggle.getAttribute('aria-label')).toBe('Open Selected task full screen');
+    expect(toggle.classList).toContain('text-ot-muted');
+    expect(
+      toggle.closest('app-panel-fullscreen-button').nextElementSibling.getAttribute('aria-label'),
+    ).toBe('Task actions');
+
+    toggle.click();
+    expect(panel.toggleFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps task details to a reading width only while full screen', () => {
+    const details = () => fixture.nativeElement.querySelector('.task-details') as HTMLElement;
+    expect(details().classList).not.toContain('dashboard-reading-measure');
+
+    panel.isFullscreen = true;
+    fixture.detectChanges();
+
+    expect(details().classList).toContain('dashboard-reading-measure');
+  });
 });

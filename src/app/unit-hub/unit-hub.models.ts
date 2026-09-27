@@ -17,6 +17,8 @@ export interface UnitAnnouncement {
   title: string;
   body: string;
   published_at: string | null;
+  /** Last edit time when the API supplies it. Read status falls back to published_at. */
+  updated_at?: string | null;
   expires_at?: string | null;
   source_url?: string | null;
   pinned: boolean;

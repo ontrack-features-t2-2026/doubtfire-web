@@ -215,6 +215,8 @@ describe('AuthenticationService', () => {
     expect(notificationService.reset).toHaveBeenCalledTimes(1);
     expect(notificationFeedbackIntents.clear).toHaveBeenCalledTimes(1);
     expect(demoMode.reset).toHaveBeenCalledTimes(1);
+    expect(demoScenarioRegistry.clear).toHaveBeenCalledTimes(1);
+    expect(TestBed.inject(FeedbackDraftStore).clearUser).toHaveBeenCalledWith(1);
     expect(themeService.disconnectAccount).toHaveBeenCalledTimes(1);
     expect(authReturnUrl.clear).toHaveBeenCalledTimes(1);
   });

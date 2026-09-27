@@ -59,12 +59,42 @@ describe('ProjectGroupsComponent authorised states', () => {
 
   it('distinguishes configured-but-empty group work from no group-work configuration', () => {
     component.unit = {...unit, hasGroupwork: () => true} as Unit;
-    component.selectedGroupSet = groupSet;
+    component.selectedGroupSet = {
+      ...groupSet,
+      allowStudentsToCreateGroups: false,
+    } as unknown as GroupSet;
     fixture.detectChanges();
 
     const state = fixture.nativeElement.querySelector('[data-state="configured-empty"]');
     expect(state.textContent).toContain('no groups have been published');
     expect(state.textContent).toContain('Project teams');
+    expect(fixture.nativeElement.querySelector('f-group-set-manager')).toBeNull();
+  });
+
+  it('renders the group manager for an empty set so a student can create the first group', () => {
+    component.unit = {...unit, hasGroupwork: () => true} as Unit;
+    component.selectedGroupSet = {
+      ...groupSet,
+      allowStudentsToCreateGroups: true,
+      locked: false,
+    } as unknown as GroupSet;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('f-group-set-manager')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-state]')).toBeNull();
+  });
+
+  it('keeps the empty state for a locked set even when student-created groups are allowed', () => {
+    component.unit = {...unit, hasGroupwork: () => true} as Unit;
+    component.selectedGroupSet = {
+      ...groupSet,
+      allowStudentsToCreateGroups: true,
+      locked: true,
+    } as unknown as GroupSet;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-state="configured-empty"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('f-group-set-manager')).toBeNull();
   });
 
   it('renders the ordinary authorised group manager when the unit payload contains groups', () => {

@@ -7,6 +7,8 @@ import {
 
 describe('additional email verification callback', () => {
   beforeEach(() => {
+    // Other specs in the same worker can leave history state behind.
+    globalThis.history?.replaceState(null, '');
     consumeAdditionalEmailVerificationToken();
   });
 

@@ -79,8 +79,23 @@ ngx-gantt {
     fill: var(--ot-color-text);
   }
 
-  .gridline-path {
+  // axis titles and tick labels have no fill of their own, so they went black in dark
+  g[ngx-charts-axis-label] text,
+  .tick text {
+    fill: var(--ot-chart-axis);
+  }
+
+  .gridline-path,
+  .gridline-path-dotted {
     stroke: var(--ot-chart-grid);
+  }
+
+  // axis line and tick marks carry the scale, so they take the axis colour
+  .tick line,
+  .domain,
+  .refline-path,
+  .pie-label-line {
+    stroke: var(--ot-chart-axis);
   }
 }
 
@@ -89,10 +104,25 @@ ngx-gantt {
     background: var(--ot-color-surface-raised);
   }
 
+  .legend-title-text,
   .legend-label,
   .legend-label:hover,
   .legend-label .active .legend-label-text {
     color: var(--ot-color-text);
+  }
+}
+
+:root .gauge {
+  .gauge-tick text {
+    fill: var(--ot-chart-axis);
+  }
+
+  .gauge-tick path {
+    stroke: var(--ot-chart-axis);
+  }
+
+  .background-arc path {
+    fill: var(--ot-meter-track);
   }
 }
 

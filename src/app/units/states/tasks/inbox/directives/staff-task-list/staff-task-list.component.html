@@ -209,7 +209,10 @@
             {{ listSummary }}
           </p>
         </div>
-        <ng-container *ngTemplateOutlet="ListActions"></ng-container>
+        <div class="flex shrink-0 items-center">
+          <ng-container *ngTemplateOutlet="ListActions"></ng-container>
+          <app-panel-collapse-button></app-panel-collapse-button>
+        </div>
       </div>
       <ng-container *ngTemplateOutlet="SearchTemplate; context: {collapsable: true}"></ng-container>
     </header>
@@ -485,7 +488,7 @@
                     matTooltipPosition="right"
                     matTooltipShowDelay="400"
                     type="button"
-                    [attr.aria-label]="'More options for ' + task.project.student.name"
+                    [attr.aria-label]="'More options for ' + task.project.student.displayName"
                     [matMenuTriggerFor]="overflowMenu"
                     [ngClass]="{'task-options--shown': rowActionsShown(task)}"
                     (blur)="hideTaskActionsForFocus(task)"

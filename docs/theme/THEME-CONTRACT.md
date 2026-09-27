@@ -9,6 +9,46 @@ anything.
 
 Read sections 4, 6, 7 and 10 before writing any style code. The rest is why.
 
+## 14 September 2026 correction handover
+
+This note records the scoped correction candidate in the Unit Hub release branch. The audit below
+remains a historical snapshot of its named August revision; this note does not approve the full
+theme MVP or change its palette. The fixes consume the existing `--ot-color-*` tokens.
+
+| Surface                                       | Correction to verify                                                                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cross-project dashboard (`/dashboard`)        | Native date/search fields, placeholders, filter controls and quieter dark unit headers                                                             |
+| Project dashboard (`/projects/:id/dashboard`) | Progress container, grade fields, learning outcomes, engagement/peer summary text, planner links, task search, selected rows and mobile panes/tabs |
+| Progress burndown                             | SVG axis labels, grid lines and legend states; the scoped chart rule reaches the library's child SVG                                               |
+| Task Planner and tutorials                    | Gantt surfaces/text and toolbar controls; tutorial cards and empty states                                                                          |
+| Calendar, About and demo controls             | Dialog fields, links, headings, cards and the demo banner                                                                                          |
+
+The final frontend regression run passed **1,050 tests across 141 files** on Node 22.
+Full lint, typecheck, deployment configuration validation and the production build passed.
+The build retains its existing stylesheet-size and dependency warnings; budgets were not raised.
+The old test requiring a permanently white search field now checks its label, placeholder,
+search type and keyboard focus. Planner regressions exercise the library's English locale
+and supported empty template.
+
+Browser checks used fictional local accounts in the installed in-app browser:
+
+- Dark dashboard date/search controls, progress panels, chart labels, tutorials, About,
+  calendar tabs/download action and PPI/push previews were inspected after rebuilding.
+- Light-mode comparison covered the same shared tokens and core planner, dashboard,
+  calendar and preview surfaces. Theme switching updated existing page colours.
+- Phone layout checks included 320 CSS pixels for About, PPI/push previews and the
+  dashboard, and a phone-width planner with its English empty state visible. The
+  tutorials table stays inside a keyboard-scrollable region. Mobile overview/task-list
+  navigation remained usable.
+- Announcement and session blank areas opened their detail views. Keyboard activation
+  worked; separate Join, calendar and download controls remained independent.
+
+Record the final component revisions and local evidence in the release handover. These checks
+are a scoped correction check, not full theme-MVP acceptance or accessibility certification.
+Physical iOS/Android devices and operating-system-driven System-theme changes still need the
+receiving team's acceptance. Live tenant and personal-calendar acceptance are separate from
+this styling correction; no real meeting invitation or enrolment was changed.
+
 ---
 
 ## 1. Missing inputs, and what is provisional because of them

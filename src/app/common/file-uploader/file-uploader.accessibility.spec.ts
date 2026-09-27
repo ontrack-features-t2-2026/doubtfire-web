@@ -61,7 +61,7 @@ describe('File uploader accessible controls', () => {
         fixture.nativeElement.querySelector('button.file-drop-zone');
       expect(dropZone).not.toBeNull();
       expect(dropZone.closest('[hidden]')).toBeNull();
-      expect(dropZone.textContent).toContain('Drop PDF file here');
+      expect(dropZone.textContent).toContain('Drop your PDF here');
     },
   );
 

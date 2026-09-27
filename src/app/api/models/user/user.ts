@@ -20,6 +20,13 @@ export class User extends Entity {
   public receiveTaskNotifications: boolean;
   public receivePortfolioNotifications: boolean;
   public receiveFeedbackNotifications: boolean;
+  /** Unit Hub updates in the bell. Email, push and reminders only apply while this is on. */
+  public receiveUnitHubNotifications: boolean;
+  public receiveUnitHubEmailNotifications: boolean;
+  public receiveUnitHubPushNotifications: boolean;
+  public receiveUnitHubSessionReminders: boolean;
+  /** How often the unit summary email arrives: off, daily, weekly or monthly. */
+  public digestFrequency: string;
   public displayPeerProgress: boolean;
   public themePreference: 'light' | 'dark' | 'system' | null;
   public themePreferenceUpdatedAt: string | null;

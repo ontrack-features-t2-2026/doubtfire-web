@@ -16,6 +16,10 @@ export class FeedbackAppealModalComponent implements OnInit {
   task: Task;
 
   reviewComment = '';
+  /** Matches the maxlength on the textarea. */
+  readonly commentMaxLength = 1000;
+  /** The counter turns to the warning colour from this many characters. */
+  readonly commentWarnLength = 900;
   submitting = false;
   errorMessage = '';
   private allowClose = false;
@@ -58,6 +62,17 @@ export class FeedbackAppealModalComponent implements OnInit {
         this.submitting = false;
       },
     });
+  }
+
+  public get commentLength(): number {
+    return this.reviewComment?.length ?? 0;
+  }
+
+  public get commentCounterState(): 'ok' | 'warn' | 'limit' {
+    if (this.commentLength >= this.commentMaxLength) {
+      return 'limit';
+    }
+    return this.commentLength >= this.commentWarnLength ? 'warn' : 'ok';
   }
 
   public get isDirty(): boolean {

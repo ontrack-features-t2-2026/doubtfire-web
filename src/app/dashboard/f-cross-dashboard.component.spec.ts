@@ -8,6 +8,7 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {provideDateFnsAdapter} from '@angular/material-date-fns-adapter';
 import {MatButtonModule} from '@angular/material/button';
 import {MatButtonHarness} from '@angular/material/button/testing';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MAT_DATE_LOCALE} from '@angular/material/core';
 import {MatDatepickerModule} from '@angular/material/datepicker';
 import {MatDateRangeInputHarness} from '@angular/material/datepicker/testing';
@@ -133,6 +134,7 @@ describe('CrossDashboardComponent', () => {
       imports: [
         CommonModule,
         MatButtonModule,
+        MatCheckboxModule,
         MatDatepickerModule,
         MatFormFieldModule,
         MatIconModule,
@@ -381,7 +383,7 @@ describe('CrossDashboardComponent', () => {
     }
   });
 
-  it('renders per-unit search with an explicit readable surface and placeholder', async () => {
+  it('renders labelled per-unit search with its placeholder and keyboard focus', async () => {
     projectsSubject.next([makeProject(1, 'SIT764', true)]);
 
     await syncView();
@@ -396,6 +398,10 @@ describe('CrossDashboardComponent', () => {
     expect(searchInput.classList.contains('text-ot-text')).toBe(true);
     expect(searchInput.classList.contains('placeholder:text-ot-muted')).toBe(true);
     expect(searchInput.classList.contains('placeholder:opacity-100')).toBe(true);
+    expect(searchInput.placeholder).toBe('Search tasks');
+    expect(searchInput.type).toBe('search');
+    searchInput.focus();
+    expect(document.activeElement).toBe(searchInput);
   });
 
   it('does not confuse Australian dates that contain the same numbers in another order', () => {
@@ -972,6 +978,33 @@ describe('CrossDashboardComponent', () => {
       {value: 2, label: 'Distinction'},
       {value: 3, label: 'High Distinction'},
     ]);
+  });
+
+  // The text in the menu item is not a label element, so the box needs its own name.
+  it('names the per-unit filter box after the filter it turns on', async () => {
+    projectsSubject.next([
+      makeProject(1, 'SIT764', true, [
+        makeTask('Individual Retrospective', '5.1P', 'not_started', makeDate(12)),
+      ]),
+    ]);
+
+    await syncView();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const filterButton = await loader.getHarness(
+      MatButtonHarness.with({selector: '[aria-label^="Filter tasks in"]'}),
+    );
+    await filterButton.click();
+    await syncView();
+
+    const item = document.querySelector('.mat-mdc-menu-panel .mat-mdc-menu-item') as HTMLElement;
+    const icon = item?.querySelector('mat-icon') as HTMLElement;
+
+    // the item is the checkbox, so its own text is the name and the icon stays quiet
+    expect(item?.getAttribute('role')).toBe('menuitemcheckbox');
+    expect(item?.getAttribute('aria-checked')).toBe('false');
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    expect(item?.textContent.replace(icon?.textContent ?? '', '').trim()).toBe('Hide Completed');
   });
 
   it('binds both multiple-select controls and Clear all through the rendered toolbar', async () => {

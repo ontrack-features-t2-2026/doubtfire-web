@@ -12,10 +12,10 @@ import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {Notification} from 'src/app/api/models/notification';
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
-import {NotificationRouteService} from 'src/app/api/services/notification-route.service';
 import {NotificationService} from 'src/app/api/services/notification.service';
 import {AlertService} from 'src/app/common/services/alert.service';
 import {ConfirmationModalService} from '../modals/confirmation-modal/confirmation-modal.service';
+import {NotificationOpenService} from '../notifications/notification-open.service';
 import {presentationFor} from '../notifications/notification-presentation';
 
 /**
@@ -69,7 +69,7 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
     private router: Router,
     private changeDetectorRef: ChangeDetectorRef,
     private elementRef: ElementRef<HTMLElement>,
-    private notificationRoutes: NotificationRouteService,
+    private notificationOpener: NotificationOpenService,
   ) {}
 
   /**
@@ -176,9 +176,9 @@ export class NotificationsPageComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (notification.link) {
-      void this.notificationRoutes.navigate(notification.link);
-    }
+    // Where it goes, for a student or for staff, and what happens when the
+    // thing it was about has gone, is all decided in NotificationOpenService.
+    void this.notificationOpener.open(notification);
   }
 
   /**

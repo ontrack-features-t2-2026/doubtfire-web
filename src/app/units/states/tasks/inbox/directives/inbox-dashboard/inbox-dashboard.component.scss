@@ -20,3 +20,11 @@
     width: max-content;
   }
 }
+
+// Full screen, the reading tabs (notes, history, details) keep a comfortable line length
+// in the middle of the page. The PDF viewers keep the whole width.
+.dashboard-reading-measure {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+}

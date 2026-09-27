@@ -17,6 +17,8 @@ import {TaskStatus, TaskStatusEnum} from 'src/app/api/models/task-status';
 import {PeerProgressIndicatorService} from 'src/app/api/services/peer-progress-indicator.service';
 import {PeerProgressDisplayPreferenceService} from 'src/app/common/services/peer-progress-display-preference.service';
 
+type PeerProgressHighlightSource = 'pointer' | 'focus';
+
 interface PeerProgressDisplaySegment {
   status: TaskStatusEnum;
   label: string;
@@ -38,6 +40,16 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
   view: PeerProgressViewModel = {state: 'loading', data: null, message: null};
   advanced = false;
 
+  // The status whose segment is emphasised, and whether a pointer or keyboard
+  // focus asked for it. Hover emphasis is only styled on fine-pointer devices.
+  highlightedStatus: TaskStatusEnum | null = null;
+  highlightSource: PeerProgressHighlightSource | null = null;
+
+  // Bars grow in only the first time a result is shown. Later refreshes change
+  // widths in place without replaying the entrance.
+  animateEntry = false;
+
+  private hasShownResult = false;
   private activeRequest?: Subscription;
   private readonly statusDisplayIndex = new Map(
     TaskStatus.PEER_PROGRESS_DISPLAY_ORDER.map((status, index) => [status, index]),
@@ -130,6 +142,55 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
     return `Anonymous peer task status distribution: ${detail}`;
   }
 
+  get highlightedSegment(): PeerProgressDisplaySegment | null {
+    if (this.highlightedStatus === null) {
+      return null;
+    }
+    return (
+      this.displaySegments.find((segment) => segment.status === this.highlightedStatus) ?? null
+    );
+  }
+
+  // Rows per legend column, so a two-column legend fills top to bottom in
+  // display order instead of leaving a lone item on a final row.
+  get legendRows(): number {
+    return Math.max(1, Math.ceil(this.displaySegments.length / 2));
+  }
+
+  get breakdownHeadingId(): string {
+    return `peer-progress-breakdown-${this.taskDef?.id ?? 'loading'}`;
+  }
+
+  highlight(status: TaskStatusEnum, source: PeerProgressHighlightSource): void {
+    this.highlightedStatus = status;
+    this.highlightSource = source;
+    this.cdr.markForCheck();
+  }
+
+  clearHighlight(source: PeerProgressHighlightSource): void {
+    if (this.highlightSource !== source) {
+      return;
+    }
+    this.highlightedStatus = null;
+    this.highlightSource = null;
+    this.cdr.markForCheck();
+  }
+
+  // Horizontal centre of a segment in the stacked bar, used to place its tooltip.
+  segmentMidpoint(status: TaskStatusEnum): string {
+    const segments = this.displaySegments;
+    const total = this.distributionTotal || 1;
+    let offset = 0;
+
+    for (const segment of segments) {
+      if (segment.status === status) {
+        return `${((offset + segment.percentage / 2) / total) * 100}%`;
+      }
+      offset += segment.percentage;
+    }
+    return '50%';
+  }
+
   get titleId(): string {
     return `peer-progress-title-${this.taskDef?.id ?? 'loading'}`;
   }
@@ -182,6 +243,13 @@ export class PpiWidgetComponent implements OnChanges, OnDestroy {
 
   private setView(next: PeerProgressViewModel): void {
     this.view = next;
+    this.highlightedStatus = null;
+    this.highlightSource = null;
+
+    if (next.state === 'success' || next.state === 'no-data') {
+      this.animateEntry = !this.hasShownResult;
+      this.hasShownResult = true;
+    }
     this.cdr.markForCheck();
   }
 

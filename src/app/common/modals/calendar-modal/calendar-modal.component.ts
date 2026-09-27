@@ -1,13 +1,6 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  Inject,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
-import {MatSlideToggle} from '@angular/material/slide-toggle';
+import {MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS} from '@angular/material/slide-toggle';
 import {Project, ProjectService, Webcal, WebcalService} from 'src/app/api/models/doubtfire-model';
 import {FileDownloaderService} from 'src/app/common/file-downloader/file-downloader.service';
 import {DoubtfireConstants} from 'src/app/config/constants/doubtfire-constants';
@@ -21,10 +14,13 @@ import {ConfirmationModalService} from '../confirmation-modal/confirmation-modal
   styleUrls: ['./calendar-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
+  // The web calendar switch must not flip itself: its value follows `webcal.enabled`
+  // once the save succeeds. Provided here so only this dialog's switches get it.
+  // Writing it onto the injected defaults changed the one app-wide object, and every
+  // other slide toggle stopped responding once the dialog had been opened.
+  providers: [{provide: MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS, useValue: {disableToggleValue: true}}],
 })
-export class CalendarModalComponent implements OnInit, AfterViewInit {
-  @ViewChild('webcalToggle') webcalToggle: MatSlideToggle;
-
+export class CalendarModalComponent implements OnInit {
   webcal: Webcal | null;
   private savedWebcal: Webcal | null = null;
   working: boolean = true;
@@ -63,14 +59,6 @@ export class CalendarModalComponent implements OnInit, AfterViewInit {
         this.alerts.error('Unable to load the units available for your web calendar.');
       },
     });
-  }
-
-  ngAfterViewInit() {
-    // Disallow the value of the slide toggle being changed by the user. Instead, its value is bound to the presence of
-    // `this.webcal`.
-    if (this.webcalToggle) {
-      this.webcalToggle.defaults.disableToggleValue = true;
-    }
   }
 
   loadWebCalendar(): void {

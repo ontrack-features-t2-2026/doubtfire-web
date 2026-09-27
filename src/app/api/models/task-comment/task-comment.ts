@@ -22,6 +22,12 @@ export class TaskComment extends Entity {
   recipientReadTime: string;
   commentType: string = 'text';
   isNew: boolean;
+  /**
+   * True when OnTrack wrote this comment rather than a person. It is stored
+   * against the tutor for the task, because a comment needs an author, so
+   * without this it reads as something that tutor said.
+   */
+  automated = false;
   replyToId: number;
   attachmentFileName?: string;
   attachmentMimeType?: string;

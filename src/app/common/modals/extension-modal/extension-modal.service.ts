@@ -16,7 +16,7 @@ export class ExtensionModalService {
         autoFocus: 'dialog',
         closeOnNavigation: true,
         maxHeight: 'calc(100dvh - 2rem)',
-        maxWidth: '700px',
+        maxWidth: '560px',
         panelClass: 'responsive-task-dialog',
         restoreFocus: true,
         width: 'calc(100vw - 2rem)',

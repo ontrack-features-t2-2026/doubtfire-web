@@ -97,6 +97,24 @@ export const routes: Routes = [
     data: {pageTitle: 'Theme foundation'},
   },
   {
+    path: 'motion-demo',
+    loadComponent: () =>
+      import('./common/celebrate/motion-demo/motion-demo.component').then(
+        (m) => m.MotionDemoComponent,
+      ),
+    canActivate: [demoToolsGuard],
+    data: {pageTitle: 'Motion'},
+  },
+  {
+    path: 'submit-motion',
+    loadComponent: () =>
+      import('./common/celebrate/motion-demo/submit-motion.component').then(
+        (m) => m.SubmitMotionComponent,
+      ),
+    canActivate: [demoToolsGuard],
+    data: {pageTitle: 'Submitting'},
+  },
+  {
     path: 'demo-controls',
     component: DemoControlsComponent,
     canActivate: [demoToolsGuard],
