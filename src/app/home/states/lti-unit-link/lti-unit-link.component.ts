@@ -1,4 +1,4 @@
-import {AfterViewInit, ChangeDetectionStrategy, Component, Input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {CreateNewUnitModal} from 'src/app/admin/modals/create-new-unit-modal/create-new-unit-modal.component';
 import {Unit} from 'src/app/api/models/unit';
@@ -16,7 +16,7 @@ import {AlertService} from 'src/app/common/services/alert.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class LtiUnitLinkComponent implements AfterViewInit {
+export class LtiUnitLinkComponent implements OnInit {
   constructor(
     private createUnitModalService: CreateNewUnitModal,
     private unitService: UnitService,
@@ -35,11 +35,14 @@ export class LtiUnitLinkComponent implements AfterViewInit {
 
   public unitLinked: boolean = false;
 
-  public loadingUnits: boolean;
+  // Starts true, so the page opens on its loading state rather than a blank one.
+  public loadingUnits: boolean = true;
+  public loadUnitsFailed = false;
 
-  ngAfterViewInit(): void {
+  // In ngOnInit rather than ngAfterViewInit: nothing here needs the view, and state set
+  // after the view was checked threw ExpressionChangedAfterItHasBeenChecked in dev builds.
+  ngOnInit(): void {
     this.ltik = this.ltik ?? this.userService.currentUser.ltik;
-    this.loadingUnits = true;
 
     // Scroll to the bottom of the page in case the header is visible
     // Ensures our action buttons are centered
@@ -59,7 +62,6 @@ export class LtiUnitLinkComponent implements AfterViewInit {
       'Once you have linked an OnTrack unit, students who launch this app will be enrolled automatically. Unlinking a unit will not withdraw students automatically.',
       () => {
         // Trigger API call to LTI.js with our unit link request
-        console.log('Trigger API call to LTI.js');
         this.linkUnit(this.selectedUnit);
       },
     );
@@ -87,21 +89,21 @@ export class LtiUnitLinkComponent implements AfterViewInit {
         // unitName: unit.name,
       })
       .subscribe({
-        next: (link) => {
-          console.log(link);
-
+        next: () => {
           this.alertsService.success(`Successfully linked ${unit.code}`, 5000);
 
           this.router.navigateByUrl('/lti');
         },
         error: (error) => {
-          console.log(error);
-          this.alertsService.error(`Failed to link unit: ${error.error}`, 6000);
+          // Errors reach here as the message itself, so error.error was always undefined.
+          this.alertsService.error(`Failed to link unit: ${error?.error ?? error}`, 6000);
         },
       });
   }
 
   public loadUnits(): void {
+    this.loadingUnits = true;
+    this.loadUnitsFailed = false;
     // Load units that current user is a convenor/admin of
     this.unitService
       .fetchAll(
@@ -121,7 +123,9 @@ export class LtiUnitLinkComponent implements AfterViewInit {
           this.loadingUnits = false;
         },
         error: (_error) => {
-          this.alertsService.error(`Failed to fetch units`, 6000);
+          // Without this the page said "Loading..." for good after a failed request.
+          this.loadingUnits = false;
+          this.loadUnitsFailed = true;
         },
       });
   }
