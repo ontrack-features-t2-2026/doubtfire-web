@@ -1,4 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {Router} from '@angular/router';
 import {Subject} from 'rxjs';
 import {AppLifecycleService, MediaPauseEvent} from '../../services/app-lifecycle.service';
 import {AudioPlaybackCoordinatorService} from '../../services/audio-playback-coordinator.service';
@@ -121,6 +122,92 @@ describe('BaseAudioRecorderComponent', () => {
     expect(cancelAnimationFrame).toHaveBeenCalledWith(77);
     expect(component.isRecording).toBe(false);
   });
+
+  describe('with the app lifecycle service', () => {
+    let lifecycle: AppLifecycleService;
+    let visibilityState: DocumentVisibilityState;
+    let originalVisibilityState: PropertyDescriptor | undefined;
+
+    beforeEach(() => {
+      visibilityState = 'visible';
+      originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => visibilityState,
+      });
+      Object.defineProperty(globalThis, 'requestAnimationFrame', {
+        configurable: true,
+        value: vi.fn(() => 1),
+      });
+      Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      lifecycle = new AppLifecycleService(document, {
+        events: new Subject<unknown>().asObservable(),
+      } as unknown as Router);
+      lifecycle.start();
+    });
+
+    afterEach(() => {
+      lifecycle.ngOnDestroy();
+      restoreProperty(document, 'visibilityState', originalVisibilityState);
+    });
+
+    it('keeps recording through a window blur and stops once the page is hidden', async () => {
+      const recorder = fakeRecorder();
+      recorder.startRecording.mockImplementation(async () => {
+        recorder.state = 'recording';
+      });
+      const component = setupComponentWith(recorder, lifecycle);
+
+      component.recordingToggle();
+      await flushPromises();
+      expect(component.isRecording).toBe(true);
+
+      window.dispatchEvent(new Event('blur'));
+
+      expect(recorder.stopRecording).not.toHaveBeenCalled();
+      expect(component.isRecording).toBe(true);
+
+      visibilityState = 'hidden';
+      document.dispatchEvent(new Event('visibilitychange'));
+
+      expect(recorder.stopRecording).toHaveBeenCalledOnce();
+      expect(component.isRecording).toBe(false);
+    });
+
+    it('does not cancel a pending microphone permission request when the prompt takes focus', async () => {
+      const recorder = fakeRecorder();
+      let grantPermission: () => void = () => undefined;
+      recorder.startRecording.mockImplementation(() => {
+        recorder.state = 'requesting';
+        return new Promise<void>((resolve) => {
+          grantPermission = () => {
+            if (recorder.state === 'requesting') {
+              recorder.state = 'recording';
+            }
+            resolve();
+          };
+        });
+      });
+      recorder.cancelRecording.mockImplementation(() => {
+        recorder.state = 'inactive';
+      });
+      const component = setupComponentWith(recorder, lifecycle);
+
+      component.recordingToggle();
+      expect(component.isRequestingPermission).toBe(true);
+
+      window.dispatchEvent(new Event('blur'));
+      grantPermission();
+      await flushPromises();
+
+      expect(recorder.cancelRecording).not.toHaveBeenCalled();
+      expect(component.isRecording).toBe(true);
+      expect(component.recordingError).toBeNull();
+    });
+  });
 });
 
 function fakeRecorder() {
@@ -140,8 +227,9 @@ function fakeRecorder() {
   } as unknown as MediaRecorderService & {
     startRecording: ReturnType<typeof vi.fn>;
     stopRecording: ReturnType<typeof vi.fn>;
+    cancelRecording: ReturnType<typeof vi.fn>;
     dispose: ReturnType<typeof vi.fn>;
-    state: 'inactive' | 'recording';
+    state: 'inactive' | 'requesting' | 'recording';
   };
 }
 
@@ -152,6 +240,14 @@ function setupComponent(recorder: ReturnType<typeof fakeRecorder>) {
     registerMedia: vi.fn(() => unregister),
     mediaPauseSubject: pauseEvents,
   } as unknown as AppLifecycleService;
+  const component = setupComponentWith(recorder, lifecycle);
+  return {component, pauseEvents, unregister};
+}
+
+function setupComponentWith(
+  recorder: ReturnType<typeof fakeRecorder>,
+  lifecycle: AppLifecycleService,
+): TestAudioRecorder {
   const component = new TestAudioRecorder(
     recorder,
     new AudioPlaybackCoordinatorService(),
@@ -169,7 +265,7 @@ function setupComponent(recorder: ReturnType<typeof fakeRecorder>) {
     fillStyle: '',
   } as unknown as CanvasRenderingContext2D;
   component.setup(audio, canvas, context);
-  return {component, pauseEvents, unregister};
+  return component;
 }
 
 async function flushPromises(): Promise<void> {

@@ -1,3 +1,7 @@
+@use '../edit-profile-form/profile-form' as profile;
+
+@include profile.theme;
+
 :host {
   display: block;
   min-width: 0;
@@ -5,46 +9,33 @@
 }
 
 .additional-email {
-  border: 1px solid var(--ot-color-border);
-  border-radius: 12px;
-  display: grid;
-  gap: 12px;
-  margin-block: 16px;
-  padding: 16px;
-  width: 100%;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  @include profile.card;
+
+  // empty live regions stay in the tree for screen readers but take no gap
+  > p:empty {
+    margin-top: -16px;
+  }
 
   &__heading {
-    align-items: flex-start;
     display: flex;
-    gap: 12px;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 12px;
 
     > div {
-      min-width: 0;
-    }
-
-    h3,
-    p {
-      margin: 0;
-    }
-
-    p {
-      color: var(--ot-color-text-muted);
-      margin-top: 4px;
-      max-width: 42rem;
+      @include profile.card-heading;
     }
   }
 
   &__status {
-    background: var(--ot-color-warning);
-    border-radius: 999px;
-    color: var(--ot-color-on-warning);
     flex: 0 0 auto;
-    font-size: 0.8125rem;
+    padding: 4px 10px;
+    border-radius: var(--ot-radius-pill);
+    background: var(--ot-color-warning);
+    color: var(--ot-color-on-warning);
+    font-size: 0.78rem;
     font-weight: 600;
-    padding: 5px 10px;
+    line-height: 1.4;
 
     &--verified {
       background: var(--ot-status-complete);
@@ -70,6 +61,8 @@
   &__message,
   &__error {
     margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
   }
 
   &__help {
@@ -86,13 +79,11 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 599px) {
   .additional-email {
-    padding: 14px;
-
     &__heading {
-      align-items: stretch;
       flex-direction: column;
+      align-items: stretch;
     }
 
     &__status {

@@ -60,6 +60,57 @@ describe('SplashScreenComponent', () => {
     ).toBeTruthy();
   });
 
+  it('draws the mark, the wordmark and the current status while signing in', () => {
+    const splash = fixture.nativeElement.querySelector('[data-testid="startup-auth-loading"]');
+    const mark = splash.querySelector('[data-testid="startup-mark"]');
+
+    expect(splash.getAttribute('role')).toBe('status');
+    expect(splash.getAttribute('aria-live')).toBe('polite');
+    expect(mark.querySelectorAll('svg path')).toHaveLength(3);
+    expect(mark.getAttribute('aria-hidden')).toBe('true');
+    expect(splash.querySelector('[data-testid="startup-wordmark"]').textContent.trim()).toBe(
+      'OnTrack',
+    );
+    expect(splash.querySelector('[data-testid="startup-status"]').textContent.trim()).toBe(
+      'Checking your session…',
+    );
+    expect(splash.querySelector('img')).toBeFalsy();
+  });
+
+  it('swaps the status text in place when the message changes', () => {
+    startupState.next({
+      status: 'loading',
+      phase: 'authentication',
+      message: 'Still checking your session…',
+      attempt: 2,
+      startedAt: Date.now(),
+    });
+    fixture.detectChanges();
+
+    const statuses = fixture.nativeElement.querySelectorAll('[data-testid="startup-status"]');
+    expect(statuses).toHaveLength(1);
+    expect(statuses[0].textContent.trim()).toBe('Still checking your session…');
+  });
+
+  it('shows a thin progress line with the message as a caption while data loads', () => {
+    startupState.next({
+      status: 'loading',
+      phase: 'units-and-projects',
+      message: 'Loading your units…',
+      attempt: 1,
+      startedAt: Date.now(),
+    });
+    fixture.detectChanges();
+
+    const progress = fixture.nativeElement.querySelector('[data-testid="startup-data-loading"]');
+    expect(progress.getAttribute('role')).toBe('status');
+    expect(progress.getAttribute('aria-live')).toBe('polite');
+    expect(progress.querySelector('.startup-progress-track span')).toBeTruthy();
+    expect(progress.querySelector('.startup-progress-caption').textContent.trim()).toBe(
+      'Loading your units…',
+    );
+  });
+
   it('renders a terminal recovery action instead of an indefinite logo', () => {
     startupState.next({
       status: 'error',

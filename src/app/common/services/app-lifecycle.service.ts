@@ -14,6 +14,11 @@ export interface MediaPauseEvent {
 /**
  * One app-wide lifecycle contract for mobile/PWA features. Foregrounding only
  * publishes state; it deliberately does not navigate, reload, or resume media.
+ *
+ * Only real backgrounding counts as hidden: visibilitychange to hidden, pagehide
+ * and freeze. A window blur is not, because a file picker, a microphone
+ * permission prompt or a click into another window all blur a page the user is
+ * still looking at, and pausing there cut recordings off mid-take.
  */
 @Injectable({providedIn: 'root'})
 export class AppLifecycleService implements OnDestroy {
@@ -35,7 +40,7 @@ export class AppLifecycleService implements OnDestroy {
   };
   private readonly pageHideListener = () => this.markHiddenAndPause();
   private readonly pageShowListener = () => this.stateSubject.next('active');
-  private readonly blurListener = () => this.markHiddenAndPause();
+  private readonly freezeListener = () => this.markHiddenAndPause();
   private readonly focusListener = () => {
     if (this.document.visibilityState !== 'hidden') {
       this.stateSubject.next('active');
@@ -54,9 +59,9 @@ export class AppLifecycleService implements OnDestroy {
     this.started = true;
 
     this.document.addEventListener('visibilitychange', this.visibilityChangeListener);
+    this.document.addEventListener('freeze', this.freezeListener);
     window.addEventListener('pagehide', this.pageHideListener);
     window.addEventListener('pageshow', this.pageShowListener);
-    window.addEventListener('blur', this.blurListener);
     window.addEventListener('focus', this.focusListener);
     this.routerSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationStart))
@@ -70,9 +75,9 @@ export class AppLifecycleService implements OnDestroy {
     this.started = false;
 
     this.document.removeEventListener('visibilitychange', this.visibilityChangeListener);
+    this.document.removeEventListener('freeze', this.freezeListener);
     window.removeEventListener('pagehide', this.pageHideListener);
     window.removeEventListener('pageshow', this.pageShowListener);
-    window.removeEventListener('blur', this.blurListener);
     window.removeEventListener('focus', this.focusListener);
     this.routerSubscription?.unsubscribe();
     this.routerSubscription = undefined;
