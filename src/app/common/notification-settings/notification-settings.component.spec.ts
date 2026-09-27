@@ -7,6 +7,7 @@ import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSelectModule} from '@angular/material/select';
+import {MatSelectHarness} from '@angular/material/select/testing';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {User} from 'src/app/api/models/user/user';
@@ -169,6 +170,19 @@ describe('NotificationSettingsComponent', () => {
     await portfolioCheckbox.check();
 
     expect(changes).toBe(2);
+  });
+
+  it('reports a new summary email cadence so the enclosing form can be marked dirty', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    let changes = 0;
+    component.preferencesChange.subscribe(() => changes++);
+
+    const select = await loader.getHarness(MatSelectHarness);
+    await select.open();
+    await select.clickOptions({text: 'Daily'});
+
+    expect(component.user.digestFrequency).toBe('daily');
+    expect(changes).toBe(1);
   });
 
   it('shows help text for each notification category', () => {

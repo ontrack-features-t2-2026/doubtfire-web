@@ -72,6 +72,7 @@
         id="digest-frequency"
         [ngModelOptions]="{standalone: true}"
         [(ngModel)]="user.digestFrequency"
+        (ngModelChange)="preferencesChange.emit()"
       >
         @for (option of digestOptions; track option.value) {
           <mat-option [value]="option.value">{{ option.label }}</mat-option>
