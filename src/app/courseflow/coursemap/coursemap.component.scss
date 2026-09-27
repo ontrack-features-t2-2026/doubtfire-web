@@ -285,7 +285,7 @@ button.secondary {
 }
 .cdk-drag-preview {
   box-sizing: border-box;
-  box-shadow: 0 5px 12px rgb(0 0 0 / 20%);
+  box-shadow: 0 5px 12px var(--ot-scrim);
 }
 .cdk-drag-placeholder {
   opacity: 0.35;
