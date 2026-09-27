@@ -1,8 +1,14 @@
+<p class="m-2 text-sm" id="chat-attachment-guidance" role="status">{{ attachmentGuidance }}</p>
+@if (attachmentsUploading > 0) {
+  <p aria-live="polite" class="m-2" role="status">
+    Uploading {{ attachmentsUploading }} attachment(s)… Your draft is unchanged.
+  </p>
+}
 <emoji-mart
   class="emoji-picker"
   emoji="thumbsup"
   title="Pick your emoji…"
-  [darkMode]="false"
+  [darkMode]="theme.isDark()"
   [hidden]="!this.showEmojiPicker"
   [hideRecent]="false"
   [isNative]="true"
@@ -21,7 +27,7 @@
         <mat-icon aria-label="Quit cross icon">close</mat-icon>
       </button>
       Replying to:
-      <b>{{ originalComment !== null ? originalComment.author.name : '' }}</b>
+      <b>{{ originalComment !== null ? originalComment.author.displayName : '' }}</b>
     </div>
     <p>{{ originalComment !== null ? originalComment.text : '' }}</p>
   </div>
@@ -50,15 +56,15 @@
   [hidden]="!emojiSearchMode || !(emojiSearchResults?.length > 0)"
 >
   @for (emoji of emojiSearchResults; track emoji) {
-    <mat-list-item (click)="emojiSelected(emoji.native)">
-      <div fxLayout="row" fxLayoutAlign="start center">
+    <button mat-list-item type="button" (click)="emojiSelected(emoji.native)">
+      <div class="flex flex-row items-center justify-start">
         <ngx-emoji set="apple" style="align-items: center" [emoji]="emoji" [size]="20"></ngx-emoji>
-        <div class="emoji-details" fxLayout="column" fxLayoutAlign="center start">
+        <div class="emoji-details flex flex-col items-start justify-center">
           <div style="font-weight: 500; font-size: 12px">{{ emoji.name }}</div>
           <div style="font-size: 10px">{{ emoji.colons }}</div>
         </div>
       </div>
-    </mat-list-item>
+    </button>
   }
 </mat-action-list>
 
@@ -77,10 +83,10 @@
       (templateSelected)="addFeedback($event)"
     ></f-task-feedback-templates>
   }
-  <div class="composer-container" fxLayout="row" fxLayoutAlign="space-around center">
+  <div class="composer-container flex flex-row items-center justify-around">
     <div class="composer-action-group" [@shrinkgrow]="$userIsTyping | async">
       <!-- if active -->
-      <div fxLayout="row" fxLayoutAlign="start center">
+      <div class="composer-action-row flex flex-row items-center justify-start">
         @if ($userIsTyping | async) {
           <button
             aria-label="Expand action buttons"
@@ -95,20 +101,6 @@
             <mat-icon>{{ recording ? 'cancel' : 'chevron_right' }}</mat-icon>
           </button>
         }
-
-        <!-- <button
-          [hidden]="shrinkGrowToggle"
-          *ngIf="isStaff"
-          matTooltip="Create a Real Talk discussion"
-          matTooltipShowDelay="400"
-          mat-icon-button
-          class="btn-no-outline"
-          type="button"
-          aria-label="launch real talk took"
-          (click)="openDiscussionComposer()"
-        >
-          <mat-icon>crisis_alert</mat-icon>
-        </button> -->
 
         @if (isStaff) {
           @if (!isEditing) {
@@ -129,22 +121,24 @@
 
         @if (!isEditing) {
           <button
-            aria-label="attach a file icon button"
-            class="btn-no-outline"
+            aria-describedby="chat-attachment-guidance"
+            aria-label="Attach a file"
+            class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Attach a file"
             matTooltipShowDelay="400"
             type="button"
+            [disabled]="!attachmentPolicy"
             [hidden]="$userIsTyping | async"
             (click)="openFile()"
           >
             <mat-icon class="message-inbox-icon">attach_file</mat-icon>
             <input
               #uploader
-              accept="audio/*,image/*,.pdf"
               multiple="multiple"
               style="display: none"
               type="file"
+              [accept]="attachmentAccept"
               (change)="uploadFiles($event.target.files)"
             />
           </button>
@@ -152,8 +146,8 @@
 
         @if (!isEditing) {
           <button
-            aria-label="audio recording button"
-            class="btn-no-outline"
+            aria-label="Record audio feedback"
+            class="btn-no-outline composer-touch-action"
             mat-icon-button
             matTooltip="Send a recording"
             matTooltipShowDelay="400"
@@ -173,11 +167,16 @@
     >
       <div
         #commentInput
+        aria-multiline="true"
         enterkeyhint="send"
         id="textField"
         name="commentComposer"
         placeholder="Aa"
+        role="textbox"
+        [attr.aria-disabled]="!contentEditableValue() || recording"
+        [attr.aria-label]="isEditing ? 'Edit task comment' : 'Task comment'"
         [attr.contenteditable]="contentEditableValue() && !recording"
+        [attr.tabindex]="contentEditableValue() && !recording ? 0 : -1"
         [class.active]="($userIsTyping | async) === false"
         [hidden]="recording"
         (beforeinput)="handleBeforeInput($event)"
@@ -196,37 +195,48 @@
       }
       <div id="innerButtons" [hidden]="recording">
         @if (isEditing) {
-          <mat-icon
+          <button
             aria-label="Save edited comment"
-            id="emojiButton"
+            class="composer-inline-action"
+            id="saveEditedCommentButton"
+            mat-icon-button
             matTooltip="Save edited comment"
             matTooltipShowDelay="400"
+            type="button"
             (click)="saveEditedComment()"
           >
-            check</mat-icon
-          >
+            <mat-icon aria-hidden="true">check</mat-icon>
+          </button>
         }
-        <mat-icon
-          aria-label="Emoji picker button"
+        <button
+          aria-label="Choose an emoji"
+          class="composer-inline-action"
           id="emojiButton"
+          mat-icon-button
           matTooltip="Choose an emoji"
           matTooltipShowDelay="400"
+          type="button"
+          [attr.aria-expanded]="showEmojiPicker"
           (click)="this.showEmojiPicker = !this.showEmojiPicker"
         >
-          emoji_emotions</mat-icon
-        >
+          <mat-icon aria-hidden="true">emoji_emotions</mat-icon>
+        </button>
       </div>
       <div id="innerButtons" [hidden]="recording || !isStaff">
         @if (!isEditing) {
-          <mat-icon
-            aria-label="Feedback template button"
+          <button
+            aria-label="Choose feedback templates"
+            class="composer-inline-action"
             id="feedbackTemplateButton"
+            mat-icon-button
             matTooltip="Choose feedback templates"
             matTooltipShowDelay="400"
+            type="button"
+            [attr.aria-expanded]="showFeedbackTemplatePicker"
             (click)="showFeedbackPicker()"
           >
-            task</mat-icon
-          >
+            <mat-icon aria-hidden="true">task</mat-icon>
+          </button>
         }
       </div>
     </div>

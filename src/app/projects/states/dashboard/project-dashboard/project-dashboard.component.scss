@@ -2,6 +2,155 @@
   display: block;
 }
 
+.project-dashboard-shell {
+  height: calc((var(--vh, 1vh) * 100) - 100px);
+}
+
+.desktop-task-dashboard > f-task-dashboard {
+  display: block;
+  height: 100%;
+}
+
+.mobile-task-view,
+.mobile-overview-view {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.mobile-task-toolbar {
+  position: relative;
+  z-index: 20;
+  flex: none;
+  border-bottom: 1px solid var(--ot-color-divider);
+  background: var(--ot-color-surface);
+  box-shadow: var(--ot-elevation-1);
+}
+
+.mobile-task-heading {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 0.75rem;
+}
+
+.mobile-task-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--ot-color-divider);
+}
+
+.mobile-task-tab {
+  display: flex;
+  min-width: 0;
+  min-height: 52px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.125rem;
+  border-bottom: 3px solid transparent;
+  color: var(--ot-color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.mobile-task-tab mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.mobile-task-tab:hover,
+.mobile-task-tab:focus-visible {
+  background: var(--ot-color-hover);
+}
+
+.mobile-task-tab:focus-visible {
+  outline: 2px solid var(--ot-color-focus);
+  outline-offset: -2px;
+}
+
+.mobile-task-tab--active {
+  border-bottom-color: var(--ot-color-primary);
+  background: var(--ot-color-selected);
+  color: var(--ot-color-selected-text);
+}
+
+.mobile-task-tab:disabled {
+  cursor: default;
+  background: var(--ot-color-surface);
+  color: var(--ot-color-disabled-text);
+}
+
+.mobile-task-pane {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  background: var(--ot-color-surface);
+}
+
+.mobile-task-pane > f-task-dashboard,
+.mobile-task-pane > task-comments-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mobile-overview-pane {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--ot-color-surface);
+}
+
+.mobile-overview-pane > f-progress-dashboard {
+  min-width: 0;
+}
+
+@media (max-width: 639.98px) {
+  .project-dashboard-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-dashboard-layout {
+    height: auto !important;
+    min-height: 0;
+    flex: 1;
+    width: 100%;
+  }
+
+  .project-task-list-panel {
+    width: 100% !important;
+    min-width: 0;
+    padding-right: 0.25rem !important;
+  }
+
+  .project-task-list-panel--phone-hidden,
+  .project-task-resizer--phone-hidden,
+  .project-dashboard-placeholder--phone-hidden,
+  .comments-floating-toggle {
+    display: none !important;
+  }
+}
+
 .comments-floating-toggle {
   position: fixed;
   top: 50%;
@@ -58,7 +207,7 @@
   min-width: 375px;
   width: 375px !important;
   border-radius: 0 !important;
-  box-shadow: -2px 0 6px rgba(15, 23, 42, 0.08);
+  box-shadow: -2px 0 6px var(--ot-scrim);
   z-index: 250;
 }
 
@@ -68,6 +217,6 @@
   left: -20px;
   z-index: 260;
   transform: translateY(-50%);
-  background: white;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  background: var(--ot-color-surface);
+  box-shadow: 0 2px 8px var(--ot-scrim);
 }

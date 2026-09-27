@@ -13,16 +13,27 @@
       @if (task.numNewComments > 0) {
         <span
           class="flex size-[20px] items-center justify-center rounded-full bg-blue-500 text-[12px] leading-none font-bold text-white"
+          role="img"
+          [attr.aria-label]="newCommentsLabel(task)"
         >
           {{ task.numNewComments }}
         </span>
       }
       @if (task.similaritiesDetected) {
+        <!--
+          The label matches the tooltip exactly. When they differ the tooltip adds
+          an aria-describedby and a screen reader reads the text twice.
+        -->
         <span
+          aria-label="Similarities Detected"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c]"
           matTooltip="Similarities Detected"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
             visibility
           </mat-icon>
         </span>
@@ -50,30 +61,49 @@
       }
       @if (task.isDueSoon() && !task.inFinalState()) {
         <span
-          class="flex size-[20px] items-center justify-center rounded-full bg-[#fab143] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          aria-label="Due soon"
+          class="flex size-[20px] items-center justify-center rounded-full bg-[var(--ot-status-working-on-it)] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-black">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-[color:var(--ot-status-working-on-it-on)]"
+          >
             schedule
           </mat-icon>
         </span>
       }
       @if (task.betweenDueDateAndDeadlineDate() && !task.isPastDeadline() && !task.inFinalState()) {
         <span
+          aria-label="Due, deadline not yet passed"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
             schedule
           </mat-icon>
         </span>
       }
+      <!--
+        Same colour as the due badge above, so the glyph has to differ too.
+        Colour alone is not enough to tell the two states apart.
+      -->
       @if (task.isPastDeadline() && !task.inFinalState()) {
         <span
+          aria-label="Past deadline"
           class="flex size-[20px] items-center justify-center rounded-full bg-[#da532c] drop-shadow-[0_-4px_2px_rgba(0,0,0,0.15)]"
+          role="img"
         >
-          <mat-icon class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white">
-            schedule
+          <mat-icon
+            aria-hidden="true"
+            class="!h-[12px] !w-[12px] !text-[12px] font-bold text-white"
+          >
+            event_busy
           </mat-icon>
-          <strong class="h-min font-bold text-white">!</strong>
+          <strong aria-hidden="true" class="h-min font-bold text-white">!</strong>
         </span>
       }
     </div>
@@ -91,17 +121,12 @@
     <div class="omnisearch rounded-t-2xl md:rounded-2xl">
       <div class="flex items-center justify-between">
         <div class="flex min-w-0 flex-1 items-center">
-          <button
-            aria-label="Search Icon"
-            class="flex flex-none items-center"
-            disabled
-            mat-icon-button
-          >
-            <mat-icon class="flex items-center" disabled>search</mat-icon>
-          </button>
+          <mat-icon aria-hidden="true" class="flex items-center">search</mat-icon>
+
           <input
+            aria-label="Search tasks"
             autocomplete="off"
-            class="search w-full"
+            class="search w-full text-[color:var(--ot-color-text)] placeholder:text-[color:var(--ot-color-text-muted)] placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-formatif-blue"
             placeholder="Search Tasks"
             spellcheck="false"
             type="text"
@@ -116,28 +141,40 @@
           [matMenuTriggerFor]="taskListFiltersMenu"
         >
           <mat-icon
-            class="text-gray-500"
+            class="text-[color:var(--ot-color-text-muted)]"
             matBadgeColor="accent"
             matBadgeSize="small"
             [matBadge]="activeViewPreferenceCount || null"
             >tune</mat-icon
           >
         </button>
-        <mat-menu #taskListFiltersMenu="matMenu" class="task-list-filters-menu" xPosition="after">
-          <div class="px-3 py-2" (click)="$event.stopPropagation()">
-            <div class="mb-1 text-xs font-bold tracking-normal text-gray-500 uppercase">
+        <mat-menu
+          #taskListFiltersMenu="matMenu"
+          aria-label="Task list filters"
+          class="task-list-filters-menu"
+          xPosition="after"
+        >
+          <div class="px-3 py-2" role="none">
+            <div
+              aria-hidden="true"
+              class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
+            >
               Sort tasks
             </div>
-            <div class="mb-2">
+            <div aria-label="Sort tasks" class="mb-2" role="group">
               @for (option of sortOptions; track option.value) {
                 <button
-                  class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-gray-50"
+                  class="flex h-10 w-full items-center gap-2 px-2 text-left text-sm hover:bg-[var(--ot-color-hover)]"
+                  mat-menu-item
+                  role="menuitemradio"
                   type="button"
+                  [attr.aria-checked]="viewPreferences.sortBy === option.value"
                   [ngClass]="{
-                    'bg-blue-50 text-formatif-blue': viewPreferences.sortBy === option.value,
-                    'text-gray-700': viewPreferences.sortBy !== option.value,
+                    'bg-[var(--ot-color-selected)] text-[color:var(--ot-color-selected-text)]':
+                      viewPreferences.sortBy === option.value,
+                    'text-[color:var(--ot-color-text)]': viewPreferences.sortBy !== option.value,
                   }"
-                  (click)="setSortBy(option.value)"
+                  (click)="$event.stopPropagation(); setSortBy(option.value)"
                 >
                   <mat-icon class="task-list-menu-icon shrink-0">{{ option.icon }}</mat-icon>
                   <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
@@ -153,34 +190,55 @@
               }
             </div>
 
-            <div class="mb-1 text-xs font-bold tracking-normal text-gray-500 uppercase">
+            <div
+              aria-hidden="true"
+              class="mb-1 text-xs font-bold tracking-normal text-[color:var(--ot-color-text-muted)] uppercase"
+            >
               Filters
             </div>
-            <div class="flex flex-col gap-1">
-              <mat-checkbox
-                color="primary"
-                [ngModel]="viewPreferences.hideCompleted"
-                (ngModelChange)="toggleHideCompleted($event)"
+            <div aria-label="Filters" class="flex flex-col gap-1" role="group">
+              <button
+                mat-menu-item
+                role="menuitemcheckbox"
+                type="button"
+                [attr.aria-checked]="viewPreferences.hideCompleted"
+                (click)="
+                  $event.stopPropagation(); toggleHideCompleted(!viewPreferences.hideCompleted)
+                "
               >
+                <mat-icon aria-hidden="true">{{
+                  viewPreferences.hideCompleted ? 'check_box' : 'check_box_outline_blank'
+                }}</mat-icon>
                 Hide completed tasks
-              </mat-checkbox>
-              <mat-checkbox
-                color="primary"
+              </button>
+              <button
+                mat-menu-item
+                role="menuitemcheckbox"
+                type="button"
+                [attr.aria-checked]="viewPreferences.showAboveTargetGrade"
                 [disabled]="!project"
-                [ngModel]="viewPreferences.hideAboveTargetGrade"
-                (ngModelChange)="toggleHideAboveTargetGrade($event)"
+                (click)="
+                  $event.stopPropagation();
+                  toggleShowAboveTargetGrade(!viewPreferences.showAboveTargetGrade)
+                "
               >
-                Hide tasks beyond target grade
-              </mat-checkbox>
+                <mat-icon aria-hidden="true">{{
+                  viewPreferences.showAboveTargetGrade ? 'check_box' : 'check_box_outline_blank'
+                }}</mat-icon>
+                Show tasks beyond target grade
+              </button>
             </div>
 
-            <div class="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500">
+            <div
+              class="mt-2 flex items-center justify-end gap-2 text-xs text-[color:var(--ot-color-text-muted)]"
+              role="none"
+            >
               <button
-                class="shrink-0 text-formatif-blue disabled:text-gray-400"
-                mat-button
+                class="shrink-0 text-[color:var(--ot-color-link)] disabled:text-[color:var(--ot-color-text-muted)]"
+                mat-menu-item
                 type="button"
-                [disabled]="activeViewPreferenceCount === 0"
-                (click)="resetViewPreferences()"
+                [disabled]="!hasNonDefaultViewPreferences"
+                (click)="$event.stopPropagation(); resetViewPreferences()"
               >
                 Reset
               </button>
@@ -194,12 +252,16 @@
   <div class="scrollable min-h-0 flex-1 overflow-x-hidden" itemSize="60">
     <mat-nav-list #taskDefinitions>
       @for (taskDef of filteredTaskDefinitions; track taskDef) {
-        <mat-list-item
-          class="flex w-full cursor-pointer items-center border-b border-gray-200 p-1"
+        <button
+          class="flex w-full cursor-pointer items-center border-b border-[color:var(--ot-color-divider)] p-1 text-left focus-visible:outline-2! focus-visible:-outline-offset-2! focus-visible:outline-[color:var(--ot-color-focus)]!"
+          mat-list-item
+          type="button"
+          [attr.aria-pressed]="isSelectedTaskDefinition(taskDef)"
           [disableRipple]="true"
           [ngClass]="{
-            'bg-blue-50 hover:bg-blue-50': isSelectedTaskDefinition(taskDef),
-            'hover:bg-gray-50': !isSelectedTaskDefinition(taskDef),
+            'bg-[var(--ot-color-selected)] hover:bg-[var(--ot-color-selected)]':
+              isSelectedTaskDefinition(taskDef),
+            'hover:bg-[var(--ot-color-hover)]': !isSelectedTaskDefinition(taskDef),
             'h-16.25': !isCollapsed,
             'h-21': isCollapsed,
           }"
@@ -213,9 +275,10 @@
                 [matTooltip]="taskDef.name"
               >
                 <span
-                  class="min-w-0 flex-1 truncate text-center text-sm leading-none font-bold text-gray-700"
+                  class="min-w-0 flex-1 truncate text-center text-sm leading-none font-bold text-[color:var(--ot-color-text)]"
                 >
                   {{ taskDef.abbreviation }}
+                  <span class="sr-only">{{ taskDef.name }}</span>
                 </span>
                 @if (taskListItem(taskDef); as task) {
                   <ng-container
@@ -232,12 +295,20 @@
 
                       <div class="flex min-w-0 items-center gap-0.5">
                         @if (taskDef.isGroupTask()) {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">groups</mat-icon>
+                          <mat-icon
+                            class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]"
+                            >groups</mat-icon
+                          >
                         } @else {
-                          <mat-icon class="shrink-0 scale-75 text-gray-600">person</mat-icon>
+                          <mat-icon
+                            class="shrink-0 scale-75 text-[color:var(--ot-color-text-muted)]"
+                            >person</mat-icon
+                          >
                         }
 
-                        <div class="mr-1 truncate text-[14px] leading-none text-gray-500">
+                        <div
+                          class="mr-1 truncate text-[14px] leading-tight text-[color:var(--ot-color-text-muted)]"
+                        >
                           {{ taskDef.abbreviation }}
                           -
                           {{ gradeNames[taskDef.targetGrade] }} Task
@@ -261,10 +332,18 @@
                             <span
                               class="flex shrink-0 items-center gap-px text-[12px] font-bold"
                               [ngClass]="{
-                                'text-[#da532c]': task.daysUntilDueDate() <= 0,
-                                'font-normal text-[#fab143]':
-                                  task.daysUntilDueDate() > 0 && task.daysUntilDueDate() < 11,
-                                'font-normal text-gray-500': task.daysUntilDueDate() > 11,
+                                'text-[color:var(--ot-color-selected-text)]':
+                                  isSelectedTaskDefinition(taskDef),
+                                'text-[color:var(--ot-urgency-overdue)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
+                                  task.daysUntilDueDate() <= 0,
+                                'font-normal text-[color:var(--ot-urgency-soon)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
+                                  task.daysUntilDueDate() > 0 &&
+                                  task.daysUntilDueDate() < 11,
+                                'font-normal text-[color:var(--ot-urgency-later)]':
+                                  !isSelectedTaskDefinition(taskDef) &&
+                                  task.daysUntilDueDate() > 11,
                               }"
                             >
                               <mat-icon class="!h-[16px] !w-[16px] !text-[16px]">
@@ -286,14 +365,14 @@
               </div>
             }
           }
-        </mat-list-item>
+        </button>
       } @empty {
         <div class="text-muted text-center">No tasks to display</div>
       }
 
       @if (mode === 'project' && project) {
         <mat-list-item
-          class="item-content flex h-21 w-full cursor-pointer items-center border-b border-gray-200 p-1 hover:bg-gray-50"
+          class="item-content flex h-21 w-full cursor-pointer items-center border-b border-[color:var(--ot-color-divider)] p-1 hover:bg-[var(--ot-color-hover)]"
           [disableRipple]="true"
           [ngClass]="project.portfolioTaskStatusClass()"
         >
@@ -303,10 +382,11 @@
               [routerLink]="['/projects', project.id, 'portfolio']"
             >
               <span
-                class="flex min-w-0 flex-1 items-center justify-center truncate text-center text-sm leading-none text-gray-700"
+                class="flex min-w-0 flex-1 items-center justify-center truncate text-center text-sm leading-none text-[color:var(--ot-color-text)]"
                 matTooltip="Create Portfolio"
               >
                 <mat-icon class="m-0 place-self-center">history_edu</mat-icon>
+                <span class="sr-only">Create portfolio</span>
               </span>
               <div class="relative flex shrink-0 items-center justify-center">
                 <status-icon

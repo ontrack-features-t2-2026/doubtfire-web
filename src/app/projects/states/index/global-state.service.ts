@@ -1,5 +1,5 @@
-import {MediaObserver} from 'ng-flex-layout';
 import {EntityCache} from 'ngx-entity-service';
+import {BreakpointObserver} from '@angular/cdk/layout';
 import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
 import {BehaviorSubject, Observable, Subject, find} from 'rxjs';
@@ -18,6 +18,7 @@ import {
 import {AuthenticationService} from 'src/app/api/services/authentication.service';
 import {FeedbackTemplateService} from 'src/app/api/services/feedback-template.service';
 import {AlertService} from 'src/app/common/services/alert.service';
+import {AuthReturnUrlService} from 'src/app/security/auth-return-url.service';
 
 /**
  * The different types of views that can be shown. Used by the header to determine details to show.
@@ -98,6 +99,7 @@ export class GlobalStateService implements OnDestroy {
    * protect views from attempting to access details before they are loaded.
    */
   public isLoadingSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  public projectLoadErrorSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public showHideHeader: Subject<boolean> = new Subject<boolean>();
 
@@ -113,7 +115,8 @@ export class GlobalStateService implements OnDestroy {
     private feedbackTemplateService: FeedbackTemplateService,
     private router: Router,
     private alerts: AlertService,
-    private mediaObserver: MediaObserver,
+    private breakpointObserver: BreakpointObserver,
+    private authReturnUrl: AuthReturnUrlService,
   ) {
     this.loadedUnitRoles = this.unitRoleService.cache;
     this.loadedUnits = this.unitService.cache;
@@ -136,6 +139,7 @@ export class GlobalStateService implements OnDestroy {
 
           // and if we are not going to the sign in page, then redirect to it
           if (window.location.pathname !== '/sign_in') {
+            this.authReturnUrl.rememberCurrentUrl();
             this.router.navigateByUrl('/sign_in');
           }
         }
@@ -156,7 +160,7 @@ export class GlobalStateService implements OnDestroy {
 
       if (this._isInboxState) {
         document.body.style.setProperty('--vh', `${vh}px`);
-      } else if (!this.mediaObserver.isActive('gt-sm') || !this._showFooter) {
+      } else if (!this.breakpointObserver.isMatched('(min-width: 960px)') || !this._showFooter) {
         document.body.style.setProperty('--vh', `${vh - 0.2}px`);
       } else {
         if (this._showFooter && !this._showFooterWarning) {
@@ -174,20 +178,21 @@ export class GlobalStateService implements OnDestroy {
 
   public setInboxState() {
     this._isInboxState = true;
-    // set background color to inbox grey
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    // THM-M01: inbox grey, was hardcoded #f5f5f5 inline. Onto the page token so it
+    // follows the resolved theme; the fallback keeps the legacy value pre-boot.
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
     this.resetHeight();
   }
 
   public goHome() {
     this.showHeader();
-    document.body.style.setProperty('background-color', '#f5f5f5');
+    document.body.style.setProperty('background-color', 'var(--ot-color-page, #f5f5f5)');
   }
 
   public setNotInboxState() {
     this._isInboxState = false;
-    // set background color to white
-    document.body.style.setProperty('background-color', '#fff');
+    // THM-M01: was hardcoded #fff inline.
+    document.body.style.setProperty('background-color', 'var(--ot-color-surface, #fff)');
     this.resetHeight();
   }
 
@@ -231,6 +236,7 @@ export class GlobalStateService implements OnDestroy {
 
   public ngOnDestroy(): void {
     this.isLoadingSubject.complete();
+    this.projectLoadErrorSubject.complete();
     this.showHideHeader.complete();
     this.currentViewAndEntitySubject$.complete();
   }
@@ -303,22 +309,33 @@ export class GlobalStateService implements OnDestroy {
    * Query the API for the units taught and studied by the current user.
    */
   private loadUnitsAndProjects() {
+    this.projectLoadErrorSubject.next(false);
     this.unitRoleService.query().subscribe({
       next: (_unitRoles: UnitRole[]) => {
         // unit roles are now in the cache
 
-        this.projectService.query(undefined, {params: {include_in_active: false}}).subscribe({
-          next: (_projects: Project[]) => {
-            // projects updated in cache
-
-            setTimeout(() => {
+        this.projectService
+          .query(undefined, {
+            params: {
+              include_inactive: false,
+              include_task_definitions: true,
+            },
+          })
+          .subscribe({
+            next: (_projects: Project[]) => {
+              // projects updated in cache
+              setTimeout(() => {
+                this.isLoadingSubject.next(false);
+              }, 800);
+            },
+            error: (_response) => {
+              // Let views render a recoverable project error instead of leaving
+              // the application's loading gate closed indefinitely.
+              this.projectLoadErrorSubject.next(true);
               this.isLoadingSubject.next(false);
-            }, 800);
-          },
-          error: (_response) => {
-            this.alerts.error('Unable to access the units you study.', 6000);
-          },
-        });
+              this.alerts.error('Unable to access the units you study.', 6000);
+            },
+          });
       },
       error: (_response) => {
         this.alerts.error('Unable to access your units.', 6000);
@@ -346,6 +363,7 @@ export class GlobalStateService implements OnDestroy {
    * Clear all of the project and unit role data on sign out
    */
   public clearUnitsAndProjects(): void {
+    this.projectLoadErrorSubject.next(false);
     this.loadedUnits.clear();
     this.loadedUnitRoles.clear();
     this.userService.cache.clear();

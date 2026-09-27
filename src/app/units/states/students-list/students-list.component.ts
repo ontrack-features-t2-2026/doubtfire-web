@@ -11,7 +11,7 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatSort, Sort} from '@angular/material/sort';
 import {MatTableDataSource} from '@angular/material/table';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable, Subscription, finalize, first, of} from 'rxjs';
+import {Observable, Subscription, distinctUntilChanged, finalize, first, of} from 'rxjs';
 import {
   Project,
   ProjectService,
@@ -52,9 +52,12 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   staffFilter: 'all' | 'mine' = 'all';
   filteredSuggestions: string[] = [];
   loadingStudents = true;
+  studentsLoadFailed = false;
   unit: Unit;
 
   private subscriptions: Subscription[] = [];
+  private studentCacheSub?: Subscription;
+  private studentLoadSub?: Subscription;
   public sortState: Sort = {active: 'name', direction: 'asc'};
 
   constructor(
@@ -69,33 +72,26 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.unit$ = this.unit$ ?? of(this.route.parent.snapshot.data.unit);
     this.subscriptions.push(
-      this.unit$?.pipe(first()).subscribe((unit) => {
+      this.unit$?.pipe(distinctUntilChanged((a, b) => a?.id === b?.id)).subscribe((unit) => {
+        this.studentLoadSub?.unsubscribe();
+        this.studentCacheSub?.unsubscribe();
         if (!unit) {
-          this.loadingStudents = false;
+          this.loadingStudents = true;
+          this.studentsLoadFailed = false;
           return;
         }
 
         this.unit = unit;
         this.staffFilter = unit.myRole === 'Tutor' ? 'mine' : 'all';
 
-        this.subscriptions.push(
-          this.unit.studentCache.values.subscribe(() => {
-            this.updateSuggestions();
-            this.updateDataSource();
-          }),
-        );
+        this.studentCacheSub = this.unit.studentCache.values.subscribe(() => {
+          this.updateSuggestions();
+          this.updateDataSource();
+        });
 
         this.updateSuggestions();
         this.updateDataSource();
-        this.projectService
-          .loadStudents(this.unit)
-          .pipe(
-            first(),
-            finalize(() => {
-              this.loadingStudents = false;
-            }),
-          )
-          .subscribe();
+        this.loadStudents();
       }),
     );
   }
@@ -106,12 +102,35 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.studentLoadSub?.unsubscribe();
+    this.studentCacheSub?.unsubscribe();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
   }
 
   public onSearchChange(): void {
     this.updateSuggestions();
     this.updateDataSource(true);
+  }
+
+  public loadStudents(): void {
+    // Unsubscribe first: finalize from the previous request must not end this load.
+    this.studentLoadSub?.unsubscribe();
+    this.loadingStudents = true;
+    this.studentsLoadFailed = false;
+
+    this.studentLoadSub = this.projectService
+      .loadStudents(this.unit)
+      .pipe(
+        first(),
+        finalize(() => {
+          this.loadingStudents = false;
+        }),
+      )
+      .subscribe({
+        error: () => {
+          this.studentsLoadFailed = true;
+        },
+      });
   }
 
   public setStaffFilter(filter: 'all' | 'mine'): void {
@@ -231,7 +250,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'username':
         return project.student.username?.toLowerCase() || '';
       case 'name':
-        return project.student.name?.toLowerCase() || '';
+        return project.student.displayName?.toLowerCase() || '';
       case 'stats':
         return project.orderScale ?? 0;
       case 'grade':
@@ -245,7 +264,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'tutorial':
         return project.shortTutorialDescription().toLowerCase();
       default:
-        return project.student.name?.toLowerCase() || '';
+        return project.student.displayName?.toLowerCase() || '';
     }
   }
 
@@ -264,7 +283,7 @@ export class StudentsListComponent implements OnInit, AfterViewInit, OnDestroy {
   private csvRow(project: Project): string[] {
     const row = [
       project.student.username || '',
-      project.student.name || '',
+      project.student.displayName || '',
       project.student.email || '',
       String(project.portfolioStatus ?? ''),
     ];

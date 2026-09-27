@@ -35,6 +35,11 @@ export class AudioCommentRecorderComponent extends BaseAudioRecorderComponent im
     this.canvas = document.getElementById('audio-recorder-visualiser') as HTMLCanvasElement;
     this.audio = document.getElementById('audioPlayer') as HTMLAudioElement;
     this.canvasCtx = this.canvas.getContext('2d');
+
+    this.audio.onended = () => {
+      this.isPlaying = false;
+      this.audio.currentTime = 0;
+    };
   }
 
   sendRecording(): void {
@@ -60,8 +65,10 @@ export class AudioCommentRecorderComponent extends BaseAudioRecorderComponent im
 
   private scrollCommentsDown(): void {
     setTimeout(() => {
-      const objDiv = document.querySelector('div.comments-body');
-      // let wrappedResult = angular.element(objDiv);
+      const objDiv = document.querySelector<HTMLElement>('div.comments-body');
+      if (!objDiv) {
+        return;
+      }
       objDiv.scrollTop = objDiv.scrollHeight;
     }, 50);
   }

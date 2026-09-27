@@ -38,6 +38,7 @@ import {TaskAssessmentComment} from './task-assessment-comment/task-assessment-c
 export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
   // Get the comments body from the HTML template
   @ViewChild('commentsBody') commentsBody: ElementRef;
+  @ViewChild('commentComposer') commentComposer: {uploadFiles(files: ArrayLike<File>): void};
 
   lastComment: TaskComment;
   @Input() project: Project;
@@ -155,13 +156,14 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
         }
       }
 
-      for (const cachedComment of task.comments) {
-        if (!comments.find((c) => c.id === cachedComment.id)) {
+      const commentIds = new Set(comments.map((comment) => comment.id));
+
+      for (const cachedComment of [...task.comments]) {
+        if (!commentIds.has(cachedComment.id)) {
           // This comment is in cache but not in the latest comments list
           task.commentCache.delete(cachedComment.id);
         }
       }
-
       task.refreshCommentData();
 
       const lastReadComment: TaskComment = task.comments
@@ -215,47 +217,19 @@ export class TaskCommentsViewerComponent implements OnChanges, OnDestroy {
     return this.task.scormEnabled;
   }
 
-  uploadFiles(event) {
-    [...event].forEach((file) => {
-      if (
-        [
-          'audio/mpeg',
-          'audio/vorbis',
-          'audio/mp4',
-          'audio/ogg',
-          'audio/wav',
-          'audio/x-wav',
-          'audio/webm',
-          'image/png',
-          'image/pdf',
-          'application/pdf',
-          'image/gif',
-          'image/jpg',
-          'image/jpeg',
-        ].includes(file.type) ||
-        file.type.startsWith('audio/') ||
-        file.type.startsWith('image/')
-      ) {
-        this.postAttachmentComment(file);
-      } else {
-        this.alerts.error('I cannot upload that file - only images, audio, and PDFs.', 4000);
-      }
-    });
-    console.log('implement - check map comments');
-    // this.task.comments = this.ts.mapComments(this.task.comments);
+  uploadFiles(files: ArrayLike<File>) {
+    this.commentComposer?.uploadFiles(files);
   }
 
-  // # Upload image files as comments to a given task
-  postAttachmentComment(file) {
-    this.taskCommentService.addComment(this.task, file, 'file', null).subscribe({
-      error: (error) => {
-        this.alerts.error(error || error?.message, 2000);
-      },
-    });
+  downloadAttachment(comment: TaskComment): void {
+    this.taskCommentService.downloadAttachment(comment);
   }
 
-  scrollToComment(commentID) {
-    document.querySelector(`#comment-${commentID}`).scrollIntoView();
+  scrollToComment(commentID?: number) {
+    if (!commentID) {
+      return;
+    }
+    document.querySelector(`#comment-${commentID}`)?.scrollIntoView();
   }
 
   openCommentsModal(comment: TaskComment) {
