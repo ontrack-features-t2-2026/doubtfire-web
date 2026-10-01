@@ -1,8 +1,9 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
 import {User} from 'src/app/api/models/user/user';
 
 @Component({
   selector: 'f-notification-settings',
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './notification-settings.component.html',
   styleUrl: './notification-settings.component.scss',
   standalone: false,
@@ -16,6 +17,41 @@ export class NotificationSettingsComponent {
    * someone else, and on the first-login setup form.
    */
   @Input() showNotificationsLink = false;
+  @Input() editable = true;
+
+  public readonly categories = [
+    {
+      key: 'task',
+      label: 'Task updates',
+      help: 'Due dates, extensions, task status, group and tutorial updates. For staff, also submissions and help requests.',
+      email: 'receiveTaskEmailNotifications',
+      push: 'receiveTaskPushNotifications',
+    },
+    {
+      key: 'feedback',
+      label: 'Feedback updates',
+      help: 'New comments, feedback, and review outcomes.',
+      email: 'receiveFeedbackEmailNotifications',
+      push: 'receiveFeedbackPushNotifications',
+    },
+    {
+      key: 'portfolio',
+      label: 'Portfolio updates',
+      help: 'Portfolio processing and assessment updates.',
+      email: 'receivePortfolioEmailNotifications',
+      push: 'receivePortfolioPushNotifications',
+    },
+  ] as const;
+
+  public readonly staffDigestOptions = [
+    {value: 'off', label: 'Never'},
+    {value: 'daily', label: 'Daily'},
+    {value: 'weekly', label: 'Weekly'},
+  ];
+
+  public get isStaff(): boolean {
+    return ['Admin', 'Convenor', 'Tutor'].includes(this.user?.systemRole);
+  }
 
   /**
    * The summary email's cadence. 'off' stops it without also turning off

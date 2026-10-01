@@ -224,3 +224,57 @@
     }
   }
 }
+
+.notification-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding-block: 12px;
+
+  label {
+    display: flex;
+    flex: 1 1 150px;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    font-weight: 500;
+  }
+
+  select {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    background: var(--ot-color-surface);
+    color: var(--ot-color-text);
+    border: 1px solid var(--ot-color-divider);
+    border-radius: 4px;
+    padding: 8px;
+  }
+
+  .notification-filter-check {
+    flex-direction: row;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  input {
+    width: 20px;
+    height: 20px;
+  }
+  select:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 2px;
+  }
+}
+
+.notification-day {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 20px 0 8px;
+}
+
+.notification-results {
+  color: var(--ot-color-text-muted);
+}

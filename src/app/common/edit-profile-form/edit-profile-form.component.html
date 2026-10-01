@@ -232,6 +232,7 @@
     }
 
     <f-notification-settings
+      [editable]="managingOwnProfile"
       [showNotificationsLink]="isOwnProfilePage"
       [user]="user"
       (preferencesChange)="form.form.markAsDirty()"

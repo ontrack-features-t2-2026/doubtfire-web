@@ -49,4 +49,24 @@ describe('TaskDueCardComponent', () => {
     expect(styles).toContain('padding: 1rem 1rem 0.5rem');
     expect(styles).toContain('overflow-wrap: anywhere');
   });
+
+  it.each([true, false])(
+    'explains the actual late replacement policy while awaiting feedback (portfolio: %s)',
+    (portfolio) => {
+      component.task = {
+        unit: {allowFlexibleDates: false},
+        definition: {unit: {markLateSubmissionsAsAssessInPortfolio: portfolio}},
+        inFinalState: () => false,
+        inAwaitingFeedbackState: () => true,
+        isPastDeadline: () => true,
+      } as never;
+      fixture.detectChanges();
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Replacing your files now is a new submission');
+      expect(text).toContain(portfolio ? 'assessed in your portfolio' : 'Time Exceeded');
+      if (portfolio) {
+        expect(text).not.toContain('Time Exceeded');
+      }
+    },
+  );
 });

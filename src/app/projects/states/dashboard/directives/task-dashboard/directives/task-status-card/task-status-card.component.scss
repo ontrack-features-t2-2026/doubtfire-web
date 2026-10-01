@@ -2,6 +2,52 @@
   display: block;
 }
 
+.next-task-step {
+  padding: 1rem;
+  border: 1px solid var(--ot-color-border);
+  border-radius: var(--ot-radius-lg, 12px);
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+  p {
+    margin: 0 0 0.4rem;
+  }
+  summary {
+    cursor: pointer;
+    min-height: 44px;
+    padding-block: 0.75rem;
+  }
+  summary:focus-visible {
+    outline: 2px solid var(--ot-color-focus);
+    outline-offset: 2px;
+  }
+}
+.next-task-step__summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.next-task-step__copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.next-task-step__date {
+  color: var(--ot-color-text-muted);
+  font-size: 0.875rem;
+}
+.next-task-step__summary > a,
+.next-task-step__summary > button {
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: normal;
+}
+@media (max-width: 599px) {
+  .next-task-step__summary {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 // Wrap the whole status card in the current task's status colour. --tsc / --tsc-on
 // are bound on the card from the template (the status token and its on-colour), with
 // a neutral fallback until they resolve.

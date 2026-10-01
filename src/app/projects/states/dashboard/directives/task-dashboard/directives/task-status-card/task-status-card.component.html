@@ -1,101 +1,158 @@
-<mat-card
-  appearance="outlined"
-  class="task-status-card"
-  [style.--tsc]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + ')' : null"
-  [style.--tsc-on]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + '-on)' : null"
->
-  @if (triggers?.length > 0) {
-    <mat-form-field appearance="outline" class="px-2.5 pt-2.5">
-      <mat-label>Task status</mat-label>
-      <mat-select
-        [disabled]="task?.blockedByPrerequisiteTasks() && !isTutor"
-        [value]="$safeNavigationMigration(task?.status)"
-        (selectionChange)="triggerTransition($event.value)"
-      >
-        <mat-select-trigger>
-          <span style="display: inline-flex">
-            <status-icon
-              aria-hidden="true"
-              style="margin-right: 10px"
-              [status]="$safeNavigationMigration(task?.status)"
-            ></status-icon>
-            <span class="mb-0 text-xl">{{ task?.statusLabel() }}</span>
-          </span>
-        </mat-select-trigger>
-        @for (trigger of triggers; track trigger) {
-          <mat-option [value]="trigger.status">
-            <div class="flex items-center">
-              <!-- The label beside it says the same thing, so the icon is decorative
-                   here and its own role="img" would announce the status twice. -->
-              <status-icon
-                aria-hidden="true"
-                [showTooltip]="false"
-                [status]="trigger.status"
-              ></status-icon>
-              <span class="m-0 ml-2">{{ trigger.label }}</span>
-            </div>
-          </mat-option>
+@if (compact) {
+  <section aria-label="Your next step for this task" class="next-task-step">
+    <div class="next-task-step__summary">
+      <div class="next-task-step__copy">
+        <p class="next-task-step__status">
+          <strong>{{ task?.definition?.abbreviation }} · {{ task?.statusLabel() }}</strong>
+        </p>
+        <p>{{ nextStepMessage }}</p>
+        @if (nextStepDate) {
+          <p class="next-task-step__date">
+            {{ task?.unit?.allowFlexibleDates ? 'Planned submission' : 'Your due date' }}:
+            <strong>{{ nextStepDate | date: 'EEE d MMM' }}</strong
+            >. {{ task?.effectiveDeadlineExplanation }}
+          </p>
         }
-      </mat-select>
-    </mat-form-field>
-  }
-  @if (triggers?.length < 0) {
-    <mat-card-title>
-      <span style="display: inline-flex">
-        <status-icon
-          style="margin-right: 10px"
-          [status]="$safeNavigationMigration(task?.status)"
-        ></status-icon>
-        <span>{{ task?.statusLabel() }}</span>
-      </span>
-    </mat-card-title>
-  }
-
-  <mat-card-content>
-    <p>{{ task?.statusHelp().reason }} {{ task?.statusHelp().action }}</p>
-    @if (task?.blockedByPrerequisiteTasks()) {
-      <p>
-        To submit this task, you must first complete all tasks that are listed as prerequisites.
-      </p>
-    }
-  </mat-card-content>
-
-  <mat-card-actions class="task-status-actions">
-    <div class="task-status-primary-actions">
-      @if (showUploadSubmission) {
-        <button
-          mat-stroked-button
-          [disabled]="(task?.blockedByPrerequisiteTasks() && !isTutor) || isSubmittedForPortfolio()"
-          (click)="uploadSubmission()"
+        @if (feedbackCutoff) {
+          <p class="next-task-step__date">
+            Last submission date for feedback:
+            <strong>{{ feedbackCutoff | date: 'EEE d MMM' }}</strong
+            >.
+          </p>
+        }
+      </div>
+      @if (
+        primaryAction === 'messages' || primaryAction === 'discussion' || primaryAction === 'help'
+      ) {
+        <a
+          color="primary"
+          mat-flat-button
+          [routerLink]="[
+            '/projects',
+            task.project.id,
+            'dashboard',
+            task.definition.abbreviation,
+            'feedback',
+          ]"
+          >{{ primaryLabel }}</a
         >
-          <mat-icon aria-hidden="true">upload</mat-icon>
-          Upload submission
-        </button>
-      }
-
-      @if (task?.canApplyForExtension()) {
-        <button mat-stroked-button (click)="applyForExtension()">
-          <mat-icon aria-hidden="true">more_time</mat-icon>
-          Request extension
-        </button>
-      }
-      @if (showUploadNewFiles) {
-        <button
-          mat-stroked-button
-          [disabled]="submissionActionPending"
-          (click)="updateFilesInSubmission()"
-        >
-          <mat-icon aria-hidden="true">upload_file</mat-icon>
-          Upload new files
+      } @else if (primaryAction) {
+        <button color="primary" mat-flat-button type="button" (click)="performPrimaryAction()">
+          {{ primaryLabel }}
         </button>
       }
     </div>
+    <details>
+      <summary>Task status and other actions</summary>
+      <ng-container *ngTemplateOutlet="statusControls"></ng-container>
+    </details>
+  </section>
+} @else {
+  <ng-container *ngTemplateOutlet="statusControls"></ng-container>
+}
 
-    <button aria-label="More task options" mat-icon-button [matMenuTriggerFor]="menu">
-      <mat-icon>more_vert</mat-icon>
-    </button>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="openFeedbackAppealModal()">Request feedback review</button>
-    </mat-menu>
-  </mat-card-actions>
-</mat-card>
+<ng-template #statusControls>
+  <mat-card
+    appearance="outlined"
+    class="task-status-card"
+    [style.--tsc]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + ')' : null"
+    [style.--tsc-on]="taskStatusColor ? 'var(--ot-status-' + taskStatusColor + '-on)' : null"
+  >
+    @if (triggers?.length > 0) {
+      <mat-form-field appearance="outline" class="px-2.5 pt-2.5">
+        <mat-label>Task status</mat-label>
+        <mat-select
+          [disabled]="task?.blockedByPrerequisiteTasks() && !isTutor"
+          [value]="$safeNavigationMigration(task?.status)"
+          (selectionChange)="triggerTransition($event.value)"
+        >
+          <mat-select-trigger>
+            <span style="display: inline-flex">
+              <status-icon
+                aria-hidden="true"
+                style="margin-right: 10px"
+                [status]="$safeNavigationMigration(task?.status)"
+              ></status-icon>
+              <span class="mb-0 text-xl">{{ task?.statusLabel() }}</span>
+            </span>
+          </mat-select-trigger>
+          @for (trigger of triggers; track trigger) {
+            <mat-option [value]="trigger.status">
+              <div class="flex items-center">
+                <!-- The label beside it says the same thing, so the icon is decorative
+                   here and its own role="img" would announce the status twice. -->
+                <status-icon
+                  aria-hidden="true"
+                  [showTooltip]="false"
+                  [status]="trigger.status"
+                ></status-icon>
+                <span class="m-0 ml-2">{{ trigger.label }}</span>
+              </div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    @if (triggers?.length < 0) {
+      <mat-card-title>
+        <span style="display: inline-flex">
+          <status-icon
+            style="margin-right: 10px"
+            [status]="$safeNavigationMigration(task?.status)"
+          ></status-icon>
+          <span>{{ task?.statusLabel() }}</span>
+        </span>
+      </mat-card-title>
+    }
+
+    <mat-card-content>
+      <p>{{ task?.statusHelp().reason }} {{ task?.statusHelp().action }}</p>
+      @if (task?.blockedByPrerequisiteTasks()) {
+        <p>
+          To submit this task, you must first complete all tasks that are listed as prerequisites.
+        </p>
+      }
+    </mat-card-content>
+
+    <mat-card-actions class="task-status-actions">
+      <div class="task-status-primary-actions">
+        @if (showUploadSubmission) {
+          <button
+            mat-stroked-button
+            [disabled]="
+              (task?.blockedByPrerequisiteTasks() && !isTutor) || isSubmittedForPortfolio()
+            "
+            (click)="uploadSubmission()"
+          >
+            <mat-icon aria-hidden="true">upload</mat-icon>
+            Upload submission
+          </button>
+        }
+
+        @if (task?.canApplyForExtension()) {
+          <button mat-stroked-button (click)="applyForExtension()">
+            <mat-icon aria-hidden="true">more_time</mat-icon>
+            Request extension
+          </button>
+        }
+        @if (showUploadNewFiles) {
+          <button
+            mat-stroked-button
+            [disabled]="submissionActionPending"
+            (click)="updateFilesInSubmission()"
+          >
+            <mat-icon aria-hidden="true">upload_file</mat-icon>
+            Upload new files
+          </button>
+        }
+      </div>
+
+      <button aria-label="More task options" mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="openFeedbackAppealModal()">Request feedback review</button>
+      </mat-menu>
+    </mat-card-actions>
+  </mat-card>
+</ng-template>

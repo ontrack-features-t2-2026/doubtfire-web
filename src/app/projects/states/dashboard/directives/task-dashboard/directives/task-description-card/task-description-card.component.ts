@@ -228,13 +228,15 @@ export class TaskDescriptionCardComponent implements DoCheck {
       {key: 'start', label: flexible ? 'Planned start' : 'Start', date: this.startDate()},
       {
         key: 'due',
-        label: flexible ? 'Planned submit' : 'Due',
+        label: flexible ? 'Planned submission' : 'Your due date',
         date: dueDate,
         note:
           extensions > 0 ? `Extended ${extensions} week${extensions > 1 ? 's' : ''}` : undefined,
-        warning: submitsTooLate ? 'After the feedback date' : undefined,
+        warning: submitsTooLate
+          ? 'Too late to receive feedback before portfolio assessment'
+          : undefined,
       },
-      {key: 'feedback', label: 'Feedback by', date: feedbackDate},
+      {key: 'feedback', label: 'Last submission for feedback', date: feedbackDate},
     ];
 
     // In date order, so the line reads left to right in time. A planned submit

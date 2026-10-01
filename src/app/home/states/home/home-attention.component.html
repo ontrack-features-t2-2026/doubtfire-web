@@ -1,0 +1,135 @@
+<section
+  class="attention"
+  [attr.aria-busy]="loading"
+  [attr.aria-labelledby]="staff ? 'staff-attention-title' : 'student-attention-title'"
+>
+  <div class="attention-heading">
+    <div>
+      <h2 [id]="staff ? 'staff-attention-title' : 'student-attention-title'">
+        {{ staff ? 'Waiting for your team' : 'Needs attention' }}
+      </h2>
+      <p>
+        {{
+          staff
+            ? 'Work in the teaching queues you can access, with the longest waits first.'
+            : 'Your next steps across current units. Messages and changed dates come first.'
+        }}
+      </p>
+    </div>
+    <button mat-stroked-button type="button" [disabled]="loading" (click)="refresh()">
+      {{ loading ? 'Refreshing…' : 'Refresh' }}
+    </button>
+  </div>
+  @if (loading) {
+    <p role="status">{{ staff ? 'Checking your teaching queues…' : 'Checking task updates…' }}</p>
+  } @else if (loadFailed) {
+    <p role="alert">
+      {{
+        staff
+          ? 'We could not check your teaching queues.'
+          : 'We could not refresh your tasks. The summary may be out of date.'
+      }}
+      Use Refresh to try again.
+    </p>
+  }
+  @if (!staff && datesUnavailable) {
+    <p role="status">
+      Date and extension updates could not be checked. Your loaded tasks are still shown. Use
+      Refresh to try again.
+    </p>
+  }
+
+  @if (staff) {
+    @if (!loading && !loadFailed && staffAttention) {
+      <p class="attention-totals" role="status">
+        {{ staffAttention.totals.awaiting_feedback_count }} waiting for feedback ·
+        {{ staffAttention.totals.help_requested_count }} help requests ·
+        {{ staffAttention.totals.extension_requested_count }} extension requests
+      </p>
+      @if (waitingUnits.length) {
+        <ul aria-label="Teaching queues needing attention" class="attention-list">
+          @for (unit of waitingUnits; track unit.unit_id) {
+            <li>
+              <div class="attention-copy">
+                <h3>
+                  {{ unit.unit_code }} <span>{{ unit.unit_name }}</span>
+                </h3>
+                <p>
+                  {{ unit.awaiting_feedback_count }} waiting for feedback ·
+                  {{ unit.help_requested_count }} help requests ·
+                  {{ unit.extension_requested_count }} extension requests
+                </p>
+                @if (unit.oldest_wait_days !== null) {
+                  <p class="attention-detail">
+                    Longest feedback wait: {{ unit.oldest_wait_days }}
+                    {{ unit.oldest_wait_days === 1 ? 'teaching day' : 'teaching days' }}.
+                  </p>
+                }
+                @if (unit.overdue_feedback_count > 0) {
+                  <p class="attention-warning">
+                    {{ unit.overdue_feedback_count }} reached the unit's feedback waiting threshold.
+                  </p>
+                }
+              </div>
+              <div class="attention-actions">
+                <a
+                  mat-stroked-button
+                  [queryParams]="{students: unit.queue_scope}"
+                  [routerLink]="['/units', unit.unit_id, 'tasks', 'inbox']"
+                  >Open inbox<span class="sr-only"> for {{ unit.unit_code }}</span></a
+                >
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p>No submissions or requests are waiting in these queues.</p>
+      }
+    }
+  } @else {
+    @let attention = studentAttention;
+    @if (attention.items.length) {
+      <ul aria-label="Tasks needing attention" class="attention-list">
+        @for (item of attention.items | slice: 0 : 6; track item.key) {
+          <li>
+            <div class="attention-copy">
+              <h3>
+                {{ item.unitCode }} · {{ item.abbreviation }} <span>{{ item.title }}</span>
+              </h3>
+              <p class="attention-reason">{{ item.reason }}</p>
+              @if (item.dateUpdate && item.dateUpdate !== item.reason) {
+                <p>{{ item.dateUpdate }}.</p>
+              }
+              @if (item.date) {
+                <p class="attention-detail">
+                  {{ item.dateLabel }}: {{ item.date | date: 'EEE d MMM' }}. {{ item.extension }}
+                </p>
+              }
+            </div>
+            <a
+              mat-stroked-button
+              [routerLink]="item.route"
+              (click)="acknowledgeDateUpdate(item, $event)"
+              >{{ item.action
+              }}<span class="sr-only"> for {{ item.unitCode }} {{ item.abbreviation }}</span></a
+            >
+          </li>
+        }
+      </ul>
+      @if (attention.items.length > 6) {
+        <p>Showing 6 of {{ attention.items.length }} tasks needing attention.</p>
+      }
+    } @else if (!loading && !loadFailed && !datesUnavailable) {
+      <p>
+        No unread messages, changed dates or tasks due in the next seven days need your attention.
+      </p>
+    }
+    @if (attention.waiting > 0) {
+      <p class="attention-detail">
+        {{ attention.waiting }} {{ attention.waiting === 1 ? 'task is' : 'tasks are' }} waiting for
+        tutor feedback or help. These are not counted as overdue work for you.
+      </p>
+    }
+    <a mat-button routerLink="/dashboard">See all current tasks</a>
+  }
+</section>

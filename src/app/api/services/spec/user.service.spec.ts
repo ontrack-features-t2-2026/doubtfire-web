@@ -83,6 +83,39 @@ describe('UserService', () => {
     });
   });
 
+  it('round-trips independent notification channels and summary schedules', () => {
+    const user = Object.assign(new User(), {
+      id: 1,
+      receiveTaskEmailNotifications: false,
+      receiveTaskPushNotifications: true,
+      receiveFeedbackEmailNotifications: true,
+      receiveFeedbackPushNotifications: false,
+      receivePortfolioEmailNotifications: false,
+      receivePortfolioPushNotifications: true,
+      digestFrequency: 'monthly',
+      staffDigestFrequency: 'weekly',
+    });
+    let saved: User;
+    userService.update(user).subscribe((value) => (saved = value));
+    const request = httpMock.expectOne('http://localhost:3000/api/users/1');
+    const preferences = {
+      receive_task_email_notifications: false,
+      receive_task_push_notifications: true,
+      receive_feedback_email_notifications: true,
+      receive_feedback_push_notifications: false,
+      receive_portfolio_email_notifications: false,
+      receive_portfolio_push_notifications: true,
+      digest_frequency: 'monthly',
+      staff_digest_frequency: 'weekly',
+    };
+    expect(request.request.body.user).toMatchObject(preferences);
+    request.flush({id: 1, ...preferences});
+    expect(saved.receiveTaskEmailNotifications).toBe(false);
+    expect(saved.receiveTaskPushNotifications).toBe(true);
+    expect(saved.staffDigestFrequency).toBe('weekly');
+    expect(saved.digestFrequency).toBe('monthly');
+  });
+
   it('serialises the peer progress display preference when updating a profile', () => {
     const user = new User();
     user.id = 1;

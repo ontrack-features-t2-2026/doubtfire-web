@@ -50,14 +50,19 @@
     @if (task?.effectiveDeadlineDate) {
       <p class="effective-deadline mt-3 text-sm text-ot-text">
         <strong
-          >Effective submission date: {{ task.effectiveDeadlineDate | date: 'fullDate' }}.</strong
+          >{{ allowsFlexibleDates ? 'Your planned submission date' : 'Your current due date' }}:
+          {{ task.effectiveDeadlineDate | date: 'fullDate' }}.</strong
         >
         {{ task.effectiveDeadlineExplanation }}
         @if (task.effectiveDeadlineReason !== 'flexible_date') {
-          The deadline is the end of this day anywhere on earth.
+          This due date ends at the end of the day anywhere on Earth (UTC−12).
         }
       </p>
     }
+    <p class="mt-2 text-sm text-ot-muted">
+      The last submission date for feedback is the cutoff for submitting work to receive feedback
+      before portfolio assessment. It is not a promised date for a tutor reply.
+    </p>
   </mat-card-content>
 
   @let calendarUrl = googleCalendarUrl;
@@ -101,5 +106,13 @@
         </a>
       }
     </mat-card-actions>
+  }
+  @if (calendarUrl) {
+    <mat-card-content
+      ><p class="text-sm text-ot-muted">
+        Add to Google Calendar creates a one-time copy. It will not update when task dates or
+        extensions change. Use the web calendar subscription for updates.
+      </p></mat-card-content
+    >
   }
 </mat-card>

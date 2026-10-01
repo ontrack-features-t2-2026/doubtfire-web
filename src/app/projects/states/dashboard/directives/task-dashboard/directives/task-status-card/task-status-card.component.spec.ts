@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {OverlayContainer} from '@angular/cdk/overlay';
+import {CommonModule} from '@angular/common';
 import {NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {MatButtonModule} from '@angular/material/button';
@@ -7,7 +8,7 @@ import {MatCardModule} from '@angular/material/card';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatSelectModule} from '@angular/material/select';
-import {ActivatedRoute} from '@angular/router';
+import {RouterLink, provideRouter} from '@angular/router';
 import {EMPTY} from 'rxjs';
 import {Task} from 'src/app/api/models/task';
 import {TaskDefinition} from 'src/app/api/models/task-definition';
@@ -34,11 +35,19 @@ describe('TaskStatusCardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [TaskStatusCardComponent],
-      imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatMenuModule, MatSelectModule],
+      imports: [
+        CommonModule,
+        RouterLink,
+        MatButtonModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatMenuModule,
+        MatSelectModule,
+      ],
       providers: [
+        provideRouter([]),
         {provide: ExtensionModalService, useValue: emptyProvider},
         {provide: TaskService, useValue: taskServiceStub},
-        {provide: ActivatedRoute, useValue: emptyProvider},
         {provide: QrModalService, useValue: emptyProvider},
         {provide: DoubtfireConstants, useValue: emptyProvider},
         {provide: SubmissionTypeModalService, useValue: emptyProvider},
@@ -187,5 +196,91 @@ describe('TaskStatusCardComponent', () => {
 
     component.task = {processingPdf: false, loadingSubmissionDetails: true} as Task;
     expect(component.submissionActionPending).toBe(true);
+  });
+
+  function showNextStep(status: TaskStatusEnum): Task {
+    const task = buildTask(status, true);
+    task.project = {id: 12, unit: {staff: [], allowFlexibleDates: false}} as never;
+    task.definition.id = 1;
+    task.definition.abbreviation = '1.1P';
+    task.blockedByPrerequisiteTasks = vi.fn().mockReturnValue(false);
+    task.canApplyForExtension = vi.fn().mockReturnValue(false);
+    task.isPastDueDate = vi.fn().mockReturnValue(false);
+    task.localDueDate = () => new Date(2026, 9, 3);
+    task.localDeadlineDate = () => new Date(2026, 9, 10);
+    task.triggerTransition = vi.fn();
+    component.task = task;
+    component.compact = true;
+    fixture.detectChanges();
+    return task;
+  }
+
+  const primary = (): HTMLElement | null =>
+    fixture.nativeElement.querySelector(
+      '.next-task-step__summary > a, .next-task-step__summary > button',
+    );
+
+  it('offers the existing full submission flow for a revision and puts dates beside the action', () => {
+    const task = showNextStep('fix_and_resubmit');
+    expect(primary()?.textContent).toContain('Submit revision');
+    primary().click();
+    expect(task.triggerTransition).toHaveBeenCalledWith('ready_for_feedback');
+    expect(fixture.nativeElement.textContent).toContain('Last submission date for feedback');
+  });
+
+  it('re-checks prerequisites at click time, without starting an upload', () => {
+    const task = showNextStep('working_on_it');
+    const button = primary();
+    vi.mocked(task.blockedByPrerequisiteTasks).mockReturnValue(true);
+    button.click();
+    expect(task.triggerTransition).not.toHaveBeenCalled();
+    fixture.detectChanges();
+    expect(primary()).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Complete the prerequisites');
+  });
+
+  it('offers a message link only for unread messages, not because historical feedback exists', () => {
+    const task = showNextStep('complete');
+    task.hasFeedback = true;
+    fixture.detectChanges();
+    expect(primary()).toBeNull();
+    task.numNewComments = 1;
+    fixture.detectChanges();
+    expect(primary()?.getAttribute('href')).toBe('/projects/12/dashboard/1.1P/feedback');
+    expect(primary()?.textContent).toContain('Read messages');
+  });
+
+  it('keeps submitted and processing tasks out of the primary upload flow', () => {
+    showNextStep('ready_for_feedback');
+    expect(primary()).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Wait for feedback');
+    const task = showNextStep('working_on_it');
+    task.processingPdf = true;
+    fixture.detectChanges();
+    expect(primary()).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Your upload is being prepared');
+  });
+
+  it('uses the existing extension permission before recommending an extension', () => {
+    const task = showNextStep('working_on_it');
+    vi.mocked(task.isPastDueDate).mockReturnValue(true);
+    fixture.detectChanges();
+    expect(primary()?.textContent).toContain('Submit task');
+    vi.mocked(task.canApplyForExtension).mockReturnValue(true);
+    fixture.detectChanges();
+    expect(primary()?.textContent).toContain('Request extension');
+    const apply = vi.spyOn(component, 'applyForExtension').mockImplementation(() => undefined);
+    primary().click();
+    expect(apply).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an allowed extension reachable for Time Exceeded without offering a new upload', () => {
+    const task = showNextStep('time_exceeded');
+    vi.mocked(task.canApplyForExtension).mockReturnValue(true);
+    fixture.detectChanges();
+    expect(primary()?.textContent).toContain('Request extension');
+    vi.mocked(task.canApplyForExtension).mockReturnValue(false);
+    fixture.detectChanges();
+    expect(primary()).toBeNull();
   });
 });

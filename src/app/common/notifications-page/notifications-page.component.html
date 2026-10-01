@@ -15,35 +15,88 @@
       the document body. disabledInteractive keeps it focusable while the guard
       in markAllRead prevents another request.
     -->
-    @if (!loading && !loadFailed && notifications.length) {
+    @if (actionsVisible) {
       <div aria-label="Notification actions" class="notification-actions">
         <button
           class="notification-mark-all"
           mat-stroked-button
-          [disabled]="!hasUnread || markAllReadPending || deleteAllPending"
+          [disabled]="!hasUnread || markAllReadPending || deleteAllPending || loading || loadFailed"
           [disabledInteractive]="true"
           (click)="markAllRead()"
         >
           <mat-icon>done_all</mat-icon>
           <span>Mark all read</span>
         </button>
-        <button
-          class="notification-delete-all"
-          color="warn"
-          mat-stroked-button
-          [disabled]="deleteAllPending"
-          [disabledInteractive]="true"
-          (click)="confirmDeleteAll()"
-        >
-          <mat-icon>delete_sweep</mat-icon>
-          <span>Delete all</span>
-        </button>
+        @if (!filtered && totalCount) {
+          <button
+            class="notification-delete-all"
+            color="warn"
+            mat-stroked-button
+            [disabled]="deleteAllPending || loading || loadFailed"
+            [disabledInteractive]="true"
+            (click)="confirmDeleteAll()"
+          >
+            <mat-icon>delete_sweep</mat-icon>
+            <span>Delete all</span>
+          </button>
+        }
       </div>
     }
   </div>
 
+  <div aria-label="Filter notifications" class="notification-filters" role="group">
+    <label class="notification-filter-check">
+      <input
+        type="checkbox"
+        [checked]="unreadOnly"
+        (change)="unreadOnly = $any($event.target).checked; filtersChanged()"
+      />
+      Unread only
+    </label>
+    <label
+      >Unit
+      <select [value]="unitId" (change)="unitId = $any($event.target).value; filtersChanged()">
+        <option value="">All units</option>
+        @for (unit of units; track unit.id) {
+          <option [value]="unit.id">{{ unit.code }} {{ unit.name }}</option>
+        }
+      </select>
+    </label>
+    <label
+      >Category
+      <select
+        [value]="category"
+        (change)="category = $any($event.target).value; event = ''; filtersChanged()"
+      >
+        <option value="">All categories</option>
+        @for (option of categories; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    <label
+      >Event
+      <select [value]="event" (change)="event = $any($event.target).value; filtersChanged()">
+        <option value="">All events</option>
+        @for (option of events; track option) {
+          <option [value]="option">{{ eventLabel(option) }}</option>
+        }
+      </select>
+    </label>
+    @if (filtered) {
+      <button mat-stroked-button (click)="clearFilters()">Clear filters</button>
+    }
+  </div>
+  <p aria-live="polite" class="notification-results" role="status">
+    @if (!loading && !loadFailed) {
+      {{ totalCount }} {{ filtered ? 'matching' : '' }}
+      {{ totalCount === 1 ? 'notification' : 'notifications' }}. Mark all read applies to your whole
+      inbox.
+    }
+  </p>
+
   @if (loading) {
-    <div class="flex items-center gap-3 py-6">
+    <div class="flex items-center gap-3 py-6" role="status">
       <mat-spinner [diameter]="24"></mat-spinner>
       <span>Loading your notifications</span>
     </div>
@@ -53,7 +106,7 @@
       not find out" look the same and mean opposite things, and only one of them
       has a way out.
     -->
-    <div class="notifications-placeholder py-6" tabindex="-1">
+    <div class="notifications-placeholder py-6" role="alert" tabindex="-1">
       <p>We could not load your notifications.</p>
       <button class="notifications-retry" mat-stroked-button (click)="load()">Try again</button>
     </div>
@@ -64,9 +117,15 @@
     -->
     <div class="notifications-placeholder" tabindex="-1">
       <f-empty-state
-        hint="Comments on your tasks, feedback and reminders will show up here."
         icon="notifications_none"
-        message="You have no notifications yet."
+        [hint]="
+          filtered
+            ? 'Try another filter or clear your filters.'
+            : 'Comments on your tasks, feedback and reminders will show up here.'
+        "
+        [message]="
+          filtered ? 'No notifications match these filters.' : 'You have no notifications yet.'
+        "
       ></f-empty-state>
     </div>
   } @else {
@@ -81,67 +140,75 @@
       open.
     -->
     <div class="notification-list">
-      @for (notification of visible; track notification.id) {
-        <!--
+      @for (group of groups; track group.label) {
+        <h2 class="notification-day">{{ group.label }}</h2>
+        @for (notification of group.notifications; track notification.id) {
+          <!--
           The delete button is a sibling of the row and not inside it. A button
           inside a button is not valid html, the browser unnests them, and the
           two end up as separate controls in an order nobody chose. Being
           siblings is also what stops a click on delete from opening the
           notification, with no need to stop the event.
         -->
-        <div class="notification-item flex w-full items-center">
-          <button
-            class="notification-row grow"
-            type="button"
-            [attr.aria-label]="rowLabel(notification)"
-            (click)="open(notification)"
-          >
-            <span class="notification-line">
-              <!--
+          <div class="notification-item flex w-full items-center">
+            <button
+              class="notification-row grow"
+              type="button"
+              [attr.aria-label]="rowLabel(notification)"
+              (click)="open(notification)"
+            >
+              <span class="notification-line">
+                <!--
                 The same event-specific presentation as the dropdown in the
                 header, so a notification looks like itself wherever it is read.
               -->
-              <span class="notification-glyph" [class]="'tone-' + toneFor(notification)">
-                <mat-icon>{{ iconFor(notification) }}</mat-icon>
-              </span>
-
-              <span class="notification-body">
-                <span class="notification-message" [class.unread]="!notification.isRead">{{
-                  notification.message
-                }}</span>
-                <span class="notification-meta">
-                  <span class="notification-kind">{{ labelFor(notification) }}</span>
-                  <span aria-hidden="true">·</span>
-                  <span class="notification-time">{{ timeAgo(notification) }}</span>
+                <span class="notification-glyph" [class]="'tone-' + toneFor(notification)">
+                  <mat-icon>{{ iconFor(notification) }}</mat-icon>
                 </span>
+
+                <span class="notification-body">
+                  <span class="notification-message" [class.unread]="!notification.isRead">{{
+                    notification.message
+                  }}</span>
+                  <span class="notification-meta">
+                    <span class="notification-kind">{{ labelFor(notification) }}</span>
+                    @if (unitLabel(notification)) {
+                      <span aria-hidden="true">·</span><span>{{ unitLabel(notification) }}</span>
+                    }
+                    <span aria-hidden="true">·</span>
+                    <span class="notification-time">{{ timeAgo(notification) }}</span>
+                  </span>
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  class="notification-unread-dot"
+                  [class.is-read]="notification.isRead"
+                ></span>
               </span>
+            </button>
 
-              <span
-                aria-hidden="true"
-                class="notification-unread-dot"
-                [class.is-read]="notification.isRead"
-              ></span>
-            </span>
-          </button>
-
-          <button
-            class="notification-delete"
-            mat-icon-button
-            matTooltip="Delete"
-            [attr.aria-label]="deleteLabel(notification)"
-            [disabled]="isDeleting(notification)"
-            [disabledInteractive]="true"
-            (click)="confirmDelete(notification)"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
+            <button
+              class="notification-delete"
+              mat-icon-button
+              matTooltip="Delete"
+              [attr.aria-label]="deleteLabel(notification)"
+              [disabled]="isDeleting(notification)"
+              [disabledInteractive]="true"
+              (click)="confirmDelete(notification)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
       }
     </div>
-
+  }
+  @if (totalCount > 0) {
     <mat-paginator
+      aria-label="Notification pages"
       class="mat-elevation-z0"
-      [length]="notifications.length"
+      [length]="totalCount"
       [pageIndex]="pageIndex"
       [pageSize]="pageSize"
       [pageSizeOptions]="pageSizeOptions"

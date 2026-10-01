@@ -80,6 +80,7 @@
       </header>
 
       @if (staffUnits.length > 0) {
+        <f-home-attention [staff]="true"></f-home-attention>
         <ul
           aria-label="Active units you teach"
           class="m-0 grid list-none grid-cols-1 gap-4 p-0 pb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -217,6 +218,7 @@
       </header>
 
       @if (studyUnits.length > 0) {
+        <f-home-attention [projects]="projects"></f-home-attention>
         <ul
           aria-label="Active units you study"
           class="m-0 grid list-none grid-cols-1 gap-4 p-0 pb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
