@@ -96,9 +96,6 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       this.user.displayPeerProgress = true;
     }
 
-    // The values Discard puts back. Retaken after every successful save.
-    this.takeSnapshot();
-
     // The same for Unit Hub updates, which are on in the bell and off everywhere
     // else until the user opts in.
     this.user.receiveUnitHubNotifications ??= true;
@@ -113,6 +110,15 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
       this.user.receiveTaskNotifications = true;
       this.user.displayPeerProgress = true;
     }
+    for (const category of ['Task', 'Feedback', 'Portfolio'] as const) {
+      this.user[`receive${category}EmailNotifications`] ??=
+        this.user[`receive${category}Notifications`] ?? false;
+      this.user[`receive${category}PushNotifications`] ??=
+        this.user[`receive${category}Notifications`] ?? false;
+    }
+    this.user.digestFrequency ??= this.user.receiveFeedbackNotifications ? 'weekly' : 'off';
+    this.user.staffDigestFrequency ??= 'off';
+    this.takeSnapshot();
   }
 
   ngOnDestroy(): void {
@@ -308,6 +314,21 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
     'optInToResearch',
     'displayPeerProgress',
     'acceptedTiiEula',
+    'digestFrequency',
+    'staffDigestFrequency',
+    'receiveTaskNotifications',
+    'receiveTaskEmailNotifications',
+    'receiveTaskPushNotifications',
+    'receiveFeedbackNotifications',
+    'receiveFeedbackEmailNotifications',
+    'receiveFeedbackPushNotifications',
+    'receivePortfolioNotifications',
+    'receivePortfolioEmailNotifications',
+    'receivePortfolioPushNotifications',
+    'receiveUnitHubNotifications',
+    'receiveUnitHubEmailNotifications',
+    'receiveUnitHubPushNotifications',
+    'receiveUnitHubSessionReminders',
   ] as const;
 
   private savedSnapshot: Record<string, unknown> = {};
@@ -407,7 +428,21 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
         error: (error: unknown) => this.handleSaveError(error),
       });
     } else {
-      const ignoreKeys = this.readOnlyIdentityKeys;
+      const ignoreKeys = [...this.readOnlyIdentityKeys];
+      if (!this.managingOwnProfile) {
+        ignoreKeys.push(
+          'staffDigestFrequency',
+          'digestFrequency',
+          'receiveUnitHubNotifications',
+          'receiveUnitHubEmailNotifications',
+          'receiveUnitHubPushNotifications',
+          'receiveUnitHubSessionReminders',
+          ...(['Task', 'Feedback', 'Portfolio'] as const).flatMap((category) => [
+            `receive${category}EmailNotifications`,
+            `receive${category}PushNotifications`,
+          ]),
+        );
+      }
       const request = ignoreKeys.length
         ? this.userService.update(this.user, {entity: this.user, ignoreKeys})
         : this.userService.update(this.user);

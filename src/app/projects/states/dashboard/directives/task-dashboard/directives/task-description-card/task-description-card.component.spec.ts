@@ -336,7 +336,7 @@ describe('TaskDescriptionCardComponent', () => {
 
       expect(
         steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
-      ).toEqual(['Start', 'Due', 'Feedback by']);
+      ).toEqual(['Start', 'Your due date', 'Last submission for feedback']);
       expect(
         steps.map((step) => step.querySelector('.task-dates__date').textContent.trim()),
       ).toEqual(['Tue 1 Sep', 'Tue 15 Sep', 'Tue 29 Sep']);
@@ -414,12 +414,12 @@ describe('TaskDescriptionCardComponent', () => {
 
       expect(
         steps.map((step) => step.querySelector('.task-dates__label').textContent.trim()),
-      ).toEqual(['Planned start', 'Feedback by', 'Planned submit']);
+      ).toEqual(['Planned start', 'Last submission for feedback', 'Planned submission']);
       // The nearer feedback date is the one to count down to.
       expect(steps[1].classList).toContain('task-dates__step--next');
       expect(steps[1].querySelector('.task-dates__when').textContent.trim()).toBe('In 5 days');
       expect(steps[2].querySelector('.task-dates__warning').textContent).toContain(
-        'After the feedback date',
+        'Too late to receive feedback before portfolio assessment',
       );
     });
 

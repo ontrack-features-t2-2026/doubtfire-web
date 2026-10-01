@@ -263,6 +263,7 @@ import {GroupSelectorComponent} from './groups/group-selector/group-selector.com
 import {GroupSetManagerComponent} from './groups/group-set-manager/group-set-manager.component';
 import {GroupSetSelectorComponent} from './groups/group-set-selector/group-set-selector.component';
 import {SplashScreenComponent} from './home/splash-screen/splash-screen.component';
+import {HomeAttentionComponent} from './home/states/home/home-attention.component';
 import {HomeComponent} from './home/states/home/home.component';
 import {LtiDashboardComponent} from './home/states/lti-dashboard/lti-dashboard.component';
 import {LtiUnitLinkComponent} from './home/states/lti-unit-link/lti-unit-link.component';
@@ -835,6 +836,7 @@ const DEFAULT_TOOLTIP_OPTIONS: MatTooltipDefaultOptions = {
     },
   ],
   imports: [
+    HomeAttentionComponent,
     PreviousSubmissionsComponent,
     PanelLayoutComponent,
     PanelComponent,

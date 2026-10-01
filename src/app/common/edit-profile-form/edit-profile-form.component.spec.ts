@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {TestbedHarnessEnvironment} from '@angular/cdk/testing/testbed';
 import {Directive, NO_ERRORS_SCHEMA} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, NgForm} from '@angular/forms';
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import {MatCheckboxHarness} from '@angular/material/checkbox/testing';
 import {MAT_DIALOG_DATA} from '@angular/material/dialog';
@@ -10,6 +10,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {By} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {Subject, of} from 'rxjs';
 import {User} from 'src/app/api/models/user/user';
@@ -773,10 +774,43 @@ describe('EditProfileFormComponent save state', () => {
     expect(saveButton()).toBeNull();
   });
 
+  it('saves a Unit Hub channel-only change and restores it with Discard before saving', async () => {
+    const checkbox = await TestbedHarnessEnvironment.loader(fixture).getHarness(
+      MatCheckboxHarness.with({selector: '#unit-hub-email'}),
+    );
+    await checkbox.check();
+    fixture.detectChanges();
+    expect(saveButton()).not.toBeNull();
+    fixture.componentInstance.discard(
+      fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(await checkbox.isChecked()).toBe(false);
+    expect(saveButton()).toBeNull();
+    await checkbox.check();
+    fixture.detectChanges();
+    saveButton().click();
+    expect(userServiceStub.update.mock.calls[0][0].receiveUnitHubEmailNotifications).toBe(true);
+  });
+
+  it('discards changes to a channel and both digest fields', () => {
+    const component = fixture.componentInstance;
+    const email = component.user.receiveFeedbackEmailNotifications;
+    const cadence = component.user.digestFrequency;
+    component.user.receiveFeedbackEmailNotifications = !email;
+    component.user.digestFrequency = 'daily';
+    component.user.staffDigestFrequency = 'weekly';
+    component.discard();
+    expect(component.user.receiveFeedbackEmailNotifications).toBe(email);
+    expect(component.user.digestFrequency).toBe(cadence);
+    expect(component.user.staffDigestFrequency).toBe('off');
+  });
+
   it('offers Save changes when only a notification category changes', async () => {
     const loader = TestbedHarnessEnvironment.loader(fixture);
     const feedback = await loader.getHarness(
-      MatCheckboxHarness.with({label: 'Feedback notifications'}),
+      MatCheckboxHarness.with({selector: '#feedback-email'}),
     );
 
     await feedback.check();
@@ -790,7 +824,7 @@ describe('EditProfileFormComponent save state', () => {
 
     expect(userServiceStub.update).toHaveBeenCalled();
     expect(userServiceStub.update.mock.calls[0][0]).toEqual(
-      expect.objectContaining({receiveFeedbackNotifications: true}),
+      expect.objectContaining({receiveFeedbackEmailNotifications: true}),
     );
   });
 });

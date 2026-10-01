@@ -27,6 +27,13 @@ export class User extends Entity {
   public receiveUnitHubSessionReminders: boolean;
   /** How often the unit summary email arrives: off, daily, weekly or monthly. */
   public digestFrequency: string;
+  public staffDigestFrequency: string;
+  public receiveTaskEmailNotifications: boolean;
+  public receiveTaskPushNotifications: boolean;
+  public receiveFeedbackEmailNotifications: boolean;
+  public receiveFeedbackPushNotifications: boolean;
+  public receivePortfolioEmailNotifications: boolean;
+  public receivePortfolioPushNotifications: boolean;
   public displayPeerProgress: boolean;
   public themePreference: 'light' | 'dark' | 'system' | null;
   public themePreferenceUpdatedAt: string | null;

@@ -63,6 +63,53 @@ describe('NotificationService', () => {
     httpMock.verify({ignoreCancelled: true});
   });
 
+  it('requests bounded filtered pages and maps metadata without evicting cached history', () => {
+    const cached = primeCache(unreadJson(1));
+    let result;
+    service
+      .listPage({
+        page: 2,
+        perPage: 20,
+        unreadOnly: true,
+        notificationType: 'feedback',
+        event: 'task_comment_created',
+        unitId: 42,
+      })
+      .subscribe((value) => (result = value));
+    const request = httpMock.expectOne((req) => req.url === `${API_URL}/notifications`);
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('per_page')).toBe('20');
+    expect(request.request.params.get('unit_id')).toBe('42');
+    expect(request.request.params.get('unread_only')).toBe('true');
+    expect(request.request.params.get('event')).toBe('task_comment_created');
+    request.flush({
+      notifications: [{...unreadJson(2), announcement_id: 8, session_id: 9}],
+      total_count: 1200,
+      unread_count: 17,
+      through_id: 1300,
+      page: 2,
+      per_page: 20,
+      events: ['task_comment_created'],
+      units: [{id: 42, code: 'SIT764', name: 'Project A'}],
+    });
+    expect(result.totalCount).toBe(1200);
+    expect(result.notifications[0].createdAt).toBeInstanceOf(Date);
+    expect(result.notifications[0].readAt).toBeNull();
+    expect(result.notifications[0].announcementId).toBe(8);
+    expect(result.notifications[0].sessionId).toBe(9);
+    expect(service.cache.currentValues).toContain(cached[0]);
+  });
+
+  it('cancels a paginated request at sign-out before caching another account data', () => {
+    let emitted = false;
+    service.listPage({page: 1, perPage: 20}).subscribe(() => (emitted = true));
+    const request = httpMock.expectOne((req) => req.url === `${API_URL}/notifications`);
+    service.reset();
+    expect(request.cancelled).toBe(true);
+    expect(emitted).toBe(false);
+    expect(service.cache.currentValues).toHaveLength(0);
+  });
+
   /**
    * Read whatever unreadCount$ is holding right now. It is a BehaviorSubject so
    * this emits synchronously.

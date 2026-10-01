@@ -1,0 +1,87 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.attention {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--ot-color-border);
+  border-radius: var(--ot-radius-lg, 12px);
+  background: var(--ot-color-surface);
+  color: var(--ot-color-text);
+}
+.attention-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+h3 span {
+  font-weight: 400;
+}
+p {
+  margin: 0.35rem 0;
+}
+.attention-heading p,
+.attention-detail {
+  color: var(--ot-color-text-muted);
+  font-size: 0.875rem;
+}
+.attention-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+}
+.attention-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--ot-color-divider);
+}
+.attention-copy {
+  flex: 1;
+  min-width: 0;
+}
+.attention-reason {
+  font-weight: 600;
+}
+.attention-warning {
+  color: var(--ot-color-error);
+}
+.attention-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+a,
+button {
+  min-height: 44px;
+  white-space: normal;
+}
+@media (max-width: 599px) {
+  .attention-heading,
+  .attention-list li {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .attention-heading button {
+    align-self: flex-start;
+  }
+  .attention-list a {
+    align-self: flex-start;
+  }
+}

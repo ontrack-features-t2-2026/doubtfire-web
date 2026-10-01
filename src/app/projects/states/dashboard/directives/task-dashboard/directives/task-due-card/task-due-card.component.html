@@ -123,9 +123,7 @@
         <mat-card-header class="bg-ot-error text-(--ot-color-on-error)">
           <mat-card-title class="mb-2.5 flex items-center"
             ><mat-icon>error</mat-icon>
-            <span class="ml-2.5"
-              >Passed Due Date By {{ task?.timePastDueDateDescription() }}</span
-            ></mat-card-title
+            <span class="ml-2.5">Last submission date for feedback has passed</span></mat-card-title
           >
         </mat-card-header>
         <mat-card-content
@@ -173,10 +171,16 @@
   <mat-card-content>
     <p>
       You have submitted this task and should now wait for feedback from your tutor.
-      <span [hidden]="!task?.isPastDeadline()"
-        >Do not re-upload new files at this time as the status will be changed to
-        <strong>Time Exceeded</strong>.</span
-      >
+      @if (task?.isPastDeadline()) {
+        <span
+          >Replacing your files now is a new submission after the feedback cutoff.
+          @if (task?.definition?.unit.markLateSubmissionsAsAssessInPortfolio) {
+            It will be assessed in your portfolio without further feedback.
+          } @else {
+            It will be marked <strong>Time Exceeded</strong>.
+          }
+        </span>
+      }
     </p>
   </mat-card-content>
 </mat-card>

@@ -6,6 +6,37 @@ import API_URL from 'src/app/config/constants/apiUrl';
 import {Notification} from '../models/notification';
 import {MappingFunctions} from './mapping-fn';
 
+export interface NotificationQuery {
+  page: number;
+  perPage: number;
+  unreadOnly?: boolean;
+  notificationType?: string;
+  event?: string;
+  unitId?: number;
+}
+
+export interface NotificationPage {
+  notifications: Notification[];
+  totalCount: number;
+  unreadCount: number;
+  throughId: number | null;
+  page: number;
+  perPage: number;
+  events: string[];
+  units: {id: number; code: string; name: string}[];
+}
+
+interface NotificationPageResponse {
+  notifications: object[];
+  total_count: number;
+  unread_count: number;
+  through_id: number | null;
+  page: number;
+  per_page: number;
+  events: string[];
+  units: {id: number; code: string; name: string}[];
+}
+
 /**
  * Reads and updates the signed in user's notifications.
  *
@@ -70,6 +101,8 @@ export class NotificationService extends CachedEntityService<Notification> {
       'taskId',
       'commentId',
       'groupId',
+      'announcementId',
+      'sessionId',
       {
         // Not MappingFunctions.mapDate. read_at is null on every unread
         // notification and new Date(null) is the epoch, not null, so mapDate
@@ -116,9 +149,8 @@ export class NotificationService extends CachedEntityService<Notification> {
    * would build a fresh set of objects, so a component holding the result of an
    * earlier call would stop seeing later updates to the same rows.
    *
-   * There is no paging. GET /notifications returns the lot in one response, it
-   * takes unread_only and nothing else, so page client side over what comes
-   * back. If real paging is wanted it is an api change, not a change here.
+   * Retained for the bell and older callers. The history page uses listPage()
+   * to fetch bounded, server-filtered pages instead of downloading all history.
    */
   public list(unreadOnly = false): Observable<Notification[]> {
     const options: RequestOptions<Notification> = {cache: this.cache};
@@ -135,6 +167,45 @@ export class NotificationService extends CachedEntityService<Notification> {
       }),
       takeUntil(this.sessionEnded),
     );
+  }
+
+  /** Bounded, server-filtered history. A partial page must never evict other cached rows. */
+  public listPage(query: NotificationQuery): Observable<NotificationPage> {
+    const params: Record<string, string | number | boolean> = {
+      paginated: true,
+      page: query.page,
+      per_page: query.perPage,
+    };
+    if (query.unreadOnly) {
+      params.unread_only = true;
+    }
+    if (query.notificationType) {
+      params.notification_type = query.notificationType;
+    }
+    if (query.event) {
+      params.event = query.event;
+    }
+    if (query.unitId) {
+      params.unit_id = query.unitId;
+    }
+
+    return this.apiHttpClient
+      .get<NotificationPageResponse>(`${API_URL}/notifications`, {params})
+      .pipe(
+        map((response) => ({
+          notifications: response.notifications.map((row) =>
+            this.buildInstance(row, {cache: this.cache}),
+          ),
+          totalCount: response.total_count,
+          unreadCount: response.unread_count,
+          throughId: response.through_id,
+          page: response.page,
+          perPage: response.per_page,
+          events: response.events,
+          units: response.units,
+        })),
+        takeUntil(this.sessionEnded),
+      );
   }
 
   /**
